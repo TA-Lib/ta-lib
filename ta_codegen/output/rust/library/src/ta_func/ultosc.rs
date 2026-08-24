@@ -47,14 +47,19 @@
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
  *  DX       Dex Hunter (https://github.com/dexhunter)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  281206 DM   Initial Implementation
- *  010606 MF   Abstract local arrays. Detect divide by zero.
- *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
+ *  281206 DM    Initial Implementation
+ *  010606 MF    Abstract local arrays. Detect divide by zero.
+ *  073126 DX    Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
+ *  082326 MF,CC Fix #253. Recognize an empty window by counting bars, so the
+ *               divides are guarded exactly instead of against the fixed
+ *               TA_IS_ZERO band -- which zeroed the oscillator for any
+ *               instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -168,6 +173,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingPos1: usize = 0_usize;
         let mut trailingPos2: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0i32; 3 as usize];
@@ -249,6 +255,20 @@ impl Core {
         b2Total = 0.0;
         a3Total = 0.0;
         b3Total = 0.0;
+        // Consecutive bars that put nothing into the windows, counted so that an
+        // empty window can be recognized exactly (the shape #244 needed for MFI).
+        // The running totals cannot answer that question themselves: they are
+        // maintained by add-then-subtract, so once a window empties they hold
+        // rounding residue of arbitrary sign rather than zero, and v0.6.4 divides
+        // one residue by another there -- it returns -92.9 for an oscillator
+        // documented to run 0..100. Both of a bar's terms have to be zero for it to
+        // count, which for valid bars is one condition (a zero true range means
+        // H == L == the previous close, which leaves the close on the true low).
+        // Reseeding on the count is what lets the divides below be guarded exactly
+        // rather than against a fixed band -- a true range carries the quote unit,
+        // so the band they used to carry zeroed the oscillator for any instrument
+        // quoted below it (issue #253).
+        nullRun = 0;
         // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
         i = startIdx - ((optInTimePeriod3) as usize) + 1;
         while i < startIdx {
@@ -270,6 +290,11 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
+            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
             if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
@@ -320,15 +345,40 @@ impl Core {
             b1Total += trueRange;
             b2Total += trueRange;
             b3Total += trueRange;
-            // Calculate the oscillator value for today
+            // Once a whole window of no-contribution bars has gone by, every slot it
+            // spans is 0.0, so its totals are known to be exactly zero and the
+            // residue can be dropped. The periods are sorted shortest-first, so a
+            // run long enough for a longer window is long enough for every shorter
+            // one.
+            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((optInTimePeriod1) as usize) {
+                a1Total = 0.0;
+                b1Total = 0.0;
+                if nullRun >= ((optInTimePeriod2) as usize) {
+                    a2Total = 0.0;
+                    b2Total = 0.0;
+                    if nullRun >= ((optInTimePeriod3) as usize) {
+                        nullRun = (optInTimePeriod3) as usize;
+                        a3Total = 0.0;
+                        b3Total = 0.0;
+                    }
+                }
+            }
+            // Calculate the oscillator value for today. Each window contributes only
+            // when it holds a true range; the totals are sums of non-negative terms
+            // and the reseed above removes their residue, so the test is exact.
             output = 0.0;
-            if !((b1Total).abs() < 1e-14) {
+            if b1Total > 0.0 {
                 output += 4.0 * (a1Total / b1Total);
             }
-            if !((b2Total).abs() < 1e-14) {
+            if b2Total > 0.0 {
                 output += 2.0 * (a2Total / b2Total);
             }
-            if !((b3Total).abs() < 1e-14) {
+            if b3Total > 0.0 {
                 output += a3Total / b3Total;
             }
             // Remove the trailing terms to prepare for next day. Each was evaluated
@@ -525,6 +575,7 @@ struct ULTOSC_StreamState {
     b3Total: f64,
     trailingPos1: usize,
     trailingPos2: usize,
+    nullRun: usize,
     term_Idx: usize,
     maxIdx_term: usize,
     lag1_inClose: f64,
@@ -549,6 +600,7 @@ impl ULTOSC_StreamState {
         self.b3Total = src.b3Total;
         self.trailingPos1 = src.trailingPos1;
         self.trailingPos2 = src.trailingPos2;
+        self.nullRun = src.nullRun;
         self.term_Idx = src.term_Idx;
         self.maxIdx_term = src.maxIdx_term;
         self.lag1_inClose = src.lag1_inClose;
@@ -597,15 +649,40 @@ impl Core {
         sp.b1Total += trueRange;
         sp.b2Total += trueRange;
         sp.b3Total += trueRange;
-        // Calculate the oscillator value for today
+        // Once a whole window of no-contribution bars has gone by, every slot it
+        // spans is 0.0, so its totals are known to be exactly zero and the
+        // residue can be dropped. The periods are sorted shortest-first, so a
+        // run long enough for a longer window is long enough for every shorter
+        // one.
+        if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
+            sp.nullRun += 1;
+        } else {
+            sp.nullRun = 0;
+        }
+        if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
+            sp.a1Total = 0.0;
+            sp.b1Total = 0.0;
+            if sp.nullRun >= ((sp.optInTimePeriod2) as usize) {
+                sp.a2Total = 0.0;
+                sp.b2Total = 0.0;
+                if sp.nullRun >= ((sp.optInTimePeriod3) as usize) {
+                    sp.nullRun = (sp.optInTimePeriod3) as usize;
+                    sp.a3Total = 0.0;
+                    sp.b3Total = 0.0;
+                }
+            }
+        }
+        // Calculate the oscillator value for today. Each window contributes only
+        // when it holds a true range; the totals are sums of non-negative terms
+        // and the reseed above removes their residue, so the test is exact.
         output = 0.0;
-        if !((sp.b1Total).abs() < 1e-14) {
+        if sp.b1Total > 0.0 {
             output += 4.0 * (sp.a1Total / sp.b1Total);
         }
-        if !((sp.b2Total).abs() < 1e-14) {
+        if sp.b2Total > 0.0 {
             output += 2.0 * (sp.a2Total / sp.b2Total);
         }
-        if !((sp.b3Total).abs() < 1e-14) {
+        if sp.b3Total > 0.0 {
             output += sp.a3Total / sp.b3Total;
         }
         // Remove the trailing terms to prepare for next day. Each was evaluated
@@ -697,6 +774,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingPos1: usize = 0_usize;
         let mut trailingPos2: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0_i32; 3 as usize];
@@ -767,6 +845,20 @@ impl Core {
         b2Total = 0.0;
         a3Total = 0.0;
         b3Total = 0.0;
+        // Consecutive bars that put nothing into the windows, counted so that an
+        // empty window can be recognized exactly (the shape #244 needed for MFI).
+        // The running totals cannot answer that question themselves: they are
+        // maintained by add-then-subtract, so once a window empties they hold
+        // rounding residue of arbitrary sign rather than zero, and v0.6.4 divides
+        // one residue by another there -- it returns -92.9 for an oscillator
+        // documented to run 0..100. Both of a bar's terms have to be zero for it to
+        // count, which for valid bars is one condition (a zero true range means
+        // H == L == the previous close, which leaves the close on the true low).
+        // Reseeding on the count is what lets the divides below be guarded exactly
+        // rather than against a fixed band -- a true range carries the quote unit,
+        // so the band they used to carry zeroed the oscillator for any instrument
+        // quoted below it (issue #253).
+        nullRun = 0;
         // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
         i = startIdx - ((optInTimePeriod3) as usize) + 1;
         while i < startIdx {
@@ -788,6 +880,11 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
+            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
             if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
@@ -838,15 +935,40 @@ impl Core {
             b1Total += trueRange;
             b2Total += trueRange;
             b3Total += trueRange;
-            // Calculate the oscillator value for today
+            // Once a whole window of no-contribution bars has gone by, every slot it
+            // spans is 0.0, so its totals are known to be exactly zero and the
+            // residue can be dropped. The periods are sorted shortest-first, so a
+            // run long enough for a longer window is long enough for every shorter
+            // one.
+            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((optInTimePeriod1) as usize) {
+                a1Total = 0.0;
+                b1Total = 0.0;
+                if nullRun >= ((optInTimePeriod2) as usize) {
+                    a2Total = 0.0;
+                    b2Total = 0.0;
+                    if nullRun >= ((optInTimePeriod3) as usize) {
+                        nullRun = (optInTimePeriod3) as usize;
+                        a3Total = 0.0;
+                        b3Total = 0.0;
+                    }
+                }
+            }
+            // Calculate the oscillator value for today. Each window contributes only
+            // when it holds a true range; the totals are sums of non-negative terms
+            // and the reseed above removes their residue, so the test is exact.
             output = 0.0;
-            if !((b1Total).abs() < 1e-14) {
+            if b1Total > 0.0 {
                 output += 4.0 * (a1Total / b1Total);
             }
-            if !((b2Total).abs() < 1e-14) {
+            if b2Total > 0.0 {
                 output += 2.0 * (a2Total / b2Total);
             }
-            if !((b3Total).abs() < 1e-14) {
+            if b3Total > 0.0 {
                 output += a3Total / b3Total;
             }
             // Remove the trailing terms to prepare for next day. Each was evaluated
@@ -898,6 +1020,7 @@ impl Core {
             b3Total,
             trailingPos1,
             trailingPos2,
+            nullRun,
             term_Idx,
             maxIdx_term,
             lag1_inClose: inClose[historyLen - 1],

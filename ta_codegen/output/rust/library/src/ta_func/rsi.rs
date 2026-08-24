@@ -45,15 +45,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  062804 MF   Resolve div by zero bug on limit case.
+ *  112400 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  062804 MF    Resolve div by zero bug on limit case.
+ *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
+ *               the fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -212,8 +215,16 @@ impl Core {
             tempValue1 = prevLoss / (optInTimePeriod as f64);
             tempValue2 = prevGain / (optInTimePeriod as f64);
             // Write the output.
+            //
+            // Both halves are averages of non-negative magnitudes, so the total is
+            // zero only when every change since the seed was exactly zero -- test it
+            // exactly, do not compare it to a fixed band.  A gain carries the quote
+            // unit, so any constant put against it is a constant in some arbitrary
+            // unit, and zeroes a healthy oscillator for an instrument quoted below it
+            // (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
+            // unlike a sliding sum this total cannot hold cancellation residue.
             tempValue1 = tempValue2 + tempValue1;
-            if !((tempValue1).abs() < 1e-14) {
+            if tempValue1 > 0.0 {
                 outReal[outIdx] = 100.0 * (tempValue2 / tempValue1);
                 outIdx = outIdx + 1;
             } else {
@@ -265,7 +276,7 @@ impl Core {
         // The second equation is used here for speed optimization.
         if today > startIdx {
             tempValue1 = prevGain + prevLoss;
-            if !((tempValue1).abs() < 1e-14) {
+            if tempValue1 > 0.0 {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
             } else {
@@ -308,7 +319,7 @@ impl Core {
             prevLoss /= optInTimePeriod as f64;
             prevGain /= optInTimePeriod as f64;
             tempValue1 = prevGain + prevLoss;
-            if !((tempValue1).abs() < 1e-14) {
+            if tempValue1 > 0.0 {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
             } else {
@@ -506,7 +517,7 @@ impl Core {
         sp.prevLoss /= sp.optInTimePeriod as f64;
         sp.prevGain /= sp.optInTimePeriod as f64;
         tempValue1 = sp.prevGain + sp.prevLoss;
-        if !((tempValue1).abs() < 1e-14) {
+        if tempValue1 > 0.0 {
             (*outReal) = 100.0 * (sp.prevGain / tempValue1);
         } else {
             (*outReal) = 0.0;
@@ -640,8 +651,16 @@ impl Core {
             tempValue1 = prevLoss / (optInTimePeriod as f64);
             tempValue2 = prevGain / (optInTimePeriod as f64);
             // Write the output.
+            //
+            // Both halves are averages of non-negative magnitudes, so the total is
+            // zero only when every change since the seed was exactly zero -- test it
+            // exactly, do not compare it to a fixed band.  A gain carries the quote
+            // unit, so any constant put against it is a constant in some arbitrary
+            // unit, and zeroes a healthy oscillator for an instrument quoted below it
+            // (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
+            // unlike a sliding sum this total cannot hold cancellation residue.
             tempValue1 = tempValue2 + tempValue1;
-            if !((tempValue1).abs() < 1e-14) {
+            if tempValue1 > 0.0 {
                 outReal[(outIdx * outStride) as usize] = 100.0 * (tempValue2 / tempValue1);
                 outIdx = outIdx + 1;
             } else {
@@ -693,7 +712,7 @@ impl Core {
         // The second equation is used here for speed optimization.
         if today > startIdx {
             tempValue1 = prevGain + prevLoss;
-            if !((tempValue1).abs() < 1e-14) {
+            if tempValue1 > 0.0 {
                 outReal[(outIdx * outStride) as usize] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
             } else {
@@ -736,7 +755,7 @@ impl Core {
             prevLoss /= optInTimePeriod as f64;
             prevGain /= optInTimePeriod as f64;
             tempValue1 = prevGain + prevLoss;
-            if !((tempValue1).abs() < 1e-14) {
+            if tempValue1 > 0.0 {
                 outReal[(outIdx * outStride) as usize] = 100.0 * (prevGain / tempValue1);
                 outIdx = outIdx + 1;
             } else {

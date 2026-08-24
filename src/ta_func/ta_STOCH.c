@@ -60,6 +60,9 @@
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  *  072026 MF,CC Fix #130. Never elect outSlowD as the K scratch buffer: %D's
  *               in-place ma() destroyed the smoothed K before the final copy.
+ *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
+ *               fixed band zeroed the whole output for any instrument quoted
+ *               small enough to fall under it.
  */
 
 TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -311,11 +314,15 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
          highest = tmp;
          diff = (highest - lowest) / 100.0;
       }
-      /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-       * a machine-flat window leaves a sub-epsilon residue that an exact check
-       * would divide into [0,100] noise (issue #107 / STOCHRSI).
+      /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+       * machine-flat window leaves a sub-epsilon residue that an exact check
+       * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+       * range against ITS OWN two extremes, not against a fixed band: the range
+       * carries the quote unit, so a constant put against it answers "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output (issue #253).
        */
-      if( !TA_IS_ZERO(diff) )
+      if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
          tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
       } else 
@@ -526,7 +533,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
          highest = tmp;
          diff = (highest - lowest) / 100.0;
       }
-      if( !TA_IS_ZERO(diff) )
+      if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
          tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
       } else 
@@ -678,11 +685,15 @@ static TA_RetCode TA_STOCH_StepImpl( struct TA_STOCH_Stream *sp, double inHigh, 
       sp->highest = tmp;
       sp->diff = (sp->highest - sp->lowest) / 100.0;
    }
-   /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-    * a machine-flat window leaves a sub-epsilon residue that an exact check
-    * would divide into [0,100] noise (issue #107 / STOCHRSI).
+   /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+    * machine-flat window leaves a sub-epsilon residue that an exact check
+    * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+    * range against ITS OWN two extremes, not against a fixed band: the range
+    * carries the quote unit, so a constant put against it answers "flat" for
+    * every window of an instrument quoted below it and zeroed the whole
+    * output (issue #253).
     */
-   if( !TA_IS_ZERO(sp->diff) )
+   if( !TA_IS_ZERO_SCALED(sp->highest - sp->lowest, fabs(sp->highest) + fabs(sp->lowest)) )
    {
       cur_tempBuffer = (sp->x_inClose[sp->today & sp->xMask] - sp->lowest) / sp->diff;
    } else 
@@ -946,11 +957,15 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-          * a machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
           */
-         if( !TA_IS_ZERO(diff) )
+         if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
          {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else 

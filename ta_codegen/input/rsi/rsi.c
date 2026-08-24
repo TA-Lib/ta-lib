@@ -3,15 +3,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  062804 MF   Resolve div by zero bug on limit case.
+ *  112400 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  062804 MF    Resolve div by zero bug on limit case.
+ *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
+ *               the fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
 int rsi_lookback(int optInTimePeriod)
@@ -147,9 +150,18 @@ TA_RetCode rsi(int startIdx, int endIdx,
       tempValue1 = prevLoss/(double)optInTimePeriod;
       tempValue2 = prevGain/(double)optInTimePeriod;
 
-      /* Write the output. */
+      /* Write the output.
+       *
+       * Both halves are averages of non-negative magnitudes, so the total is
+       * zero only when every change since the seed was exactly zero -- test it
+       * exactly, do not compare it to a fixed band.  A gain carries the quote
+       * unit, so any constant put against it is a constant in some arbitrary
+       * unit, and zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
+       * unlike a sliding sum this total cannot hold cancellation residue.
+       */
       tempValue1 = tempValue2+tempValue1;
-      if( !TA_IS_ZERO(tempValue1) )
+      if( tempValue1 > 0.0 )
       {
          outReal[outIdx] = 100.0*(tempValue2/tempValue1); outIdx = outIdx + 1;
       }
@@ -211,7 +223,7 @@ TA_RetCode rsi(int startIdx, int endIdx,
    if( today > startIdx )
    {
       tempValue1 = prevGain+prevLoss;
-      if( !TA_IS_ZERO(tempValue1) )
+      if( tempValue1 > 0.0 )
       {
          outReal[outIdx] = 100.0*(prevGain/tempValue1); outIdx = outIdx + 1;
       }
@@ -272,7 +284,7 @@ TA_RetCode rsi(int startIdx, int endIdx,
       prevLoss /= (double)optInTimePeriod;
       prevGain /= (double)optInTimePeriod;
       tempValue1 = prevGain+prevLoss;
-      if( !TA_IS_ZERO(tempValue1) )
+      if( tempValue1 > 0.0 )
       {
          outReal[outIdx] = 100.0*(prevGain/tempValue1); outIdx = outIdx + 1;
       }

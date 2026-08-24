@@ -3135,6 +3135,7 @@ static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( sv_xtier_ne(a->upSum, b->upSum, z) ) { *w = "upSum"; return 1; }
    if( sv_xtier_ne(a->downSum, b->downSum, z) ) { *w = "downSum"; return 1; }
    if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
@@ -3772,6 +3773,7 @@ static int sv_steq_TA_KAMA( const struct TA_KAMA_Stream *a, const struct TA_KAMA
    if( sv_xtier_ne(a->constDiff, b->constDiff, z) ) { *w = "constDiff"; return 1; }
    if( sv_xtier_ne(a->sumROC1, b->sumROC1, z) ) { *w = "sumROC1"; return 1; }
    if( sv_xtier_ne(a->prevKAMA, b->prevKAMA, z) ) { *w = "prevKAMA"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
    if( sv_xtier_ne(a->lag1_inReal, b->lag1_inReal, z) ) { *w = "lag1_inReal"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
@@ -5043,6 +5045,7 @@ static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_
    if( sv_xtier_ne(a->b3Total, b->b3Total, z) ) { *w = "b3Total"; return 1; }
    if( a->trailingPos1 != b->trailingPos1 ) { *w = "trailingPos1"; return 1; }
    if( a->trailingPos2 != b->trailingPos2 ) { *w = "trailingPos2"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( a->term_Idx != b->term_Idx ) { *w = "term_Idx"; return 1; }
    if( a->maxIdx_term != b->maxIdx_term ) { *w = "maxIdx_term"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }

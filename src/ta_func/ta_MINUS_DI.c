@@ -50,6 +50,7 @@
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -60,6 +61,9 @@
  *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
  *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
  *  122204 MF,CF Fix #1090231. Issues when period is 1.
+ *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
+ *               fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
 TA_LIB_API int TA_MINUS_DI_Lookback( int optInTimePeriod )
@@ -276,7 +280,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
             }
             _true_range_0 = range_0;
             tempReal = _true_range_0;
-            if( TA_IS_ZERO(tempReal) )
+            if( tempReal <= 0.0 )
             {
                outReal[outIdx++] = (double)0.0;
             } else 
@@ -382,7 +386,14 @@ TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
    /* Now start to write the output in
     * the caller provided outReal.
     */
-   if( !TA_IS_ZERO(prevTR) )
+   /* prevTR is a running sum of true ranges: non-negative by construction and
+    * built only by adding, so it carries no cancellation residue and reaches
+    * zero only for a window whose every range is exactly zero. Test it exactly.
+    * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+    * to be compared against was a constant in some arbitrary unit, and zeroed
+    * the index for any instrument quoted below it (issue #253).
+    */
+   if( prevTR > 0.0 )
    {
       outReal[0] = (100.0 * (prevMinusDM / prevTR));
    } else 
@@ -429,7 +440,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
       prevClose = inClose[today];
       /* Calculate the DI. The value is rounded (see Wilder book). */
-      if( !TA_IS_ZERO(prevTR) )
+      if( prevTR > 0.0 )
       {
          outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
       } else 
@@ -533,7 +544,7 @@ TA_RetCode TA_S_MINUS_DI( int    startIdx,
             }
             _true_range_0 = range_0;
             tempReal = _true_range_0;
-            if( TA_IS_ZERO(tempReal) )
+            if( tempReal <= 0.0 )
             {
                outReal[outIdx++] = (double)0.0;
             } else 
@@ -622,7 +633,7 @@ TA_RetCode TA_S_MINUS_DI( int    startIdx,
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
       prevClose = (double)inClose[today];
    }
-   if( !TA_IS_ZERO(prevTR) )
+   if( prevTR > 0.0 )
    {
       outReal[0] = (100.0 * (prevMinusDM / prevTR));
    } else 
@@ -662,7 +673,7 @@ TA_RetCode TA_S_MINUS_DI( int    startIdx,
       tempReal = _true_range_3;
       prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
       prevClose = (double)inClose[today];
-      if( !TA_IS_ZERO(prevTR) )
+      if( prevTR > 0.0 )
       {
          outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
       } else 
@@ -723,7 +734,7 @@ static void TA_MINUS_DI_StepImpl( struct TA_MINUS_DI_Stream *sp, double inHigh, 
          }
          _true_range_0 = range_0;
          tempReal = _true_range_0;
-         if( TA_IS_ZERO(tempReal) )
+         if( tempReal <= 0.0 )
          {
             *outReal= (double)0.0;
          } else 
@@ -778,7 +789,7 @@ static void TA_MINUS_DI_StepImpl( struct TA_MINUS_DI_Stream *sp, double inHigh, 
       sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
       sp->prevClose = inClose;
       /* Calculate the DI. The value is rounded (see Wilder book). */
-      if( !TA_IS_ZERO(sp->prevTR) )
+      if( sp->prevTR > 0.0 )
       {
          *outReal= (100.0 * (sp->prevMinusDM / sp->prevTR));
       } else 
@@ -984,7 +995,7 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
             }
             _true_range_2 = range_2;
             tempReal = _true_range_2;
-            if( TA_IS_ZERO(tempReal) )
+            if( tempReal <= 0.0 )
             {
                outReal[outIdx++ * outStride] = (double)0.0;
             } else 
@@ -1235,7 +1246,14 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
       /* Now start to write the output in
        * the caller provided outReal.
        */
-      if( !TA_IS_ZERO(prevTR) )
+      /* prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253).
+       */
+      if( prevTR > 0.0 )
       {
          outReal[0 * outStride] = (100.0 * (prevMinusDM / prevTR));
       } else 
@@ -1282,7 +1300,7 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !TA_IS_ZERO(prevTR) )
+         if( prevTR > 0.0 )
          {
             outReal[outIdx++ * outStride] = (100.0 * (prevMinusDM / prevTR));
          } else 

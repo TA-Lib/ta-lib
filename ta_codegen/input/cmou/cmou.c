@@ -10,6 +10,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#124).
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars, so the
+ *                0/0 is guarded exactly instead of against the fixed
+ *                TA_IS_ZERO band -- which zeroed the oscillator for any
+ *                instrument quoted small enough to fall under it.
  */
 
 int cmou_lookback(int optInTimePeriod)
@@ -32,6 +36,7 @@ TA_RetCode cmou(int startIdx, int endIdx,
 {
    int outIdx;
    int today, trailingIdx, lookbackTotal, i;
+   int nullRun;
    double upSum, downSum, sum, diff, tempReal, prevValue, trailingValue;
 
    /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
@@ -71,6 +76,13 @@ TA_RetCode cmou(int startIdx, int endIdx,
 
    upSum = 0.0;
    downSum = 0.0;
+   /* Consecutive changes of exactly zero, counted so that an empty window can
+    * be recognized exactly (the shape #244 needed for MFI). The sums cannot
+    * answer that question themselves once the window starts sliding: they are
+    * maintained by add-then-subtract, so an emptied window leaves them holding
+    * rounding residue of arbitrary sign rather than zero.
+    */
+   nullRun = 0;
    for( i = 0; i < optInTimePeriod; i++ )
    {
       today++;
@@ -81,11 +93,17 @@ TA_RetCode cmou(int startIdx, int endIdx,
          upSum += diff;
       else if( diff < 0.0 )
          downSum -= diff;
+      if( diff == 0.0 )
+         nullRun++;
+      else
+         nullRun = 0;
    }
 
    /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
     * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-    * with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+    * exactly and emit 0.0. Not against a fixed band: a price change carries the
+    * quote unit, so a constant put against the total zeroed the oscillator for
+    * any instrument quoted below it (issue #253).
     *
     * Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
     * order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -93,7 +111,7 @@ TA_RetCode cmou(int startIdx, int endIdx,
     * which both scale before dividing. The two orders differ by <=1 ULP. */
    outIdx = 0;
    sum = upSum + downSum;
-   if( !TA_IS_ZERO(sum) )
+   if( sum > 0.0 )
       outReal[outIdx++] = (100.0 * (upSum - downSum)) / sum;
    else
       outReal[outIdx++] = 0.0;
@@ -124,8 +142,23 @@ TA_RetCode cmou(int startIdx, int endIdx,
       else if( diff < 0.0 )
          downSum -= diff;
 
+      /* Once a whole period of flat bars has gone by, every change in the
+       * window is exactly zero, so both sums are known to be exactly zero and
+       * the residue can be dropped.
+       */
+      if( diff == 0.0 )
+         nullRun++;
+      else
+         nullRun = 0;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         upSum = 0.0;
+         downSum = 0.0;
+      }
+
       sum = upSum + downSum;
-      if( !TA_IS_ZERO(sum) )
+      if( sum > 0.0 )
          outReal[outIdx++] = (100.0 * (upSum - downSum)) / sum;
       else
          outReal[outIdx++] = 0.0;

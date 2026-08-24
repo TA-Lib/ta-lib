@@ -48,6 +48,7 @@
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -58,6 +59,9 @@
  *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
  *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
  *  122204 MF,CF Fix #1090231. Issues when period is 1.
+ *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
+ *               fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -282,7 +286,7 @@ impl Core {
                     }
                     _true_range_0 = range_0;
                     tempReal = _true_range_0;
-                    if (tempReal).abs() < 1e-14 {
+                    if tempReal <= 0.0 {
                         outReal[outIdx] = 0.0 as f64;
                         outIdx += 1;
                     } else {
@@ -377,7 +381,13 @@ impl Core {
         }
         // Now start to write the output in
         // the caller provided outReal.
-        if !((prevTR).abs() < 1e-14) {
+        // prevTR is a running sum of true ranges: non-negative by construction and
+        // built only by adding, so it carries no cancellation residue and reaches
+        // zero only for a window whose every range is exactly zero. Test it exactly.
+        // A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+        // to be compared against was a constant in some arbitrary unit, and zeroed
+        // the index for any instrument quoted below it (issue #253).
+        if prevTR > 0.0 {
             outReal[0] = (100.0 * (prevMinusDM / prevTR));
         } else {
             outReal[0] = 0.0;
@@ -417,7 +427,7 @@ impl Core {
             prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
             prevClose = inClose[today];
             // Calculate the DI. The value is rounded (see Wilder book).
-            if !((prevTR).abs() < 1e-14) {
+            if prevTR > 0.0 {
                 outReal[outIdx] = (100.0 * (prevMinusDM / prevTR));
                 outIdx += 1;
             } else {
@@ -627,7 +637,7 @@ impl Core {
                 }
                 _true_range_0 = range_0;
                 tempReal = _true_range_0;
-                if (tempReal).abs() < 1e-14 {
+                if tempReal <= 0.0 {
                     (*outReal) = 0.0 as f64;
                 } else {
                     (*outReal) = diffM / tempReal;
@@ -672,7 +682,7 @@ impl Core {
             sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
             sp.prevClose = inClose;
             // Calculate the DI. The value is rounded (see Wilder book).
-            if !((sp.prevTR).abs() < 1e-14) {
+            if sp.prevTR > 0.0 {
                 (*outReal) = (100.0 * (sp.prevMinusDM / sp.prevTR));
             } else {
                 (*outReal) = 0.0;
@@ -863,7 +873,7 @@ impl Core {
                     }
                     _true_range_2 = range_2;
                     tempReal = _true_range_2;
-                    if (tempReal).abs() < 1e-14 {
+                    if tempReal <= 0.0 {
                         outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0 as f64;
                     } else {
                         outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = diffM / tempReal;
@@ -1087,7 +1097,13 @@ impl Core {
             }
             // Now start to write the output in
             // the caller provided outReal.
-            if !((prevTR).abs() < 1e-14) {
+            // prevTR is a running sum of true ranges: non-negative by construction and
+            // built only by adding, so it carries no cancellation residue and reaches
+            // zero only for a window whose every range is exactly zero. Test it exactly.
+            // A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+            // to be compared against was a constant in some arbitrary unit, and zeroed
+            // the index for any instrument quoted below it (issue #253).
+            if prevTR > 0.0 {
                 outReal[(0 * outStride) as usize] = (100.0 * (prevMinusDM / prevTR));
             } else {
                 outReal[(0 * outStride) as usize] = 0.0;
@@ -1127,7 +1143,7 @@ impl Core {
                 prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
                 prevClose = inClose[today];
                 // Calculate the DI. The value is rounded (see Wilder book).
-                if !((prevTR).abs() < 1e-14) {
+                if prevTR > 0.0 {
                     outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (100.0 * (prevMinusDM / prevTR));
                 } else {
                     outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;

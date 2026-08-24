@@ -60,6 +60,9 @@
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  *  072026 MF,CC Fix #130. Never elect outFastD as the K scratch buffer: %D's
  *               in-place ma() destroyed the raw K before the final copy.
+ *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
+ *               fixed band zeroed the whole output for any instrument quoted
+ *               small enough to fall under it.
  */
 
 // Import types from parent module
@@ -293,10 +296,14 @@ impl Core {
                 highest = tmp;
                 diff = (highest - lowest) / 100.0;
             }
-            // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-            // a machine-flat window leaves a sub-epsilon residue that an exact check
-            // would divide into [0,100] noise (issue #107 / STOCHRSI).
-            if !((diff).abs() < 1e-14) {
+            // Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+            // machine-flat window leaves a sub-epsilon residue that an exact check
+            // would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+            // range against ITS OWN two extremes, not against a fixed band: the range
+            // carries the quote unit, so a constant put against it answers "flat" for
+            // every window of an instrument quoted below it and zeroed the whole
+            // output (issue #253).
+            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
                 tempBuffer[outIdx] = (inClose[today] - lowest) / diff;
                 outIdx += 1;
             } else {
@@ -597,10 +604,14 @@ impl Core {
             sp.highest = tmp;
             sp.diff = (sp.highest - sp.lowest) / 100.0;
         }
-        // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-        // a machine-flat window leaves a sub-epsilon residue that an exact check
-        // would divide into [0,100] noise (issue #107 / STOCHRSI).
-        if !((sp.diff).abs() < 1e-14) {
+        // Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+        // machine-flat window leaves a sub-epsilon residue that an exact check
+        // would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+        // range against ITS OWN two extremes, not against a fixed band: the range
+        // carries the quote unit, so a constant put against it answers "flat" for
+        // every window of an instrument quoted below it and zeroed the whole
+        // output (issue #253).
+        if !(((sp.highest - sp.lowest).abs() <= 1e-14 * ((sp.highest).abs() + (sp.lowest).abs()))) {
             cur_tempBuffer = (sp.x_inClose[(sp.today & sp.xMask) as usize] - sp.lowest) / sp.diff;
         } else {
             cur_tempBuffer = 0.0;
@@ -795,10 +806,14 @@ impl Core {
                 highest = tmp;
                 diff = (highest - lowest) / 100.0;
             }
-            // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-            // a machine-flat window leaves a sub-epsilon residue that an exact check
-            // would divide into [0,100] noise (issue #107 / STOCHRSI).
-            if !((diff).abs() < 1e-14) {
+            // Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+            // machine-flat window leaves a sub-epsilon residue that an exact check
+            // would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+            // range against ITS OWN two extremes, not against a fixed band: the range
+            // carries the quote unit, so a constant put against it answers "flat" for
+            // every window of an instrument quoted below it and zeroed the whole
+            // output (issue #253).
+            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
                 tempBuffer[outIdx] = (inClose[today] - lowest) / diff;
                 outIdx += 1;
             } else {

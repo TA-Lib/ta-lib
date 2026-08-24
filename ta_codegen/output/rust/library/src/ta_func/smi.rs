@@ -52,6 +52,9 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  082026 MF,CC  Initial version (#238).
+ *  082326 MF,CC  Fix #253. Test the smoothed range exactly instead of against
+ *                the fixed TA_IS_ZERO band, which zeroed the oscillator for
+ *                any instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -369,7 +372,7 @@ impl Core {
             if nBar >= lookbackSlow + lookbackFast {
                 nSignal = nBar - lookbackSlow - lookbackFast;
                 halfDen = 0.5 * emaFastDen;
-                if !((halfDen).abs() < 1e-14) {
+                if halfDen > 0.0 {
                     smiValue = 100.0 * emaFastNum / halfDen;
                 } else {
                     smiValue = 0.0;
@@ -432,13 +435,18 @@ impl Core {
             emaSlowDen = (den - emaSlowDen as f64).mul_add(kSlow, emaSlowDen);
             emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(kFast, emaFastNum);
             emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(kFast, emaFastDen);
-            // Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
-            // window leaves a sub-epsilon residue that an exact check would divide
-            // into noise (issue #107 / STOCHRSI). A window whose bars are all
-            // H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
-            // CCI (#7) and IMI (#112) convention.
+            // The denominator is an EMA of an EMA of the high-low range: every term
+            // is non-negative and every weight is positive, so it carries no
+            // cancellation residue and is zero only when every range that reached it
+            // was exactly zero -- 0/0, since a window of H == L bars makes num zero
+            // too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+            // convention. Test it exactly: the range carries the quote unit, so the
+            // fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+            // instrument quoted below it (issue #253). Issue #107's machine-flat
+            // window is caught by the exact test as well, since the residue an
+            // EMA leaves there is zero, not sub-epsilon.
             halfDen = 0.5 * emaFastDen;
-            if !((halfDen).abs() < 1e-14) {
+            if halfDen > 0.0 {
                 smiValue = 100.0 * emaFastNum / halfDen;
             } else {
                 smiValue = 0.0;
@@ -752,13 +760,18 @@ impl Core {
         sp.emaSlowDen = (den - sp.emaSlowDen as f64).mul_add(sp.kSlow, sp.emaSlowDen);
         sp.emaFastNum = (sp.emaSlowNum - sp.emaFastNum as f64).mul_add(sp.kFast, sp.emaFastNum);
         sp.emaFastDen = (sp.emaSlowDen - sp.emaFastDen as f64).mul_add(sp.kFast, sp.emaFastDen);
-        // Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
-        // window leaves a sub-epsilon residue that an exact check would divide
-        // into noise (issue #107 / STOCHRSI). A window whose bars are all
-        // H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
-        // CCI (#7) and IMI (#112) convention.
+        // The denominator is an EMA of an EMA of the high-low range: every term
+        // is non-negative and every weight is positive, so it carries no
+        // cancellation residue and is zero only when every range that reached it
+        // was exactly zero -- 0/0, since a window of H == L bars makes num zero
+        // too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+        // convention. Test it exactly: the range carries the quote unit, so the
+        // fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+        // instrument quoted below it (issue #253). Issue #107's machine-flat
+        // window is caught by the exact test as well, since the residue an
+        // EMA leaves there is zero, not sub-epsilon.
         halfDen = 0.5 * sp.emaFastDen;
-        if !((halfDen).abs() < 1e-14) {
+        if halfDen > 0.0 {
             smiValue = 100.0 * sp.emaFastNum / halfDen;
         } else {
             smiValue = 0.0;
@@ -976,7 +989,7 @@ impl Core {
             if nBar >= lookbackSlow + lookbackFast {
                 nSignal = nBar - lookbackSlow - lookbackFast;
                 halfDen = 0.5 * emaFastDen;
-                if !((halfDen).abs() < 1e-14) {
+                if halfDen > 0.0 {
                     smiValue = 100.0 * emaFastNum / halfDen;
                 } else {
                     smiValue = 0.0;
@@ -1039,13 +1052,18 @@ impl Core {
             emaSlowDen = (den - emaSlowDen as f64).mul_add(kSlow, emaSlowDen);
             emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(kFast, emaFastNum);
             emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(kFast, emaFastDen);
-            // Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
-            // window leaves a sub-epsilon residue that an exact check would divide
-            // into noise (issue #107 / STOCHRSI). A window whose bars are all
-            // H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
-            // CCI (#7) and IMI (#112) convention.
+            // The denominator is an EMA of an EMA of the high-low range: every term
+            // is non-negative and every weight is positive, so it carries no
+            // cancellation residue and is zero only when every range that reached it
+            // was exactly zero -- 0/0, since a window of H == L bars makes num zero
+            // too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+            // convention. Test it exactly: the range carries the quote unit, so the
+            // fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+            // instrument quoted below it (issue #253). Issue #107's machine-flat
+            // window is caught by the exact test as well, since the residue an
+            // EMA leaves there is zero, not sub-epsilon.
             halfDen = 0.5 * emaFastDen;
-            if !((halfDen).abs() < 1e-14) {
+            if halfDen > 0.0 {
                 smiValue = 100.0 * emaFastNum / halfDen;
             } else {
                 smiValue = 0.0;

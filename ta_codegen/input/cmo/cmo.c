@@ -4,6 +4,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  BT       Barry Tsung
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -11,6 +12,9 @@
  *  -------------------------------------------------------------------
  *  112605 MF      Initial version.
  *  021806 MF,BT   Fix #1434450 reported by BT.
+ *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
+ *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
+ *                 instrument quoted small enough to fall under it.
  */
 
 int cmo_lookback(int optInTimePeriod)
@@ -129,8 +133,17 @@ TA_RetCode cmo(int startIdx, int endIdx,
       tempValue3 = tempValue2-tempValue1;
       tempValue4 = tempValue1+tempValue2;
 
-      /* Write the output. */
-      if( !TA_IS_ZERO(tempValue4) )
+      /* Write the output.
+       *
+       * Both halves are averages of non-negative magnitudes, so the total is
+       * zero only when every change since the seed was exactly zero -- test it
+       * exactly, do not compare it to a fixed band.  A gain carries the quote
+       * unit, so any constant put against it is a constant in some arbitrary
+       * unit, and zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
+       * unlike a sliding sum this total cannot hold cancellation residue.
+       */
+      if( tempValue4 > 0.0 )
          outReal[outIdx++] = 100*(tempValue3/tempValue4);
       else
          outReal[outIdx++] = 0.0;
@@ -185,7 +198,7 @@ TA_RetCode cmo(int startIdx, int endIdx,
    if( today > startIdx )
    {
       tempValue1 = prevGain+prevLoss;
-      if( !TA_IS_ZERO(tempValue1) )
+      if( tempValue1 > 0.0 )
          outReal[outIdx++] = 100.0*((prevGain-prevLoss)/tempValue1);
       else
          outReal[outIdx++] = 0.0;
@@ -234,7 +247,7 @@ TA_RetCode cmo(int startIdx, int endIdx,
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
       tempValue1 = prevGain+prevLoss;
-      if( !TA_IS_ZERO(tempValue1) )
+      if( tempValue1 > 0.0 )
          outReal[outIdx++] = 100.0*((prevGain-prevLoss)/tempValue1);
       else
          outReal[outIdx++] = 0.0;

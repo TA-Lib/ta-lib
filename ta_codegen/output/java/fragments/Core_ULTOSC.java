@@ -5,14 +5,19 @@
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
  *  DX       Dex Hunter (https://github.com/dexhunter)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  281206 DM   Initial Implementation
- *  010606 MF   Abstract local arrays. Detect divide by zero.
- *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
+ *  281206 DM    Initial Implementation
+ *  010606 MF    Abstract local arrays. Detect divide by zero.
+ *  073126 DX    Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
+ *  082326 MF,CC Fix #253. Recognize an empty window by counting bars, so the
+ *               divides are guarded exactly instead of against the fixed
+ *               TA_IS_ZERO band -- which zeroed the oscillator for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -90,6 +95,7 @@
       int outIdx = 0;
       int trailingPos1 = 0;
       int trailingPos2 = 0;
+      int nullRun = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -179,6 +185,21 @@
       b2Total = 0;
       a3Total = 0;
       b3Total = 0;
+      /* Consecutive bars that put nothing into the windows, counted so that an
+       * empty window can be recognized exactly (the shape #244 needed for MFI).
+       * The running totals cannot answer that question themselves: they are
+       * maintained by add-then-subtract, so once a window empties they hold
+       * rounding residue of arbitrary sign rather than zero, and v0.6.4 divides
+       * one residue by another there -- it returns -92.9 for an oscillator
+       * documented to run 0..100. Both of a bar's terms have to be zero for it to
+       * count, which for valid bars is one condition (a zero true range means
+       * H == L == the previous close, which leaves the close on the true low).
+       * Reseeding on the count is what lets the divides below be guarded exactly
+       * rather than against a fixed band -- a true range carries the quote unit,
+       * so the band they used to carry zeroed the oscillator for any instrument
+       * quoted below it (issue #253).
+       */
+      nullRun = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
          tempLT = inLow[i];
          tempHT = inHigh[i];
@@ -198,6 +219,11 @@
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -248,15 +274,42 @@
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
-         /* Calculate the oscillator value for today */
+         /* Once a whole window of no-contribution bars has gone by, every slot it
+          * spans is 0.0, so its totals are known to be exactly zero and the
+          * residue can be dropped. The periods are sorted shortest-first, so a
+          * run long enough for a longer window is long enough for every shorter
+          * one.
+          */
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= optInTimePeriod3 ) {
+                  nullRun = optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
          output = 0.0;
-         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+         if( b1Total > 0.0 ) {
             output += 4.0 * (a1Total / b1Total);
          }
-         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+         if( b2Total > 0.0 ) {
             output += 2.0 * (a2Total / b2Total);
          }
-         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+         if( b3Total > 0.0 ) {
             output += a3Total / b3Total;
          }
          /* Remove the trailing terms to prepare for next day. Each was evaluated
@@ -329,6 +382,7 @@
       int outIdx = 0;
       int trailingPos1 = 0;
       int trailingPos2 = 0;
+      int nullRun = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -398,6 +452,7 @@
       b2Total = 0;
       a3Total = 0;
       b3Total = 0;
+      nullRun = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
          tempLT = (double)inLow[i];
          tempHT = (double)inHigh[i];
@@ -417,6 +472,11 @@
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -461,14 +521,32 @@
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= optInTimePeriod3 ) {
+                  nullRun = optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
          output = 0.0;
-         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+         if( b1Total > 0.0 ) {
             output += 4.0 * (a1Total / b1Total);
          }
-         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+         if( b2Total > 0.0 ) {
             output += 2.0 * (a2Total / b2Total);
          }
-         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+         if( b3Total > 0.0 ) {
             output += a3Total / b3Total;
          }
          a1Total -= term_closeMinusTrueLow[trailingPos1];
@@ -689,6 +767,7 @@
       double b3Total;
       int trailingPos1;
       int trailingPos2;
+      int nullRun;
       int term_Idx;
       int maxIdx_term;
       double lag1_inClose;
@@ -726,6 +805,7 @@
          this.b3Total = other.b3Total;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
+         this.nullRun = other.nullRun;
          this.term_Idx = other.term_Idx;
          this.maxIdx_term = other.maxIdx_term;
          this.lag1_inClose = other.lag1_inClose;
@@ -750,6 +830,7 @@
          this.b3Total = other.b3Total;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
+         this.nullRun = other.nullRun;
          this.term_Idx = other.term_Idx;
          this.maxIdx_term = other.maxIdx_term;
          this.lag1_inClose = other.lag1_inClose;
@@ -890,15 +971,42 @@
       sp.b1Total += trueRange;
       sp.b2Total += trueRange;
       sp.b3Total += trueRange;
-      /* Calculate the oscillator value for today */
+      /* Once a whole window of no-contribution bars has gone by, every slot it
+       * spans is 0.0, so its totals are known to be exactly zero and the
+       * residue can be dropped. The periods are sorted shortest-first, so a
+       * run long enough for a longer window is long enough for every shorter
+       * one.
+       */
+      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod1 ) {
+         sp.a1Total = 0.0;
+         sp.b1Total = 0.0;
+         if( sp.nullRun >= sp.optInTimePeriod2 ) {
+            sp.a2Total = 0.0;
+            sp.b2Total = 0.0;
+            if( sp.nullRun >= sp.optInTimePeriod3 ) {
+               sp.nullRun = sp.optInTimePeriod3;
+               sp.a3Total = 0.0;
+               sp.b3Total = 0.0;
+            }
+         }
+      }
+      /* Calculate the oscillator value for today. Each window contributes only
+       * when it holds a true range; the totals are sums of non-negative terms
+       * and the reseed above removes their residue, so the test is exact.
+       */
       output = 0.0;
-      if( !((-0.00000000000001 < sp.b1Total) && (sp.b1Total < 0.00000000000001)) ) {
+      if( sp.b1Total > 0.0 ) {
          output += 4.0 * (sp.a1Total / sp.b1Total);
       }
-      if( !((-0.00000000000001 < sp.b2Total) && (sp.b2Total < 0.00000000000001)) ) {
+      if( sp.b2Total > 0.0 ) {
          output += 2.0 * (sp.a2Total / sp.b2Total);
       }
-      if( !((-0.00000000000001 < sp.b3Total) && (sp.b3Total < 0.00000000000001)) ) {
+      if( sp.b3Total > 0.0 ) {
          output += sp.a3Total / sp.b3Total;
       }
       /* Remove the trailing terms to prepare for next day. Each was evaluated
@@ -957,6 +1065,7 @@
       int outIdx = 0;
       int trailingPos1 = 0;
       int trailingPos2 = 0;
+      int nullRun = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -1053,6 +1162,21 @@
       b2Total = 0;
       a3Total = 0;
       b3Total = 0;
+      /* Consecutive bars that put nothing into the windows, counted so that an
+       * empty window can be recognized exactly (the shape #244 needed for MFI).
+       * The running totals cannot answer that question themselves: they are
+       * maintained by add-then-subtract, so once a window empties they hold
+       * rounding residue of arbitrary sign rather than zero, and v0.6.4 divides
+       * one residue by another there -- it returns -92.9 for an oscillator
+       * documented to run 0..100. Both of a bar's terms have to be zero for it to
+       * count, which for valid bars is one condition (a zero true range means
+       * H == L == the previous close, which leaves the close on the true low).
+       * Reseeding on the count is what lets the divides below be guarded exactly
+       * rather than against a fixed band -- a true range carries the quote unit,
+       * so the band they used to carry zeroed the oscillator for any instrument
+       * quoted below it (issue #253).
+       */
+      nullRun = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
          tempLT = inLow[i];
          tempHT = inHigh[i];
@@ -1072,6 +1196,11 @@
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -1122,15 +1251,42 @@
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
-         /* Calculate the oscillator value for today */
+         /* Once a whole window of no-contribution bars has gone by, every slot it
+          * spans is 0.0, so its totals are known to be exactly zero and the
+          * residue can be dropped. The periods are sorted shortest-first, so a
+          * run long enough for a longer window is long enough for every shorter
+          * one.
+          */
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= optInTimePeriod3 ) {
+                  nullRun = optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
          output = 0.0;
-         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+         if( b1Total > 0.0 ) {
             output += 4.0 * (a1Total / b1Total);
          }
-         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+         if( b2Total > 0.0 ) {
             output += 2.0 * (a2Total / b2Total);
          }
-         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+         if( b3Total > 0.0 ) {
             output += a3Total / b3Total;
          }
          /* Remove the trailing terms to prepare for next day. Each was evaluated
@@ -1182,6 +1338,7 @@
       sp.b3Total = b3Total;
       sp.trailingPos1 = trailingPos1;
       sp.trailingPos2 = trailingPos2;
+      sp.nullRun = nullRun;
       sp.term_Idx = term_Idx;
       sp.maxIdx_term = maxIdx_term;
       sp.lag1_inClose = inClose[historyLen - 1];

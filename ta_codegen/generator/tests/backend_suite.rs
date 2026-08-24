@@ -652,7 +652,7 @@ fn test_c_rsi_guarded_has_validation() {
 // 5. Indicator-specific feature tests
 // ---------------------------------------------------------------------------
 
-// --- RSI: unstable period + compatibility + IS_ZERO ---
+// --- RSI: unstable period + compatibility ---
 
 #[test]
 fn test_rsi_c_unstable_period() {
@@ -667,10 +667,29 @@ fn test_rsi_c_unstable_period() {
         out.c.contains("TA_GLOBALS_COMPATIBILITY"),
         "C RSI should use TA_GLOBALS_COMPATIBILITY"
     );
-    // TA_IS_ZERO is preserved as a macro call — the C backend emits TA_IS_ZERO(x)
+}
+
+// The IS_ZERO family reaches C as a macro call rather than being expanded to a
+// literal comparison, so the epsilon has one definition (ta_utility.h) instead
+// of one per body. Checked on the two forms an indicator still uses: the fixed
+// band, which after #253 survives only where the guarded quantity is
+// dimensionless (ADX tests a sum of two ratios), and the operand-scaled one
+// that replaced it everywhere else (CCI tests a deviation against its own
+// price level).
+#[test]
+fn test_c_keeps_is_zero_family_as_macros() {
+    let (func, enums) = load_indicator("adx");
+    let out = generate_all(&func, &enums);
     assert!(
         out.c.contains("TA_IS_ZERO("),
-        "C RSI should use TA_IS_ZERO macro"
+        "C ADX should use the TA_IS_ZERO macro"
+    );
+
+    let (func, enums) = load_indicator("cci");
+    let out = generate_all(&func, &enums);
+    assert!(
+        out.c.contains("TA_IS_ZERO_SCALED("),
+        "C CCI should use the TA_IS_ZERO_SCALED macro"
     );
 }
 

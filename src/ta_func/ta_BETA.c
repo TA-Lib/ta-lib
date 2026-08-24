@@ -62,6 +62,9 @@
  *               + reseed) and a scale-relative denominator test.
  *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3,
  *               on BOTH axes -- the output reads S_xy and S_y too.
+ *  082326 MF,CC Fix #253. Test the base price of a return exactly instead of
+ *               against the fixed TA_IS_ZERO band, which collapsed beta to
+ *               zero for any instrument quoted small enough to fall under it.
  */
 
 TA_LIB_API int TA_BETA_Lookback( int optInTimePeriod )
@@ -217,18 +220,24 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
     * afford before the sums exist.
     */
    i = ++trailingIdx;
-   if( !TA_IS_ZERO(last_price_x) )
+   /* A return needs a non-zero base price and nothing more: the test is exact,
+    * not the fixed TA_IS_ZERO band it used to be. A price carries the quote
+    * unit, so that band declared every bar of a small-quoted instrument
+    * "no previous price", left every return at -shift, and collapsed beta to
+    * zero (issue #253).
+    */
+   if( last_price_x != 0.0 )
    {
       shift_x = (inReal0[i] - last_price_x) / last_price_x;
    }
-   if( !TA_IS_ZERO(last_price_y) )
+   if( last_price_y != 0.0 )
    {
       shift_y = (inReal1[i] - last_price_y) / last_price_y;
    }
    while( i < startIdx )
    {
       tmp_real = inReal0[i];
-      if( !TA_IS_ZERO(last_price_x) )
+      if( last_price_x != 0.0 )
       {
          x = (tmp_real - last_price_x) / last_price_x - shift_x;
       } else 
@@ -237,7 +246,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       }
       last_price_x = tmp_real;
       tmp_real = inReal1[i++];
-      if( !TA_IS_ZERO(last_price_y) )
+      if( last_price_y != 0.0 )
       {
          y = (tmp_real - last_price_y) / last_price_y - shift_y;
       } else 
@@ -258,7 +267,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
    do
    {
       tmp_real = inReal0[i];
-      if( !TA_IS_ZERO(last_price_x) )
+      if( last_price_x != 0.0 )
       {
          x = (tmp_real - last_price_x) / last_price_x - shift_x;
       } else 
@@ -267,7 +276,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       }
       last_price_x = tmp_real;
       tmp_real = inReal1[i++];
-      if( !TA_IS_ZERO(last_price_y) )
+      if( last_price_y != 0.0 )
       {
          y = (tmp_real - last_price_y) / last_price_y - shift_y;
       } else 
@@ -345,12 +354,12 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
          shift_y = 0.0;
          for( j = windowStart; j < i; j += 1 )
          {
-            if( !TA_IS_ZERO(prev_x) )
+            if( prev_x != 0.0 )
             {
                tmp_real += (inReal0[j] - prev_x) / prev_x;
             }
             prev_x = inReal0[j];
-            if( !TA_IS_ZERO(prev_y) )
+            if( prev_y != 0.0 )
             {
                shift_y += (inReal1[j] - prev_y) / prev_y;
             }
@@ -367,7 +376,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
          S_y = 0.0;
          for( j = windowStart; j < i; j += 1 )
          {
-            if( !TA_IS_ZERO(prev_x) )
+            if( prev_x != 0.0 )
             {
                x = (inReal0[j] - prev_x) / prev_x - shift_x;
             } else 
@@ -375,7 +384,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
                x = 0 - shift_x;
             }
             prev_x = inReal0[j];
-            if( !TA_IS_ZERO(prev_y) )
+            if( prev_y != 0.0 )
             {
                y = (inReal1[j] - prev_y) / prev_y - shift_y;
             } else 
@@ -408,7 +417,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
        * buffer can be the same.
        */
       tmp_real = inReal0[trailingIdx];
-      if( !TA_IS_ZERO(trailing_last_price_x) )
+      if( trailing_last_price_x != 0.0 )
       {
          x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
       } else 
@@ -418,7 +427,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       trailing_last_price_x = tmp_real;
       tmp_real = inReal1[trailingIdx];
       trailingIdx += 1;
-      if( !TA_IS_ZERO(trailing_last_price_y) )
+      if( trailing_last_price_y != 0.0 )
       {
          y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
       } else 
@@ -546,18 +555,18 @@ TA_RetCode TA_S_BETA( int    startIdx,
    trailing_last_price_y = (double)inReal1[trailingIdx];
    last_price_y = trailing_last_price_y;
    i = ++trailingIdx;
-   if( !TA_IS_ZERO(last_price_x) )
+   if( last_price_x != 0.0 )
    {
       shift_x = ((double)inReal0[i] - last_price_x) / last_price_x;
    }
-   if( !TA_IS_ZERO(last_price_y) )
+   if( last_price_y != 0.0 )
    {
       shift_y = ((double)inReal1[i] - last_price_y) / last_price_y;
    }
    while( i < startIdx )
    {
       tmp_real = (double)inReal0[i];
-      if( !TA_IS_ZERO(last_price_x) )
+      if( last_price_x != 0.0 )
       {
          x = (tmp_real - last_price_x) / last_price_x - shift_x;
       } else 
@@ -566,7 +575,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
       }
       last_price_x = tmp_real;
       tmp_real = (double)inReal1[i++];
-      if( !TA_IS_ZERO(last_price_y) )
+      if( last_price_y != 0.0 )
       {
          y = (tmp_real - last_price_y) / last_price_y - shift_y;
       } else 
@@ -586,7 +595,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
    do
    {
       tmp_real = (double)inReal0[i];
-      if( !TA_IS_ZERO(last_price_x) )
+      if( last_price_x != 0.0 )
       {
          x = (tmp_real - last_price_x) / last_price_x - shift_x;
       } else 
@@ -595,7 +604,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
       }
       last_price_x = tmp_real;
       tmp_real = (double)inReal1[i++];
-      if( !TA_IS_ZERO(last_price_y) )
+      if( last_price_y != 0.0 )
       {
          y = (tmp_real - last_price_y) / last_price_y - shift_y;
       } else 
@@ -621,12 +630,12 @@ TA_RetCode TA_S_BETA( int    startIdx,
          shift_y = 0.0;
          for( j = windowStart; j < i; j += 1 )
          {
-            if( !TA_IS_ZERO(prev_x) )
+            if( prev_x != 0.0 )
             {
                tmp_real += ((double)inReal0[j] - prev_x) / prev_x;
             }
             prev_x = (double)inReal0[j];
-            if( !TA_IS_ZERO(prev_y) )
+            if( prev_y != 0.0 )
             {
                shift_y += ((double)inReal1[j] - prev_y) / prev_y;
             }
@@ -643,7 +652,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
          S_y = 0.0;
          for( j = windowStart; j < i; j += 1 )
          {
-            if( !TA_IS_ZERO(prev_x) )
+            if( prev_x != 0.0 )
             {
                x = ((double)inReal0[j] - prev_x) / prev_x - shift_x;
             } else 
@@ -651,7 +660,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
                x = 0 - shift_x;
             }
             prev_x = (double)inReal0[j];
-            if( !TA_IS_ZERO(prev_y) )
+            if( prev_y != 0.0 )
             {
                y = ((double)inReal1[j] - prev_y) / prev_y - shift_y;
             } else 
@@ -673,7 +682,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
          }
       }
       tmp_real = (double)inReal0[trailingIdx];
-      if( !TA_IS_ZERO(trailing_last_price_x) )
+      if( trailing_last_price_x != 0.0 )
       {
          x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
       } else 
@@ -683,7 +692,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
       trailing_last_price_x = tmp_real;
       tmp_real = (double)inReal1[trailingIdx];
       trailingIdx += 1;
-      if( !TA_IS_ZERO(trailing_last_price_y) )
+      if( trailing_last_price_y != 0.0 )
       {
          y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
       } else 
@@ -784,7 +793,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    sp->x_inReal0[sp->i & sp->xMask] = inReal0;
    sp->x_inReal1[sp->i & sp->xMask] = inReal1;
    tmp_real = sp->x_inReal0[sp->i & sp->xMask];
-   if( !TA_IS_ZERO(sp->last_price_x) )
+   if( sp->last_price_x != 0.0 )
    {
       x = (tmp_real - sp->last_price_x) / sp->last_price_x - sp->shift_x;
    } else 
@@ -793,7 +802,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    }
    sp->last_price_x = tmp_real;
    tmp_real = sp->x_inReal1[sp->i++ & sp->xMask];
-   if( !TA_IS_ZERO(sp->last_price_y) )
+   if( sp->last_price_y != 0.0 )
    {
       y = (tmp_real - sp->last_price_y) / sp->last_price_y - sp->shift_y;
    } else 
@@ -871,12 +880,12 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
       sp->shift_y = 0.0;
       for( sp->j = windowStart; sp->j < sp->i; sp->j += 1 )
       {
-         if( !TA_IS_ZERO(prev_x) )
+         if( prev_x != 0.0 )
          {
             tmp_real += (sp->x_inReal0[sp->j & sp->xMask] - prev_x) / prev_x;
          }
          prev_x = sp->x_inReal0[sp->j & sp->xMask];
-         if( !TA_IS_ZERO(prev_y) )
+         if( prev_y != 0.0 )
          {
             sp->shift_y += (sp->x_inReal1[sp->j & sp->xMask] - prev_y) / prev_y;
          }
@@ -893,7 +902,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
       S_y = 0.0;
       for( sp->j = windowStart; sp->j < sp->i; sp->j += 1 )
       {
-         if( !TA_IS_ZERO(prev_x) )
+         if( prev_x != 0.0 )
          {
             x = (sp->x_inReal0[sp->j & sp->xMask] - prev_x) / prev_x - sp->shift_x;
          } else 
@@ -901,7 +910,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
             x = 0 - sp->shift_x;
          }
          prev_x = sp->x_inReal0[sp->j & sp->xMask];
-         if( !TA_IS_ZERO(prev_y) )
+         if( prev_y != 0.0 )
          {
             y = (sp->x_inReal1[sp->j & sp->xMask] - prev_y) / prev_y - sp->shift_y;
          } else 
@@ -934,7 +943,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
     * buffer can be the same.
     */
    tmp_real = sp->x_inReal0[sp->trailingIdx & sp->xMask];
-   if( !TA_IS_ZERO(sp->trailing_last_price_x) )
+   if( sp->trailing_last_price_x != 0.0 )
    {
       x = (tmp_real - sp->trailing_last_price_x) / sp->trailing_last_price_x - sp->shift_x;
    } else 
@@ -944,7 +953,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    sp->trailing_last_price_x = tmp_real;
    tmp_real = sp->x_inReal1[sp->trailingIdx & sp->xMask];
    sp->trailingIdx += 1;
-   if( !TA_IS_ZERO(sp->trailing_last_price_y) )
+   if( sp->trailing_last_price_y != 0.0 )
    {
       y = (tmp_real - sp->trailing_last_price_y) / sp->trailing_last_price_y - sp->shift_y;
    } else 
@@ -1110,18 +1119,24 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
        * afford before the sums exist.
        */
       i = ++trailingIdx;
-      if( !TA_IS_ZERO(last_price_x) )
+      /* A return needs a non-zero base price and nothing more: the test is exact,
+       * not the fixed TA_IS_ZERO band it used to be. A price carries the quote
+       * unit, so that band declared every bar of a small-quoted instrument
+       * "no previous price", left every return at -shift, and collapsed beta to
+       * zero (issue #253).
+       */
+      if( last_price_x != 0.0 )
       {
          shift_x = (inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !TA_IS_ZERO(last_price_y) )
+      if( last_price_y != 0.0 )
       {
          shift_y = (inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx )
       {
          tmp_real = inReal0[i];
-         if( !TA_IS_ZERO(last_price_x) )
+         if( last_price_x != 0.0 )
          {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else 
@@ -1130,7 +1145,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !TA_IS_ZERO(last_price_y) )
+         if( last_price_y != 0.0 )
          {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else 
@@ -1151,7 +1166,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
       do
       {
          tmp_real = inReal0[i];
-         if( !TA_IS_ZERO(last_price_x) )
+         if( last_price_x != 0.0 )
          {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else 
@@ -1160,7 +1175,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !TA_IS_ZERO(last_price_y) )
+         if( last_price_y != 0.0 )
          {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else 
@@ -1238,12 +1253,12 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 )
             {
-               if( !TA_IS_ZERO(prev_x) )
+               if( prev_x != 0.0 )
                {
                   tmp_real += (inReal0[j] - prev_x) / prev_x;
                }
                prev_x = inReal0[j];
-               if( !TA_IS_ZERO(prev_y) )
+               if( prev_y != 0.0 )
                {
                   shift_y += (inReal1[j] - prev_y) / prev_y;
                }
@@ -1260,7 +1275,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 )
             {
-               if( !TA_IS_ZERO(prev_x) )
+               if( prev_x != 0.0 )
                {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else 
@@ -1268,7 +1283,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
                   x = 0 - shift_x;
                }
                prev_x = inReal0[j];
-               if( !TA_IS_ZERO(prev_y) )
+               if( prev_y != 0.0 )
                {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else 
@@ -1301,7 +1316,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
           * buffer can be the same.
           */
          tmp_real = inReal0[trailingIdx];
-         if( !TA_IS_ZERO(trailing_last_price_x) )
+         if( trailing_last_price_x != 0.0 )
          {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else 
@@ -1311,7 +1326,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !TA_IS_ZERO(trailing_last_price_y) )
+         if( trailing_last_price_y != 0.0 )
          {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else 

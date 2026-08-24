@@ -62,6 +62,10 @@ public partial class Core
     *                of two scratch buffers + three sma() calls. Enables streaming
     *                and is bit-identical to the prior three-SMA form (verified vs
     *                v0.6.4).
+    *  082326 MF,CC  Fix #253. Scale the High+Low cancellation test to its own
+    *                operands instead of the fixed TA_IS_ZERO band, which widened
+    *                the bands of any instrument quoted small enough to fall
+    *                under it.
     */
    /// <summary>
    /// Number of leading input bars <c>ACCBANDS</c> consumes before it can
@@ -164,8 +168,17 @@ public partial class Core
        */
       i = trailingIdx;
       while( i < startIdx ) {
+         /* The band factor 4*(H-L)/(H+L) is a ratio of two prices, so it is
+          * scale-free -- but H+L is a sum that CANCELS when the two prices have
+          * opposite signs, and the factor then blows up on what is left of the
+          * operands' last bits. Test the sum against ITS OWN operands, not against
+          * a fixed band: an absolute threshold answers "cancelled" for every bar
+          * of an instrument quoted small enough to fall under it, and widened
+          * every band it touched (issue #253). Same test on all three sites, so
+          * the bar that enters a running sum is the one that later leaves it.
+          */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh[i]) + Math.Abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -184,7 +197,7 @@ public partial class Core
       while( i <= endIdx ) {
          /* Add the incoming bar to each running sum. */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh[i]) + Math.Abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -200,7 +213,7 @@ public partial class Core
          tempLower = periodTotalLower;
          /* Remove the trailing bar from each running sum. */
          tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh[trailingIdx]) + Math.Abs(inLow[trailingIdx]))) ) {
             tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
             periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
             periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
@@ -275,7 +288,7 @@ public partial class Core
       i = trailingIdx;
       while( i < startIdx ) {
          tempReal = (double)inHigh[i] + (double)inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs((double)inHigh[i]) + Math.Abs((double)inLow[i]))) ) {
             tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
             periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
             periodTotalLower += (double)inLow[i] * (1 - tempReal);
@@ -289,7 +302,7 @@ public partial class Core
       outIdx = 0;
       while( i <= endIdx ) {
          tempReal = (double)inHigh[i] + (double)inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs((double)inHigh[i]) + Math.Abs((double)inLow[i]))) ) {
             tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
             periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
             periodTotalLower += (double)inLow[i] * (1 - tempReal);
@@ -303,7 +316,7 @@ public partial class Core
          tempMiddle = periodTotalMiddle;
          tempLower = periodTotalLower;
          tempReal = (double)inHigh[trailingIdx] + (double)inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs((double)inHigh[trailingIdx]) + Math.Abs((double)inLow[trailingIdx]))) ) {
             tempReal = 4 * ((double)inHigh[trailingIdx] - (double)inLow[trailingIdx]) / tempReal;
             periodTotalUpper -= (double)inHigh[trailingIdx] * (1 + tempReal);
             periodTotalLower -= (double)inLow[trailingIdx] * (1 - tempReal);
@@ -702,7 +715,7 @@ public partial class Core
       }
       /* Add the incoming bar to each running sum. */
       tempReal = inHigh + inLow;
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+      if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh) + Math.Abs(inLow))) ) {
          tempReal = 4 * (inHigh - inLow) / tempReal;
          sp.periodTotalUpper += inHigh * (1 + tempReal);
          sp.periodTotalLower += inLow * (1 - tempReal);
@@ -717,7 +730,7 @@ public partial class Core
       tempLower = sp.periodTotalLower;
       /* Remove the trailing bar from each running sum. */
       tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+      if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]) + Math.Abs(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]))) ) {
          tempReal = 4 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
          sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1 + tempReal);
          sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1 - tempReal);
@@ -809,8 +822,17 @@ public partial class Core
        */
       i = trailingIdx;
       while( i < startIdx ) {
+         /* The band factor 4*(H-L)/(H+L) is a ratio of two prices, so it is
+          * scale-free -- but H+L is a sum that CANCELS when the two prices have
+          * opposite signs, and the factor then blows up on what is left of the
+          * operands' last bits. Test the sum against ITS OWN operands, not against
+          * a fixed band: an absolute threshold answers "cancelled" for every bar
+          * of an instrument quoted small enough to fall under it, and widened
+          * every band it touched (issue #253). Same test on all three sites, so
+          * the bar that enters a running sum is the one that later leaves it.
+          */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh[i]) + Math.Abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -829,7 +851,7 @@ public partial class Core
       while( i <= endIdx ) {
          /* Add the incoming bar to each running sum. */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh[i]) + Math.Abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -845,7 +867,7 @@ public partial class Core
          tempLower = periodTotalLower;
          /* Remove the trailing bar from each running sum. */
          tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh[trailingIdx]) + Math.Abs(inLow[trailingIdx]))) ) {
             tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
             periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
             periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);

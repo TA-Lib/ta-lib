@@ -14,6 +14,9 @@
  *                from the wrong bar (TR-buffer-relative index).
  *  070626 MF,CC  Speed optimization: True Range computed inline in a
  *                single pass (bit-exact, no temporary buffer).
+ *  082326 MF,CC  Fix #253. Test the close exactly instead of against the fixed
+ *                TA_IS_ZERO band, which zeroed the output for any instrument
+ *                quoted small enough to fall under it.
  */
 
 int natr_lookback(int optInTimePeriod)
@@ -185,8 +188,13 @@ TA_RetCode natr(int startIdx, int endIdx,
    }
    else
    {
+      /* NATR is the ATR as a percentage of the close, so it is scale-free and
+       * the divisor only has to be non-zero. An exact test, not the fixed
+       * TA_IS_ZERO band it used to be: a close carries the quote unit, and that
+       * band zeroed the whole output for any instrument quoted below it (#253).
+       */
       tempValue = inClose[startIdx];
-      if( !TA_IS_ZERO(tempValue) )
+      if( tempValue != 0.0 )
          outReal[0] = (prevATR/tempValue)*100.0;
       else
          outReal[0] = 0.0;
@@ -222,7 +230,7 @@ TA_RetCode natr(int startIdx, int endIdx,
       else
       {
          tempValue = inClose[today];
-         if( !TA_IS_ZERO(tempValue) )
+         if( tempValue != 0.0 )
             outReal[outIdx] = (prevATR/tempValue)*100.0;
          else
             outReal[outIdx] = 0.0;

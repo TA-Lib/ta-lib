@@ -19,6 +19,10 @@
  *                KAMA math at period=1 would be a fixed-alpha EMA
  *                (efficiency ratio is always 1), which would disagree
  *                with TA_MA's period-1 copy, so identity is explicit.
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars and drop
+ *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
+ *                forced the fastest adaptation on any instrument quoted small
+ *                enough to fall under it.
  */
 
    /**
@@ -68,6 +72,7 @@
       int outIdx = 0;
       int lookbackTotal = 0;
       int trailingIdx = 0;
+      int nullRun = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -126,6 +131,14 @@
        * the lookback period.
        */
       sumROC1 = 0.0;
+      /* Consecutive 1-day changes of exactly zero, counted so that a flat window
+       * can be recognized exactly (the shape #244 needed for MFI). sumROC1 cannot
+       * answer that question itself once the window starts sliding: it is
+       * maintained by add-then-subtract, so a window that has gone flat leaves it
+       * holding rounding residue of arbitrary sign rather than zero, and the
+       * efficiency ratio then divides that residue into itself.
+       */
+      nullRun = 0;
       today = startIdx - lookbackTotal;
       trailingIdx = today;
       i = optInTimePeriod;
@@ -133,6 +146,11 @@
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -148,8 +166,16 @@
        * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+      /* Calculate the efficiency ratio.
+       *
+       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
+       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
+       * sit beside it was not -- it declared the window flat, and forced the
+       * fastest adaptation, for every window of an instrument quoted below it
+       * (issue #253). A genuinely flat window is now recognized by the exact bar
+       * count above instead.
+       */
+      if( sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -177,12 +203,27 @@
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -210,12 +251,27 @@
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -252,6 +308,7 @@
       int outIdx = 0;
       int lookbackTotal = 0;
       int trailingIdx = 0;
+      int nullRun = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -295,6 +352,7 @@
          return RetCode.Success ;
       }
       sumROC1 = 0.0;
+      nullRun = 0;
       today = startIdx - lookbackTotal;
       trailingIdx = today;
       i = optInTimePeriod;
@@ -302,13 +360,18 @@
          tempReal = (double)inReal[today++];
          tempReal -= (double)inReal[today];
          sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       prevKAMA = (double)inReal[today - 1];
       tempReal = (double)inReal[today];
       tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       trailingValue = tempReal2;
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+      if( sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -322,8 +385,17 @@
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
+         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -341,8 +413,17 @@
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
+         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -517,6 +598,7 @@
       double constDiff;
       double sumROC1;
       double prevKAMA;
+      int nullRun;
       double trailingValue;
       double lag1_inReal;
       int ringPos_trailingIdx;
@@ -547,6 +629,7 @@
          this.constDiff = other.constDiff;
          this.sumROC1 = other.sumROC1;
          this.prevKAMA = other.prevKAMA;
+         this.nullRun = other.nullRun;
          this.trailingValue = other.trailingValue;
          this.lag1_inReal = other.lag1_inReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -564,6 +647,7 @@
          this.constDiff = other.constDiff;
          this.sumROC1 = other.sumROC1;
          this.prevKAMA = other.prevKAMA;
+         this.nullRun = other.nullRun;
          this.trailingValue = other.trailingValue;
          this.lag1_inReal = other.lag1_inReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -676,12 +760,27 @@
        */
       sp.sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
       sp.sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
+      /* Once a whole window of flat bars has gone by, every 1-day change it
+       * spans is exactly zero, so the sum is known to be exactly zero and the
+       * residue can be dropped. That is what lets the efficiency ratio be
+       * decided by `sumROC1 <= periodROC` alone: a window that flat has
+       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       */
+      if( tempReal - sp.lag1_inReal == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.sumROC1 = 0.0;
+      }
       /* Save the trailing value. Do this because inReal
        * and outReal can be pointers to the same buffer.
        */
       sp.trailingValue = tempReal2;
       /* Calculate the efficiency ratio */
-      if( sp.sumROC1 <= periodROC || ((-0.00000000000001 < sp.sumROC1) && (sp.sumROC1 < 0.00000000000001)) ) {
+      if( sp.sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sp.sumROC1);
@@ -715,6 +814,7 @@
       int outIdx = 0;
       int lookbackTotal = 0;
       int trailingIdx = 0;
+      int nullRun = 0;
       double trailingValue = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -745,6 +845,7 @@
          sp.constDiff = 0.0;
          sp.sumROC1 = 0.0;
          sp.prevKAMA = 0.0;
+         sp.nullRun = 0;
          sp.trailingValue = 0.0;
          sp.lag1_inReal = 0.0;
          sp.ringPos_trailingIdx = 0;
@@ -787,6 +888,14 @@
        * the lookback period.
        */
       sumROC1 = 0.0;
+      /* Consecutive 1-day changes of exactly zero, counted so that a flat window
+       * can be recognized exactly (the shape #244 needed for MFI). sumROC1 cannot
+       * answer that question itself once the window starts sliding: it is
+       * maintained by add-then-subtract, so a window that has gone flat leaves it
+       * holding rounding residue of arbitrary sign rather than zero, and the
+       * efficiency ratio then divides that residue into itself.
+       */
+      nullRun = 0;
       today = startIdx - lookbackTotal;
       trailingIdx = today;
       i = optInTimePeriod;
@@ -794,6 +903,11 @@
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -809,8 +923,16 @@
        * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+      /* Calculate the efficiency ratio.
+       *
+       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
+       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
+       * sit beside it was not -- it declared the window flat, and forced the
+       * fastest adaptation, for every window of an instrument quoted below it
+       * (issue #253). A genuinely flat window is now recognized by the exact bar
+       * count above instead.
+       */
+      if( sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -838,12 +960,27 @@
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -871,12 +1008,27 @@
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -904,6 +1056,7 @@
       sp.constDiff = constDiff;
       sp.sumROC1 = sumROC1;
       sp.prevKAMA = prevKAMA;
+      sp.nullRun = nullRun;
       sp.trailingValue = trailingValue;
       sp.lag1_inReal = inReal[historyLen - 1];
       sp.ringPos_trailingIdx = 0;

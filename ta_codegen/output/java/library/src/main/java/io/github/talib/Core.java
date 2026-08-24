@@ -1519,6 +1519,10 @@ public final class Core {
  *                of two scratch buffers + three sma() calls. Enables streaming
  *                and is bit-identical to the prior three-SMA form (verified vs
  *                v0.6.4).
+ *  082326 MF,CC  Fix #253. Scale the High+Low cancellation test to its own
+ *                operands instead of the fixed TA_IS_ZERO band, which widened
+ *                the bands of any instrument quoted small enough to fall
+ *                under it.
  */
 
    /**
@@ -1616,8 +1620,17 @@ public final class Core {
        */
       i = trailingIdx;
       while( i < startIdx ) {
+         /* The band factor 4*(H-L)/(H+L) is a ratio of two prices, so it is
+          * scale-free -- but H+L is a sum that CANCELS when the two prices have
+          * opposite signs, and the factor then blows up on what is left of the
+          * operands' last bits. Test the sum against ITS OWN operands, not against
+          * a fixed band: an absolute threshold answers "cancelled" for every bar
+          * of an instrument quoted small enough to fall under it, and widened
+          * every band it touched (issue #253). Same test on all three sites, so
+          * the bar that enters a running sum is the one that later leaves it.
+          */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh[i]) + Math.abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -1636,7 +1649,7 @@ public final class Core {
       while( i <= endIdx ) {
          /* Add the incoming bar to each running sum. */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh[i]) + Math.abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -1652,7 +1665,7 @@ public final class Core {
          tempLower = periodTotalLower;
          /* Remove the trailing bar from each running sum. */
          tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh[trailingIdx]) + Math.abs(inLow[trailingIdx]))) ) {
             tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
             periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
             periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
@@ -1725,7 +1738,7 @@ public final class Core {
       i = trailingIdx;
       while( i < startIdx ) {
          tempReal = (double)inHigh[i] + (double)inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs((double)inHigh[i]) + Math.abs((double)inLow[i]))) ) {
             tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
             periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
             periodTotalLower += (double)inLow[i] * (1 - tempReal);
@@ -1739,7 +1752,7 @@ public final class Core {
       outIdx = 0;
       while( i <= endIdx ) {
          tempReal = (double)inHigh[i] + (double)inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs((double)inHigh[i]) + Math.abs((double)inLow[i]))) ) {
             tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
             periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
             periodTotalLower += (double)inLow[i] * (1 - tempReal);
@@ -1753,7 +1766,7 @@ public final class Core {
          tempMiddle = periodTotalMiddle;
          tempLower = periodTotalLower;
          tempReal = (double)inHigh[trailingIdx] + (double)inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs((double)inHigh[trailingIdx]) + Math.abs((double)inLow[trailingIdx]))) ) {
             tempReal = 4 * ((double)inHigh[trailingIdx] - (double)inLow[trailingIdx]) / tempReal;
             periodTotalUpper -= (double)inHigh[trailingIdx] * (1 + tempReal);
             periodTotalLower -= (double)inLow[trailingIdx] * (1 - tempReal);
@@ -2147,7 +2160,7 @@ public final class Core {
       }
       /* Add the incoming bar to each running sum. */
       tempReal = inHigh + inLow;
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+      if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh) + Math.abs(inLow))) ) {
          tempReal = 4 * (inHigh - inLow) / tempReal;
          sp.periodTotalUpper += inHigh * (1 + tempReal);
          sp.periodTotalLower += inLow * (1 - tempReal);
@@ -2162,7 +2175,7 @@ public final class Core {
       tempLower = sp.periodTotalLower;
       /* Remove the trailing bar from each running sum. */
       tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+      if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx]) + Math.abs(sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]))) ) {
          tempReal = 4 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
          sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1 + tempReal);
          sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1 - tempReal);
@@ -2251,8 +2264,17 @@ public final class Core {
        */
       i = trailingIdx;
       while( i < startIdx ) {
+         /* The band factor 4*(H-L)/(H+L) is a ratio of two prices, so it is
+          * scale-free -- but H+L is a sum that CANCELS when the two prices have
+          * opposite signs, and the factor then blows up on what is left of the
+          * operands' last bits. Test the sum against ITS OWN operands, not against
+          * a fixed band: an absolute threshold answers "cancelled" for every bar
+          * of an instrument quoted small enough to fall under it, and widened
+          * every band it touched (issue #253). Same test on all three sites, so
+          * the bar that enters a running sum is the one that later leaves it.
+          */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh[i]) + Math.abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -2271,7 +2293,7 @@ public final class Core {
       while( i <= endIdx ) {
          /* Add the incoming bar to each running sum. */
          tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh[i]) + Math.abs(inLow[i]))) ) {
             tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
             periodTotalUpper += inHigh[i] * (1 + tempReal);
             periodTotalLower += inLow[i] * (1 - tempReal);
@@ -2287,7 +2309,7 @@ public final class Core {
          tempLower = periodTotalLower;
          /* Remove the trailing bar from each running sum. */
          tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh[trailingIdx]) + Math.abs(inLow[trailingIdx]))) ) {
             tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
             periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
             periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
@@ -4644,16 +4666,20 @@ public final class Core {
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
  *  GC       guycom@users.sourceforge.net
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
- *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
- *  082206 MF   Fix #1544555. Div by zero bug reported by GC.
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
+ *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
+ *  082206 MF    Fix #1544555. Div by zero bug reported by GC.
+ *  082326 MF,CC Fix #253. Test the true-range sum exactly instead of against
+ *               the fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -4930,8 +4956,18 @@ public final class Core {
          tempReal = _true_range_1;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
-         /* Calculate the DX. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         /* Calculate the DX. The value is rounded (see Wilder book).
+          *
+          * prevTR is a running sum of true ranges: non-negative by construction
+          * and built only by adding, so it carries no cancellation residue and
+          * reaches zero only for a window whose every range is exactly zero. Test
+          * it exactly. A true range carries the quote unit, so the fixed
+          * TA_IS_ZERO band it used to be compared against was a constant in some
+          * arbitrary unit, and zeroed the index for any instrument quoted below
+          * it (issue #253). The DI legs it feeds are ratios -- dimensionless --
+          * so the fixed band on THEIR sum is scale-invariant and stays.
+          */
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             /* This loop is just to accumulate the initial DX */
@@ -4980,7 +5016,7 @@ public final class Core {
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
@@ -5031,7 +5067,7 @@ public final class Core {
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
@@ -5166,7 +5202,7 @@ public final class Core {
          tempReal = _true_range_1;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             tempReal = minusDI + plusDI;
@@ -5206,7 +5242,7 @@ public final class Core {
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             tempReal = minusDI + plusDI;
@@ -5247,7 +5283,7 @@ public final class Core {
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             tempReal = minusDI + plusDI;
@@ -5609,7 +5645,7 @@ public final class Core {
       tempReal = _true_range_0;
       sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
-      if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+      if( sp.prevTR > 0.0 ) {
          /* Calculate the DX. The value is rounded (see Wilder book). */
          minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
          plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
@@ -5871,8 +5907,18 @@ public final class Core {
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
-         /* Calculate the DX. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         /* Calculate the DX. The value is rounded (see Wilder book).
+          *
+          * prevTR is a running sum of true ranges: non-negative by construction
+          * and built only by adding, so it carries no cancellation residue and
+          * reaches zero only for a window whose every range is exactly zero. Test
+          * it exactly. A true range carries the quote unit, so the fixed
+          * TA_IS_ZERO band it used to be compared against was a constant in some
+          * arbitrary unit, and zeroed the index for any instrument quoted below
+          * it (issue #253). The DI legs it feeds are ratios -- dimensionless --
+          * so the fixed band on THEIR sum is scale-invariant and stays.
+          */
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             /* This loop is just to accumulate the initial DX */
@@ -5921,7 +5967,7 @@ public final class Core {
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
@@ -5972,7 +6018,7 @@ public final class Core {
          tempReal = _true_range_4;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
@@ -14012,6 +14058,9 @@ public final class Core {
  *               + reseed) and a scale-relative denominator test.
  *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3,
  *               on BOTH axes -- the output reads S_xy and S_y too.
+ *  082326 MF,CC Fix #253. Test the base price of a return exactly instead of
+ *               against the fixed TA_IS_ZERO band, which collapsed beta to
+ *               zero for any instrument quoted small enough to fall under it.
  */
 
    /**
@@ -14172,22 +14221,28 @@ public final class Core {
        * afford before the sums exist.
        */
       i = ++trailingIdx;
-      if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+      /* A return needs a non-zero base price and nothing more: the test is exact,
+       * not the fixed TA_IS_ZERO band it used to be. A price carries the quote
+       * unit, so that band declared every bar of a small-quoted instrument
+       * "no previous price", left every return at -shift, and collapsed beta to
+       * zero (issue #253).
+       */
+      if( last_price_x != 0.0 ) {
          shift_x = (inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+      if( last_price_y != 0.0 ) {
          shift_y = (inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx ) {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -14205,14 +14260,14 @@ public final class Core {
       barsSinceReseed = 32 * optInTimePeriod;
       do {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -14286,11 +14341,11 @@ public final class Core {
             tmp_real = 0.0;
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   tmp_real += (inReal0[j] - prev_x) / prev_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   shift_y += (inReal1[j] - prev_y) / prev_y;
                }
                prev_y = inReal1[j];
@@ -14305,13 +14360,13 @@ public final class Core {
             S_x = 0.0;
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
                   x = 0 - shift_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
                   y = 0 - shift_y;
@@ -14341,7 +14396,7 @@ public final class Core {
           * buffer can be the same.
           */
          tmp_real = inReal0[trailingIdx];
-         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+         if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
@@ -14349,7 +14404,7 @@ public final class Core {
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+         if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -14464,22 +14519,22 @@ public final class Core {
       trailing_last_price_y = (double)inReal1[trailingIdx];
       last_price_y = trailing_last_price_y;
       i = ++trailingIdx;
-      if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+      if( last_price_x != 0.0 ) {
          shift_x = ((double)inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+      if( last_price_y != 0.0 ) {
          shift_y = ((double)inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx ) {
          tmp_real = (double)inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = (double)inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -14496,14 +14551,14 @@ public final class Core {
       barsSinceReseed = 32 * optInTimePeriod;
       do {
          tmp_real = (double)inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = (double)inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -14525,11 +14580,11 @@ public final class Core {
             tmp_real = 0.0;
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   tmp_real += ((double)inReal0[j] - prev_x) / prev_x;
                }
                prev_x = (double)inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   shift_y += ((double)inReal1[j] - prev_y) / prev_y;
                }
                prev_y = (double)inReal1[j];
@@ -14544,13 +14599,13 @@ public final class Core {
             S_x = 0.0;
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   x = ((double)inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
                   x = 0 - shift_x;
                }
                prev_x = (double)inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   y = ((double)inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
                   y = 0 - shift_y;
@@ -14569,7 +14624,7 @@ public final class Core {
             }
          }
          tmp_real = (double)inReal0[trailingIdx];
-         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+         if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
@@ -14577,7 +14632,7 @@ public final class Core {
          trailing_last_price_x = tmp_real;
          tmp_real = (double)inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+         if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -14968,14 +15023,14 @@ public final class Core {
       sp.x_inReal0[sp.i & sp.xMask] = inReal0;
       sp.x_inReal1[sp.i & sp.xMask] = inReal1;
       tmp_real = sp.x_inReal0[sp.i & sp.xMask];
-      if( !((-0.00000000000001 < sp.last_price_x) && (sp.last_price_x < 0.00000000000001)) ) {
+      if( sp.last_price_x != 0.0 ) {
          x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
       } else {
          x = 0 - sp.shift_x;
       }
       sp.last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.i++ & sp.xMask];
-      if( !((-0.00000000000001 < sp.last_price_y) && (sp.last_price_y < 0.00000000000001)) ) {
+      if( sp.last_price_y != 0.0 ) {
          y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
       } else {
          y = 0 - sp.shift_y;
@@ -15049,11 +15104,11 @@ public final class Core {
          tmp_real = 0.0;
          sp.shift_y = 0.0;
          for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+            if( prev_x != 0.0 ) {
                tmp_real += (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x;
             }
             prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+            if( prev_y != 0.0 ) {
                sp.shift_y += (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y;
             }
             prev_y = sp.x_inReal1[sp.j & sp.xMask];
@@ -15068,13 +15123,13 @@ public final class Core {
          sp.S_x = 0.0;
          sp.S_y = 0.0;
          for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+            if( prev_x != 0.0 ) {
                x = (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x - sp.shift_x;
             } else {
                x = 0 - sp.shift_x;
             }
             prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+            if( prev_y != 0.0 ) {
                y = (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y - sp.shift_y;
             } else {
                y = 0 - sp.shift_y;
@@ -15104,7 +15159,7 @@ public final class Core {
        * buffer can be the same.
        */
       tmp_real = sp.x_inReal0[sp.trailingIdx & sp.xMask];
-      if( !((-0.00000000000001 < sp.trailing_last_price_x) && (sp.trailing_last_price_x < 0.00000000000001)) ) {
+      if( sp.trailing_last_price_x != 0.0 ) {
          x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
       } else {
          x = 0 - sp.shift_x;
@@ -15112,7 +15167,7 @@ public final class Core {
       sp.trailing_last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.trailingIdx & sp.xMask];
       sp.trailingIdx += 1;
-      if( !((-0.00000000000001 < sp.trailing_last_price_y) && (sp.trailing_last_price_y < 0.00000000000001)) ) {
+      if( sp.trailing_last_price_y != 0.0 ) {
          y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
       } else {
          y = 0 - sp.shift_y;
@@ -15276,22 +15331,28 @@ public final class Core {
        * afford before the sums exist.
        */
       i = ++trailingIdx;
-      if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+      /* A return needs a non-zero base price and nothing more: the test is exact,
+       * not the fixed TA_IS_ZERO band it used to be. A price carries the quote
+       * unit, so that band declared every bar of a small-quoted instrument
+       * "no previous price", left every return at -shift, and collapsed beta to
+       * zero (issue #253).
+       */
+      if( last_price_x != 0.0 ) {
          shift_x = (inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+      if( last_price_y != 0.0 ) {
          shift_y = (inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx ) {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -15309,14 +15370,14 @@ public final class Core {
       barsSinceReseed = 32 * optInTimePeriod;
       do {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -15390,11 +15451,11 @@ public final class Core {
             tmp_real = 0.0;
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   tmp_real += (inReal0[j] - prev_x) / prev_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   shift_y += (inReal1[j] - prev_y) / prev_y;
                }
                prev_y = inReal1[j];
@@ -15409,13 +15470,13 @@ public final class Core {
             S_x = 0.0;
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
                   x = 0 - shift_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
                   y = 0 - shift_y;
@@ -15445,7 +15506,7 @@ public final class Core {
           * buffer can be the same.
           */
          tmp_real = inReal0[trailingIdx];
-         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+         if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
@@ -15453,7 +15514,7 @@ public final class Core {
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+         if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -15600,13 +15661,16 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112605 MF   Initial coding.
+ *  112605 MF    Initial coding.
+ *  082326 MF,CC Fix #253. Test the bar range exactly instead of against the
+ *               fixed TA_IS_ZERO_OR_NEG band, which zeroed the output for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -15645,8 +15709,14 @@ public final class Core {
       /* BOP = (Close - Open)/(High - Low) */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
+         /* BOP is a fraction of the bar's own range, so it is scale-free and the
+          * divisor only has to be positive. An exact test, not the fixed
+          * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+          * and that band zeroed the output for any instrument quoted below it
+          * (issue #253).
+          */
          tempReal = inHigh[i] - inLow[i];
-         if( (tempReal < 0.00000000000001) ) {
+         if( tempReal <= 0.0 ) {
             outReal[outIdx++] = 0.0;
          } else {
             outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
@@ -15678,7 +15748,7 @@ public final class Core {
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = (double)inHigh[i] - (double)inLow[i];
-         if( (tempReal < 0.00000000000001) ) {
+         if( tempReal <= 0.0 ) {
             outReal[outIdx++] = 0.0;
          } else {
             outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
@@ -15947,8 +16017,14 @@ public final class Core {
    void BOP_StepImpl( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
+      /* BOP is a fraction of the bar's own range, so it is scale-free and the
+       * divisor only has to be positive. An exact test, not the fixed
+       * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+       * and that band zeroed the output for any instrument quoted below it
+       * (issue #253).
+       */
       tempReal = inHigh - inLow;
-      if( (tempReal < 0.00000000000001) ) {
+      if( tempReal <= 0.0 ) {
          sp.cur_outReal = 0.0;
       } else {
          sp.cur_outReal = (inClose - inOpen) / tempReal;
@@ -15975,8 +16051,14 @@ public final class Core {
       /* BOP = (Close - Open)/(High - Low) */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
+         /* BOP is a fraction of the bar's own range, so it is scale-free and the
+          * divisor only has to be positive. An exact test, not the fixed
+          * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+          * and that band zeroed the output for any instrument quoted below it
+          * (issue #253).
+          */
          tempReal = inHigh[i] - inLow[i];
-         if( (tempReal < 0.00000000000001) ) {
+         if( tempReal <= 0.0 ) {
             outReal[outIdx++ * outStride] = 0.0;
          } else {
             outReal[outIdx++ * outStride] = (inClose[i] - inOpen[i]) / tempReal;
@@ -16081,6 +16163,9 @@ public final class Core {
  *                "!= 0.0" check: identical prices over the period leave
  *                sub-epsilon residue that the exact check divided into a
  *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
+ *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
+ *                level: the fixed band zeroed the whole output for any
+ *                instrument quoted small enough to fall under it.
  */
 
    /**
@@ -16117,6 +16202,7 @@ public final class Core {
    {
       double tempReal = 0;
       double tempReal2 = 0;
+      double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
       int i = 0;
@@ -16191,16 +16277,27 @@ public final class Core {
          }
          theAverage /= optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
-          * for the whole period.
+          * for the whole period, then its mean.
           */
          tempReal2 = 0;
          for( j = 0; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
          }
+         tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -16227,6 +16324,7 @@ public final class Core {
    {
       double tempReal = 0;
       double tempReal2 = 0;
+      double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
       int i = 0;
@@ -16282,9 +16380,11 @@ public final class Core {
          for( j = 0; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
          }
+         tempReal2 /= optInTimePeriod;
          tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -16589,6 +16689,7 @@ public final class Core {
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
+      double tempReal3 = 0.0;
       double theAverage = 0.0;
       double lastValue = 0.0;
       int j = 0;
@@ -16601,16 +16702,27 @@ public final class Core {
       }
       theAverage /= sp.optInTimePeriod;
       /* Do the summation of the ABS(TypePrice-average)
-       * for the whole period.
+       * for the whole period, then its mean.
        */
       tempReal2 = 0;
       for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
          tempReal2 += Math.abs(sp.cb_circBuffer[j] - theAverage);
       }
+      tempReal2 /= sp.optInTimePeriod;
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-         sp.cur_outReal = tempReal / (0.015 * (tempReal2 / sp.optInTimePeriod));
+      /* Both tests are relative to the window's own price level (issue #253).
+       * They ask "is this window flat?", and flatness is a property of the
+       * prices relative to each other -- but a deviation carries the quote
+       * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output. The band is still wide enough (~90 ulp of the average) to
+       * absorb the sub-epsilon residue an identical-price window leaves in the
+       * average, which is what it was widened for in the first place (#7).
+       */
+      tempReal3 = Math.abs(theAverage);
+      if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         sp.cur_outReal = tempReal / (0.015 * tempReal2);
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -16624,6 +16736,7 @@ public final class Core {
    {
       double tempReal = 0;
       double tempReal2 = 0;
+      double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
       int i = 0;
@@ -16705,16 +16818,27 @@ public final class Core {
          }
          theAverage /= optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
-          * for the whole period.
+          * for the whole period, then its mean.
           */
          tempReal2 = 0;
          for( j = 0; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
          }
+         tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++ * outStride] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            outReal[outIdx++ * outStride] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }
@@ -68144,6 +68268,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  BT       Barry Tsung
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -68151,6 +68276,9 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  112605 MF      Initial version.
  *  021806 MF,BT   Fix #1434450 reported by BT.
+ *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
+ *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
+ *                 instrument quoted small enough to fall under it.
  */
 
    /**
@@ -68300,7 +68428,7 @@ public final class Core {
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -68342,7 +68470,7 @@ public final class Core {
          prevLoss /= optInTimePeriod;
          prevGain /= optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -68424,7 +68552,7 @@ public final class Core {
       prevGain /= optInTimePeriod;
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -68460,7 +68588,7 @@ public final class Core {
          prevLoss /= optInTimePeriod;
          prevGain /= optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -68759,7 +68887,7 @@ public final class Core {
       sp.prevLoss /= sp.optInTimePeriod;
       sp.prevGain /= sp.optInTimePeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
-      if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+      if( tempValue1 > 0.0 ) {
          sp.cur_outReal = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
       } else {
          sp.cur_outReal = 0.0;
@@ -68891,7 +69019,7 @@ public final class Core {
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -68933,7 +69061,7 @@ public final class Core {
          prevLoss /= optInTimePeriod;
          prevGain /= optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -69032,6 +69160,10 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#124).
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars, so the
+ *                0/0 is guarded exactly instead of against the fixed
+ *                TA_IS_ZERO band -- which zeroed the oscillator for any
+ *                instrument quoted small enough to fall under it.
  */
 
    /**
@@ -69075,6 +69207,7 @@ public final class Core {
       int trailingIdx = 0;
       int lookbackTotal = 0;
       int i = 0;
+      int nullRun = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
@@ -69126,6 +69259,13 @@ public final class Core {
       trailingValue = prevValue;
       upSum = 0.0;
       downSum = 0.0;
+      /* Consecutive changes of exactly zero, counted so that an empty window can
+       * be recognized exactly (the shape #244 needed for MFI). The sums cannot
+       * answer that question themselves once the window starts sliding: they are
+       * maintained by add-then-subtract, so an emptied window leaves them holding
+       * rounding residue of arbitrary sign rather than zero.
+       */
+      nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
          today += 1;
          tempReal = inReal[today];
@@ -69136,10 +69276,17 @@ public final class Core {
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-       * with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+       * exactly and emit 0.0. Not against a fixed band: a price change carries the
+       * quote unit, so a constant put against the total zeroed the oscillator for
+       * any instrument quoted below it (issue #253).
        *
        * Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
        * order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -69148,7 +69295,7 @@ public final class Core {
        */
       outIdx = 0;
       sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
       } else {
          outReal[outIdx++] = 0.0;
@@ -69179,8 +69326,22 @@ public final class Core {
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         /* Once a whole period of flat bars has gone by, every change in the
+          * window is exactly zero, so both sums are known to be exactly zero and
+          * the residue can be dropped.
+          */
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
          sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         if( sum > 0.0 ) {
             outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
          } else {
             outReal[outIdx++] = 0.0;
@@ -69204,6 +69365,7 @@ public final class Core {
       int trailingIdx = 0;
       int lookbackTotal = 0;
       int i = 0;
+      int nullRun = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
@@ -69237,6 +69399,7 @@ public final class Core {
       trailingValue = prevValue;
       upSum = 0.0;
       downSum = 0.0;
+      nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
          today += 1;
          tempReal = (double)inReal[today];
@@ -69247,10 +69410,15 @@ public final class Core {
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       outIdx = 0;
       sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
       } else {
          outReal[outIdx++] = 0.0;
@@ -69274,8 +69442,18 @@ public final class Core {
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
          sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         if( sum > 0.0 ) {
             outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
          } else {
             outReal[outIdx++] = 0.0;
@@ -69436,6 +69614,7 @@ public final class Core {
    public static final class CMOU_Stream {
       Core core;
       int optInTimePeriod;
+      int nullRun;
       double upSum;
       double downSum;
       double prevValue;
@@ -69464,6 +69643,7 @@ public final class Core {
       CMOU_Stream( CMOU_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.nullRun = other.nullRun;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
          this.prevValue = other.prevValue;
@@ -69479,6 +69659,7 @@ public final class Core {
       void copyFrom( CMOU_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.nullRun = other.nullRun;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
          this.prevValue = other.prevValue;
@@ -69602,8 +69783,22 @@ public final class Core {
       } else if( diff < 0.0 ) {
          sp.downSum -= diff;
       }
+      /* Once a whole period of flat bars has gone by, every change in the
+       * window is exactly zero, so both sums are known to be exactly zero and
+       * the residue can be dropped.
+       */
+      if( diff == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.upSum = 0.0;
+         sp.downSum = 0.0;
+      }
       sum = sp.upSum + sp.downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sum;
       } else {
          sp.cur_outReal = 0.0;
@@ -69621,6 +69816,7 @@ public final class Core {
       int trailingIdx = 0;
       int lookbackTotal = 0;
       int i = 0;
+      int nullRun = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
@@ -69679,6 +69875,13 @@ public final class Core {
       trailingValue = prevValue;
       upSum = 0.0;
       downSum = 0.0;
+      /* Consecutive changes of exactly zero, counted so that an empty window can
+       * be recognized exactly (the shape #244 needed for MFI). The sums cannot
+       * answer that question themselves once the window starts sliding: they are
+       * maintained by add-then-subtract, so an emptied window leaves them holding
+       * rounding residue of arbitrary sign rather than zero.
+       */
+      nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
          today += 1;
          tempReal = inReal[today];
@@ -69689,10 +69892,17 @@ public final class Core {
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-       * with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+       * exactly and emit 0.0. Not against a fixed band: a price change carries the
+       * quote unit, so a constant put against the total zeroed the oscillator for
+       * any instrument quoted below it (issue #253).
        *
        * Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
        * order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -69701,7 +69911,7 @@ public final class Core {
        */
       outIdx = 0;
       sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
       } else {
          outReal[outIdx++ * outStride] = 0.0;
@@ -69732,8 +69942,22 @@ public final class Core {
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         /* Once a whole period of flat bars has gone by, every change in the
+          * window is exactly zero, so both sums are known to be exactly zero and
+          * the residue can be dropped.
+          */
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
          sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         if( sum > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -69751,6 +69975,7 @@ public final class Core {
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
+      sp.nullRun = nullRun;
       sp.upSum = upSum;
       sp.downSum = downSum;
       sp.prevValue = prevValue;
@@ -73193,15 +73418,19 @@ public final class Core {
  *  MF       Mario Fortier
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
- *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
+ *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
+ *  082326 MF,CC Fix #253. Test the true-range sum exactly instead of against
+ *               the fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -73470,8 +73699,18 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
       }
-      /* Write the first DX output */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* Write the first DX output.
+       *
+       * prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253). The DI legs it
+       * feeds are ratios -- dimensionless -- so the fixed band on THEIR sum is
+       * scale-invariant and stays.
+       */
+      if( prevTR > 0.0 ) {
          minusDI = (100.0 * (prevMinusDM / prevTR));
          plusDI = (100.0 * (prevPlusDM / prevTR));
          tempReal = minusDI + plusDI;
@@ -73520,7 +73759,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             /* This loop is just to accumulate the initial DX */
@@ -73658,7 +73897,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
       }
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      if( prevTR > 0.0 ) {
          minusDI = (100.0 * (prevMinusDM / prevTR));
          plusDI = (100.0 * (prevPlusDM / prevTR));
          tempReal = minusDI + plusDI;
@@ -73700,7 +73939,7 @@ public final class Core {
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             tempReal = minusDI + plusDI;
@@ -74064,7 +74303,7 @@ public final class Core {
       sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       /* Calculate the DX. The value is rounded (see Wilder book). */
-      if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+      if( sp.prevTR > 0.0 ) {
          minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
          plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
          /* This loop is just to accumulate the initial DX */
@@ -74316,8 +74555,18 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
       }
-      /* Write the first DX output */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* Write the first DX output.
+       *
+       * prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253). The DI legs it
+       * feeds are ratios -- dimensionless -- so the fixed band on THEIR sum is
+       * scale-invariant and stays.
+       */
+      if( prevTR > 0.0 ) {
          minusDI = (100.0 * (prevMinusDM / prevTR));
          plusDI = (100.0 * (prevPlusDM / prevTR));
          tempReal = minusDI + plusDI;
@@ -74366,7 +74615,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             /* This loop is just to accumulate the initial DX */
@@ -90620,6 +90869,10 @@ public final class Core {
  *                KAMA math at period=1 would be a fixed-alpha EMA
  *                (efficiency ratio is always 1), which would disagree
  *                with TA_MA's period-1 copy, so identity is explicit.
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars and drop
+ *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
+ *                forced the fastest adaptation on any instrument quoted small
+ *                enough to fall under it.
  */
 
    /**
@@ -90669,6 +90922,7 @@ public final class Core {
       int outIdx = 0;
       int lookbackTotal = 0;
       int trailingIdx = 0;
+      int nullRun = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -90727,6 +90981,14 @@ public final class Core {
        * the lookback period.
        */
       sumROC1 = 0.0;
+      /* Consecutive 1-day changes of exactly zero, counted so that a flat window
+       * can be recognized exactly (the shape #244 needed for MFI). sumROC1 cannot
+       * answer that question itself once the window starts sliding: it is
+       * maintained by add-then-subtract, so a window that has gone flat leaves it
+       * holding rounding residue of arbitrary sign rather than zero, and the
+       * efficiency ratio then divides that residue into itself.
+       */
+      nullRun = 0;
       today = startIdx - lookbackTotal;
       trailingIdx = today;
       i = optInTimePeriod;
@@ -90734,6 +90996,11 @@ public final class Core {
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -90749,8 +91016,16 @@ public final class Core {
        * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+      /* Calculate the efficiency ratio.
+       *
+       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
+       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
+       * sit beside it was not -- it declared the window flat, and forced the
+       * fastest adaptation, for every window of an instrument quoted below it
+       * (issue #253). A genuinely flat window is now recognized by the exact bar
+       * count above instead.
+       */
+      if( sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -90778,12 +91053,27 @@ public final class Core {
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -90811,12 +91101,27 @@ public final class Core {
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -90853,6 +91158,7 @@ public final class Core {
       int outIdx = 0;
       int lookbackTotal = 0;
       int trailingIdx = 0;
+      int nullRun = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -90896,6 +91202,7 @@ public final class Core {
          return RetCode.Success ;
       }
       sumROC1 = 0.0;
+      nullRun = 0;
       today = startIdx - lookbackTotal;
       trailingIdx = today;
       i = optInTimePeriod;
@@ -90903,13 +91210,18 @@ public final class Core {
          tempReal = (double)inReal[today++];
          tempReal -= (double)inReal[today];
          sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       prevKAMA = (double)inReal[today - 1];
       tempReal = (double)inReal[today];
       tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       trailingValue = tempReal2;
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+      if( sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -90923,8 +91235,17 @@ public final class Core {
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
+         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -90942,8 +91263,17 @@ public final class Core {
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
+         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -91118,6 +91448,7 @@ public final class Core {
       double constDiff;
       double sumROC1;
       double prevKAMA;
+      int nullRun;
       double trailingValue;
       double lag1_inReal;
       int ringPos_trailingIdx;
@@ -91148,6 +91479,7 @@ public final class Core {
          this.constDiff = other.constDiff;
          this.sumROC1 = other.sumROC1;
          this.prevKAMA = other.prevKAMA;
+         this.nullRun = other.nullRun;
          this.trailingValue = other.trailingValue;
          this.lag1_inReal = other.lag1_inReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -91165,6 +91497,7 @@ public final class Core {
          this.constDiff = other.constDiff;
          this.sumROC1 = other.sumROC1;
          this.prevKAMA = other.prevKAMA;
+         this.nullRun = other.nullRun;
          this.trailingValue = other.trailingValue;
          this.lag1_inReal = other.lag1_inReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -91277,12 +91610,27 @@ public final class Core {
        */
       sp.sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
       sp.sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
+      /* Once a whole window of flat bars has gone by, every 1-day change it
+       * spans is exactly zero, so the sum is known to be exactly zero and the
+       * residue can be dropped. That is what lets the efficiency ratio be
+       * decided by `sumROC1 <= periodROC` alone: a window that flat has
+       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       */
+      if( tempReal - sp.lag1_inReal == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.sumROC1 = 0.0;
+      }
       /* Save the trailing value. Do this because inReal
        * and outReal can be pointers to the same buffer.
        */
       sp.trailingValue = tempReal2;
       /* Calculate the efficiency ratio */
-      if( sp.sumROC1 <= periodROC || ((-0.00000000000001 < sp.sumROC1) && (sp.sumROC1 < 0.00000000000001)) ) {
+      if( sp.sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sp.sumROC1);
@@ -91316,6 +91664,7 @@ public final class Core {
       int outIdx = 0;
       int lookbackTotal = 0;
       int trailingIdx = 0;
+      int nullRun = 0;
       double trailingValue = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -91346,6 +91695,7 @@ public final class Core {
          sp.constDiff = 0.0;
          sp.sumROC1 = 0.0;
          sp.prevKAMA = 0.0;
+         sp.nullRun = 0;
          sp.trailingValue = 0.0;
          sp.lag1_inReal = 0.0;
          sp.ringPos_trailingIdx = 0;
@@ -91388,6 +91738,14 @@ public final class Core {
        * the lookback period.
        */
       sumROC1 = 0.0;
+      /* Consecutive 1-day changes of exactly zero, counted so that a flat window
+       * can be recognized exactly (the shape #244 needed for MFI). sumROC1 cannot
+       * answer that question itself once the window starts sliding: it is
+       * maintained by add-then-subtract, so a window that has gone flat leaves it
+       * holding rounding residue of arbitrary sign rather than zero, and the
+       * efficiency ratio then divides that residue into itself.
+       */
+      nullRun = 0;
       today = startIdx - lookbackTotal;
       trailingIdx = today;
       i = optInTimePeriod;
@@ -91395,6 +91753,11 @@ public final class Core {
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -91410,8 +91773,16 @@ public final class Core {
        * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+      /* Calculate the efficiency ratio.
+       *
+       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
+       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
+       * sit beside it was not -- it declared the window flat, and forced the
+       * fastest adaptation, for every window of an instrument quoted below it
+       * (issue #253). A genuinely flat window is now recognized by the exact bar
+       * count above instead.
+       */
+      if( sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -91439,12 +91810,27 @@ public final class Core {
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -91472,12 +91858,27 @@ public final class Core {
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
          /* Save the trailing value. Do this because inReal
           * and outReal can be pointers to the same buffer.
           */
          trailingValue = tempReal2;
          /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         if( sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -91505,6 +91906,7 @@ public final class Core {
       sp.constDiff = constDiff;
       sp.sumROC1 = sumROC1;
       sp.prevKAMA = prevKAMA;
+      sp.nullRun = nullRun;
       sp.trailingValue = trailingValue;
       sp.lag1_inReal = inReal[historyLen - 1];
       sp.ringPos_trailingIdx = 0;
@@ -111237,6 +111639,7 @@ public final class Core {
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -111247,6 +111650,9 @@ public final class Core {
  *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
  *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
  *  122204 MF,CF Fix #1090231. Issues when period is 1.
+ *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
+ *               fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -111459,7 +111865,7 @@ public final class Core {
                }
                _true_range_0 = range_0;
                tempReal = _true_range_0;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++] = (double)0.0;
                } else {
                   outReal[outIdx++] = diffM / tempReal;
@@ -111553,7 +111959,14 @@ public final class Core {
       /* Now start to write the output in
        * the caller provided outReal.
        */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253).
+       */
+      if( prevTR > 0.0 ) {
          outReal[0] = (100.0 * (prevMinusDM / prevTR));
       } else {
          outReal[0] = 0.0;
@@ -111593,7 +112006,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
          } else {
             outReal[outIdx++] = 0.0;
@@ -111677,7 +112090,7 @@ public final class Core {
                }
                _true_range_0 = range_0;
                tempReal = _true_range_0;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++] = (double)0.0;
                } else {
                   outReal[outIdx++] = diffM / tempReal;
@@ -111754,7 +112167,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
       }
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      if( prevTR > 0.0 ) {
          outReal[0] = (100.0 * (prevMinusDM / prevTR));
       } else {
          outReal[0] = 0.0;
@@ -111787,7 +112200,7 @@ public final class Core {
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
          } else {
             outReal[outIdx++] = 0.0;
@@ -112120,7 +112533,7 @@ public final class Core {
             }
             _true_range_0 = range_0;
             tempReal = _true_range_0;
-            if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            if( tempReal <= 0.0 ) {
                sp.cur_outReal = (double)0.0;
             } else {
                sp.cur_outReal = diffM / tempReal;
@@ -112165,7 +112578,7 @@ public final class Core {
          sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+         if( sp.prevTR > 0.0 ) {
             sp.cur_outReal = (100.0 * (sp.prevMinusDM / sp.prevTR));
          } else {
             sp.cur_outReal = 0.0;
@@ -112348,7 +112761,7 @@ public final class Core {
                }
                _true_range_2 = range_2;
                tempReal = _true_range_2;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++ * outStride] = (double)0.0;
                } else {
                   outReal[outIdx++ * outStride] = diffM / tempReal;
@@ -112575,7 +112988,14 @@ public final class Core {
          /* Now start to write the output in
           * the caller provided outReal.
           */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         /* prevTR is a running sum of true ranges: non-negative by construction and
+          * built only by adding, so it carries no cancellation residue and reaches
+          * zero only for a window whose every range is exactly zero. Test it exactly.
+          * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+          * to be compared against was a constant in some arbitrary unit, and zeroed
+          * the index for any instrument quoted below it (issue #253).
+          */
+         if( prevTR > 0.0 ) {
             outReal[0 * outStride] = (100.0 * (prevMinusDM / prevTR));
          } else {
             outReal[0 * outStride] = 0.0;
@@ -112615,7 +113035,7 @@ public final class Core {
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
-            if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+            if( prevTR > 0.0 ) {
                outReal[outIdx++ * outStride] = (100.0 * (prevMinusDM / prevTR));
             } else {
                outReal[outIdx++ * outStride] = 0.0;
@@ -114839,6 +115259,9 @@ public final class Core {
  *                from the wrong bar (TR-buffer-relative index).
  *  070626 MF,CC  Speed optimization: True Range computed inline in a
  *                single pass (bit-exact, no temporary buffer).
+ *  082326 MF,CC  Fix #253. Test the close exactly instead of against the fixed
+ *                TA_IS_ZERO band, which zeroed the output for any instrument
+ *                quoted small enough to fall under it.
  */
 
    /**
@@ -115036,8 +115459,13 @@ public final class Core {
          /* No smoothing: emit the raw True Range (unnormalized). */
          outReal[0] = prevATR;
       } else {
+         /* NATR is the ATR as a percentage of the close, so it is scale-free and
+          * the divisor only has to be non-zero. An exact test, not the fixed
+          * TA_IS_ZERO band it used to be: a close carries the quote unit, and that
+          * band zeroed the whole output for any instrument quoted below it (#253).
+          */
          tempValue = inClose[startIdx];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             outReal[0] = prevATR / tempValue * 100.0;
          } else {
             outReal[0] = 0.0;
@@ -115068,7 +115496,7 @@ public final class Core {
             outReal[outIdx] = prevATR;
          } else {
             tempValue = inClose[today];
-            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            if( tempValue != 0.0 ) {
                outReal[outIdx] = prevATR / tempValue * 100.0;
             } else {
                outReal[outIdx] = 0.0;
@@ -115170,7 +115598,7 @@ public final class Core {
          outReal[0] = prevATR;
       } else {
          tempValue = (double)inClose[startIdx];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             outReal[0] = prevATR / tempValue * 100.0;
          } else {
             outReal[0] = 0.0;
@@ -115197,7 +115625,7 @@ public final class Core {
             outReal[outIdx] = prevATR;
          } else {
             tempValue = (double)inClose[today];
-            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            if( tempValue != 0.0 ) {
                outReal[outIdx] = prevATR / tempValue * 100.0;
             } else {
                outReal[outIdx] = 0.0;
@@ -115518,7 +115946,7 @@ public final class Core {
          sp.cur_outReal = sp.prevATR;
       } else {
          tempValue = inClose;
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             sp.cur_outReal = sp.prevATR / tempValue * 100.0;
          } else {
             sp.cur_outReal = 0.0;
@@ -115688,8 +116116,13 @@ public final class Core {
          /* No smoothing: emit the raw True Range (unnormalized). */
          outReal[0 * outStride] = prevATR;
       } else {
+         /* NATR is the ATR as a percentage of the close, so it is scale-free and
+          * the divisor only has to be non-zero. An exact test, not the fixed
+          * TA_IS_ZERO band it used to be: a close carries the quote unit, and that
+          * band zeroed the whole output for any instrument quoted below it (#253).
+          */
          tempValue = inClose[startIdx];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             outReal[0 * outStride] = prevATR / tempValue * 100.0;
          } else {
             outReal[0 * outStride] = 0.0;
@@ -115720,7 +116153,7 @@ public final class Core {
             outReal[outIdx * outStride] = prevATR;
          } else {
             tempValue = inClose[today];
-            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            if( tempValue != 0.0 ) {
                outReal[outIdx * outStride] = prevATR / tempValue * 100.0;
             } else {
                outReal[outIdx * outStride] = 0.0;
@@ -116876,6 +117309,7 @@ public final class Core {
  *  AM       Adrian Michel
  *  MIF      Mirek Fontan (mira@fontan.cz)
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -116886,6 +117320,9 @@ public final class Core {
  *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
  *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
  *  122204 MF,CF Fix #1090231. Issues when period is 1.
+ *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
+ *               fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -117098,7 +117535,7 @@ public final class Core {
                }
                _true_range_0 = range_0;
                tempReal = _true_range_0;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++] = (double)0.0;
                } else {
                   outReal[outIdx++] = diffP / tempReal;
@@ -117192,7 +117629,14 @@ public final class Core {
       /* Now start to write the output in
        * the caller provided outReal.
        */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253).
+       */
+      if( prevTR > 0.0 ) {
          outReal[0] = (100.0 * (prevPlusDM / prevTR));
       } else {
          outReal[0] = 0.0;
@@ -117232,7 +117676,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevPlusDM / prevTR));
          } else {
             outReal[outIdx++] = 0.0;
@@ -117316,7 +117760,7 @@ public final class Core {
                }
                _true_range_0 = range_0;
                tempReal = _true_range_0;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++] = (double)0.0;
                } else {
                   outReal[outIdx++] = diffP / tempReal;
@@ -117393,7 +117837,7 @@ public final class Core {
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
       }
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      if( prevTR > 0.0 ) {
          outReal[0] = (100.0 * (prevPlusDM / prevTR));
       } else {
          outReal[0] = 0.0;
@@ -117426,7 +117870,7 @@ public final class Core {
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevPlusDM / prevTR));
          } else {
             outReal[outIdx++] = 0.0;
@@ -117767,7 +118211,7 @@ public final class Core {
             }
             _true_range_0 = range_0;
             tempReal = _true_range_0;
-            if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            if( tempReal <= 0.0 ) {
                sp.cur_outReal = (double)0.0;
             } else {
                sp.cur_outReal = diffP / tempReal;
@@ -117812,7 +118256,7 @@ public final class Core {
          sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+         if( sp.prevTR > 0.0 ) {
             sp.cur_outReal = (100.0 * (sp.prevPlusDM / sp.prevTR));
          } else {
             sp.cur_outReal = 0.0;
@@ -117995,7 +118439,7 @@ public final class Core {
                }
                _true_range_2 = range_2;
                tempReal = _true_range_2;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++ * outStride] = (double)0.0;
                } else {
                   outReal[outIdx++ * outStride] = diffP / tempReal;
@@ -118222,7 +118666,14 @@ public final class Core {
          /* Now start to write the output in
           * the caller provided outReal.
           */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         /* prevTR is a running sum of true ranges: non-negative by construction and
+          * built only by adding, so it carries no cancellation residue and reaches
+          * zero only for a window whose every range is exactly zero. Test it exactly.
+          * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+          * to be compared against was a constant in some arbitrary unit, and zeroed
+          * the index for any instrument quoted below it (issue #253).
+          */
+         if( prevTR > 0.0 ) {
             outReal[0 * outStride] = (100.0 * (prevPlusDM / prevTR));
          } else {
             outReal[0 * outStride] = 0.0;
@@ -118262,7 +118713,7 @@ public final class Core {
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
-            if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+            if( prevTR > 0.0 ) {
                outReal[outIdx++ * outStride] = (100.0 * (prevPlusDM / prevTR));
             } else {
                outReal[outIdx++ * outStride] = 0.0;
@@ -124664,15 +125115,18 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112400 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
- *  062804 MF   Resolve div by zero bug on limit case.
+ *  112400 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  062804 MF    Resolve div by zero bug on limit case.
+ *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
+ *               the fixed TA_IS_ZERO band, which zeroed the index for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -124824,7 +125278,7 @@ public final class Core {
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx] = 100.0 * (prevGain / tempValue1);
             outIdx = outIdx + 1;
          } else {
@@ -124869,7 +125323,7 @@ public final class Core {
          prevLoss /= (double)optInTimePeriod;
          prevGain /= (double)optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx] = 100.0 * (prevGain / tempValue1);
             outIdx = outIdx + 1;
          } else {
@@ -124952,7 +125406,7 @@ public final class Core {
       prevGain /= (double)optInTimePeriod;
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx] = 100.0 * (prevGain / tempValue1);
             outIdx = outIdx + 1;
          } else {
@@ -124991,7 +125445,7 @@ public final class Core {
          prevLoss /= (double)optInTimePeriod;
          prevGain /= (double)optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx] = 100.0 * (prevGain / tempValue1);
             outIdx = outIdx + 1;
          } else {
@@ -125316,7 +125770,7 @@ public final class Core {
       sp.prevLoss /= (double)sp.optInTimePeriod;
       sp.prevGain /= (double)sp.optInTimePeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
-      if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+      if( tempValue1 > 0.0 ) {
          sp.cur_outReal = 100.0 * (sp.prevGain / tempValue1);
       } else {
          sp.cur_outReal = 0.0;
@@ -125450,7 +125904,7 @@ public final class Core {
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
             outIdx = outIdx + 1;
          } else {
@@ -125495,7 +125949,7 @@ public final class Core {
          prevLoss /= (double)optInTimePeriod;
          prevGain /= (double)optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
             outIdx = outIdx + 1;
          } else {
@@ -129833,6 +130287,9 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  082026 MF,CC  Initial version (#238).
+ *  082326 MF,CC  Fix #253. Test the smoothed range exactly instead of against
+ *                the fixed TA_IS_ZERO band, which zeroed the oscillator for
+ *                any instrument quoted small enough to fall under it.
  */
 
    /**
@@ -130096,7 +130553,7 @@ public final class Core {
          if( nBar >= lookbackSlow + lookbackFast ) {
             nSignal = nBar - lookbackSlow - lookbackFast;
             halfDen = 0.5 * emaFastDen;
-            if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+            if( halfDen > 0.0 ) {
                smiValue = 100.0 * emaFastNum / halfDen;
             } else {
                smiValue = 0.0;
@@ -130159,14 +130616,19 @@ public final class Core {
          emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
          emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
          emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
-         /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
-          * window leaves a sub-epsilon residue that an exact check would divide
-          * into noise (issue #107 / STOCHRSI). A window whose bars are all
-          * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
-          * CCI (#7) and IMI (#112) convention.
+         /* The denominator is an EMA of an EMA of the high-low range: every term
+          * is non-negative and every weight is positive, so it carries no
+          * cancellation residue and is zero only when every range that reached it
+          * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+          * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+          * convention. Test it exactly: the range carries the quote unit, so the
+          * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+          * instrument quoted below it (issue #253). Issue #107's machine-flat
+          * window is caught by the exact test as well, since the residue an
+          * EMA leaves there is zero, not sub-epsilon.
           */
          halfDen = 0.5 * emaFastDen;
-         if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+         if( halfDen > 0.0 ) {
             smiValue = 100.0 * emaFastNum / halfDen;
          } else {
             smiValue = 0.0;
@@ -130352,7 +130814,7 @@ public final class Core {
          if( nBar >= lookbackSlow + lookbackFast ) {
             nSignal = nBar - lookbackSlow - lookbackFast;
             halfDen = 0.5 * emaFastDen;
-            if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+            if( halfDen > 0.0 ) {
                smiValue = 100.0 * emaFastNum / halfDen;
             } else {
                smiValue = 0.0;
@@ -130413,7 +130875,7 @@ public final class Core {
          emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
          emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
          halfDen = 0.5 * emaFastDen;
-         if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+         if( halfDen > 0.0 ) {
             smiValue = 100.0 * emaFastNum / halfDen;
          } else {
             smiValue = 0.0;
@@ -130931,14 +131393,19 @@ public final class Core {
       sp.emaSlowDen = Math.fma(den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
       sp.emaFastNum = Math.fma(sp.emaSlowNum - sp.emaFastNum, sp.kFast, sp.emaFastNum);
       sp.emaFastDen = Math.fma(sp.emaSlowDen - sp.emaFastDen, sp.kFast, sp.emaFastDen);
-      /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
-       * window leaves a sub-epsilon residue that an exact check would divide
-       * into noise (issue #107 / STOCHRSI). A window whose bars are all
-       * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
-       * CCI (#7) and IMI (#112) convention.
+      /* The denominator is an EMA of an EMA of the high-low range: every term
+       * is non-negative and every weight is positive, so it carries no
+       * cancellation residue and is zero only when every range that reached it
+       * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+       * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+       * convention. Test it exactly: the range carries the quote unit, so the
+       * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+       * instrument quoted below it (issue #253). Issue #107's machine-flat
+       * window is caught by the exact test as well, since the residue an
+       * EMA leaves there is zero, not sub-epsilon.
        */
       halfDen = 0.5 * sp.emaFastDen;
-      if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+      if( halfDen > 0.0 ) {
          smiValue = 100.0 * sp.emaFastNum / halfDen;
       } else {
          smiValue = 0.0;
@@ -131152,7 +131619,7 @@ public final class Core {
          if( nBar >= lookbackSlow + lookbackFast ) {
             nSignal = nBar - lookbackSlow - lookbackFast;
             halfDen = 0.5 * emaFastDen;
-            if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+            if( halfDen > 0.0 ) {
                smiValue = 100.0 * emaFastNum / halfDen;
             } else {
                smiValue = 0.0;
@@ -131215,14 +131682,19 @@ public final class Core {
          emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
          emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
          emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
-         /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
-          * window leaves a sub-epsilon residue that an exact check would divide
-          * into noise (issue #107 / STOCHRSI). A window whose bars are all
-          * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
-          * CCI (#7) and IMI (#112) convention.
+         /* The denominator is an EMA of an EMA of the high-low range: every term
+          * is non-negative and every weight is positive, so it carries no
+          * cancellation residue and is zero only when every range that reached it
+          * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+          * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+          * convention. Test it exactly: the range carries the quote unit, so the
+          * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+          * instrument quoted below it (issue #253). Issue #107's machine-flat
+          * window is caught by the exact test as well, since the residue an
+          * EMA leaves there is zero, not sub-epsilon.
           */
          halfDen = 0.5 * emaFastDen;
-         if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+         if( halfDen > 0.0 ) {
             smiValue = 100.0 * emaFastNum / halfDen;
          } else {
             smiValue = 0.0;
@@ -132400,6 +132872,9 @@ public final class Core {
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  *  072026 MF,CC Fix #130. Never elect outSlowD as the K scratch buffer: %D's
  *               in-place ma() destroyed the smoothed K before the final copy.
+ *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
+ *               fixed band zeroed the whole output for any instrument quoted
+ *               small enough to fall under it.
  */
 
    /**
@@ -132652,11 +133127,15 @@ public final class Core {
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-          * a machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
           */
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -132838,7 +133317,7 @@ public final class Core {
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
             tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -133367,11 +133846,15 @@ public final class Core {
          sp.highest = tmp;
          sp.diff = (sp.highest - sp.lowest) / 100.0;
       }
-      /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-       * a machine-flat window leaves a sub-epsilon residue that an exact check
-       * would divide into [0,100] noise (issue #107 / STOCHRSI).
+      /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+       * machine-flat window leaves a sub-epsilon residue that an exact check
+       * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+       * range against ITS OWN two extremes, not against a fixed band: the range
+       * carries the quote unit, so a constant put against it answers "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output (issue #253).
        */
-      if( !((-0.00000000000001 < sp.diff) && (sp.diff < 0.00000000000001)) ) {
+      if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
          cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
       } else {
          cur_tempBuffer = 0.0;
@@ -133571,11 +134054,15 @@ public final class Core {
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-          * a machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
           */
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -133769,6 +134256,9 @@ public final class Core {
  *               of dividing a sub-epsilon residue into [0,100] noise (STOCHRSI).
  *  072026 MF,CC Fix #130. Never elect outFastD as the K scratch buffer: %D's
  *               in-place ma() destroyed the raw K before the final copy.
+ *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
+ *               fixed band zeroed the whole output for any instrument quoted
+ *               small enough to fall under it.
  */
 
    /**
@@ -133991,11 +134481,15 @@ public final class Core {
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-          * a machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
           */
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -134156,7 +134650,7 @@ public final class Core {
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
             tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -134644,11 +135138,15 @@ public final class Core {
          sp.highest = tmp;
          sp.diff = (sp.highest - sp.lowest) / 100.0;
       }
-      /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-       * a machine-flat window leaves a sub-epsilon residue that an exact check
-       * would divide into [0,100] noise (issue #107 / STOCHRSI).
+      /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+       * machine-flat window leaves a sub-epsilon residue that an exact check
+       * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+       * range against ITS OWN two extremes, not against a fixed band: the range
+       * carries the quote unit, so a constant put against it answers "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output (issue #253).
        */
-      if( !((-0.00000000000001 < sp.diff) && (sp.diff < 0.00000000000001)) ) {
+      if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
          cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
       } else {
          cur_tempBuffer = 0.0;
@@ -134837,11 +135335,15 @@ public final class Core {
             highest = tmp;
             diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-          * a machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
           */
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
             tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
          } else {
             tempBuffer[outIdx++] = 0.0;
@@ -143363,14 +143865,19 @@ public final class Core {
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
  *  DX       Dex Hunter (https://github.com/dexhunter)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  281206 DM   Initial Implementation
- *  010606 MF   Abstract local arrays. Detect divide by zero.
- *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
+ *  281206 DM    Initial Implementation
+ *  010606 MF    Abstract local arrays. Detect divide by zero.
+ *  073126 DX    Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
+ *  082326 MF,CC Fix #253. Recognize an empty window by counting bars, so the
+ *               divides are guarded exactly instead of against the fixed
+ *               TA_IS_ZERO band -- which zeroed the oscillator for any
+ *               instrument quoted small enough to fall under it.
  */
 
    /**
@@ -143448,6 +143955,7 @@ public final class Core {
       int outIdx = 0;
       int trailingPos1 = 0;
       int trailingPos2 = 0;
+      int nullRun = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -143537,6 +144045,21 @@ public final class Core {
       b2Total = 0;
       a3Total = 0;
       b3Total = 0;
+      /* Consecutive bars that put nothing into the windows, counted so that an
+       * empty window can be recognized exactly (the shape #244 needed for MFI).
+       * The running totals cannot answer that question themselves: they are
+       * maintained by add-then-subtract, so once a window empties they hold
+       * rounding residue of arbitrary sign rather than zero, and v0.6.4 divides
+       * one residue by another there -- it returns -92.9 for an oscillator
+       * documented to run 0..100. Both of a bar's terms have to be zero for it to
+       * count, which for valid bars is one condition (a zero true range means
+       * H == L == the previous close, which leaves the close on the true low).
+       * Reseeding on the count is what lets the divides below be guarded exactly
+       * rather than against a fixed band -- a true range carries the quote unit,
+       * so the band they used to carry zeroed the oscillator for any instrument
+       * quoted below it (issue #253).
+       */
+      nullRun = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
          tempLT = inLow[i];
          tempHT = inHigh[i];
@@ -143556,6 +144079,11 @@ public final class Core {
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -143606,15 +144134,42 @@ public final class Core {
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
-         /* Calculate the oscillator value for today */
+         /* Once a whole window of no-contribution bars has gone by, every slot it
+          * spans is 0.0, so its totals are known to be exactly zero and the
+          * residue can be dropped. The periods are sorted shortest-first, so a
+          * run long enough for a longer window is long enough for every shorter
+          * one.
+          */
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= optInTimePeriod3 ) {
+                  nullRun = optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
          output = 0.0;
-         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+         if( b1Total > 0.0 ) {
             output += 4.0 * (a1Total / b1Total);
          }
-         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+         if( b2Total > 0.0 ) {
             output += 2.0 * (a2Total / b2Total);
          }
-         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+         if( b3Total > 0.0 ) {
             output += a3Total / b3Total;
          }
          /* Remove the trailing terms to prepare for next day. Each was evaluated
@@ -143687,6 +144242,7 @@ public final class Core {
       int outIdx = 0;
       int trailingPos1 = 0;
       int trailingPos2 = 0;
+      int nullRun = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -143756,6 +144312,7 @@ public final class Core {
       b2Total = 0;
       a3Total = 0;
       b3Total = 0;
+      nullRun = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
          tempLT = (double)inLow[i];
          tempHT = (double)inHigh[i];
@@ -143775,6 +144332,11 @@ public final class Core {
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -143819,14 +144381,32 @@ public final class Core {
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= optInTimePeriod3 ) {
+                  nullRun = optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
          output = 0.0;
-         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+         if( b1Total > 0.0 ) {
             output += 4.0 * (a1Total / b1Total);
          }
-         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+         if( b2Total > 0.0 ) {
             output += 2.0 * (a2Total / b2Total);
          }
-         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+         if( b3Total > 0.0 ) {
             output += a3Total / b3Total;
          }
          a1Total -= term_closeMinusTrueLow[trailingPos1];
@@ -144047,6 +144627,7 @@ public final class Core {
       double b3Total;
       int trailingPos1;
       int trailingPos2;
+      int nullRun;
       int term_Idx;
       int maxIdx_term;
       double lag1_inClose;
@@ -144084,6 +144665,7 @@ public final class Core {
          this.b3Total = other.b3Total;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
+         this.nullRun = other.nullRun;
          this.term_Idx = other.term_Idx;
          this.maxIdx_term = other.maxIdx_term;
          this.lag1_inClose = other.lag1_inClose;
@@ -144108,6 +144690,7 @@ public final class Core {
          this.b3Total = other.b3Total;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
+         this.nullRun = other.nullRun;
          this.term_Idx = other.term_Idx;
          this.maxIdx_term = other.maxIdx_term;
          this.lag1_inClose = other.lag1_inClose;
@@ -144248,15 +144831,42 @@ public final class Core {
       sp.b1Total += trueRange;
       sp.b2Total += trueRange;
       sp.b3Total += trueRange;
-      /* Calculate the oscillator value for today */
+      /* Once a whole window of no-contribution bars has gone by, every slot it
+       * spans is 0.0, so its totals are known to be exactly zero and the
+       * residue can be dropped. The periods are sorted shortest-first, so a
+       * run long enough for a longer window is long enough for every shorter
+       * one.
+       */
+      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod1 ) {
+         sp.a1Total = 0.0;
+         sp.b1Total = 0.0;
+         if( sp.nullRun >= sp.optInTimePeriod2 ) {
+            sp.a2Total = 0.0;
+            sp.b2Total = 0.0;
+            if( sp.nullRun >= sp.optInTimePeriod3 ) {
+               sp.nullRun = sp.optInTimePeriod3;
+               sp.a3Total = 0.0;
+               sp.b3Total = 0.0;
+            }
+         }
+      }
+      /* Calculate the oscillator value for today. Each window contributes only
+       * when it holds a true range; the totals are sums of non-negative terms
+       * and the reseed above removes their residue, so the test is exact.
+       */
       output = 0.0;
-      if( !((-0.00000000000001 < sp.b1Total) && (sp.b1Total < 0.00000000000001)) ) {
+      if( sp.b1Total > 0.0 ) {
          output += 4.0 * (sp.a1Total / sp.b1Total);
       }
-      if( !((-0.00000000000001 < sp.b2Total) && (sp.b2Total < 0.00000000000001)) ) {
+      if( sp.b2Total > 0.0 ) {
          output += 2.0 * (sp.a2Total / sp.b2Total);
       }
-      if( !((-0.00000000000001 < sp.b3Total) && (sp.b3Total < 0.00000000000001)) ) {
+      if( sp.b3Total > 0.0 ) {
          output += sp.a3Total / sp.b3Total;
       }
       /* Remove the trailing terms to prepare for next day. Each was evaluated
@@ -144315,6 +144925,7 @@ public final class Core {
       int outIdx = 0;
       int trailingPos1 = 0;
       int trailingPos2 = 0;
+      int nullRun = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -144411,6 +145022,21 @@ public final class Core {
       b2Total = 0;
       a3Total = 0;
       b3Total = 0;
+      /* Consecutive bars that put nothing into the windows, counted so that an
+       * empty window can be recognized exactly (the shape #244 needed for MFI).
+       * The running totals cannot answer that question themselves: they are
+       * maintained by add-then-subtract, so once a window empties they hold
+       * rounding residue of arbitrary sign rather than zero, and v0.6.4 divides
+       * one residue by another there -- it returns -92.9 for an oscillator
+       * documented to run 0..100. Both of a bar's terms have to be zero for it to
+       * count, which for valid bars is one condition (a zero true range means
+       * H == L == the previous close, which leaves the close on the true low).
+       * Reseeding on the count is what lets the divides below be guarded exactly
+       * rather than against a fixed band -- a true range carries the quote unit,
+       * so the band they used to carry zeroed the oscillator for any instrument
+       * quoted below it (issue #253).
+       */
+      nullRun = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
          tempLT = inLow[i];
          tempHT = inHigh[i];
@@ -144430,6 +145056,11 @@ public final class Core {
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -144480,15 +145111,42 @@ public final class Core {
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
-         /* Calculate the oscillator value for today */
+         /* Once a whole window of no-contribution bars has gone by, every slot it
+          * spans is 0.0, so its totals are known to be exactly zero and the
+          * residue can be dropped. The periods are sorted shortest-first, so a
+          * run long enough for a longer window is long enough for every shorter
+          * one.
+          */
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= optInTimePeriod3 ) {
+                  nullRun = optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
          output = 0.0;
-         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+         if( b1Total > 0.0 ) {
             output += 4.0 * (a1Total / b1Total);
          }
-         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+         if( b2Total > 0.0 ) {
             output += 2.0 * (a2Total / b2Total);
          }
-         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+         if( b3Total > 0.0 ) {
             output += a3Total / b3Total;
          }
          /* Remove the trailing terms to prepare for next day. Each was evaluated
@@ -144540,6 +145198,7 @@ public final class Core {
       sp.b3Total = b3Total;
       sp.trailingPos1 = trailingPos1;
       sp.trailingPos2 = trailingPos2;
+      sp.nullRun = nullRun;
       sp.term_Idx = term_Idx;
       sp.maxIdx_term = maxIdx_term;
       sp.lag1_inClose = inClose[historyLen - 1];

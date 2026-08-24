@@ -4909,6 +4909,8 @@ typedef struct {
     double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
     long long    mfiSkipped;      /* MFI cases skipped: v0.6.4 categorically wrong there (issue #244) */
+    long long    kamaSkipped;     /* KAMA (and KAMA-smoothed STOCH/STOCHF): v0.6.4 divides residue (issue #253) */
+    long long    ultoscSkipped;   /* ULTOSC: same (issue #253) */
     long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
     long long    xySkipped;      /* CORREL/BETA cases skipped: same re-baseline over two series (issue #242) */
     int          reportedThisFunc;
@@ -5504,6 +5506,108 @@ static int fuzz_mfi_064_blind( const double *h, const double *l,
     return 0;
 }
 
+
+/* KAMA, and the two functions that hand KAMA a series this predicate cannot
+ * see (issue #253).
+ *
+ * KAMA's efficiency ratio is periodROC/sumROC1, and sumROC1 is a sliding sum of
+ * |1-day changes| maintained by add-then-subtract. On a window that has gone
+ * flat the true sum is zero but the accumulator holds residue, sized by the
+ * largest change that ever passed through. v0.6.4 decides the 0/0 with an
+ * absolute band on that accumulator, so its answer -- ratio 1 (fastest
+ * adaptation) or ratio 0 (slowest) -- depends on which side of 1e-14 the
+ * residue happened to land, and on the ZEROSUM shape it lands on both. The fix
+ * answers it exactly by counting flat bars, so the two differ there and only
+ * there.
+ *
+ * A case is not compared when any window KAMA evaluates is exactly flat, or
+ * when the true sum is inside v0.6.4's band. Two-pass on purpose, like
+ * fuzz_mfi_064_blind: the predicate must not re-run the algorithm under test.
+ * The scan starts at the first bar with a full window rather than at the call's
+ * startIdx, because a divergence at one bar is carried forward by prevKAMA. */
+static int fuzz_kama_064_blind( const double *x, int n, int period, int s, int e )
+{
+    int t, j;
+
+    (void)s;
+    if( period < 2 ) return 0;         /* period 1 is a copy of the input */
+    if( e >= n ) e = n - 1;
+
+    for( t = period; t <= e; t++ )
+    {
+        double sum = 0.0;
+        int flat = 1;
+        for( j = t - period + 1; j <= t; j++ )
+        {
+            double d = x[j] - x[j-1];
+            if( d != 0.0 ) flat = 0;
+            sum += fabs(d);
+        }
+        if( flat ) return 1;
+        if( sum < 1e-14 ) return 1;    /* v0.6.4's band, on the true sum */
+    }
+    return 0;
+}
+
+/* True when this parameter vector asks for KAMA smoothing. STOCH and STOCHF
+ * then run KAMA over the Fast-K series, which is not an input and so cannot be
+ * examined without re-running the library; those vectors are dropped whole.
+ * MACDEXT can also smooth a derived series with KAMA and is deliberately left
+ * compared -- it does not diverge on this corpus, and if it ever starts to,
+ * this gate should say so rather than have been silenced in advance. */
+static int fuzz_vector_smooths_with_kama( const TA_FuncInfo *fi, const double *v )
+{
+    unsigned int i;
+    for( i = 0; i < fi->nbOptInput && i < FUZZ_MAX_OPT; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        if( oi->type == TA_OptInput_IntegerList &&
+            oi->paramName && strstr(oi->paramName, "MAType") &&
+            (int)v[i] == (int)TA_MAType_KAMA )
+            return 1;
+    }
+    return 0;
+}
+
+/* ULTOSC (issue #253). Its three moving totals are sliding sums of true ranges,
+ * so a window that has gone empty leaves them holding residue of arbitrary
+ * sign, and v0.6.4 divides one residue by another: on the ZEROSUM shape it
+ * returns -92.9 for an oscillator documented to run 0..100. The fix recognizes
+ * an empty window by counting bars and contributes 0 for it.
+ *
+ * A case is not compared when any of the three windows is empty, or when its
+ * true total is inside v0.6.4's band. Two-pass, and from the first full window
+ * rather than the call's startIdx, for the same two reasons as above. */
+static int fuzz_ultosc_064_blind( const double *h, const double *l, const double *c,
+                                  int n, int p1, int p2, int p3, int s, int e )
+{
+    int per[3], k, t, j, longest;
+
+    (void)s;
+    per[0] = p1; per[1] = p2; per[2] = p3;
+    longest = p1 > p2 ? p1 : p2;
+    if( p3 > longest ) longest = p3;
+    if( longest < 1 || longest >= n ) return 0;
+    if( e >= n ) e = n - 1;
+
+    for( t = longest; t <= e; t++ )
+        for( k = 0; k < 3; k++ )
+        {
+            double total = 0.0;
+            if( per[k] < 1 ) continue;
+            for( j = t - per[k] + 1; j <= t; j++ )
+            {
+                double prevClose = c[j-1];
+                double trueLow   = ( l[j] < prevClose ) ? l[j] : prevClose;
+                double trueHigh  = ( h[j] > prevClose ) ? h[j] : prevClose;
+                total += trueHigh - trueLow;
+            }
+            if( total < 1e-14 ) return 1;
+        }
+    return 0;
+}
+
 static double fuzz_correl_condition(const double *x, const double *y,
                                     int n, int period, int s, int e)
 {
@@ -5951,6 +6055,26 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                         n, (int)vec[k][0], s, e ) )
                 { ctx->mfiSkipped++; continue; }
 
+                /* #253: the same shape -- v0.6.4 divides accumulator residue on
+                 * a window that has emptied, and reports whatever the residue
+                 * happened to be. Skip only those windows; everything else stays
+                 * bit-exact. optInTimePeriod is opt 0 for KAMA, and ULTOSC's
+                 * three periods are opts 0,1,2. */
+                if( strcmp(funcInfo->name, "KAMA") == 0 &&
+                    fuzz_kama_064_blind( g_fzBuf[3], n, (int)vec[k][0], s, e ) )
+                { ctx->kamaSkipped++; continue; }
+
+                if( ( strcmp(funcInfo->name, "STOCH") == 0 ||
+                      strcmp(funcInfo->name, "STOCHF") == 0 ) &&
+                    fuzz_vector_smooths_with_kama( funcInfo, vec[k] ) )
+                { ctx->kamaSkipped++; continue; }
+
+                if( strcmp(funcInfo->name, "ULTOSC") == 0 &&
+                    fuzz_ultosc_064_blind( g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], n,
+                                           (int)vec[k][0], (int)vec[k][1], (int)vec[k][2],
+                                           s, e ) )
+                { ctx->ultoscSkipped++; continue; }
+
                 TA_Integer curBeg = 0, curNb = 0;
                 for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
                 {
@@ -6089,6 +6213,17 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI function(s) skipped entirely — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
+    if( ctx.kamaSkipped > 0 )
+        printf("kama-skipped: %lld case(s) where v0.6.4's efficiency ratio is decided by"
+               " accumulator residue on a flat window (issue #253) -- KAMA itself, and the"
+               " STOCH/STOCHF vectors that smooth with MAType=KAMA, whose series this gate"
+               " cannot examine. Every other case was compared bit-exact\n",
+               ctx.kamaSkipped);
+    if( ctx.ultoscSkipped > 0 )
+        printf("ultosc-skipped: %lld case(s) where a window has emptied and v0.6.4 divides"
+               " the residue its moving totals are left holding (issue #253). Every other"
+               " case was compared bit-exact\n",
+               ctx.ultoscSkipped);
     if( ctx.mfiSkipped > 0 )
         printf("mfi-skipped: %lld MFI case(s) where v0.6.4 reports a non-index (issue #244): its 1.0 guard fired, the window was empty, or a one-sided window left it dividing residue. Every other MFI case was compared bit-exact\n",
                ctx.mfiSkipped);

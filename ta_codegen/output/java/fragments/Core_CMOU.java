@@ -10,6 +10,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#124).
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars, so the
+ *                0/0 is guarded exactly instead of against the fixed
+ *                TA_IS_ZERO band -- which zeroed the oscillator for any
+ *                instrument quoted small enough to fall under it.
  */
 
    /**
@@ -53,6 +57,7 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       int i = 0;
+      int nullRun = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
@@ -104,6 +109,13 @@
       trailingValue = prevValue;
       upSum = 0.0;
       downSum = 0.0;
+      /* Consecutive changes of exactly zero, counted so that an empty window can
+       * be recognized exactly (the shape #244 needed for MFI). The sums cannot
+       * answer that question themselves once the window starts sliding: they are
+       * maintained by add-then-subtract, so an emptied window leaves them holding
+       * rounding residue of arbitrary sign rather than zero.
+       */
+      nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
          today += 1;
          tempReal = inReal[today];
@@ -114,10 +126,17 @@
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-       * with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+       * exactly and emit 0.0. Not against a fixed band: a price change carries the
+       * quote unit, so a constant put against the total zeroed the oscillator for
+       * any instrument quoted below it (issue #253).
        *
        * Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
        * order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -126,7 +145,7 @@
        */
       outIdx = 0;
       sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
       } else {
          outReal[outIdx++] = 0.0;
@@ -157,8 +176,22 @@
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         /* Once a whole period of flat bars has gone by, every change in the
+          * window is exactly zero, so both sums are known to be exactly zero and
+          * the residue can be dropped.
+          */
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
          sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         if( sum > 0.0 ) {
             outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
          } else {
             outReal[outIdx++] = 0.0;
@@ -182,6 +215,7 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       int i = 0;
+      int nullRun = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
@@ -215,6 +249,7 @@
       trailingValue = prevValue;
       upSum = 0.0;
       downSum = 0.0;
+      nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
          today += 1;
          tempReal = (double)inReal[today];
@@ -225,10 +260,15 @@
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       outIdx = 0;
       sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
       } else {
          outReal[outIdx++] = 0.0;
@@ -252,8 +292,18 @@
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
          sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         if( sum > 0.0 ) {
             outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
          } else {
             outReal[outIdx++] = 0.0;
@@ -414,6 +464,7 @@
    public static final class CMOU_Stream {
       Core core;
       int optInTimePeriod;
+      int nullRun;
       double upSum;
       double downSum;
       double prevValue;
@@ -442,6 +493,7 @@
       CMOU_Stream( CMOU_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.nullRun = other.nullRun;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
          this.prevValue = other.prevValue;
@@ -457,6 +509,7 @@
       void copyFrom( CMOU_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.nullRun = other.nullRun;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
          this.prevValue = other.prevValue;
@@ -580,8 +633,22 @@
       } else if( diff < 0.0 ) {
          sp.downSum -= diff;
       }
+      /* Once a whole period of flat bars has gone by, every change in the
+       * window is exactly zero, so both sums are known to be exactly zero and
+       * the residue can be dropped.
+       */
+      if( diff == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.upSum = 0.0;
+         sp.downSum = 0.0;
+      }
       sum = sp.upSum + sp.downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sum;
       } else {
          sp.cur_outReal = 0.0;
@@ -599,6 +666,7 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       int i = 0;
+      int nullRun = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
@@ -657,6 +725,13 @@
       trailingValue = prevValue;
       upSum = 0.0;
       downSum = 0.0;
+      /* Consecutive changes of exactly zero, counted so that an empty window can
+       * be recognized exactly (the shape #244 needed for MFI). The sums cannot
+       * answer that question themselves once the window starts sliding: they are
+       * maintained by add-then-subtract, so an emptied window leaves them holding
+       * rounding residue of arbitrary sign rather than zero.
+       */
+      nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
          today += 1;
          tempReal = inReal[today];
@@ -667,10 +742,17 @@
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-       * with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+       * exactly and emit 0.0. Not against a fixed band: a price change carries the
+       * quote unit, so a constant put against the total zeroed the oscillator for
+       * any instrument quoted below it (issue #253).
        *
        * Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
        * order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -679,7 +761,7 @@
        */
       outIdx = 0;
       sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+      if( sum > 0.0 ) {
          outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
       } else {
          outReal[outIdx++ * outStride] = 0.0;
@@ -710,8 +792,22 @@
          } else if( diff < 0.0 ) {
             downSum -= diff;
          }
+         /* Once a whole period of flat bars has gone by, every change in the
+          * window is exactly zero, so both sums are known to be exactly zero and
+          * the residue can be dropped.
+          */
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
          sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         if( sum > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -729,6 +825,7 @@
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
+      sp.nullRun = nullRun;
       sp.upSum = upSum;
       sp.downSum = downSum;
       sp.prevValue = prevValue;

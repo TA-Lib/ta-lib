@@ -19,6 +19,10 @@
  *                KAMA math at period=1 would be a fixed-alpha EMA
  *                (efficiency ratio is always 1), which would disagree
  *                with TA_MA's period-1 copy, so identity is explicit.
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars and drop
+ *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
+ *                forced the fastest adaptation on any instrument quoted small
+ *                enough to fall under it.
  */
 
 int kama_lookback(int optInTimePeriod)
@@ -42,6 +46,7 @@ TA_RetCode kama(int startIdx, int endIdx,
    double sumROC1, periodROC, prevKAMA;
    int i, today, outIdx, lookbackTotal;
    int trailingIdx;
+   int nullRun;
    double trailingValue;
 
    /* Default return values */
@@ -92,6 +97,14 @@ TA_RetCode kama(int startIdx, int endIdx,
     * the lookback period.
     */
    sumROC1 = 0.0;
+   /* Consecutive 1-day changes of exactly zero, counted so that a flat window
+    * can be recognized exactly (the shape #244 needed for MFI). sumROC1 cannot
+    * answer that question itself once the window starts sliding: it is
+    * maintained by add-then-subtract, so a window that has gone flat leaves it
+    * holding rounding residue of arbitrary sign rather than zero, and the
+    * efficiency ratio then divides that residue into itself.
+    */
+   nullRun = 0;
    today = startIdx-lookbackTotal;
    trailingIdx = today;
    i = optInTimePeriod;
@@ -100,6 +113,10 @@ TA_RetCode kama(int startIdx, int endIdx,
       tempReal  = inReal[today++];
       tempReal -= inReal[today];
       sumROC1  += fabs(tempReal);
+      if( tempReal == 0.0 )
+         nullRun++;
+      else
+         nullRun = 0;
    }
 
    /* At this point sumROC1 represent the
@@ -121,8 +138,16 @@ TA_RetCode kama(int startIdx, int endIdx,
     */
    trailingValue = tempReal2;
 
-   /* Calculate the efficiency ratio */
-   if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1))
+   /* Calculate the efficiency ratio.
+    *
+    * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
+    * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
+    * sit beside it was not -- it declared the window flat, and forced the
+    * fastest adaptation, for every window of an instrument quoted below it
+    * (issue #253). A genuinely flat window is now recognized by the exact bar
+    * count above instead.
+    */
+   if( sumROC1 <= periodROC )
       tempReal = 1.0;
    else
       tempReal = fabs(periodROC/sumROC1);
@@ -156,13 +181,29 @@ TA_RetCode kama(int startIdx, int endIdx,
       sumROC1 -= fabs(trailingValue-tempReal2);
       sumROC1 += fabs(tempReal-inReal[today-1]);
 
+      /* Once a whole window of flat bars has gone by, every 1-day change it
+       * spans is exactly zero, so the sum is known to be exactly zero and the
+       * residue can be dropped. That is what lets the efficiency ratio be
+       * decided by `sumROC1 <= periodROC` alone: a window that flat has
+       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       */
+      if( tempReal - inReal[today-1] == 0.0 )
+         nullRun++;
+      else
+         nullRun = 0;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         sumROC1 = 0.0;
+      }
+
       /* Save the trailing value. Do this because inReal
        * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
 
       /* Calculate the efficiency ratio */
-      if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+      if( sumROC1 <= periodROC )
          tempReal = 1.0;
       else
          tempReal = fabs(periodROC/sumROC1);
@@ -196,13 +237,29 @@ TA_RetCode kama(int startIdx, int endIdx,
       sumROC1 -= fabs(trailingValue-tempReal2);
       sumROC1 += fabs(tempReal-inReal[today-1]);
 
+      /* Once a whole window of flat bars has gone by, every 1-day change it
+       * spans is exactly zero, so the sum is known to be exactly zero and the
+       * residue can be dropped. That is what lets the efficiency ratio be
+       * decided by `sumROC1 <= periodROC` alone: a window that flat has
+       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       */
+      if( tempReal - inReal[today-1] == 0.0 )
+         nullRun++;
+      else
+         nullRun = 0;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         sumROC1 = 0.0;
+      }
+
       /* Save the trailing value. Do this because inReal
        * and outReal can be pointers to the same buffer.
        */
       trailingValue = tempReal2;
 
       /* Calculate the efficiency ratio */
-      if( (sumROC1 <= periodROC) || TA_IS_ZERO(sumROC1) )
+      if( sumROC1 <= periodROC )
          tempReal = 1.0;
       else
          tempReal = fabs(periodROC / sumROC1);

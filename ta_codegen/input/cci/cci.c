@@ -20,6 +20,9 @@
  *                "!= 0.0" check: identical prices over the period leave
  *                sub-epsilon residue that the exact check divided into a
  *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
+ *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
+ *                level: the fixed band zeroed the whole output for any
+ *                instrument quoted small enough to fall under it.
  */
 
 int cci_lookback(int optInTimePeriod)
@@ -35,7 +38,7 @@ TA_RetCode cci(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double tempReal, tempReal2, theAverage, lastValue;
+   double tempReal, tempReal2, tempReal3, theAverage, lastValue;
    int i, j, outIdx, lookbackTotal;
 
    /* This ptr will points on a circular buffer of
@@ -100,18 +103,30 @@ TA_RetCode cci(int startIdx, int endIdx,
       theAverage /= optInTimePeriod;
 
       /* Do the summation of the ABS(TypePrice-average)
-       * for the whole period.
+       * for the whole period, then its mean.
        */
       tempReal2 = 0;
       for( j=0; j < optInTimePeriod; j++ )
          tempReal2 += fabs(circBuffer[j]-theAverage);
+      tempReal2 /= optInTimePeriod;
 
       /* And finally, the CCI... */
       tempReal = lastValue-theAverage;
 
-      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
+      /* Both tests are relative to the window's own price level (issue #253).
+       * They ask "is this window flat?", and flatness is a property of the
+       * prices relative to each other -- but a deviation carries the quote
+       * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output. The band is still wide enough (~90 ulp of the average) to
+       * absorb the sub-epsilon residue an identical-price window leaves in the
+       * average, which is what it was widened for in the first place (#7).
+       */
+      tempReal3 = fabs(theAverage);
+
+      if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
       {
-         outReal[outIdx++] = tempReal/(0.015*(tempReal2/optInTimePeriod));
+         outReal[outIdx++] = tempReal/(0.015*tempReal2);
       }
       else
          outReal[outIdx++] = 0.0;

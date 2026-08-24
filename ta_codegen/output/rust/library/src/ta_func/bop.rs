@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  112605 MF   Initial coding.
+ *  112605 MF    Initial coding.
+ *  082326 MF,CC Fix #253. Test the bar range exactly instead of against the
+ *               fixed TA_IS_ZERO_OR_NEG band, which zeroed the output for any
+ *               instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -103,8 +106,13 @@ impl Core {
         // BOP = (Close - Open)/(High - Low)
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            // BOP is a fraction of the bar's own range, so it is scale-free and the
+            // divisor only has to be positive. An exact test, not the fixed
+            // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+            // and that band zeroed the output for any instrument quoted below it
+            // (issue #253).
             tempReal = inHigh[i] - inLow[i];
-            if (tempReal) < 1e-14 {
+            if tempReal <= 0.0 {
                 outReal[outIdx] = 0.0;
                 outIdx += 1;
             } else {
@@ -261,8 +269,13 @@ impl BOP_StreamState {
 impl Core {
     fn BOP_step_impl(&self, sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
+        // BOP is a fraction of the bar's own range, so it is scale-free and the
+        // divisor only has to be positive. An exact test, not the fixed
+        // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+        // and that band zeroed the output for any instrument quoted below it
+        // (issue #253).
         tempReal = inHigh - inLow;
-        if (tempReal) < 1e-14 {
+        if tempReal <= 0.0 {
             (*outReal) = 0.0;
         } else {
             (*outReal) = (inClose - inOpen) / tempReal;
@@ -296,8 +309,13 @@ impl Core {
         // BOP = (Close - Open)/(High - Low)
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
+            // BOP is a fraction of the bar's own range, so it is scale-free and the
+            // divisor only has to be positive. An exact test, not the fixed
+            // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+            // and that band zeroed the output for any instrument quoted below it
+            // (issue #253).
             tempReal = inHigh[i] - inLow[i];
-            if (tempReal) < 1e-14 {
+            if tempReal <= 0.0 {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inClose[i] - inOpen[i]) / tempReal) as f64);

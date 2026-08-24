@@ -52,6 +52,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  Initial version (#124).
+ *  082326 MF,CC  Fix #253. Recognize a flat window by counting bars, so the
+ *                0/0 is guarded exactly instead of against the fixed
+ *                TA_IS_ZERO band -- which zeroed the oscillator for any
+ *                instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -122,6 +126,7 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut upSum: f64 = 0.0_f64;
         let mut downSum: f64 = 0.0_f64;
         let mut sum: f64 = 0.0_f64;
@@ -160,6 +165,12 @@ impl Core {
         trailingValue = prevValue;
         upSum = 0.0;
         downSum = 0.0;
+        // Consecutive changes of exactly zero, counted so that an empty window can
+        // be recognized exactly (the shape #244 needed for MFI). The sums cannot
+        // answer that question themselves once the window starts sliding: they are
+        // maintained by add-then-subtract, so an emptied window leaves them holding
+        // rounding residue of arbitrary sign rather than zero.
+        nullRun = 0;
         // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
         i = 0;
         while i < ((optInTimePeriod) as usize) {
@@ -172,11 +183,18 @@ impl Core {
             } else if diff < 0.0 {
                 downSum -= diff;
             }
+            if diff == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
             i += 1;
         }
         // Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
         // magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-        // with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+        // exactly and emit 0.0. Not against a fixed band: a price change carries the
+        // quote unit, so a constant put against the total zeroed the oscillator for
+        // any instrument quoted below it (issue #253).
         //
         // Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
         // order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -184,7 +202,7 @@ impl Core {
         // which both scale before dividing. The two orders differ by <=1 ULP.
         outIdx = 0;
         sum = upSum + downSum;
-        if !((sum).abs() < 1e-14) {
+        if sum > 0.0 {
             outReal[outIdx] = 100.0 * (upSum - downSum) / sum;
             outIdx += 1;
         } else {
@@ -216,8 +234,21 @@ impl Core {
             } else if diff < 0.0 {
                 downSum -= diff;
             }
+            // Once a whole period of flat bars has gone by, every change in the
+            // window is exactly zero, so both sums are known to be exactly zero and
+            // the residue can be dropped.
+            if diff == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                upSum = 0.0;
+                downSum = 0.0;
+            }
             sum = upSum + downSum;
-            if !((sum).abs() < 1e-14) {
+            if sum > 0.0 {
                 outReal[outIdx] = 100.0 * (upSum - downSum) / sum;
                 outIdx += 1;
             } else {
@@ -358,6 +389,7 @@ impl CMOU_Stream {
 #[allow(non_snake_case, dead_code)]
 struct CMOU_StreamState {
     optInTimePeriod: i32,
+    nullRun: usize,
     upSum: f64,
     downSum: f64,
     prevValue: f64,
@@ -373,6 +405,7 @@ impl CMOU_StreamState {
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
         self.optInTimePeriod = src.optInTimePeriod;
+        self.nullRun = src.nullRun;
         self.upSum = src.upSum;
         self.downSum = src.downSum;
         self.prevValue = src.prevValue;
@@ -418,8 +451,21 @@ impl Core {
         } else if diff < 0.0 {
             sp.downSum -= diff;
         }
+        // Once a whole period of flat bars has gone by, every change in the
+        // window is exactly zero, so both sums are known to be exactly zero and
+        // the residue can be dropped.
+        if diff == 0.0 {
+            sp.nullRun += 1;
+        } else {
+            sp.nullRun = 0;
+        }
+        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.upSum = 0.0;
+            sp.downSum = 0.0;
+        }
         sum = sp.upSum + sp.downSum;
-        if !((sum).abs() < 1e-14) {
+        if sum > 0.0 {
             (*outReal) = 100.0 * (sp.upSum - sp.downSum) / sum;
         } else {
             (*outReal) = 0.0;
@@ -462,6 +508,7 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut upSum: f64 = 0.0_f64;
         let mut downSum: f64 = 0.0_f64;
         let mut sum: f64 = 0.0_f64;
@@ -500,6 +547,12 @@ impl Core {
         trailingValue = prevValue;
         upSum = 0.0;
         downSum = 0.0;
+        // Consecutive changes of exactly zero, counted so that an empty window can
+        // be recognized exactly (the shape #244 needed for MFI). The sums cannot
+        // answer that question themselves once the window starts sliding: they are
+        // maintained by add-then-subtract, so an emptied window leaves them holding
+        // rounding residue of arbitrary sign rather than zero.
+        nullRun = 0;
         // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
         i = 0;
         while i < ((optInTimePeriod) as usize) {
@@ -512,11 +565,18 @@ impl Core {
             } else if diff < 0.0 {
                 downSum -= diff;
             }
+            if diff == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
             i += 1;
         }
         // Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
         // magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-        // with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
+        // exactly and emit 0.0. Not against a fixed band: a price change carries the
+        // quote unit, so a constant put against the total zeroed the oscillator for
+        // any instrument quoted below it (issue #253).
         //
         // Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
         // order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
@@ -524,7 +584,7 @@ impl Core {
         // which both scale before dividing. The two orders differ by <=1 ULP.
         outIdx = 0;
         sum = upSum + downSum;
-        if !((sum).abs() < 1e-14) {
+        if sum > 0.0 {
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (upSum - downSum) / sum;
         } else {
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
@@ -554,8 +614,21 @@ impl Core {
             } else if diff < 0.0 {
                 downSum -= diff;
             }
+            // Once a whole period of flat bars has gone by, every change in the
+            // window is exactly zero, so both sums are known to be exactly zero and
+            // the residue can be dropped.
+            if diff == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                upSum = 0.0;
+                downSum = 0.0;
+            }
             sum = upSum + downSum;
-            if !((sum).abs() < 1e-14) {
+            if sum > 0.0 {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (upSum - downSum) / sum;
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
@@ -576,6 +649,7 @@ impl Core {
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
         let state = CMOU_StreamState {
             optInTimePeriod,
+            nullRun,
             upSum,
             downSum,
             prevValue,

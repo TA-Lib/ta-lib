@@ -20,6 +20,9 @@
  *                "!= 0.0" check: identical prices over the period leave
  *                sub-epsilon residue that the exact check divided into a
  *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
+ *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
+ *                level: the fixed band zeroed the whole output for any
+ *                instrument quoted small enough to fall under it.
  */
 
    /**
@@ -56,6 +59,7 @@
    {
       double tempReal = 0;
       double tempReal2 = 0;
+      double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
       int i = 0;
@@ -130,16 +134,27 @@
          }
          theAverage /= optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
-          * for the whole period.
+          * for the whole period, then its mean.
           */
          tempReal2 = 0;
          for( j = 0; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
          }
+         tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -166,6 +181,7 @@
    {
       double tempReal = 0;
       double tempReal2 = 0;
+      double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
       int i = 0;
@@ -221,9 +237,11 @@
          for( j = 0; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
          }
+         tempReal2 /= optInTimePeriod;
          tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -528,6 +546,7 @@
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
+      double tempReal3 = 0.0;
       double theAverage = 0.0;
       double lastValue = 0.0;
       int j = 0;
@@ -540,16 +559,27 @@
       }
       theAverage /= sp.optInTimePeriod;
       /* Do the summation of the ABS(TypePrice-average)
-       * for the whole period.
+       * for the whole period, then its mean.
        */
       tempReal2 = 0;
       for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
          tempReal2 += Math.abs(sp.cb_circBuffer[j] - theAverage);
       }
+      tempReal2 /= sp.optInTimePeriod;
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-         sp.cur_outReal = tempReal / (0.015 * (tempReal2 / sp.optInTimePeriod));
+      /* Both tests are relative to the window's own price level (issue #253).
+       * They ask "is this window flat?", and flatness is a property of the
+       * prices relative to each other -- but a deviation carries the quote
+       * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output. The band is still wide enough (~90 ulp of the average) to
+       * absorb the sub-epsilon residue an identical-price window leaves in the
+       * average, which is what it was widened for in the first place (#7).
+       */
+      tempReal3 = Math.abs(theAverage);
+      if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         sp.cur_outReal = tempReal / (0.015 * tempReal2);
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -563,6 +593,7 @@
    {
       double tempReal = 0;
       double tempReal2 = 0;
+      double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
       int i = 0;
@@ -644,16 +675,27 @@
          }
          theAverage /= optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
-          * for the whole period.
+          * for the whole period, then its mean.
           */
          tempReal2 = 0;
          for( j = 0; j < optInTimePeriod; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
          }
+         tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++ * outStride] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            outReal[outIdx++ * outStride] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }

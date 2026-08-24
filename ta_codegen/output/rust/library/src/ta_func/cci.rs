@@ -62,6 +62,9 @@
  *                "!= 0.0" check: identical prices over the period leave
  *                sub-epsilon residue that the exact check divided into a
  *                spurious value (issue #7 / SF bug #107). Now returns 0.0.
+ *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
+ *                level: the fixed band zeroed the whole output for any
+ *                instrument quoted small enough to fall under it.
  */
 
 // Import types from parent module
@@ -127,6 +130,7 @@ impl Core {
         let mut startIdx = startIdx;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
+        let mut tempReal3: f64 = 0.0_f64;
         let mut theAverage: f64 = 0.0_f64;
         let mut lastValue: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -194,7 +198,7 @@ impl Core {
             }
             theAverage /= ((optInTimePeriod) as f64);
             // Do the summation of the ABS(TypePrice-average)
-            // for the whole period.
+            // for the whole period, then its mean.
             tempReal2 = 0.0;
             // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
@@ -202,10 +206,20 @@ impl Core {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
+            tempReal2 /= ((optInTimePeriod) as f64);
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
-            if !((tempReal).abs() < 1e-14) && !((tempReal2).abs() < 1e-14) {
-                outReal[outIdx] = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
+            // Both tests are relative to the window's own price level (issue #253).
+            // They ask "is this window flat?", and flatness is a property of the
+            // prices relative to each other -- but a deviation carries the quote
+            // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+            // every window of an instrument quoted below it and zeroed the whole
+            // output. The band is still wide enough (~90 ulp of the average) to
+            // absorb the sub-epsilon residue an identical-price window leaves in the
+            // average, which is what it was widened for in the first place (#7).
+            tempReal3 = (theAverage).abs();
+            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
+                outReal[outIdx] = tempReal / (0.015 * tempReal2);
                 outIdx += 1;
             } else {
                 outReal[outIdx] = 0.0;
@@ -390,6 +404,7 @@ impl Core {
     fn CCI_step_impl(&self, sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
+        let mut tempReal3: f64 = 0.0_f64;
         let mut theAverage: f64 = 0.0_f64;
         let mut lastValue: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
@@ -405,7 +420,7 @@ impl Core {
         }
         theAverage /= ((sp.optInTimePeriod) as f64);
         // Do the summation of the ABS(TypePrice-average)
-        // for the whole period.
+        // for the whole period, then its mean.
         tempReal2 = 0.0;
         // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
         j = 0;
@@ -413,10 +428,20 @@ impl Core {
             tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
             j += 1;
         }
+        tempReal2 /= ((sp.optInTimePeriod) as f64);
         // And finally, the CCI...
         tempReal = lastValue - theAverage;
-        if !((tempReal).abs() < 1e-14) && !((tempReal2).abs() < 1e-14) {
-            (*outReal) = tempReal / (0.015 * (tempReal2 / ((sp.optInTimePeriod) as f64)));
+        // Both tests are relative to the window's own price level (issue #253).
+        // They ask "is this window flat?", and flatness is a property of the
+        // prices relative to each other -- but a deviation carries the quote
+        // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+        // every window of an instrument quoted below it and zeroed the whole
+        // output. The band is still wide enough (~90 ulp of the average) to
+        // absorb the sub-epsilon residue an identical-price window leaves in the
+        // average, which is what it was widened for in the first place (#7).
+        tempReal3 = (theAverage).abs();
+        if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
+            (*outReal) = tempReal / (0.015 * tempReal2);
         } else {
             (*outReal) = 0.0;
         }
@@ -455,6 +480,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
+        let mut tempReal3: f64 = 0.0_f64;
         let mut theAverage: f64 = 0.0_f64;
         let mut lastValue: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -515,7 +541,7 @@ impl Core {
             }
             theAverage /= ((optInTimePeriod) as f64);
             // Do the summation of the ABS(TypePrice-average)
-            // for the whole period.
+            // for the whole period, then its mean.
             tempReal2 = 0.0;
             // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
@@ -523,10 +549,20 @@ impl Core {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
+            tempReal2 /= ((optInTimePeriod) as f64);
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
-            if !((tempReal).abs() < 1e-14) && !((tempReal2).abs() < 1e-14) {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
+            // Both tests are relative to the window's own price level (issue #253).
+            // They ask "is this window flat?", and flatness is a property of the
+            // prices relative to each other -- but a deviation carries the quote
+            // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+            // every window of an instrument quoted below it and zeroed the whole
+            // output. The band is still wide enough (~90 ulp of the average) to
+            // absorb the sub-epsilon residue an identical-price window leaves in the
+            // average, which is what it was widened for in the first place (#7).
+            tempReal3 = (theAverage).abs();
+            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal / (0.015 * tempReal2);
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }

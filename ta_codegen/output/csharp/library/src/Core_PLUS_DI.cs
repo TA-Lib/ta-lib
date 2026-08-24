@@ -50,6 +50,7 @@ public partial class Core
     *  AM       Adrian Michel
     *  MIF      Mirek Fontan (mira@fontan.cz)
     *  CF       Christo Fogelberg
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
@@ -60,6 +61,9 @@ public partial class Core
     *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
     *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
     *  122204 MF,CF Fix #1090231. Issues when period is 1.
+    *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
+    *               fixed TA_IS_ZERO band, which zeroed the index for any
+    *               instrument quoted small enough to fall under it.
     */
    /// <summary>
    /// Number of leading input bars <c>PLUS_DI</c> consumes before it can produce
@@ -278,7 +282,7 @@ public partial class Core
                }
                _true_range_0 = range_0;
                tempReal = _true_range_0;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++] = (double)0.0;
                } else {
                   outReal[outIdx++] = diffP / tempReal;
@@ -372,7 +376,14 @@ public partial class Core
       /* Now start to write the output in
        * the caller provided outReal.
        */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253).
+       */
+      if( prevTR > 0.0 ) {
          outReal[0] = (100.0 * (prevPlusDM / prevTR));
       } else {
          outReal[0] = 0.0;
@@ -412,7 +423,7 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevPlusDM / prevTR));
          } else {
             outReal[outIdx++] = 0.0;
@@ -498,7 +509,7 @@ public partial class Core
                }
                _true_range_0 = range_0;
                tempReal = _true_range_0;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++] = (double)0.0;
                } else {
                   outReal[outIdx++] = diffP / tempReal;
@@ -575,7 +586,7 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
       }
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      if( prevTR > 0.0 ) {
          outReal[0] = (100.0 * (prevPlusDM / prevTR));
       } else {
          outReal[0] = 0.0;
@@ -608,7 +619,7 @@ public partial class Core
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevPlusDM / prevTR));
          } else {
             outReal[outIdx++] = 0.0;
@@ -956,7 +967,7 @@ public partial class Core
             }
             _true_range_0 = range_0;
             tempReal = _true_range_0;
-            if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            if( tempReal <= 0.0 ) {
                sp.cur_outReal = (double)0.0;
             } else {
                sp.cur_outReal = diffP / tempReal;
@@ -1001,7 +1012,7 @@ public partial class Core
          sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+         if( sp.prevTR > 0.0 ) {
             sp.cur_outReal = (100.0 * (sp.prevPlusDM / sp.prevTR));
          } else {
             sp.cur_outReal = 0.0;
@@ -1187,7 +1198,7 @@ public partial class Core
                }
                _true_range_2 = range_2;
                tempReal = _true_range_2;
-               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               if( tempReal <= 0.0 ) {
                   outReal[outIdx++ * outStride] = (double)0.0;
                } else {
                   outReal[outIdx++ * outStride] = diffP / tempReal;
@@ -1414,7 +1425,14 @@ public partial class Core
          /* Now start to write the output in
           * the caller provided outReal.
           */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         /* prevTR is a running sum of true ranges: non-negative by construction and
+          * built only by adding, so it carries no cancellation residue and reaches
+          * zero only for a window whose every range is exactly zero. Test it exactly.
+          * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+          * to be compared against was a constant in some arbitrary unit, and zeroed
+          * the index for any instrument quoted below it (issue #253).
+          */
+         if( prevTR > 0.0 ) {
             outReal[0 * outStride] = (100.0 * (prevPlusDM / prevTR));
          } else {
             outReal[0 * outStride] = 0.0;
@@ -1454,7 +1472,7 @@ public partial class Core
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
-            if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+            if( prevTR > 0.0 ) {
                outReal[outIdx++ * outStride] = (100.0 * (prevPlusDM / prevTR));
             } else {
                outReal[outIdx++ * outStride] = 0.0;

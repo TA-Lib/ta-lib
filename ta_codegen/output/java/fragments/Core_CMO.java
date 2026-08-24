@@ -4,6 +4,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  BT       Barry Tsung
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -11,6 +12,9 @@
  *  -------------------------------------------------------------------
  *  112605 MF      Initial version.
  *  021806 MF,BT   Fix #1434450 reported by BT.
+ *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
+ *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
+ *                 instrument quoted small enough to fall under it.
  */
 
    /**
@@ -160,7 +164,7 @@
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -202,7 +206,7 @@
          prevLoss /= optInTimePeriod;
          prevGain /= optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -284,7 +288,7 @@
       prevGain /= optInTimePeriod;
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -320,7 +324,7 @@
          prevLoss /= optInTimePeriod;
          prevGain /= optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++] = 0.0;
@@ -619,7 +623,7 @@
       sp.prevLoss /= sp.optInTimePeriod;
       sp.prevGain /= sp.optInTimePeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
-      if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+      if( tempValue1 > 0.0 ) {
          sp.cur_outReal = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
       } else {
          sp.cur_outReal = 0.0;
@@ -751,7 +755,7 @@
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -793,7 +797,7 @@
          prevLoss /= optInTimePeriod;
          prevGain /= optInTimePeriod;
          tempValue1 = prevGain + prevLoss;
-         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         if( tempValue1 > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else {
             outReal[outIdx++ * outStride] = 0.0;

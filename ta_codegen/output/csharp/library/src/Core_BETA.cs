@@ -62,6 +62,9 @@ public partial class Core
     *               + reseed) and a scale-relative denominator test.
     *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3,
     *               on BOTH axes -- the output reads S_xy and S_y too.
+    *  082326 MF,CC Fix #253. Test the base price of a return exactly instead of
+    *               against the fixed TA_IS_ZERO band, which collapsed beta to
+    *               zero for any instrument quoted small enough to fall under it.
     */
    /// <summary>
    /// Number of leading input bars <c>BETA</c> consumes before it can produce
@@ -226,22 +229,28 @@ public partial class Core
        * afford before the sums exist.
        */
       i = ++trailingIdx;
-      if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+      /* A return needs a non-zero base price and nothing more: the test is exact,
+       * not the fixed TA_IS_ZERO band it used to be. A price carries the quote
+       * unit, so that band declared every bar of a small-quoted instrument
+       * "no previous price", left every return at -shift, and collapsed beta to
+       * zero (issue #253).
+       */
+      if( last_price_x != 0.0 ) {
          shift_x = (inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+      if( last_price_y != 0.0 ) {
          shift_y = (inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx ) {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -259,14 +268,14 @@ public partial class Core
       barsSinceReseed = 32 * optInTimePeriod;
       do {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -340,11 +349,11 @@ public partial class Core
             tmp_real = 0.0;
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   tmp_real += (inReal0[j] - prev_x) / prev_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   shift_y += (inReal1[j] - prev_y) / prev_y;
                }
                prev_y = inReal1[j];
@@ -359,13 +368,13 @@ public partial class Core
             S_x = 0.0;
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
                   x = 0 - shift_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
                   y = 0 - shift_y;
@@ -395,7 +404,7 @@ public partial class Core
           * buffer can be the same.
           */
          tmp_real = inReal0[trailingIdx];
-         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+         if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
@@ -403,7 +412,7 @@ public partial class Core
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+         if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -520,22 +529,22 @@ public partial class Core
       trailing_last_price_y = (double)inReal1[trailingIdx];
       last_price_y = trailing_last_price_y;
       i = ++trailingIdx;
-      if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+      if( last_price_x != 0.0 ) {
          shift_x = ((double)inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+      if( last_price_y != 0.0 ) {
          shift_y = ((double)inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx ) {
          tmp_real = (double)inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = (double)inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -552,14 +561,14 @@ public partial class Core
       barsSinceReseed = 32 * optInTimePeriod;
       do {
          tmp_real = (double)inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = (double)inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -581,11 +590,11 @@ public partial class Core
             tmp_real = 0.0;
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   tmp_real += ((double)inReal0[j] - prev_x) / prev_x;
                }
                prev_x = (double)inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   shift_y += ((double)inReal1[j] - prev_y) / prev_y;
                }
                prev_y = (double)inReal1[j];
@@ -600,13 +609,13 @@ public partial class Core
             S_x = 0.0;
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   x = ((double)inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
                   x = 0 - shift_x;
                }
                prev_x = (double)inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   y = ((double)inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
                   y = 0 - shift_y;
@@ -625,7 +634,7 @@ public partial class Core
             }
          }
          tmp_real = (double)inReal0[trailingIdx];
-         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+         if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
@@ -633,7 +642,7 @@ public partial class Core
          trailing_last_price_x = tmp_real;
          tmp_real = (double)inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+         if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -1029,14 +1038,14 @@ public partial class Core
       sp.x_inReal0[sp.i & sp.xMask] = inReal0;
       sp.x_inReal1[sp.i & sp.xMask] = inReal1;
       tmp_real = sp.x_inReal0[sp.i & sp.xMask];
-      if( !((-0.00000000000001 < sp.last_price_x) && (sp.last_price_x < 0.00000000000001)) ) {
+      if( sp.last_price_x != 0.0 ) {
          x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
       } else {
          x = 0 - sp.shift_x;
       }
       sp.last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.i++ & sp.xMask];
-      if( !((-0.00000000000001 < sp.last_price_y) && (sp.last_price_y < 0.00000000000001)) ) {
+      if( sp.last_price_y != 0.0 ) {
          y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
       } else {
          y = 0 - sp.shift_y;
@@ -1110,11 +1119,11 @@ public partial class Core
          tmp_real = 0.0;
          sp.shift_y = 0.0;
          for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+            if( prev_x != 0.0 ) {
                tmp_real += (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x;
             }
             prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+            if( prev_y != 0.0 ) {
                sp.shift_y += (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y;
             }
             prev_y = sp.x_inReal1[sp.j & sp.xMask];
@@ -1129,13 +1138,13 @@ public partial class Core
          sp.S_x = 0.0;
          sp.S_y = 0.0;
          for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+            if( prev_x != 0.0 ) {
                x = (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x - sp.shift_x;
             } else {
                x = 0 - sp.shift_x;
             }
             prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+            if( prev_y != 0.0 ) {
                y = (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y - sp.shift_y;
             } else {
                y = 0 - sp.shift_y;
@@ -1165,7 +1174,7 @@ public partial class Core
        * buffer can be the same.
        */
       tmp_real = sp.x_inReal0[sp.trailingIdx & sp.xMask];
-      if( !((-0.00000000000001 < sp.trailing_last_price_x) && (sp.trailing_last_price_x < 0.00000000000001)) ) {
+      if( sp.trailing_last_price_x != 0.0 ) {
          x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
       } else {
          x = 0 - sp.shift_x;
@@ -1173,7 +1182,7 @@ public partial class Core
       sp.trailing_last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.trailingIdx & sp.xMask];
       sp.trailingIdx += 1;
-      if( !((-0.00000000000001 < sp.trailing_last_price_y) && (sp.trailing_last_price_y < 0.00000000000001)) ) {
+      if( sp.trailing_last_price_y != 0.0 ) {
          y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
       } else {
          y = 0 - sp.shift_y;
@@ -1340,22 +1349,28 @@ public partial class Core
        * afford before the sums exist.
        */
       i = ++trailingIdx;
-      if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+      /* A return needs a non-zero base price and nothing more: the test is exact,
+       * not the fixed TA_IS_ZERO band it used to be. A price carries the quote
+       * unit, so that band declared every bar of a small-quoted instrument
+       * "no previous price", left every return at -shift, and collapsed beta to
+       * zero (issue #253).
+       */
+      if( last_price_x != 0.0 ) {
          shift_x = (inReal0[i] - last_price_x) / last_price_x;
       }
-      if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+      if( last_price_y != 0.0 ) {
          shift_y = (inReal1[i] - last_price_y) / last_price_y;
       }
       while( i < startIdx ) {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -1373,14 +1388,14 @@ public partial class Core
       barsSinceReseed = 32 * optInTimePeriod;
       do {
          tmp_real = inReal0[i];
-         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+         if( last_price_x != 0.0 ) {
             x = (tmp_real - last_price_x) / last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
          }
          last_price_x = tmp_real;
          tmp_real = inReal1[i++];
-         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+         if( last_price_y != 0.0 ) {
             y = (tmp_real - last_price_y) / last_price_y - shift_y;
          } else {
             y = 0 - shift_y;
@@ -1454,11 +1469,11 @@ public partial class Core
             tmp_real = 0.0;
             shift_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   tmp_real += (inReal0[j] - prev_x) / prev_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   shift_y += (inReal1[j] - prev_y) / prev_y;
                }
                prev_y = inReal1[j];
@@ -1473,13 +1488,13 @@ public partial class Core
             S_x = 0.0;
             S_y = 0.0;
             for( j = windowStart; j < i; j += 1 ) {
-               if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               if( prev_x != 0.0 ) {
                   x = (inReal0[j] - prev_x) / prev_x - shift_x;
                } else {
                   x = 0 - shift_x;
                }
                prev_x = inReal0[j];
-               if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               if( prev_y != 0.0 ) {
                   y = (inReal1[j] - prev_y) / prev_y - shift_y;
                } else {
                   y = 0 - shift_y;
@@ -1509,7 +1524,7 @@ public partial class Core
           * buffer can be the same.
           */
          tmp_real = inReal0[trailingIdx];
-         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+         if( trailing_last_price_x != 0.0 ) {
             x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
          } else {
             x = 0 - shift_x;
@@ -1517,7 +1532,7 @@ public partial class Core
          trailing_last_price_x = tmp_real;
          tmp_real = inReal1[trailingIdx];
          trailingIdx += 1;
-         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+         if( trailing_last_price_y != 0.0 ) {
             y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
          } else {
             y = 0 - shift_y;

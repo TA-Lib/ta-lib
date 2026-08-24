@@ -49,15 +49,19 @@ public partial class Core
     *  MF       Mario Fortier
     *  AM       Adrian Michel
     *  MIF      Mirek Fontan (mira@fontan.cz)
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY    Description
     *  -------------------------------------------------------------------
-    *  010802 MF   Template creation.
-    *  052603 MF   Adapt code to compile with .NET Managed C++
-    *  082303 MF   Fix #792298. Remove rounding. Bug reported by AM.
-    *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
+    *  010802 MF    Template creation.
+    *  052603 MF    Adapt code to compile with .NET Managed C++
+    *  082303 MF    Fix #792298. Remove rounding. Bug reported by AM.
+    *  062704 MF    Fix #965557. Div by zero bug reported by MIF.
+    *  082326 MF,CC Fix #253. Test the true-range sum exactly instead of against
+    *               the fixed TA_IS_ZERO band, which zeroed the index for any
+    *               instrument quoted small enough to fall under it.
     */
    /// <summary>
    /// Number of leading input bars <c>DX</c> consumes before it can produce its
@@ -332,8 +336,18 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
       }
-      /* Write the first DX output */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* Write the first DX output.
+       *
+       * prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253). The DI legs it
+       * feeds are ratios -- dimensionless -- so the fixed band on THEIR sum is
+       * scale-invariant and stays.
+       */
+      if( prevTR > 0.0 ) {
          minusDI = (100.0 * (prevMinusDM / prevTR));
          plusDI = (100.0 * (prevPlusDM / prevTR));
          tempReal = minusDI + plusDI;
@@ -382,7 +396,7 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             /* This loop is just to accumulate the initial DX */
@@ -522,7 +536,7 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
       }
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      if( prevTR > 0.0 ) {
          minusDI = (100.0 * (prevMinusDM / prevTR));
          plusDI = (100.0 * (prevPlusDM / prevTR));
          tempReal = minusDI + plusDI;
@@ -564,7 +578,7 @@ public partial class Core
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = (double)inClose[today];
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             tempReal = minusDI + plusDI;
@@ -932,7 +946,7 @@ public partial class Core
       sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       /* Calculate the DX. The value is rounded (see Wilder book). */
-      if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+      if( sp.prevTR > 0.0 ) {
          minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
          plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
          /* This loop is just to accumulate the initial DX */
@@ -1187,8 +1201,18 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
       }
-      /* Write the first DX output */
-      if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+      /* Write the first DX output.
+       *
+       * prevTR is a running sum of true ranges: non-negative by construction and
+       * built only by adding, so it carries no cancellation residue and reaches
+       * zero only for a window whose every range is exactly zero. Test it exactly.
+       * A true range carries the quote unit, so the fixed TA_IS_ZERO band it used
+       * to be compared against was a constant in some arbitrary unit, and zeroed
+       * the index for any instrument quoted below it (issue #253). The DI legs it
+       * feeds are ratios -- dimensionless -- so the fixed band on THEIR sum is
+       * scale-invariant and stays.
+       */
+      if( prevTR > 0.0 ) {
          minusDI = (100.0 * (prevMinusDM / prevTR));
          plusDI = (100.0 * (prevPlusDM / prevTR));
          tempReal = minusDI + plusDI;
@@ -1237,7 +1261,7 @@ public partial class Core
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
-         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+         if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
             plusDI = (100.0 * (prevPlusDM / prevTR));
             /* This loop is just to accumulate the initial DX */

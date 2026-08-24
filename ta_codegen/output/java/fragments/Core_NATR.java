@@ -14,6 +14,9 @@
  *                from the wrong bar (TR-buffer-relative index).
  *  070626 MF,CC  Speed optimization: True Range computed inline in a
  *                single pass (bit-exact, no temporary buffer).
+ *  082326 MF,CC  Fix #253. Test the close exactly instead of against the fixed
+ *                TA_IS_ZERO band, which zeroed the output for any instrument
+ *                quoted small enough to fall under it.
  */
 
    /**
@@ -211,8 +214,13 @@
          /* No smoothing: emit the raw True Range (unnormalized). */
          outReal[0] = prevATR;
       } else {
+         /* NATR is the ATR as a percentage of the close, so it is scale-free and
+          * the divisor only has to be non-zero. An exact test, not the fixed
+          * TA_IS_ZERO band it used to be: a close carries the quote unit, and that
+          * band zeroed the whole output for any instrument quoted below it (#253).
+          */
          tempValue = inClose[startIdx];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             outReal[0] = prevATR / tempValue * 100.0;
          } else {
             outReal[0] = 0.0;
@@ -243,7 +251,7 @@
             outReal[outIdx] = prevATR;
          } else {
             tempValue = inClose[today];
-            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            if( tempValue != 0.0 ) {
                outReal[outIdx] = prevATR / tempValue * 100.0;
             } else {
                outReal[outIdx] = 0.0;
@@ -345,7 +353,7 @@
          outReal[0] = prevATR;
       } else {
          tempValue = (double)inClose[startIdx];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             outReal[0] = prevATR / tempValue * 100.0;
          } else {
             outReal[0] = 0.0;
@@ -372,7 +380,7 @@
             outReal[outIdx] = prevATR;
          } else {
             tempValue = (double)inClose[today];
-            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            if( tempValue != 0.0 ) {
                outReal[outIdx] = prevATR / tempValue * 100.0;
             } else {
                outReal[outIdx] = 0.0;
@@ -693,7 +701,7 @@
          sp.cur_outReal = sp.prevATR;
       } else {
          tempValue = inClose;
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             sp.cur_outReal = sp.prevATR / tempValue * 100.0;
          } else {
             sp.cur_outReal = 0.0;
@@ -863,8 +871,13 @@
          /* No smoothing: emit the raw True Range (unnormalized). */
          outReal[0 * outStride] = prevATR;
       } else {
+         /* NATR is the ATR as a percentage of the close, so it is scale-free and
+          * the divisor only has to be non-zero. An exact test, not the fixed
+          * TA_IS_ZERO band it used to be: a close carries the quote unit, and that
+          * band zeroed the whole output for any instrument quoted below it (#253).
+          */
          tempValue = inClose[startIdx];
-         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+         if( tempValue != 0.0 ) {
             outReal[0 * outStride] = prevATR / tempValue * 100.0;
          } else {
             outReal[0 * outStride] = 0.0;
@@ -895,7 +908,7 @@
             outReal[outIdx * outStride] = prevATR;
          } else {
             tempValue = inClose[today];
-            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            if( tempValue != 0.0 ) {
                outReal[outIdx * outStride] = prevATR / tempValue * 100.0;
             } else {
                outReal[outIdx * outStride] = 0.0;
