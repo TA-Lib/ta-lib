@@ -135,7 +135,7 @@ STREAM_WRITE = re.compile(
 # The #229 folded form: BOTH terms read one derived ring -- the add
 # cursor-relative, the subtract through the runtime lag.
 STREAM_FOLD = re.compile(
-    r"sp->(\w*PeriodTotal\d?)\[sp->(\w+)\]\s*=\s*sp->\1\[sp->\2\]\s*\+\s*\(\s*"
+    r"sp->(\w*PeriodTotal\d?)\[(?:sp->)?(\w+)\]\s*=\s*sp->\1\[(?:sp->)?\2\]\s*\+\s*\(\s*"
     r"sp->ring_(\w+)_derived\[([^\]]*)\]\s*-\s*sp->ring_(\w+)_derived\[([^\]]*)\]\s*\)")
 
 
