@@ -75,6 +75,30 @@ function, not that the two are the same code path; and layout alone moves these
 ratios further than the old ±10% colour band allowed, which is why the band is
 now 1.20x and spread-gated.
 
+### A/B of one change has a trap the table above does not show
+
+The three `-flto` rows are **single-TU** builds — `ta_bench_stream.c` alone
+`#include`s 181 `.c` files — so `-flto` there is nearly a no-op and the
+compiler re-decides inlining for every function on every build. In an A/B those
+decisions can differ **between the arms**. On #252 `TA_ATR_Update` was outlined
+in one arm and inlined in the other, and `ta_bench_stream` reported +16% for a
+function that is unchanged in the shipped build. Two defences:
+
+- **Carry a control function** whose generated code is byte-identical across
+  the arms, and believe nothing smaller than its excursion. RSI once read −55%
+  on identical emitted C; 107 unchanged functions put that run's real floor at
+  ±15%.
+- **When the mechanism is memory traffic or aliasing, measure the shipped
+  build.** A throwaway harness linking `libta-lib.a`, one function per process,
+  min of N, read ±3% on the same change. That is an ad-hoc check, not a seventh
+  instrument — do not add it to `bin/`.
+
+**Is it worth optimizing at all?** The non-inlined call floor — a separate-TU
+function that does nothing but write `*out` — is **1.06 ns**. That is ~30% of
+SMA's 3.5 ns `Update`, ~15% of MFI's 6.9 ns, and ~1.5% of HT_TRENDLINE's 69 ns.
+A saving well under that floor on a cheap function is one no caller can
+observe.
+
 ## Streaming vs batch
 
 `ta_bench_stream` answers the question streaming has to justify itself on: is
