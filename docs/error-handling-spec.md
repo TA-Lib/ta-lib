@@ -124,7 +124,7 @@ the whole corpus, on every test run.
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | L1 | An optional parameter is outside its documented domain | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
-| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B4 | the lookback rejection signal | ✅ | | | |
+| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B4, or the streaming opener (`Open`/`OpenAndFill`) would reject them under S5 | the lookback rejection signal | ✅ [28] | | | |
 | L3 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
 
 **Rejection Signal**
@@ -135,11 +135,18 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 lookback before it trusts the call, so a lookback that answers a plausible number
 for parameters the call then rejects is a lie a wrapper cannot detect — and the
 reverse, a rejection for parameters the call actually accepts, denies a usable
-call. The two tiers derive the domain separately, which is exactly what lets them
-drift. Asserted for C on every optional parameter of every function by the
-boundary sweep (`ta_test_func/test_period_boundary.c`, group
-`PERIOD1/BOUNDARY`), which counts the swept cases and asserts the count; not
-yet probed in the other three.
+call. The tiers derive the domain separately, which is exactly what lets them
+drift — and B4 and S5 are two separate derivations of it too, not one shared by
+construction, so a lookback that agrees with the batch tier is not thereby known
+to agree with the streaming opener.
+
+[28] Only the B4 half is asserted, and only for C: the boundary sweep
+(`ta_test_func/test_period_boundary.c`, group `PERIOD1/BOUNDARY`) compares the
+lookback tier's decision against the batch call (`TA_CallFunc`) for every
+optional parameter of every function, counting the swept cases. Nothing
+compares it against `_Open`/`OpenAndFill` (S5), in any backend — the sweep has
+no streaming leg at all. Issue #256 covers closing both halves, across all
+four backends.
 
 ### 2.2 Batch tier
 
