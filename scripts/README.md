@@ -29,7 +29,7 @@ Everything else CI gates on lives in `ta_regtest` (C) or is a step inside
 
 | Script | When |
 |---|---|
-| `sync.py` | Before every commit — refreshes versions and `TA_LIB_SOURCES_DIGEST`, and merges remote dev/main into local dev |
+| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions + `TA_LIB_SOURCES_DIGEST`. Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
 | `merge.py` | Merge dev into main (maintainers) |
 | `package.py` | Build this platform's `dist/` assets. Run by both nightlies |
 | `test-dist.py` | Verify those assets as a user would, including a ta-lib-python build. Run by both nightlies |

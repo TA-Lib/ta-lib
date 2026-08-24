@@ -10,6 +10,20 @@ Before committing, run ```scripts/sync.py``` to:
  - Ensure your local dev branch is up-to-date with both remote dev and main branches.
  - Do various check and fixes on your code (e.g. update "x.y.z" versioning in various files).
 
+It is safe to run from anywhere, including a `git worktree`. Those two bullets are
+independent halves, and the first one needs to check out dev and main — which git
+refuses when another worktree already holds them, the normal state when dev lives
+in the main checkout and feature work happens in worktrees beside it. Rather than
+fail, the script detects that (and a detached HEAD) and does the second half only,
+printing which case it hit. That is the half a feature branch wants anyway: the
+first updates dev, not the branch you are on.
+
+If it skipped the merge, your local dev is untouched — update it from its own
+checkout when you need to. And a source digest that lags is not a problem to chase:
+dev-nightly regenerates and commits it together with the dist assets, and
+`merge.py` refuses dev→main while the two disagree. Running `sync.py` first only
+saves that round trip.
+
 Merge to main branch are done with ```scripts/merge.py``` by TA-Lib maintainers with the proper permissions.
 
 ## How to update the "./configure" script
