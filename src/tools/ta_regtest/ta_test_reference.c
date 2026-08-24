@@ -444,9 +444,13 @@ double ta_test_ref_corr( const double *x, const double *y, int s, int period )
 
    if( sxx.hi <= 0.0 || syy.hi <= 0.0 ) return 0.0;
 
-   /* sqrt(sxx)*sqrt(syy), not sqrt(sxx*syy): the product overflows past ~1e154
-    * and the extreme-range dataset is deliberately near this library's declared
-    * input bound. Two roots cost more and cannot overflow. */
+   /* sqrt(sxx)*sqrt(syy), not sqrt(sxx*syy). The product form overflows once
+    * sxx*syy passes ~1.8e308, and NO IN-DOMAIN INPUT REACHES THAT: at the
+    * declared bound of 3e37 and the largest period this library accepts, sxx
+    * tops out near 9e89, so the product has ~128 decades of headroom. Two roots
+    * are kept anyway because they cost one extra sqrt in a test oracle and
+    * remove the question -- not because the extreme-range dataset is close to
+    * the edge. It is not. */
    r = dd_div( sxy, dd_mul( dd_sqrt( sxx ), dd_sqrt( syy ) ) ).hi;
    if( r >  1.0 ) r =  1.0;
    if( r < -1.0 ) r = -1.0;
@@ -619,9 +623,10 @@ int ta_test_ref_numacc( int which, double *buf )
       return 3;
    }
 
-   /* 500 x (base+1.1), 500 x (base+1.3), 1 x (base+1.2). The order is the
-    * caller's business only for an autocorrelation, which NIST does not
-    * certify; the variance is a property of the multiset. */
+   /* Emitted as base+1.2 first, then 500 alternating pairs of base+1.1 and
+    * base+1.3 -- NIST describes the same multiset in a different order, which
+    * changes nothing here: order matters only for an autocorrelation, which
+    * NIST does not certify, and the variance is a property of the multiset. */
    idx = 0;
    buf[idx++] = base + 1.2;
    while( idx < 1001 ) { buf[idx++] = base + 1.1; buf[idx++] = base + 1.3; }

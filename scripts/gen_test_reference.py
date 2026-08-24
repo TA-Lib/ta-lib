@@ -16,9 +16,11 @@ Two reasons, and the second is the stronger one.
    stayed green because both arms had moved together. The values below are
    computed in EXACT RATIONAL ARITHMETIC, in a different language, by a
    different person's library: `fractions.Fraction` over the exact binary
-   values of the inputs, so the sums and products carry no error at all, and a
-   50-digit `decimal` for the one square root a correlation needs. There is no
-   shared code with TA-Lib to be co-wrong with.
+   values of the inputs, so the sums and products carry no error at all. Only
+   the square roots leave that arithmetic -- the sigma tables, the correlations
+   and NORRIS_R -- and they take one correctly-rounded 50-digit `decimal` root
+   of an exactly-known rational, not a chain of roundings. There is no shared
+   code with TA-Lib to be co-wrong with.
 
 2. `long double` is not portable: 64 mantissa bits on x86 Linux, 53 on MSVC,
    113 on AArch64. Every pin measured on Linux was therefore weaker on Windows.

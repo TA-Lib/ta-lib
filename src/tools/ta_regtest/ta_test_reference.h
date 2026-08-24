@@ -49,6 +49,15 @@
  * fine. Nothing in this suite feeds it such a window today; if you point a new
  * sweep at pd_extreme, referee it against a BAKED golden, not against these.
  *
+ * The same form has a floor at the other end: the deviations are formed as
+ * n*x - sum(x) and then SQUARED, so for values below ~1e-162 the square
+ * underflows and every oracle here returns 0.0 -- a variance, a sigma and a
+ * correlation alike. Measured: 1e-160 still works (var 1.98e-322, already
+ * denormal), 1e-170 does not. Such values are inside this library's declared
+ * input range, so this is a real limit and not a theoretical one; it is left as
+ * a documented floor rather than fixed by rescaling, because no dataset here
+ * goes near it (the smallest, pandas GH#52407, bottoms out at 1.4e-73).
+ *
  * All of them take a window as (array, startOffset, period) and use the
  * POPULATION convention (divide by n), matching TA_VAR / TA_STDDEV / TA_CORREL.
  * -------------------------------------------------------------------------*/
