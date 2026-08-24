@@ -667,13 +667,27 @@ runs `ta_regtest.exe` under **MSVC** on the Windows nightly, against a different
 CRT, for **both** `x86_64` and `x86_32`.
 
 The two questions that raises both come out benign, and are worth recording so
-nobody re-derives them: the 32-bit arm does **not** reintroduce x87 80-bit
-intermediates (MSVC has defaulted x86 to `/arch:SSE2` since VS2012, so doubles
-are SSE2 scalar and round to 53 bits like everywhere else), and MSVC being
+nobody re-derives them: **MSVC's** 32-bit arm does **not** reintroduce x87
+80-bit intermediates (MSVC has defaulted x86 to `/arch:SSE2` since VS2012, so
+doubles are SSE2 scalar and round to 53 bits like everywhere else), and MSVC being
 outside the `if(NOT MSVC) add_compile_options(-ffp-contract=off)` guard is
 harmless (no `/arch:AVX2`, so there is no FMA instruction for it to contract
 into). What is left is purely the CRT's transcendentals. Their cross-implementation coverage is `--xlang-hash`, which carries a
 transcendental tolerance lane for exactly this reason.
+
+**The GCC i386 lane is the one that IS excess-precision, and no bit-exactness
+claim covers it.** `cmake/toolchain-linux-i386.cmake` builds the shipped
+`ta-lib_<v>_i386.deb` with `i686-linux-gnu-gcc`, which sets no `-mfpmath` and
+therefore defaults to `387`; `CMAKE_C_STANDARD 11` with `C_EXTENSIONS` at its
+ON default means `-std=gnu11`, i.e. `-fexcess-precision=fast`. Under
+`FLT_EVAL_METHOD==2` an intermediate kept in a register carries 64 mantissa
+bits while one round-tripped through a `double` in memory does not, so *any*
+difference in where a value lives changes results — every batch body already
+uses local accumulators, so batch and stream diverge on that platform
+independently of anything the generator does. Nothing executes the artifact
+either: `scripts/test-dist.py` is 64-bit only and `scripts/package.py` stubs
+its dist-test pass. Treat i386 as an unmodelled target: the bit-exact
+invariants in this file are stated for `FLT_EVAL_METHOD==0`.
 
 Two functions still reach `atan` and stay in: MAMA (damped adaptive alpha) and
 LINEARREG_ANGLE (atan is the terminal operation). Both are smooth in it, MAMA

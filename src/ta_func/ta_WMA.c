@@ -323,10 +323,14 @@ static void TA_WMA_ReleaseImpl( struct TA_WMA_Stream *sp )
 static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
+   double periodSum = sp->periodSum;
+   double periodSub = sp->periodSub;
 
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
+      sp->periodSum = periodSum;
+      sp->periodSub = periodSub;
       return;
    }
    if( sp->ringCap_trailingIdx == 0 )
@@ -337,9 +341,9 @@ static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *ou
     * who are carried through the iterations.
     */
    tempReal = inReal;
-   sp->periodSub += tempReal;
-   sp->periodSub -= sp->trailingValue;
-   sp->periodSum += tempReal * sp->optInTimePeriod;
+   periodSub += tempReal;
+   periodSub -= sp->trailingValue;
+   periodSum += tempReal * sp->optInTimePeriod;
    /* Save the trailing value for being substract at
     * the next iteration.
     * (must be saved here just in case outReal and
@@ -347,15 +351,17 @@ static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *ou
     */
    sp->trailingValue = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    /* Calculate the WMA for this price bar. */
-   *outReal= sp->periodSum / sp->divider;
+   *outReal= periodSum / sp->divider;
    /* Prepare the periodSum for the next iteration. */
-   sp->periodSum -= sp->periodSub;
+   periodSum -= periodSub;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
    {
       sp->ringPos_trailingIdx = 0;
    }
+   sp->periodSum = periodSum;
+   sp->periodSub = periodSub;
 }
 
 static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

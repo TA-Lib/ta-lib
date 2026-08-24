@@ -791,61 +791,64 @@ static void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, double inHigh, doub
 {
    double prevHigh;
    double prevLow;
+   double newHigh = sp->newHigh;
+   double newLow = sp->newLow;
+   double sar = sp->sar;
 
-   prevLow = sp->newLow;
-   prevHigh = sp->newHigh;
-   sp->newLow = inLow;
-   sp->newHigh = inHigh;
+   prevLow = newLow;
+   prevHigh = newHigh;
+   newLow = inLow;
+   newHigh = inHigh;
    if( sp->isLong == 1 )
    {
       /* Switch to short if the low penetrates the SAR value. */
-      if( sp->newLow <= sp->sar )
+      if( newLow <= sar )
       {
          /* Switch and Overide the SAR with the ep */
          sp->isLong = 0;
-         sp->sar = sp->ep;
+         sar = sp->ep;
          /* Make sure the overide SAR is within
           * yesterday's and today's range.
           */
-         if( sp->sar < prevHigh )
+         if( sar < prevHigh )
          {
-            sp->sar = prevHigh;
+            sar = prevHigh;
          }
-         if( sp->sar < sp->newHigh )
+         if( sar < newHigh )
          {
-            sp->sar = sp->newHigh;
+            sar = newHigh;
          }
          /* Output the overide SAR */
          if( sp->optInOffsetOnReverse != 0.0 )
          {
-            sp->sar += sp->sar * sp->optInOffsetOnReverse;
+            sar += sar * sp->optInOffsetOnReverse;
          }
-         *outReal= 0 - sp->sar;
+         *outReal= 0 - sar;
          /* Adjust afShort and ep */
          sp->afShort = sp->optInAccelerationInitShort;
-         sp->ep = sp->newLow;
+         sp->ep = newLow;
          /* Calculate the new SAR */
-         sp->sar = fma(sp->afShort, sp->ep - sp->sar, sp->sar);
+         sar = fma(sp->afShort, sp->ep - sar, sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
-         if( sp->sar < prevHigh )
+         if( sar < prevHigh )
          {
-            sp->sar = prevHigh;
+            sar = prevHigh;
          }
-         if( sp->sar < sp->newHigh )
+         if( sar < newHigh )
          {
-            sp->sar = sp->newHigh;
+            sar = newHigh;
          }
       } else 
       {
          /* No switch */
          /* Output the SAR (was calculated in the previous iteration) */
-         *outReal= sp->sar;
+         *outReal= sar;
          /* Adjust afLong and ep. */
-         if( sp->newHigh > sp->ep )
+         if( newHigh > sp->ep )
          {
-            sp->ep = sp->newHigh;
+            sp->ep = newHigh;
             sp->afLong += sp->optInAccelerationLong;
             if( sp->afLong > sp->optInAccelerationMaxLong )
             {
@@ -853,67 +856,67 @@ static void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, double inHigh, doub
             }
          }
          /* Calculate the new SAR */
-         sp->sar = fma(sp->afLong, sp->ep - sp->sar, sp->sar);
+         sar = fma(sp->afLong, sp->ep - sar, sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
-         if( sp->sar > prevLow )
+         if( sar > prevLow )
          {
-            sp->sar = prevLow;
+            sar = prevLow;
          }
-         if( sp->sar > sp->newLow )
+         if( sar > newLow )
          {
-            sp->sar = sp->newLow;
+            sar = newLow;
          }
       }
    /* Switch to long if the high penetrates the SAR value. */
-   } else if( sp->newHigh >= sp->sar )
+   } else if( newHigh >= sar )
    {
       /* Switch and Overide the SAR with the ep */
       sp->isLong = 1;
-      sp->sar = sp->ep;
+      sar = sp->ep;
       /* Make sure the overide SAR is within
        * yesterday's and today's range.
        */
-      if( sp->sar > prevLow )
+      if( sar > prevLow )
       {
-         sp->sar = prevLow;
+         sar = prevLow;
       }
-      if( sp->sar > sp->newLow )
+      if( sar > newLow )
       {
-         sp->sar = sp->newLow;
+         sar = newLow;
       }
       /* Output the overide SAR */
       if( sp->optInOffsetOnReverse != 0.0 )
       {
-         sp->sar -= sp->sar * sp->optInOffsetOnReverse;
+         sar -= sar * sp->optInOffsetOnReverse;
       }
-      *outReal= sp->sar;
+      *outReal= sar;
       /* Adjust afLong and ep */
       sp->afLong = sp->optInAccelerationInitLong;
-      sp->ep = sp->newHigh;
+      sp->ep = newHigh;
       /* Calculate the new SAR */
-      sp->sar = fma(sp->afLong, sp->ep - sp->sar, sp->sar);
+      sar = fma(sp->afLong, sp->ep - sar, sar);
       /* Make sure the new SAR is within
        * yesterday's and today's range.
        */
-      if( sp->sar > prevLow )
+      if( sar > prevLow )
       {
-         sp->sar = prevLow;
+         sar = prevLow;
       }
-      if( sp->sar > sp->newLow )
+      if( sar > newLow )
       {
-         sp->sar = sp->newLow;
+         sar = newLow;
       }
    } else 
    {
       /* No switch */
       /* Output the SAR (was calculated in the previous iteration) */
-      *outReal= 0 - sp->sar;
+      *outReal= 0 - sar;
       /* Adjust afShort and ep. */
-      if( sp->newLow < sp->ep )
+      if( newLow < sp->ep )
       {
-         sp->ep = sp->newLow;
+         sp->ep = newLow;
          sp->afShort += sp->optInAccelerationShort;
          if( sp->afShort > sp->optInAccelerationMaxShort )
          {
@@ -921,19 +924,22 @@ static void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, double inHigh, doub
          }
       }
       /* Calculate the new SAR */
-      sp->sar = fma(sp->afShort, sp->ep - sp->sar, sp->sar);
+      sar = fma(sp->afShort, sp->ep - sar, sar);
       /* Make sure the new SAR is within
        * yesterday's and today's range.
        */
-      if( sp->sar < prevHigh )
+      if( sar < prevHigh )
       {
-         sp->sar = prevHigh;
+         sar = prevHigh;
       }
-      if( sp->sar < sp->newHigh )
+      if( sar < newHigh )
       {
-         sp->sar = sp->newHigh;
+         sar = newHigh;
       }
    }
+   sp->newHigh = newHigh;
+   sp->newLow = newLow;
+   sp->sar = sar;
 }
 
 static TA_RetCode TA_SAREXT_OpenImpl( struct TA_SAREXT_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

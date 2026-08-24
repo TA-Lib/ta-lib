@@ -554,6 +554,7 @@ static void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *
 {
    double macdValue;
    double tempReal;
+   double prevSignal = sp->prevSignal;
 
    tempReal = inReal;
    sp->prevFast = fma(tempReal - sp->prevFast, sp->fastK, sp->prevFast);
@@ -561,14 +562,15 @@ static void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *
    macdValue = sp->prevFast - sp->prevSlow;
    if( sp->optInSignalPeriod == 1 )
    {
-      sp->prevSignal = macdValue;
+      prevSignal = macdValue;
    } else 
    {
-      sp->prevSignal = fma(macdValue - sp->prevSignal, sp->signalK, sp->prevSignal);
+      prevSignal = fma(macdValue - prevSignal, sp->signalK, prevSignal);
    }
    *outMACD= macdValue;
-   *outMACDSignal= sp->prevSignal;
-   *outMACDHist= macdValue - sp->prevSignal;
+   *outMACDSignal= prevSignal;
+   *outMACDHist= macdValue - prevSignal;
+   sp->prevSignal = prevSignal;
 }
 
 static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )

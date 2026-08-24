@@ -431,9 +431,11 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    double close;
    double tmp;
    double mfv;
+   double sumMFV = sp->sumMFV;
+   double sumVol = sp->sumVol;
 
-   sp->sumMFV -= sp->cb_mfv_flow[sp->mfv_Idx];
-   sp->sumVol -= sp->cb_mfv_volume[sp->mfv_Idx];
+   sumMFV -= sp->cb_mfv_flow[sp->mfv_Idx];
+   sumVol -= sp->cb_mfv_volume[sp->mfv_Idx];
    high = inHigh;
    low = inLow;
    close = inClose;
@@ -447,11 +449,11 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    }
    sp->cb_mfv_flow[sp->mfv_Idx] = mfv;
    sp->cb_mfv_volume[sp->mfv_Idx] = inVolume;
-   sp->sumMFV += mfv;
-   sp->sumVol += inVolume;
-   if( sp->sumVol > 0.0 )
+   sumMFV += mfv;
+   sumVol += inVolume;
+   if( sumVol > 0.0 )
    {
-      *outReal= sp->sumMFV / sp->sumVol;
+      *outReal= sumMFV / sumVol;
    } else 
    {
       *outReal= 0.0;
@@ -461,6 +463,8 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    {
       sp->mfv_Idx = 0;
    }
+   sp->sumMFV = sumMFV;
+   sp->sumVol = sumVol;
 }
 
 static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

@@ -955,6 +955,7 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
    double Q2;
    double I2;
    double todayValue;
+   double mama = sp->mama;
 
    if( sp->ringCap_trailingWMAIdx == 0 )
    {
@@ -1107,15 +1108,15 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
       tempReal = sp->optInFastLimit;
    }
    /* Calculate MAMA, FAMA */
-   sp->mama = fma(1 - tempReal, sp->mama, tempReal * todayValue);
+   mama = fma(1 - tempReal, mama, tempReal * todayValue);
    tempReal *= 0.5;
-   sp->fama = fma(1 - tempReal, sp->fama, tempReal * sp->mama);
+   sp->fama = fma(1 - tempReal, sp->fama, tempReal * mama);
    /* FAMA is nullable (issue #125): its write carries no outIdx advance so
     * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
     */
    if( outFAMA != NULL )
       *outFAMA= sp->fama;
-   *outMAMA= sp->mama;
+   *outMAMA= mama;
    /* Adjust the period for next price bar */
    sp->Re = fma(0.8, sp->Re, 0.2 * (fma(I2, sp->prevI2, Q2 * sp->prevQ2)));
    sp->Im = fma(0.8, sp->Im, 0.2 * (I2 * sp->prevQ2 - Q2 * sp->prevI2));
@@ -1152,6 +1153,7 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
       sp->ringPos_trailingWMAIdx = 0;
    }
    sp->streamParity = 1 - sp->streamParity;
+   sp->mama = mama;
 }
 
 static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )

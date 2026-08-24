@@ -569,6 +569,7 @@ static void TA_MINMAX_StepImpl( struct TA_MINMAX_Stream *sp, double inReal, doub
 {
    double tmpHigh;
    double tmpLow;
+   double lowest = sp->lowest;
 
    if( sp->today >= 1073741824 )
    {
@@ -605,27 +606,28 @@ static void TA_MINMAX_StepImpl( struct TA_MINMAX_Stream *sp, double inReal, doub
    if( sp->lowestIdx < sp->trailingIdx )
    {
       sp->lowestIdx = sp->trailingIdx;
-      sp->lowest = sp->x_inReal[sp->lowestIdx & sp->xMask];
+      lowest = sp->x_inReal[sp->lowestIdx & sp->xMask];
       sp->i = sp->lowestIdx;
       TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
          tmpLow = sp->x_inReal[sp->i & sp->xMask];
-         if( tmpLow < sp->lowest )
+         if( tmpLow < lowest )
          {
             sp->lowestIdx = sp->i;
-            sp->lowest = tmpLow;
+            lowest = tmpLow;
          }
       }
-   } else if( tmpLow <= sp->lowest )
+   } else if( tmpLow <= lowest )
    {
       sp->lowestIdx = sp->today;
-      sp->lowest = tmpLow;
+      lowest = tmpLow;
    }
    *outMax= sp->highest;
-   *outMin= sp->lowest;
+   *outMin= lowest;
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->lowest = lowest;
 }
 
 static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[], int outStride )

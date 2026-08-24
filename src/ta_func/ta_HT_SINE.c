@@ -997,6 +997,7 @@ static void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp, double inReal, do
    double DCPeriod;
    double imagPart;
    double realPart;
+   double DCPhase = sp->DCPhase;
 
    if( sp->ringCap_trailingWMAIdx == 0 )
    {
@@ -1172,30 +1173,30 @@ static void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp, double inReal, do
    tempReal = fabs(imagPart);
    if( tempReal > 0.0 )
    {
-      sp->DCPhase = atan(realPart / imagPart) * sp->rad2Deg;
+      DCPhase = atan(realPart / imagPart) * sp->rad2Deg;
    } else if( tempReal <= 0.01 )
    {
       if( realPart < 0.0 )
       {
-         sp->DCPhase -= 90.0;
+         DCPhase -= 90.0;
       } else if( realPart > 0.0 )
       {
-         sp->DCPhase += 90.0;
+         DCPhase += 90.0;
       }
    }
-   sp->DCPhase += 90.0;
+   DCPhase += 90.0;
    /* Compensate for one bar lag of the weighted moving average */
-   sp->DCPhase += 360.0 / sp->smoothPeriod;
+   DCPhase += 360.0 / sp->smoothPeriod;
    if( imagPart < 0.0 )
    {
-      sp->DCPhase += 180.0;
+      DCPhase += 180.0;
    }
-   if( sp->DCPhase > 315.0 )
+   if( DCPhase > 315.0 )
    {
-      sp->DCPhase -= 360.0;
+      DCPhase -= 360.0;
    }
-   *outSine= sin(sp->DCPhase * sp->deg2Rad);
-   *outLeadSine= sin((sp->DCPhase + 45) * sp->deg2Rad);
+   *outSine= sin(DCPhase * sp->deg2Rad);
+   *outLeadSine= sin((DCPhase + 45) * sp->deg2Rad);
    /* Ooof... let's do the next price bar now! */
    sp->smoothPrice_Idx = sp->smoothPrice_Idx + 1;
    if( sp->smoothPrice_Idx > sp->maxIdx_smoothPrice )
@@ -1209,6 +1210,7 @@ static void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp, double inReal, do
       sp->ringPos_trailingWMAIdx = 0;
    }
    sp->streamParity = 1 - sp->streamParity;
+   sp->DCPhase = DCPhase;
 }
 
 static TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[], int outStride )

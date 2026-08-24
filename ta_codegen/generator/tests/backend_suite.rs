@@ -7977,7 +7977,7 @@ fn test_c_mama_two_outputs_and_params() {
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
-    assert!(step.contains("*outMAMA= sp->mama;"), "MAMA line written unconditionally");
+    assert!(step.contains("*outMAMA= mama;"), "MAMA line written unconditionally");
     assert!(
         step.contains("if( outFAMA != NULL )") && step.contains("*outFAMA= sp->fama;"),
         "FAMA is nullable (#125): its write is NULL-guarded"

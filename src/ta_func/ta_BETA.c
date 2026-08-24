@@ -768,6 +768,11 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    int windowStart;
    double x;
    double y;
+   double S_xx = sp->S_xx;
+   double S_xy = sp->S_xy;
+   double S_x = sp->S_x;
+   double S_y = sp->S_y;
+   double S_yy = sp->S_yy;
 
    if( sp->i >= 1073741824 )
    {
@@ -796,13 +801,13 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
       y = 0 - sp->shift_y;
    }
    sp->last_price_y = tmp_real;
-   sp->S_xx += x * x;
-   sp->S_yy += y * y;
-   sp->S_xy += x * y;
-   sp->S_x += x;
-   sp->S_y += y;
-   denom_scale = sp->n * sp->S_xx;
-   denom = denom_scale - sp->S_x * sp->S_x;
+   S_xx += x * x;
+   S_yy += y * y;
+   S_xy += x * y;
+   S_x += x;
+   S_y += y;
+   denom_scale = sp->n * S_xx;
+   denom = denom_scale - S_x * S_x;
    /* Re-anchor and rebuild when the shift has gone stale. The same three
     * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
     * it is extracted from; OR the return that just left sat so far from the
@@ -849,7 +854,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
     * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
     */
    sp->barsSinceReseed -= 1;
-   if( denom < 0.000001 * denom_scale || sp->leaving_xx > 1000.0 * sp->S_xx || sp->leaving_yy > 1000.0 * sp->S_yy || sp->barsSinceReseed <= 0 )
+   if( denom < 0.000001 * denom_scale || sp->leaving_xx > 1000.0 * S_xx || sp->leaving_yy > 1000.0 * S_yy || sp->barsSinceReseed <= 0 )
    {
       sp->barsSinceReseed = 32 * sp->optInTimePeriod;
       windowStart = sp->trailingIdx;
@@ -881,11 +886,11 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
       sp->shift_y = sp->shift_y / sp->n;
       prev_x = sp->trailing_last_price_x;
       prev_y = sp->trailing_last_price_y;
-      sp->S_xx = 0.0;
-      sp->S_yy = 0.0;
-      sp->S_xy = 0.0;
-      sp->S_x = 0.0;
-      sp->S_y = 0.0;
+      S_xx = 0.0;
+      S_yy = 0.0;
+      S_xy = 0.0;
+      S_x = 0.0;
+      S_y = 0.0;
       for( sp->j = windowStart; sp->j < sp->i; sp->j += 1 )
       {
          if( !TA_IS_ZERO(prev_x) )
@@ -904,14 +909,14 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
             y = 0 - sp->shift_y;
          }
          prev_y = sp->x_inReal1[sp->j & sp->xMask];
-         sp->S_xx += x * x;
-         sp->S_yy += y * y;
-         sp->S_xy += x * y;
-         sp->S_x += x;
-         sp->S_y += y;
+         S_xx += x * x;
+         S_yy += y * y;
+         S_xy += x * y;
+         S_x += x;
+         S_y += y;
       }
-      denom_scale = sp->n * sp->S_xx;
-      denom = denom_scale - sp->S_x * sp->S_x;
+      denom_scale = sp->n * S_xx;
+      denom = denom_scale - S_x * S_x;
       /* n*S_xx - S_x*S_x is non-negative by Cauchy-Schwarz, but it is
        * extracted as a difference, so its SIGN is not guaranteed on a window
        * whose returns are all the same value. Enforce the invariant HERE and
@@ -957,7 +962,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
     */
    if( denom > 0.00000000000001 * denom_scale )
    {
-      *outReal= (sp->n * sp->S_xy - sp->S_x * sp->S_y) / denom;
+      *outReal= (sp->n * S_xy - S_x * S_y) / denom;
    } else 
    {
       *outReal= 0.0;
@@ -965,11 +970,16 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    /* Remove the calculation starting with the trailingIdx. */
    sp->leaving_xx = x * x;
    sp->leaving_yy = y * y;
-   sp->S_xx -= x * x;
-   sp->S_yy -= y * y;
-   sp->S_xy -= x * y;
-   sp->S_x -= x;
-   sp->S_y -= y;
+   S_xx -= x * x;
+   S_yy -= y * y;
+   S_xy -= x * y;
+   S_x -= x;
+   S_y -= y;
+   sp->S_xx = S_xx;
+   sp->S_xy = S_xy;
+   sp->S_x = S_x;
+   sp->S_y = S_y;
+   sp->S_yy = S_yy;
 }
 
 static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

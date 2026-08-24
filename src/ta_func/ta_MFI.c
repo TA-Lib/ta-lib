@@ -521,9 +521,11 @@ static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inL
    double posFlow;
    double negFlow;
    double posClamped;
+   double posSumMF = sp->posSumMF;
+   double negSumMF = sp->negSumMF;
 
-   sp->posSumMF -= sp->cb_mflow_positive[sp->mflow_Idx];
-   sp->negSumMF -= sp->cb_mflow_negative[sp->mflow_Idx];
+   posSumMF -= sp->cb_mflow_positive[sp->mflow_Idx];
+   negSumMF -= sp->cb_mflow_negative[sp->mflow_Idx];
    tempValue1 = (inHigh + inLow + inClose) / 3.0;
    tempValue2 = tempValue1 - sp->prevValue;
    /* Dead-zone scaled to the two typical prices being compared (issue #107).
@@ -537,17 +539,17 @@ static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inL
    negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
    sp->cb_mflow_positive[sp->mflow_Idx] = posFlow;
    sp->cb_mflow_negative[sp->mflow_Idx] = negFlow;
-   sp->posSumMF += posFlow;
-   sp->negSumMF += negFlow;
+   posSumMF += posFlow;
+   negSumMF += negFlow;
    sp->nullRun = (moneyFlow == 0.0) ? sp->nullRun + 1 : 0;
    if( sp->nullRun >= sp->optInTimePeriod )
    {
       sp->nullRun = sp->optInTimePeriod;
-      sp->posSumMF = 0.0;
-      sp->negSumMF = 0.0;
+      posSumMF = 0.0;
+      negSumMF = 0.0;
    }
-   tempValue1 = sp->posSumMF + sp->negSumMF;
-   posClamped = (sp->posSumMF < 0.0) ? 0.0 : ((sp->posSumMF > tempValue1) ? tempValue1 : sp->posSumMF);
+   tempValue1 = posSumMF + negSumMF;
+   posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
    if( tempValue1 <= 0.0 )
    {
       *outReal= 0.0;
@@ -560,6 +562,8 @@ static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inL
    {
       sp->mflow_Idx = 0;
    }
+   sp->posSumMF = posSumMF;
+   sp->negSumMF = negSumMF;
 }
 
 static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

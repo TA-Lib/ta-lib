@@ -770,6 +770,7 @@ static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inL
    double den;
    double halfDen;
    double smiValue;
+   double prevSignal = sp->prevSignal;
 
    if( sp->today >= 1073741824 )
    {
@@ -845,11 +846,12 @@ static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inL
    {
       smiValue = 0.0;
    }
-   sp->prevSignal = fma(smiValue - sp->prevSignal, sp->kSignal, sp->prevSignal);
+   prevSignal = fma(smiValue - prevSignal, sp->kSignal, prevSignal);
    *outSMI= smiValue;
-   *outSMISignal= sp->prevSignal;
+   *outSMISignal= prevSignal;
    sp->trailingIdx = sp->trailingIdx + 1;
    sp->today = sp->today + 1;
+   sp->prevSignal = prevSignal;
 }
 
 static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )

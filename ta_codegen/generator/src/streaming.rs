@@ -982,7 +982,7 @@ pub fn walk_expr(e: &Expr, f: &mut dyn FnMut(&Expr)) {
     }
 }
 
-fn expr_var_names(e: &Expr, out: &mut BTreeSet<String>) {
+pub fn expr_var_names(e: &Expr, out: &mut BTreeSet<String>) {
     walk_expr(e, &mut |x| match x {
         Expr::Var(n) | Expr::PointerDeref(n) | Expr::ArrayAccess(n, _) => {
             out.insert(n.clone());

@@ -567,6 +567,11 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
    double spXY;
    double tempReal;
    int windowStart;
+   double sumXY = sp->sumXY;
+   double sumX = sp->sumX;
+   double sumY = sp->sumY;
+   double sumX2 = sp->sumX2;
+   double sumY2 = sp->sumY2;
 
    if( sp->today >= 1073741824 )
    {
@@ -579,15 +584,15 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
    sp->x_inReal1[sp->today & sp->xMask] = inReal1;
    /* Add the incoming value, measured against the shift. */
    x = sp->x_inReal0[sp->today & sp->xMask] - sp->shiftX;
-   sp->sumX += x;
-   sp->sumX2 += x * x;
+   sumX += x;
+   sumX2 += x * x;
    y = sp->x_inReal1[sp->today & sp->xMask] - sp->shiftY;
-   sp->sumXY += x * y;
-   sp->sumY += y;
-   sp->sumY2 += y * y;
-   ssX = sp->sumX2 - sp->sumX * sp->sumX * sp->invPeriod;
-   ssY = sp->sumY2 - sp->sumY * sp->sumY * sp->invPeriod;
-   spXY = sp->sumXY - sp->sumX * sp->sumY * sp->invPeriod;
+   sumXY += x * y;
+   sumY += y;
+   sumY2 += y * y;
+   ssX = sumX2 - sumX * sumX * sp->invPeriod;
+   ssY = sumY2 - sumY * sumY * sp->invPeriod;
+   spXY = sumXY - sumX * sumY * sp->invPeriod;
    /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
     * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
     * below 1e-6 of the squared deviations it is extracted from; OR the value
@@ -615,7 +620,7 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
     * startIdx-lookbackTotal+outIdx, which is >= outIdx.
     */
    sp->barsSinceReseed -= 1;
-   if( ssX < 0.000001 * sp->sumX2 || ssY < 0.000001 * sp->sumY2 || sp->leavingX > 1000000.0 * sp->sumX2 || sp->leavingY > 1000000.0 * sp->sumY2 || sp->barsSinceReseed <= 0 )
+   if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp->leavingX > 1000000.0 * sumX2 || sp->leavingY > 1000000.0 * sumY2 || sp->barsSinceReseed <= 0 )
    {
       sp->barsSinceReseed = 32 * sp->optInTimePeriod;
       windowStart = sp->today - sp->lookbackTotal;
@@ -632,24 +637,24 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
       }
       sp->shiftX = tempReal * sp->invPeriod;
       sp->shiftY = sp->shiftY * sp->invPeriod;
-      sp->sumY2 = 0.0;
-      sp->sumX2 = sp->sumY2;
-      sp->sumY = sp->sumX2;
-      sp->sumX = sp->sumY;
-      sp->sumXY = sp->sumX;
+      sumY2 = 0.0;
+      sumX2 = sumY2;
+      sumY = sumX2;
+      sumX = sumY;
+      sumXY = sumX;
       for( sp->j = windowStart; sp->j <= sp->today; sp->j += 1 )
       {
          x = sp->x_inReal0[sp->j & sp->xMask] - sp->shiftX;
-         sp->sumX += x;
-         sp->sumX2 += x * x;
+         sumX += x;
+         sumX2 += x * x;
          y = sp->x_inReal1[sp->j & sp->xMask] - sp->shiftY;
-         sp->sumXY += x * y;
-         sp->sumY += y;
-         sp->sumY2 += y * y;
+         sumXY += x * y;
+         sumY += y;
+         sumY2 += y * y;
       }
-      ssX = sp->sumX2 - sp->sumX * sp->sumX * sp->invPeriod;
-      ssY = sp->sumY2 - sp->sumY * sp->sumY * sp->invPeriod;
-      spXY = sp->sumXY - sp->sumX * sp->sumY * sp->invPeriod;
+      ssX = sumX2 - sumX * sumX * sp->invPeriod;
+      ssY = sumY2 - sumY * sumY * sp->invPeriod;
+      spXY = sumXY - sumX * sumY * sp->invPeriod;
       /* A sum of squares is non-negative by definition, but this one is
        * extracted as a difference, so its SIGN is not guaranteed on a window
        * sitting inside a flat stretch. Enforce the invariant HERE and not at
@@ -706,7 +711,7 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
     * behaved this way, on inputs 117 orders past any price, is not a trade
     * worth making. Revisit only if input range-checking is ever added.
     */
-   if( ssX > 0.00000000000001 * sp->sumX2 && ssY > 0.00000000000001 * sp->sumY2 )
+   if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 )
    {
       tempReal = spXY / sqrt(ssX * ssY);
       /* A correlation coefficient cannot leave [-1,1]; rounding in the
@@ -727,12 +732,17 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
    /* Remove the trailing values (prepares the next window). */
    sp->leavingX = trailingX * trailingX;
    sp->leavingY = trailingY * trailingY;
-   sp->sumX -= trailingX;
-   sp->sumX2 -= sp->leavingX;
-   sp->sumXY -= trailingX * trailingY;
-   sp->sumY -= trailingY;
-   sp->sumY2 -= sp->leavingY;
+   sumX -= trailingX;
+   sumX2 -= sp->leavingX;
+   sumXY -= trailingX * trailingY;
+   sumY -= trailingY;
+   sumY2 -= sp->leavingY;
    sp->today += 1;
+   sp->sumXY = sumXY;
+   sp->sumX = sumX;
+   sp->sumY = sumY;
+   sp->sumX2 = sumX2;
+   sp->sumY2 = sumY2;
 }
 
 static TA_RetCode TA_CORREL_OpenImpl( struct TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

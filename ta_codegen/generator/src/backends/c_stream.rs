@@ -3092,6 +3092,281 @@ fn emit_step(
     let _ = writeln!(o, "}}\n");
 }
 
+/// State scalars the compiler is FORCED to reload, bound to a local for the
+/// length of the step body: loaded once at the top, stored back before every
+/// exit.
+///
+/// `sp->cb_<id>[..]` is a `double *` store and `sp->sum` is a `double` —
+/// COMPATIBLE types, so C permits them to alias. A store through a ring,
+/// CIRCBUF or window buffer (or through a real output pointer) therefore
+/// invalidates every `double` field the compiler was holding, and a later read
+/// of one it had already written becomes a store-to-load round trip. That is
+/// permitted aliasing, not a strict-aliasing violation, so no flag removes it,
+/// and GCC does not exploit `restrict` on a pointer loaded out of a struct
+/// (tested — member and local form both emit byte-identical code). The
+/// generator knows what the compiler cannot derive: those buffers are separate
+/// allocations, disjoint from the handle.
+///
+/// So the election is exactly `write -> clobber -> read`, not "read and
+/// written": a field with no clobber between its write and its read already
+/// lives in a register (ATR's `prevATR`, the Hilbert family's odd/even `prev_*`
+/// shadows), and hoisting it would only add one load and one store per bar.
+///
+/// C only. Rust's `&mut`, and a Java/C# `double[]` element against a `double`
+/// field, already forbid the alias, so those three backends never emit the
+/// reload.
+///
+/// `double` only: an `int` field IS protected from a `double *` store, by the
+/// strict-aliasing rule.
+fn elect_step_scalars(model: &StreamModel, transition: &[Statement]) -> Vec<String> {
+    let held: std::collections::BTreeMap<String, &str> = model
+        .state
+        .iter()
+        .filter(|(_, t)| matches!(t, crate::ir::VarType::Real))
+        .map(|(n, _)| (streaming::NameMap::state(&CNames, n), n.as_str()))
+        .collect();
+    if held.is_empty() {
+        return Vec::new();
+    }
+    // A dual-mode arm renders inside a nested block, where a local sharing a
+    // parameter's name would SHADOW it instead of failing to compile. The bar
+    // and output names are the only ones that can reach here.
+    let params: std::collections::BTreeSet<&str> = model
+        .bar_inputs
+        .iter()
+        .chain(model.outputs.iter())
+        .map(String::as_str)
+        .collect();
+    let int_outs: std::collections::BTreeSet<&str> = model
+        .func
+        .outputs
+        .iter()
+        .filter(|o| o.param_type == crate::ir::ParamType::Integer)
+        .map(|o| o.name.as_str())
+        .collect();
+
+    let mut st = ReloadScan {
+        held: &held,
+        int_outs: &int_outs,
+        written: std::collections::BTreeSet::new(),
+        clobbered: std::collections::BTreeSet::new(),
+        elected: std::collections::BTreeSet::new(),
+    };
+    st.stmts(transition);
+    let elected = st.elected;
+    model
+        .state
+        .iter()
+        .map(|(n, _)| n.as_str())
+        .filter(|n| !params.contains(n) && elected.contains(*n))
+        .map(ToString::to_string)
+        .collect()
+}
+
+/// Walks the transition in source order looking for `write -> clobber -> read`
+/// on each carried double. Branch arms start from the state above them and
+/// their effects are unioned below, so one arm's write never pairs with the
+/// other arm's read.
+struct ReloadScan<'a> {
+    /// `sp->x` -> `x`, for the carried doubles only.
+    held: &'a std::collections::BTreeMap<String, &'a str>,
+    int_outs: &'a std::collections::BTreeSet<&'a str>,
+    written: std::collections::BTreeSet<String>,
+    clobbered: std::collections::BTreeSet<String>,
+    elected: std::collections::BTreeSet<String>,
+}
+
+impl ReloadScan<'_> {
+    /// Every store the compiler must assume can reach a `double` field: any
+    /// write through a pointer or array whose element type is not integer.
+    fn is_clobber(&self, target: &Expr) -> bool {
+        match target {
+            Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) => !self.int_outs.contains(n.as_str()),
+            _ => false,
+        }
+    }
+
+    /// A read of a carried double that a clobber has invalidated since its
+    /// last write is exactly the forced reload this election exists to remove.
+    fn read_name(&mut self, n: &str) {
+        if let Some(bare) = self.held.get(n) {
+            if self.clobbered.contains(n) {
+                self.elected.insert((*bare).to_string());
+            }
+        }
+    }
+
+    fn read(&mut self, e: &Expr) {
+        let mut names = std::collections::BTreeSet::new();
+        streaming::expr_var_names(e, &mut names);
+        for n in names {
+            self.read_name(&n);
+        }
+    }
+
+    fn clobber(&mut self) {
+        let w = std::mem::take(&mut self.written);
+        self.clobbered.extend(w);
+    }
+
+    fn stmts(&mut self, list: &[Statement]) {
+        for s in list {
+            self.stmt(s);
+        }
+    }
+
+    fn branches(&mut self, arms: &[&[Statement]]) {
+        let entry_w = self.written.clone();
+        let entry_c = self.clobbered.clone();
+        let mut out_w = std::collections::BTreeSet::new();
+        let mut out_c = std::collections::BTreeSet::new();
+        for arm in arms {
+            self.written.clone_from(&entry_w);
+            self.clobbered.clone_from(&entry_c);
+            self.stmts(arm);
+            out_w.append(&mut self.written);
+            out_c.append(&mut self.clobbered);
+        }
+        self.written = out_w;
+        self.clobbered = out_c;
+    }
+
+    fn stmt(&mut self, s: &Statement) {
+        match s {
+            Statement::Assign {
+                target: Expr::Var(v),
+                value,
+                compound,
+            } => {
+                self.read(value);
+                if *compound {
+                    // A compound assignment reads its target first.
+                    self.read_name(v);
+                }
+                if self.held.contains_key(v) {
+                    self.written.insert(v.clone());
+                    self.clobbered.remove(v);
+                }
+            }
+            Statement::Assign { target, value, .. } => {
+                self.read(target);
+                self.read(value);
+                if self.is_clobber(target) {
+                    self.clobber();
+                }
+            }
+            Statement::VarDecl { init: Some(e), .. } => self.read(e),
+            Statement::Return { value } => {
+                if let Some(e) = value {
+                    self.read(e);
+                }
+            }
+            Statement::If {
+                condition,
+                then_body,
+                else_body,
+                ..
+            } => {
+                self.read(condition);
+                self.branches(&[then_body, else_body]);
+            }
+            Statement::While { condition, body } | Statement::DoWhile { condition, body } => {
+                self.read(condition);
+                // A loop body can carry its own write into its next iteration's
+                // read, so it is walked in place rather than as an arm.
+                self.stmts(body);
+                self.read(condition);
+            }
+            Statement::For { count, body, .. } => {
+                self.read(count);
+                self.stmts(body);
+            }
+            Statement::ForC {
+                init,
+                condition,
+                update,
+                body,
+            } => {
+                self.stmt(init);
+                self.read(condition);
+                self.stmts(body);
+                self.stmt(update);
+            }
+            Statement::Block { body } => self.stmts(body),
+            // Trivia and a bare declaration emit no code, so they cannot
+            // clobber. They reach the catch-all below otherwise, where a
+            // source comment would act as a memory barrier and elect every
+            // field written above it (DX and ADX, whose bodies are commented
+            // step by step, elected five apiece for nothing).
+            Statement::Comment(_)
+            | Statement::UnrollHint { .. }
+            | Statement::VarDecl { init: None, .. } => {}
+            Statement::Switch {
+                expr,
+                cases,
+                default,
+            } => {
+                self.read(expr);
+                let mut arms: Vec<&[Statement]> =
+                    cases.iter().map(|(_, b)| b.as_slice()).collect();
+                arms.push(default);
+                self.branches(&arms);
+            }
+            // A bare call, or anything else not modelled, may store anywhere.
+            other => {
+                let mut names = std::collections::BTreeSet::new();
+                streaming::stmt_var_names(other, &mut names);
+                for n in names {
+                    self.read_name(&n);
+                }
+                self.clobber();
+            }
+        }
+    }
+}
+
+/// Rewrite `sp->x` to `x` for the elected scalars, and store each back before
+/// every `return` the transition carries -- today only the param-degenerate
+/// identity short-circuit, which [`streaming::insert_transition_prologue`]
+/// places at index 0, so it can never follow a mutation. The arm is kept for
+/// the transition that eventually carries a guarded mid-body return; dropping
+/// a write-back is a lost state update, which `stream_verify` compares
+/// bit-exactly. A path that did not modify
+/// one writes back what it loaded, which is why this needs no per-path
+/// analysis.
+fn apply_step_scalars(transition: &[Statement], elected: &[String]) -> Vec<Statement> {
+    if elected.is_empty() {
+        return transition.to_vec();
+    }
+    let bare: std::collections::BTreeMap<String, String> = elected
+        .iter()
+        .map(|n| (streaming::NameMap::state(&CNames, n), n.clone()))
+        .collect();
+    let writeback: Vec<Statement> = elected
+        .iter()
+        .map(|n| Statement::Assign {
+            target: Expr::Var(streaming::NameMap::state(&CNames, n)),
+            value: Expr::Var(n.clone()),
+            compound: false,
+        })
+        .collect();
+    streaming::rewrite_stmts(
+        transition,
+        &|e| match e {
+            Expr::Var(ref v) => bare.get(v).map_or(e, |b| Expr::Var(b.clone())),
+            other => other,
+        },
+        &|s| match s {
+            Statement::Return { .. } => {
+                let mut body = writeback.clone();
+                body.push(s);
+                Some(Statement::Block { body })
+            }
+            other => Some(other),
+        },
+    )
+}
+
 /// The per-bar step body for ONE model at a given indent: temp decls, an
 /// optional `(void)sp`, the extrema rebase, the rendered transition, and
 /// candle-settings unpacking. Shared by the single-model [`emit_step`] and the
@@ -3108,21 +3383,29 @@ fn emit_step_inner(
     void_sp: bool,
 ) {
     let pad = " ".repeat(indent);
+    let transition = streaming::build_transition(model, &CNames)
+        .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+    let elected = elect_step_scalars(model, &transition);
+    let transition = apply_step_scalars(&transition, &elected);
     for (name, ty) in &model.temps {
         let _ = writeln!(o, "{pad}{};", c_decl(ty, name));
     }
-    if !model.temps.is_empty() {
+    for name in &elected {
+        let _ = writeln!(o, "{pad}double {name} = {};", streaming::NameMap::state(&CNames, name));
+    }
+    if !model.temps.is_empty() || !elected.is_empty() {
         let _ = writeln!(o);
     }
     if void_sp {
         let _ = writeln!(o, "{pad}(void)sp;");
     }
     emit_extrema_rebase(o, model);
-    let transition = streaming::build_transition(model, &CNames)
-        .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     let mut body_c = String::new();
     for s in &transition {
         body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter, &nullable_out_names(model.func)));
+    }
+    for name in &elected {
+        let _ = writeln!(body_c, "{pad}{} = {name};", streaming::NameMap::state(&CNames, name));
     }
     // Candle settings are read where batch reads them (per step, from the
     // globals — the settings-stability rule). The TA_STREAM_CANDLE* macros
@@ -4588,4 +4871,76 @@ fn emit_close_from(o: &mut String, func: &FuncDef, needs_release: bool) {
 
 fn emit_close(o: &mut String, func: &FuncDef, model: &StreamModel) {
     emit_close_from(o, func, model.needs_release());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn var(n: &str) -> Expr {
+        Expr::Var(n.into())
+    }
+
+    /// The write-back-before-`return` arm. Today's corpus reaches it only
+    /// vacuously — the sole return a transition carries is the param-degenerate
+    /// identity short-circuit, which sits at index 0 and so never follows a
+    /// mutation — so exercise it directly on a transition that DOES mutate
+    /// first. Without the arm the returning path would leave `sp->sum` holding
+    /// the previous bar's value.
+    #[test]
+    fn a_return_after_a_mutation_writes_the_local_back() {
+        let elected = vec!["sum".to_string()];
+        let transition = vec![
+            Statement::Assign {
+                target: var("sp->sum"),
+                value: Expr::Literal(1.0),
+                compound: false,
+            },
+            Statement::If {
+                condition: Expr::BinOp(
+                    Box::new(var("sp->sum")),
+                    crate::ir::BinOp::Greater,
+                    Box::new(Expr::Literal(0.0)),
+                ),
+                then_body: vec![Statement::Return { value: None }],
+                else_body: vec![],
+                cond_comments: vec![],
+            },
+        ];
+        let out = apply_step_scalars(&transition, &elected);
+
+        // The body now works in the bare local...
+        let Statement::Assign { target, .. } = &out[0] else {
+            panic!("first statement is the assignment")
+        };
+        assert_eq!(target, &var("sum"), "sp->sum rewritten to the local");
+
+        // ...and the return is wrapped with the store back to the handle.
+        let Statement::If { then_body, .. } = &out[1] else {
+            panic!("second statement is the branch")
+        };
+        let Statement::Block { body } = &then_body[0] else {
+            panic!("the return is wrapped in a block carrying the write-back")
+        };
+        assert_eq!(body.len(), 2, "one write-back, then the return");
+        assert!(
+            matches!(&body[0], Statement::Assign { target, value, compound: false }
+                     if target == &var("sp->sum") && value == &var("sum")),
+            "sp->sum = sum before returning, got {:?}", body[0]
+        );
+        assert!(matches!(body[1], Statement::Return { .. }), "return kept");
+    }
+
+    /// Electing nothing must leave the transition byte-identical — the 134
+    /// functions that elect no scalar have to keep the emission they had.
+    #[test]
+    fn an_empty_election_does_not_touch_the_transition() {
+        let transition = vec![Statement::Assign {
+            target: var("sp->sum"),
+            value: var("sp->sum"),
+            compound: true,
+        }];
+        let out = apply_step_scalars(&transition, &[]);
+        assert_eq!(format!("{out:?}"), format!("{transition:?}"));
+    }
 }

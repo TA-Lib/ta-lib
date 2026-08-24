@@ -627,6 +627,8 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       double fullOut;
       double halfOut;
       double diffReal;
+      double periodSubSqrt = sp->periodSubSqrt;
+      double periodSumSqrt = sp->periodSumSqrt;
 
       if( sp->ringCap_trailingIdxFull == 0 )
       {
@@ -650,9 +652,9 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       halfOut = sp->periodSumHalf / sp->dividerHalf;
       sp->periodSumHalf -= sp->periodSubHalf;
       diffReal = 2.0 * halfOut - fullOut;
-      sp->periodSubSqrt += diffReal;
-      sp->periodSubSqrt -= sp->trailingSqrt;
-      sp->periodSumSqrt += diffReal * sp->sqrtPeriod;
+      periodSubSqrt += diffReal;
+      periodSubSqrt -= sp->trailingSqrt;
+      periodSumSqrt += diffReal * sp->sqrtPeriod;
       sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
       sp->cb_dRing[sp->dRing_Idx] = diffReal;
       sp->dRing_Idx = sp->dRing_Idx + 1;
@@ -660,8 +662,8 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       {
          sp->dRing_Idx = 0;
       }
-      *outReal= sp->periodSumSqrt / sp->dividerSqrt;
-      sp->periodSumSqrt -= sp->periodSubSqrt;
+      *outReal= periodSumSqrt / sp->dividerSqrt;
+      periodSumSqrt -= periodSubSqrt;
       sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] = inReal;
       sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
       if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
@@ -674,6 +676,8 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       {
          sp->ringPos_trailingIdxHalf = 0;
       }
+      sp->periodSubSqrt = periodSubSqrt;
+      sp->periodSumSqrt = periodSumSqrt;
    }
 }
 
