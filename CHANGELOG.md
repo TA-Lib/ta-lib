@@ -96,6 +96,17 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   quoted small enough reaches it, whether from a low price or from small volumes. The
   index is a ratio and no longer depends on the size of the money flow at all. MFI also
   no longer returns a value a few ulp outside 0-100.
+- (#253) The same defect, found in the rest of the library: ACCBANDS, ADX, ADXR, BETA,
+  BOP, CCI, CMO, CMOU, DX, KAMA, MINUS_DI, NATR, PLUS_DI, RSI, SMI, STOCH, STOCHF,
+  STOCHRSI and ULTOSC each guarded a division with a fixed 1e-14 test on a price, a
+  range, or a sum of those. That threshold is a constant in whatever unit the instrument
+  happens to be quoted in, so below some price the guard fires on a perfectly ordinary
+  bar and the function reports 0 (KAMA instead switched to its fastest smoothing). A
+  token quoted in BTC reaches it. Every one of these outputs is now unchanged by a
+  change of quote unit. PPO and PVO carry the same guard and are NOT fixed yet: theirs
+  sits on a moving average of their own input, so it only fires on an input that is
+  itself near 1e-14, and removing it there would expose a separate rounding-residue
+  defect that is the worse of the two. Tracked in #253.
 
 ## [0.7.1] 2026-07-03
 ### Added
