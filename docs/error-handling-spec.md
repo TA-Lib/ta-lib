@@ -123,30 +123,23 @@ the whole corpus, on every test run.
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| L1 | An optional parameter is outside its documented domain | the lookback out-of-range sentinel | ✅ | ✅ [1] | ✅ | ✅ |
-| L1a | …and the sentinel is returned **exactly when** the batch tier would reject the same parameters under B4 | the lookback out-of-range sentinel | ✅ | | | |
-| L2 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
+| L1 | An optional parameter is outside its documented domain | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
+| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B4 | the lookback rejection signal | ✅ | | | |
+| L3 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
 
-[1] The sentinel is `-1` in C, Java and C#. Rust's `<fn>_Lookback` returns
-`Result<usize, RetCode>` instead — `Ok(lookback)` on success,
-`Err(RetCode::BadParam)` on the same rejection C/Java/C# signal with `-1` — so
-the success value stays the `usize` every other index/count in the crate uses,
-while failure is a type the compiler forces a caller to handle rather than a
-magic number a caller could forget to check. Internal composition (one
-indicator's lookback calling another's, e.g. MACD summing two EMA lookbacks)
-propagates the same way with `?`. The JSON-RPC test server is the one place
-that still speaks the numeric convention: it maps `Err` to the wire literal
-`-1`, matching C/Java/C#'s response shape, so the sentinel-vs-`Result` choice
-never leaks past the crate's own API.
+**Rejection Signal**
+For C, Java and C# it is returned as `-1`.
+For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)`.
 
-**Why L1a is a rule and not a test detail.** A caller sizes its buffers from the
+**Why L2 is a rule and not a test detail.** A caller sizes its buffers from the
 lookback before it trusts the call, so a lookback that answers a plausible number
 for parameters the call then rejects is a lie a wrapper cannot detect — and the
-reverse, a sentinel for parameters the call accepts, denies a usable call. The two
-tiers derive the domain separately, which is exactly what lets them drift. Asserted
-for C on every optional parameter of every function by the boundary sweep
-(`ta_test_func/test_period_boundary.c`, group `PERIOD1/BOUNDARY`), which counts the
-swept cases and asserts the count; not yet probed in the other three.
+reverse, a rejection for parameters the call actually accepts, denies a usable
+call. The two tiers derive the domain separately, which is exactly what lets them
+drift. Asserted for C on every optional parameter of every function by the
+boundary sweep (`ta_test_func/test_period_boundary.c`, group
+`PERIOD1/BOUNDARY`), which counts the swept cases and asserts the count; not
+yet probed in the other three.
 
 ### 2.2 Batch tier
 
