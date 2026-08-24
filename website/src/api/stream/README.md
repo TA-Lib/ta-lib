@@ -15,11 +15,11 @@ Every TA function gets these calls:
 | Call | When | Does |
 |------|------|------|
 | `TA_<NAME>_Open`   | once                                | validate params, consume warm-up history, return a **stream** + current value |
-| `TA_<NAME>_OpenAndFill` | once, instead of `Open`        | like `Open`, but returns the output for **every** history bar — see [below](#get-the-full-history-output-openandfill) |
 | `TA_<NAME>_Update` | once per **closed** bar             | commit one bar, return the new value |
-| `TA_<NAME>_UpdateAndFill` | instead of a loop of `Update` | commit `barCount` closed bars and write the `barCount` values — see [below](#catch-up-n-bars-at-once-updateandfill) |
 | `TA_<NAME>_Peek`   | any time on the **forming** bar     | evaluate a provisional bar **without** committing state |
 | `TA_<NAME>_Close`  | once                                | free the stream |
+
+Two more calls, `OpenAndFill` and `UpdateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
 ## Example (SMA)
 
@@ -53,9 +53,28 @@ TA_SMA_Close( s );
 - **Threads.** A stream is single-writer: never drive one stream from two threads at once (even `Peek`, despite its `const`). Distinct streams are fully independent.
 - **Don't persist** a stream across library versions.
 
-## Get the full history output (`OpenAndFill`)
+## Multi-input / multi-output
 
-`Open` gives you only the value at the last history bar. `OpenAndFill` gives you the output for **every** history bar — the same array the [batch function](/api/) would produce — while still opening the live stream.
+Inputs and outputs mirror the batch function — OHLCV in, one out-pointer per output:
+
+```c
+/* Candlestick: OHLC in, one int out */
+TA_CDLDOJI_Update( s, open, high, low, close, &outInteger );
+
+/* MACD: one in, three out */
+TA_MACD_Update( s, close, &macd, &signal, &hist );
+```
+
+## Array-Fill Calls
+
+`Open` and `Update` each write a single value per output. Two more calls write a full array instead — the same shape the [batch function](/api/) would produce — while still driving the stream:
+
+| Call | When | Does |
+|------|------|------|
+| `TA_<NAME>_OpenAndFill` | once, instead of `Open` | like `Open`, but returns the output for **every** history bar |
+| `TA_<NAME>_UpdateAndFill` | instead of a loop of `Update` | commit `barCount` closed bars and write a value for each |
+
+**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` gives you the output for **every** history bar — the same array the [batch function](/api/) would produce — while still opening the live stream.
 
 ```c
 double out[300];                 /* one array per output */
@@ -68,11 +87,7 @@ TA_SMA_OpenAndFill( &s, history, historyLen, period,
 TA_SMA_Update( s, newClose, &sma );
 ```
 
-The optional parameters and outputs (`outBegIdx`, `outNBElement`, one array per output) are exactly the [batch API](/api/)'s; everything else matches `Open`.
-
-## Catch up n bars at once (`UpdateAndFill`)
-
-Feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
+**`UpdateAndFill`** — feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
 in one call, writing one value per bar into your array:
 
 ```c
@@ -82,26 +97,7 @@ TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
 ```
 
 It is exactly `barCount` back-to-back `Update` calls — same values, same state —
-with one set of argument checks instead of `barCount`. There is no `outBegIdx` /
-`outNBElement` pair: `TA_StreamOutRange( s, &begIdx, &nbElement )` reports the
-bars the handle has a value for, before and after.
-
-That includes a call that fails partway. A non-finite bar is rejected exactly as
-`Update` rejects it, which means the bars **before** it are already committed and
-their values already written; the range tells you how many. Outputs must not
-alias the inputs or each other, and `barCount == 0` is a no-op.
-
-## Multi-input / multi-output
-
-Inputs and outputs mirror the batch function — OHLCV in, one out-pointer per output:
-
-```c
-/* Candlestick: OHLC in, one int out */
-TA_CDLDOJI_Update( s, open, high, low, close, &outInteger );
-
-/* MACD: one in, three out */
-TA_MACD_Update( s, close, &macd, &signal, &hist );
-```
+with one set of argument checks instead of `barCount`. `Update` and `UpdateAndFill` calls can be freely mixed on the same stream.
 
 ## Error model
 

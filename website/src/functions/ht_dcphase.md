@@ -9,7 +9,7 @@ Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of 
 
 ## Interpretation
 
-DCPhase is a rotating angle: it locates the current bar within the dominant price cycle the Hilbert-transform model has locked onto. One full lap of that cycle is the same −45°-to-315° span described above — Ehlers' original algorithm cuts the circle at 315° instead of the more common 0°. `HT_TRENDMODE` separately flags bars where the market isn't cycling at all.
+DCPhase is a rotating angle: it locates the current bar within the dominant price cycle the Hilbert-transform model has locked onto. 90° is the modeled cycle's high, 270° its low, and 0°/180° are the midpoints where the cycle is moving fastest. `HT_SINE` plots this angle as a sine wave, crossing its 45°-lead companion near those highs and lows. `HT_TRENDMODE` separately flags bars where the market isn't cycling at all.
 
 ## Inputs
 
