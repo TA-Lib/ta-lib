@@ -905,6 +905,21 @@ static ErrorNumber test_linearreg_random_walk( void )
  *
  * Non-vacuity is structural: the comparison is against the SAME function called
  * on one window, so there is no oracle to be co-wrong with.
+ *
+ * MEASURED HEADROOM, because "it has a bound" and "the bound is near what it
+ * measures" are different claims: this leg runs 13x below its own bound at
+ * period 2, 32x at 5, 56x at 14 and 111x at 30. It would therefore catch a
+ * residue an order or two worse than today's, which is what pinning a growth
+ * law needs, and it is not tightened further because the margin also absorbs
+ * libm and platform variation.
+ *
+ * The two corpora come out COMPARABLE (13x/70x/56x/111x with the bad print),
+ * which is worth recording because the opposite is the natural guess and it is
+ * wrong: hist[k] makes the bound 1000x looser after the spike, so the outlier
+ * corpus looks like it must be the slacker test. It is not, because the worst
+ * ratio occurs EARLY, before the spike enters hist, and past bar 60 the error
+ * and the bound rise together. Measured, not reasoned -- the reasoning gave the
+ * wrong answer here.
  */
 static ErrorNumber test_linearreg_range_stability( void )
 {

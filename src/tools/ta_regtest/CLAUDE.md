@@ -87,6 +87,25 @@ Regenerate with `scripts/gen_test_reference.py`; verify in place with
 catches a stale table at runtime instead, because the oracle would stop
 reproducing it.
 
+**Measured resolution.** The smallest uniform relative perturbation of every
+shipped output that each suite detects, from a mutation sweep (rebuild, run,
+bisect; `--function=REFERENCE` is the control and stays green throughout, since a
+library mutation cannot reach an oracle-vs-golden comparison):
+
+| suite | resolution | first leg to fire |
+|---|---|---|
+| `LINEARREG` | 1e-15 | #251 Wilkinson |
+| `CORREL` | 1e-15 | #242 range invariant, then the #251 goldens at 1e-14 |
+| `BBANDS` | 1e-15 | #117 SMA fast-path equivalence |
+| `STDDEV`/`VAR` | 1e-12 | #118 NIST NumAcc1 |
+| `BETA` | 1e-12 | #242 Wilkinson W.IV.B |
+
+Two things that table says which are easy to get backwards. For `STDDEV`/`VAR`
+the #251 baked goldens only bite at 1e-8 -- NIST is the sharp edge there and the
+goldens are defence in depth, not the binding constraint. And the #251 BBANDS leg
+is invisible in that sweep because #117 fires first; measured on its own (the
+earlier legs stubbed out, with a control run) it detects 1e-9.
+
 Two rules when touching it:
 
 - The dataset definitions live between the `BEGIN/END GENERATOR-PARSED DATASETS`
