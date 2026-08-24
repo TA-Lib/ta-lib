@@ -1717,7 +1717,10 @@ fn emit_sv_update_fill_leg(
 ) {
     let n_outs = out_is_int.len();
     let vout: String = (0..n_outs).map(|i| format!("&uv{i}")).collect::<Vec<_>>().join(", ");
-    let shifted: String = input_arrays.iter().map(|a| format!("{a} + P, ")).collect();
+    let shifted: String = input_arrays.iter().fold(String::new(), |mut acc, a| {
+        let _ = write!(acc, "{a} + P, ");
+        acc
+    });
     let fill_args = fbuf.join(", ");
     s.push_str("        if( npref > 0 )\n        {\n");
     s.push_str("            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;\n");
@@ -6089,7 +6092,6 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .iter()
         .map(|i| sv_rust_input_array(i, &mut gi))
         .collect();
-    let n_out = func.outputs.len();
     let out_is_int: Vec<bool> = func
         .outputs
         .iter()
@@ -6199,14 +6201,6 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .join(", ");
     let opts_lead = if opts.is_empty() { String::new() } else { format!("{opts}, ") };
     let opts_tail = if opts.is_empty() { String::new() } else { format!(", {opts}") };
-    let bar_args = |pad: &str, t: &str| -> String {
-        let _ = pad;
-        arrays
-            .iter()
-            .map(|a| format!("{a}[{t}]"))
-            .collect::<Vec<_>>()
-            .join(", ")
-    };
 
     // Batch output buffers.
     let mut bdecls = String::new();
@@ -6337,8 +6331,48 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&rust_canary_check(&out_is_int));
     s.push_str("                }\n            }\n        }\n        }\n");
 
-    // Prefix sweep.
     let seed_boundary = func_has_seed_boundary(func, funcs);
+    emit_rust_sv_prefix_sweep(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, seed_boundary);
+    emit_rust_sv_update_and_fill_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
+
+    // Short-history reject leg: at `lb` bars no output is defined for ANY
+    // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
+    // asserted either way — under an unstable period the skip can absorb the
+    // Metastock seed, making it legitimately acceptable; the C gate only
+    // shifts its first prefix.)
+    s.push_str("        if lb >= 1 && lb < svN {\n");
+    let short_ins = arrays
+        .iter()
+        .map(|a| format!("&{a}[..lb]"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let _ = writeln!(
+        s,
+        "            if c2.{fname}_Open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
+    );
+    s.push_str("        }\n");
+
+    s.push_str("    }\n");
+    // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
+    // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ufill_checked\\\":{},\\\"ufill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
+    s.push_str("}\n\n");
+    s
+}
+
+/// The sweep over `pcs` (the seed-boundary / mid-corpus / tail prefixes): open at
+/// each, compare the open value, then walk `update`/`peek` to the end of the
+/// corpus and compare every bar against the batch arrays.
+fn emit_rust_sv_prefix_sweep(
+    s: &mut String,
+    fname: &str,
+    arrays: &[&'static str],
+    pfx_ins: &str,
+    opts_tail: &str,
+    out_is_int: &[bool],
+    seed_boundary: bool,
+) {
+    let n_out = out_is_int.len();
     let shift = if seed_boundary {
         "        let seed_shift: usize = if svCompat == 1 { 1 } else { 0 };\n"
     } else {
@@ -6369,7 +6403,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     // update loop
     s.push_str("                    for t in p..svN {\n");
-    let t_args = bar_args("", "t");
+    let t_args = arrays.iter().map(|a| format!("{a}[t]")).collect::<Vec<_>>().join(", ");
     let _ = writeln!(s, "                        if t % 7 == 0 {{");
     // `update`/`peek` are fallible since the streaming tier rejects non-finite
     // bars. The fuzz corpus is finite everywhere, so a rejection here is a
@@ -6415,13 +6449,22 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }\n");
     s.push_str("                    }\n");
     s.push_str("                }\n            }\n        }\n");
+}
 
-    // UpdateAndFill leg (#246): the same Open(p) the sweep above uses, then ONE
-    // call over the tail instead of `svN - p` separate updates. Rust has no
-    // aliasing probe (`&[f64]` and `&mut [f64]` cannot alias) and no negative
-    // count (slices carry their own lengths), so the two rejections it CAN
-    // reach ride here instead: a zero-length run, and an output shorter than
-    // the bar count.
+/// UpdateAndFill leg (#246): the same `Open(p)` the prefix sweep uses, then ONE
+/// call over the tail instead of `svN - p` separate updates. Rust has no
+/// aliasing probe (`&[f64]` and `&mut [f64]` cannot alias) and no negative
+/// count (slices carry their own lengths), so the two rejections it CAN
+/// reach ride here instead: a zero-length run, and an output shorter than
+/// the bar count.
+fn emit_rust_sv_update_and_fill_leg(
+    s: &mut String,
+    fname: &str,
+    arrays: &[&'static str],
+    pfx_ins: &str,
+    opts_tail: &str,
+    out_is_int: &[bool],
+) {
     s.push_str("        if let Some(&p) = pcs.first() {\n");
     let _ = writeln!(s, "            match c2.{fname}_Open({pfx_ins}{opts_tail}) {{");
     s.push_str("                Err(_) => { ufill_ok = false; }\n");
@@ -6436,9 +6479,10 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         };
         let _ = writeln!(s, "                    let mut u{i}: Vec<{ty}> = vec![{canary}; svN];");
     }
-    let uargs: String = (0..out_is_int.len())
-        .map(|i| format!(", &mut u{i}"))
-        .collect();
+    let uargs: String = (0..out_is_int.len()).fold(String::new(), |mut acc, i| {
+        let _ = write!(acc, ", &mut u{i}");
+        acc
+    });
     let tail_ins = arrays
         .iter()
         .map(|a| format!("&{a}[p..]"))
@@ -6489,30 +6533,6 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                            if stu.out_range().beg_idx != beg || stu.out_range().count != nb { ufill_ok = false; range_ok = false; }\n");
     s.push_str("                        }\n                    }\n");
     s.push_str("                }\n            }\n        }\n");
-
-    // Short-history reject leg: at `lb` bars no output is defined for ANY
-    // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
-    // asserted either way — under an unstable period the skip can absorb the
-    // Metastock seed, making it legitimately acceptable; the C gate only
-    // shifts its first prefix.)
-    s.push_str("        if lb >= 1 && lb < svN {\n");
-    let short_ins = arrays
-        .iter()
-        .map(|a| format!("&{a}[..lb]"))
-        .collect::<Vec<_>>()
-        .join(", ");
-    let _ = writeln!(
-        s,
-        "            if c2.{fname}_Open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
-    );
-    s.push_str("        }\n");
-
-    s.push_str("    }\n");
-    // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
-    // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ufill_checked\\\":{},\\\"ufill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
-    s.push_str("}\n\n");
-    s
 }
 
 /// The whole Rust `stream_verify` section: candle-settings helpers, one
@@ -7030,7 +7050,10 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .map(|_| "new double[0]".to_string())
         .collect::<Vec<_>>()
         .join(", ");
-    let uargs: String = (0..out_is_int.len()).map(|i| format!(", u{i}")).collect();
+    let uargs: String = (0..out_is_int.len()).fold(String::new(), |mut acc, i| {
+        let _ = write!(acc, ", u{i}");
+        acc
+    });
     let _ = writeln!(
         s,
         "                        stu.updateAndFill({empty_ins}{uargs});"
@@ -8364,7 +8387,10 @@ fn emit_csharp_sv_func(
         .map(|a| format!("{a}.AsSpan(p, 0)"))
         .collect::<Vec<_>>()
         .join(", ");
-    let uargs: String = (0..out_is_int.len()).map(|i| format!(", u{i}")).collect();
+    let uargs: String = (0..out_is_int.len()).fold(String::new(), |mut acc, i| {
+        let _ = write!(acc, ", u{i}");
+        acc
+    });
     let _ = writeln!(s, "                        stu.UpdateAndFill({empty_ins}{uargs});");
     {
         let short: String = out_is_int

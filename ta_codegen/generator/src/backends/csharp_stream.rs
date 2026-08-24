@@ -1120,13 +1120,20 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
 
 
 fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
-    let class = stream_class_name(func);
+    emit_update_method(o, func);
+    emit_peek_method(o, func, reuse);
+    emit_update_and_fill_method(o, func);
+    emit_value_property(o, func);
+    emit_clone_method(o, func);
+}
+
+// --- Update ------------------------------------------------------------------
+fn emit_update_method(o: &mut String, func: &FuncDef) {
     let base = base_name(func);
     let vt = value_surface_type(func);
     let (sig_bars, fwd_bars) = bar_params(func);
     let inputs = streaming::input_array_names(func);
 
-    // --- Update -------------------------------------------------------------
     let mut d = XmlDoc::new();
     d.summary("Commit one closed bar, returning the new current value.");
     d.open("remarks");
@@ -1162,8 +1169,16 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     );
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, ""));
     let _ = writeln!(o, "      }}");
+}
 
-    // --- Peek ---------------------------------------------------------------
+// --- Peek ----------------------------------------------------------------------
+fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
+    let class = stream_class_name(func);
+    let base = base_name(func);
+    let vt = value_surface_type(func);
+    let (sig_bars, fwd_bars) = bar_params(func);
+    let inputs = streaming::input_array_names(func);
+
     // State what the caller can observe, never a comparative performance claim.
     // The scratch-election predicate is Java's, shipped unchanged because no C#
     // A/B exists to justify a different one — so the emitted docs must not
@@ -1218,8 +1233,13 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "         core.{base}_StepImpl(scratch, {fwd_bars});");
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
     let _ = writeln!(o, "      }}");
+}
 
-    // --- UpdateAndFill ------------------------------------------------------
+// --- UpdateAndFill ---------------------------------------------------------------
+fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
+    let base = base_name(func);
+    let inputs = streaming::input_array_names(func);
+
     // One emitter for every tier: each owns a `<base>_StepImpl` with the same
     // surface, so the n-bar filler is that step in a loop (issue #246). No
     // `Value` cache to keep in step on the way out, unlike Java: a multi-output
@@ -1308,8 +1328,12 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;");
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "      }}");
+}
 
-    // --- Value --------------------------------------------------------------
+// --- Value -----------------------------------------------------------------------
+fn emit_value_property(o: &mut String, func: &FuncDef) {
+    let vt = value_surface_type(func);
+
     let mut d = XmlDoc::new();
     d.summary(
         "The value at the most recently committed bar — the last history bar right after \
@@ -1321,8 +1345,12 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     o.push('\n');
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Value => {};", fresh_value_expr(func, ""));
+}
 
-    // --- Clone --------------------------------------------------------------
+// --- Clone -----------------------------------------------------------------------
+fn emit_clone_method(o: &mut String, func: &FuncDef) {
+    let class = stream_class_name(func);
+
     let mut d = XmlDoc::new();
     d.summary(
         "An independent deep copy of this stream: both evolve separately from here on.",

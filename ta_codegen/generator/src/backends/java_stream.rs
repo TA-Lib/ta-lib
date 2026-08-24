@@ -862,7 +862,15 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
 
 
 fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
-    let class = stream_class_name(func);
+    emit_update_method(o, func);
+    emit_update_and_fill_method(o, func);
+    emit_peek_method(o, func, reuse);
+    emit_value_method(o, func);
+    emit_copy_method(o, func);
+}
+
+// --- update --------------------------------------------------------------------
+fn emit_update_method(o: &mut String, func: &FuncDef) {
     let base = base_name(func);
     let vt = if has_value_class(func) {
         "Value".to_string()
@@ -901,10 +909,13 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
         let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
     }
     let _ = writeln!(o, "      }}");
+}
 
-    // --- updateAndFill ---------------------------------------------------------
-    // One emitter for every tier: each owns a `<base>_StepImpl` with the same
-    // surface, so the n-bar filler is that step in a loop (issue #246).
+// --- updateAndFill ---------------------------------------------------------------
+// One emitter for every tier: each owns a `<base>_StepImpl` with the same
+// surface, so the n-bar filler is that step in a loop (issue #246).
+fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
+    let base = base_name(func);
     let inputs = streaming::input_array_names(func);
     let mut sig = String::new();
     for a in &inputs {
@@ -1005,6 +1016,18 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
         let _ = writeln!(o, "         }}");
     }
     let _ = writeln!(o, "      }}");
+}
+
+// --- peek ------------------------------------------------------------------------
+fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
+    let class = stream_class_name(func);
+    let base = base_name(func);
+    let vt = if has_value_class(func) {
+        "Value".to_string()
+    } else {
+        out_java_type(func, &func.outputs[0].name).to_string()
+    };
+    let (sig_bars, fwd_bars) = bar_params(func);
 
     let alloc_note = if reuse {
         "It runs on a scratch handle held per thread and\n\
@@ -1053,6 +1076,15 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "         core.{base}_StepImpl(scratch, {fwd_bars});");
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
     let _ = writeln!(o, "      }}");
+}
+
+// --- value -----------------------------------------------------------------------
+fn emit_value_method(o: &mut String, func: &FuncDef) {
+    let vt = if has_value_class(func) {
+        "Value".to_string()
+    } else {
+        out_java_type(func, &func.outputs[0].name).to_string()
+    };
 
     let _ = writeln!(
         o,
@@ -1069,6 +1101,11 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
         let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
     }
     let _ = writeln!(o, "      }}");
+}
+
+// --- copy ------------------------------------------------------------------------
+fn emit_copy_method(o: &mut String, func: &FuncDef) {
+    let class = stream_class_name(func);
 
     let _ = writeln!(
         o,
