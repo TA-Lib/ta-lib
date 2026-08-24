@@ -265,7 +265,7 @@ static ErrorNumber test_reference_goldens( void )
    {
       double sl, ic, ft, ts;
       ta_test_ref_linreg( ta_test_ref_wilkinson_series[i], 0, TA_TEST_REF_WILKINSON_N,
-                          &sl, &ic, &ft, &ts, NULL );
+                          &sl, &ic, &ft, &ts );
       e = ref_cmp( "wilkinson slope",     i, sl, ta_test_ref_golden_wilkinson_slope[i] );
       if( e != TA_TEST_PASS ) return e;
       e = ref_cmp( "wilkinson intercept", i, ic, ta_test_ref_golden_wilkinson_intercept[i] );
@@ -307,7 +307,7 @@ static ErrorNumber test_reference_goldens( void )
          for( k = 0; k < ta_test_ref_golden_ladder_counts[t]; k++ )
          {
             double sl, ic, ft, ts;
-            ta_test_ref_linreg( ta_test_ref_ladder, k, period, &sl, &ic, &ft, &ts, NULL );
+            ta_test_ref_linreg( ta_test_ref_ladder, k, period, &sl, &ic, &ft, &ts );
             e = ref_cmp( "ladder slope",     k, sl, gSlope[t][k] ); if( e != TA_TEST_PASS ) return e;
             e = ref_cmp( "ladder intercept", k, ic, gIcept[t][k] ); if( e != TA_TEST_PASS ) return e;
             e = ref_cmp( "ladder fit",       k, ft, gFit[t][k] );   if( e != TA_TEST_PASS ) return e;

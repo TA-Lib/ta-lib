@@ -501,8 +501,7 @@ double ta_test_ref_slope( const double *x, const double *y, int s, int period,
 
 void ta_test_ref_linreg( const double *y, int s, int period,
                          double *outSlope, double *outIntercept,
-                         double *outFit, double *outForecast,
-                         double *outKappa )
+                         double *outFit, double *outForecast )
 {
    ta_dd sy, sxx, sxy, dx, dy, slope, ybar, half;
    double n = (double)period;
@@ -513,7 +512,6 @@ void ta_test_ref_linreg( const double *y, int s, int period,
    if( outIntercept ) *outIntercept = 0.0;
    if( outFit )       *outFit       = 0.0;
    if( outForecast )  *outForecast  = 0.0;
-   if( outKappa )     *outKappa     = 0.0;
    if( period <= 0 ) return;
 
    /* x = 0 .. period-1, so SumX = n(n-1)/2 -- an exact integer for any period
@@ -555,11 +553,6 @@ void ta_test_ref_linreg( const double *y, int s, int period,
    if( outFit )       *outFit       = dd_add( ybar, half ).hi;
    if( outForecast )  *outForecast  = dd_add( ybar, dd_mul_d( slope, ( n + 1.0 ) * 0.5 ) ).hi;
 
-   /* The cancellation the shipped recurrence actually performs. Its numerator
-    * is N = n*SumXY - SumX*SumY, and sum(dx*dy) is exactly n*N, so the ratio
-    * below is |SumX*SumY| / |N| without ever forming SumXY here. */
-   if( outKappa && sxy.hi != 0.0 )
-      *outKappa = fabs( dd_div( dd_mul_d( dd_mul_d( sy, sumX ), n ), sxy ).hi );
 }
 
 /* ===========================================================================

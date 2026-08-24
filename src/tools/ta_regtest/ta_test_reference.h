@@ -106,22 +106,21 @@ double ta_test_ref_slope( const double *x, const double *y, int s, int period,
  * (TA_LINEARREG_ANGLE is atan(m) in degrees; it has no separate oracle because
  * the only thing it adds is a libm call the caller can make itself.)
  *
- * outKappa receives the cancellation ratio of the numerator the shipped
- * recurrence actually evaluates, |SumX*SumY| / |period*SumXY - SumX*SumY| --
- * i.e. how many digits are lost in that subtraction. It is 0.0 when that
- * numerator is zero AT 106-BIT RESOLUTION, which is two different situations:
- * a genuinely flat least-squares fit, and a fit whose numerator cancelled below
- * the budget (the pd_extreme case above). DO NOT read kappa == 0 as licence to
- * assert exactness -- on the second of those the oracle is 100% wrong and the
- * shipped function returns -0 too, so the assertion passes while testing
- * nothing. Treat it as "no useful conditioning estimate".
+ * There is deliberately no conditioning out-parameter here, unlike
+ * ta_test_ref_slope above. One existed, reporting the cancellation ratio of the
+ * numerator the shipped recurrence evaluates; every caller passed NULL, and the
+ * only reading it supported was a trap. It went to 0.0 both for a genuinely flat
+ * fit and for a fit whose numerator cancelled below the 106-bit budget (the
+ * pd_extreme case above), and on the second of those the oracle is 100% wrong
+ * while the shipped function also returns -0 -- so a test that saw kappa == 0
+ * and asserted exactness would have passed while checking nothing. A future leg
+ * that wants a conditioning term for this family should add one that
+ * distinguishes those two cases, rather than revive that one.
  *
- * Any out-pointer may be NULL, and every caller in this suite currently passes
- * NULL for it; it exists for the tolerance model a future leg may want. */
+ * Any out-pointer may be NULL. */
 void ta_test_ref_linreg( const double *y, int s, int period,
                          double *outSlope, double *outIntercept,
-                         double *outFit, double *outForecast,
-                         double *outKappa );
+                         double *outFit, double *outForecast );
 
 /* 1 when every value of the window is bit-identical. Such a window makes a
  * correlation, a slope and an angle undefined, so it is evidence for nothing

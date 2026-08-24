@@ -554,7 +554,7 @@ static ErrorNumber test_linearreg_nist_numacc( void )
             double sl, ic, ft, ts;
             ErrorNumber e;
             ta_test_ref_linreg( lr_scratch, lr_out.begIdx + k - ( period - 1 ), period,
-                                &sl, &ic, &ft, &ts, NULL );
+                                &sl, &ic, &ft, &ts );
             e = lr_compare( label, lr_scratch, period, k, sl, ic, ft, ts );
             if( e != TA_TEST_PASS ) return e;
          }
@@ -845,7 +845,7 @@ static ErrorNumber test_linearreg_random_walk( void )
             double sl, ic, ft, ts;
             ErrorNumber e;
             ta_test_ref_linreg( lr_scratch, lr_out.begIdx + k - ( period - 1 ), period,
-                                &sl, &ic, &ft, &ts, NULL );
+                                &sl, &ic, &ft, &ts );
             e = lr_compare( label, lr_scratch, period, k, sl, ic, ft, ts );
             if( e != TA_TEST_PASS ) return e;
          }
