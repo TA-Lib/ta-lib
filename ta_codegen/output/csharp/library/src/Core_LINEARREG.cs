@@ -58,6 +58,8 @@ public partial class Core
     *                (numerics-changing). See issue #103.
     *  072026 MF,CC  Read the departing value before the output write so in-place
     *                (outReal==inReal) calls stay correct. See issue #130.
+    *  082426 MF,CC  Fix #254. Re-anchor the running sums: every 32*period bars,
+    *                and on the bar a large value leaves the window.
     */
    /// <summary>
    /// Number of leading input bars <c>LINEARREG</c> consumes before it can
@@ -103,8 +105,14 @@ public partial class Core
       double m = 0;
       double b = 0;
       int i = 0;
+      int j = 0;
+      int windowStart = 0;
+      int barsSinceReseed = 0;
       double tempValue1 = 0;
+      double tempValue2 = 0;
       double trailingValue = 0;
+      double weightedTrailing = 0;
+      double sumAbs = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -160,14 +168,18 @@ public partial class Core
        */
       SumXY = 0;
       SumY = 0;
+      sumAbs = 0;
       for( i = optInTimePeriod; i-- != 0;  ) {
          tempValue1 = inReal[today - i];
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
+         sumAbs += Math.Abs(tempValue1);
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      trailingValue = inReal[trailingIdx++];
+      barsSinceReseed = 32 * optInTimePeriod;
+      trailingValue = inReal[trailingIdx];
+      trailingIdx += 1;
       outReal[outIdx++] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -180,11 +192,89 @@ public partial class Core
        * next iteration departs from.
        */
       while( today <= endIdx ) {
-         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+         weightedTrailing = (double)optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
          SumY = SumY - trailingValue + inReal[today];
+         sumAbs = sumAbs - Math.Abs(trailingValue) + Math.Abs(inReal[today]);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.Abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = today - lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = inReal[j];
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.Abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         trailingValue = inReal[trailingIdx++];
+         trailingValue = inReal[trailingIdx];
+         trailingIdx += 1;
          outReal[outIdx++] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
@@ -214,8 +304,14 @@ public partial class Core
       double m = 0;
       double b = 0;
       int i = 0;
+      int j = 0;
+      int windowStart = 0;
+      int barsSinceReseed = 0;
       double tempValue1 = 0;
+      double tempValue2 = 0;
       double trailingValue = 0;
+      double weightedTrailing = 0;
+      double sumAbs = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -244,22 +340,45 @@ public partial class Core
       Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
       SumXY = 0;
       SumY = 0;
+      sumAbs = 0;
       for( i = optInTimePeriod; i-- != 0;  ) {
          tempValue1 = (double)inReal[today - i];
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
+         sumAbs += Math.Abs(tempValue1);
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      trailingValue = (double)inReal[trailingIdx++];
+      barsSinceReseed = 32 * optInTimePeriod;
+      trailingValue = (double)inReal[trailingIdx];
+      trailingIdx += 1;
       outReal[outIdx++] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       while( today <= endIdx ) {
-         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+         weightedTrailing = (double)optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
          SumY = SumY - trailingValue + (double)inReal[today];
+         sumAbs = sumAbs - Math.Abs(trailingValue) + Math.Abs((double)inReal[today]);
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.Abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = today - lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = (double)inReal[j];
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.Abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         trailingValue = (double)inReal[trailingIdx++];
+         trailingValue = (double)inReal[trailingIdx];
+         trailingIdx += 1;
          outReal[outIdx++] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
@@ -403,14 +522,19 @@ public partial class Core
    {
       internal Core core;
       internal int optInTimePeriod;
+      internal int lookbackTotal;
+      internal int trailingIdx;
       internal double SumX;
       internal double SumXY;
       internal double SumY;
       internal double Divisor;
+      internal int barsSinceReseed;
       internal double trailingValue;
-      internal int ringPos_trailingIdx;
-      internal int ringCap_trailingIdx;
-      internal double[] ring_trailingIdx_inReal = [];
+      internal double sumAbs;
+      internal int j;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inReal = [];
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -433,15 +557,20 @@ public partial class Core
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.lookbackTotal = other.lookbackTotal;
+         this.trailingIdx = other.trailingIdx;
          this.SumX = other.SumX;
          this.SumXY = other.SumXY;
          this.SumY = other.SumY;
          this.Divisor = other.Divisor;
+         this.barsSinceReseed = other.barsSinceReseed;
          this.trailingValue = other.trailingValue;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
-         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.sumAbs = other.sumAbs;
+         this.j = other.j;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inReal = new double[other.x_inReal.Length];
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -451,17 +580,22 @@ public partial class Core
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.lookbackTotal = other.lookbackTotal;
+         this.trailingIdx = other.trailingIdx;
          this.SumX = other.SumX;
          this.SumXY = other.SumXY;
          this.SumY = other.SumY;
          this.Divisor = other.Divisor;
+         this.barsSinceReseed = other.barsSinceReseed;
          this.trailingValue = other.trailingValue;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
-            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         this.sumAbs = other.sumAbs;
+         this.j = other.j;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal.Length != other.x_inReal.Length ) {
+            this.x_inReal = new double[other.x_inReal.Length];
          }
-         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -553,20 +687,102 @@ public partial class Core
    {
       double m = 0.0;
       double b = 0.0;
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal[0] = inReal;
+      int windowStart = 0;
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      double weightedTrailing = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.j -= rebaseShift;
       }
-      sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
-      sp.SumY = sp.SumY - sp.trailingValue + inReal;
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      weightedTrailing = (double)sp.optInTimePeriod * sp.trailingValue;
+      sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;
+      sp.SumY = sp.SumY - sp.trailingValue + sp.x_inReal[sp.today & sp.xMask];
+      sp.sumAbs = sp.sumAbs - Math.Abs(sp.trailingValue) + Math.Abs(sp.x_inReal[sp.today & sp.xMask]);
+      /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+       * running totals that are never rebuilt, so each bar's rounding joins a
+       * residue no later bar can subtract -- unbounded in the length of the
+       * call, and scaled by the largest value the sums have EVER held rather
+       * than by what the window holds now. Two triggers, and they cover
+       * different failures (issue #254):
+       *
+       *   - every 32*period bars, so a slow drift stays bounded however long
+       *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+       *
+       *   - when the value the window just dropped carries more weight than
+       *     everything left in it. That is the one the interval cannot cover:
+       *     one large print inflates the residue for up to 32*period bars
+       *     after it is gone (measured 31x at period 5), and this rebuilds on
+       *     the bar it leaves instead.
+       *
+       * The threshold compares two DEGREE-1 quantities, which is why it is 100
+       * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+       * against a sum of squares. On ordinary prices the ratio is ~1 and this
+       * never fires; it is a compare, not work. The constant is 100 rather than
+       * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+       * measured accuracy gain.
+       *
+       * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+       * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+       * while the departing value does not, so |weightedTrailing|/|SumY| is
+       * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+       * series measured 10.9x slower at period 30, which is precisely the
+       * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+       * guard on a quartic quantity: a ratio test is ill-posed when its
+       * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+       * when every value in the window is 0 -- and then the numerator is 0 too
+       * and the test is false. There is no window it can misjudge.
+       *
+       * It is also the RIGHT quantity on the merits, not just the safe one: a
+       * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+       * term against sum|y| asks exactly "would rebuilding beat what we are
+       * carrying?".
+       *
+       * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+       * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+       * ns/bar at period 14) because the update is INDEPENDENT of the serial
+       * SumXY -> SumY dependency chain and fills slots that were idle. The
+       * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+       * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+       * it, and silently dropped any print departing within `period` bars of a
+       * rebuild (~3% of them).
+       *
+       * The scan walks the window oldest-first with the weight counting DOWN,
+       * which is the priming scan's order and weighting -- so a reseeded bar is
+       * bit-identical to the same bar computed by a call that started there.
+       * That identity is the whole point: it is what the range-stability
+       * contract measures.
+       *
+       * Reading the window is safe when outReal aliases inReal (#130): the
+       * outputs written so far occupy [0, outIdx-1], and windowStart is
+       * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+       * to at least lookbackTotal.
+       */
+      sp.barsSinceReseed -= 1;
+      if( sp.barsSinceReseed <= 0 || Math.Abs(weightedTrailing) > 100.0 * sp.sumAbs ) {
+         sp.barsSinceReseed = 32 * sp.optInTimePeriod;
+         windowStart = sp.today - sp.lookbackTotal;
+         sp.SumY = 0;
+         sp.SumXY = 0;
+         sp.sumAbs = 0;
+         tempValue2 = (double)sp.lookbackTotal;
+         for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+            tempValue1 = sp.x_inReal[sp.j & sp.xMask];
+            sp.SumY += tempValue1;
+            sp.SumXY += tempValue2 * tempValue1;
+            sp.sumAbs += Math.Abs(tempValue1);
+            tempValue2 -= 1.0;
+         }
+      }
       m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
       b = (sp.SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
-      sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      sp.trailingValue = sp.x_inReal[sp.trailingIdx & sp.xMask];
+      sp.trailingIdx += 1;
       sp.cur_outReal = Math.FusedMultiplyAdd(m, (double)(sp.optInTimePeriod - 1), b);
-      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
-      }
+      sp.today += 1;
    }
 
    private RetCode LINEARREG_OpenImpl( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
@@ -585,8 +801,14 @@ public partial class Core
       double m = 0;
       double b = 0;
       int i = 0;
+      int j = 0;
+      int windowStart = 0;
+      int barsSinceReseed = 0;
       double tempValue1 = 0;
+      double tempValue2 = 0;
       double trailingValue = 0;
+      double weightedTrailing = 0;
+      double sumAbs = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -646,14 +868,18 @@ public partial class Core
        */
       SumXY = 0;
       SumY = 0;
+      sumAbs = 0;
       for( i = optInTimePeriod; i-- != 0;  ) {
          tempValue1 = inReal[today - i];
          SumY += tempValue1;
          SumXY += (double)i * tempValue1;
+         sumAbs += Math.Abs(tempValue1);
       }
       m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       b = (SumY - m * SumX) / (double)optInTimePeriod;
-      trailingValue = inReal[trailingIdx++];
+      barsSinceReseed = 32 * optInTimePeriod;
+      trailingValue = inReal[trailingIdx];
+      trailingIdx += 1;
       outReal[outIdx++ * outStride] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -666,33 +892,121 @@ public partial class Core
        * next iteration departs from.
        */
       while( today <= endIdx ) {
-         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+         weightedTrailing = (double)optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
          SumY = SumY - trailingValue + inReal[today];
+         sumAbs = sumAbs - Math.Abs(trailingValue) + Math.Abs(inReal[today]);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.Abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = today - lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = inReal[j];
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.Abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
          m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          b = (SumY - m * SumX) / (double)optInTimePeriod;
-         trailingValue = inReal[trailingIdx++];
+         trailingValue = inReal[trailingIdx];
+         trailingIdx += 1;
          outReal[outIdx++ * outStride] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
          today += 1;
       }
       outBegIdx = startIdx;
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
          return RetCode.InternalError;
       }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      inReal.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal);
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+      }
       sp.optInTimePeriod = optInTimePeriod;
+      sp.lookbackTotal = lookbackTotal;
+      sp.trailingIdx = trailingIdx;
       sp.SumX = SumX;
       sp.SumXY = SumXY;
       sp.SumY = SumY;
       sp.Divisor = Divisor;
+      sp.barsSinceReseed = barsSinceReseed;
       sp.trailingValue = trailingValue;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.sumAbs = sumAbs;
+      sp.j = j;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inReal = capX_inReal;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

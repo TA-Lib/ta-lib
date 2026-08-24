@@ -127,26 +127,46 @@
  *     and it is the defect class #118 fixed in TA_VAR and #242 in
  *     TA_CORREL/TA_BETA -- anchoring the window before summing would remove it.
  *
- *     TERM 2, the drift, and it IS new: #103 made SumY and SumXY running totals
- *     that are never recomputed, so every bar's rounding is added to a residue
- *     that no later bar can subtract. It grows with how far into the CALL a bar
- *     sits, and its size is set by the largest value the sums have ever held --
- *     not by the current window. A single large print therefore corrupts every
- *     later bar, permanently and by a growing amount, and TA_SUCCESS is still
- *     returned. L9 measures it directly; the numbers and the reproduction are
- *     in issue #254.
+ *     TERM 2, the drift. #103 made SumY and SumXY running totals that were never
+ *     recomputed, so every bar's rounding was added to a residue that no later
+ *     bar could subtract: it grew with how far into the CALL a bar sat, and its
+ *     size was set by the largest value the sums had ever held rather than by the
+ *     current window, so one large print corrupted every later bar permanently.
  *
- *     C_DRIFT is therefore an allowance for an open defect (#254), not a property
- *     worth preserving: when it is fixed the term should be deleted, and the legs
- *     below will pass with several orders of margin. Its exponent is 1.5, not 1:
- *     the residue is a random walk of per-bar roundings rather than their sum,
- *     and this library's cumulative-error law is already documented as n^1.5
- *     (#180). That matters for tightness, not tidiness -- against bars^1 the
- *     worst measured ratio is 82.5 and the constant has to be 300, which is loose
- *     enough to be worthless at small k; against bars^1.5 it is 3.63 and the
- *     constant is 11. All three constants are ~3x their worst measured ratio,
- *     calibrated on disjoint window sets (k <= 4 for the cancellation terms,
- *     k >= 16 for drift) so neither absorbs the other.
+ *     #254 FIXED THAT HALF. The sums are re-anchored every 32*period bars and on
+ *     the bar a large value leaves the window, so the residue is now bounded by
+ *     one interval instead of by the call, and a print's effect ends when it
+ *     leaves rather than persisting. L10 and L11 pin the two mechanisms.
+ *
+ *     C_DRIFT SURVIVES ANYWAY, and the reason is worth stating because #254
+ *     predicted otherwise ("delete this constant when the issue closes"). That
+ *     prediction assumed BOTH defects were being fixed. Only the drift was --
+ *     the cancellation in TERM 1 is untouched and unreachable on market data, so
+ *     it was deliberately left. Bisected on the full suite, the constant is now
+ *     pinned by:
+ *
+ *       - the cancellation legs -- L3's ladder binds at ~3.2, and L2/L4/L5 all
+ *         fail below ~2. These are TERM 1 wearing TERM 2's constant, because the
+ *         bound has only one place to put a k-dependent allowance;
+ *       - residue accumulated BEFORE the first reseed can fire. L8 binds at ~0.4
+ *         at k=10 and L9 at ~0.15 at k=41 with period 2, both inside the first
+ *         32*period bars. No reseed policy removes this one, and it is why L9
+ *         does NOT pass at an arbitrarily small constant -- something the first
+ *         draft of this comment asserted without measuring it.
+ *
+ *     So the drift's own leg now binds ~20x below what the cancellation legs
+ *     force the constant to be. The value stays at 11 (~3x the 3.2 that binds)
+ *     while its MEANING has changed, and deleting it would fail L2 through L5.
+ *     The before/after that does belong to the reseed is in L9's own table
+ *     below, and in L10's ratio: 8.8 -> 1.0.
+ *
+ *     Its exponent is 1.5, not 1: the residue is a random walk of per-bar
+ *     roundings rather than their sum, and this library's cumulative-error law is
+ *     already documented as n^1.5 (#180). Against bars^1 the worst measured ratio
+ *     is 82.5 and the constant has to be 300, loose enough to be worthless at
+ *     small k. All three constants are ~3x their worst measured ratio, calibrated
+ *     on disjoint window sets (k <= 4 for the cancellation terms, k >= 16 for
+ *     drift) so neither absorbs the other.
  */
 
 /**** Headers ****/
@@ -178,9 +198,34 @@
  * dominates). Re-measure the same way if you change a corpus. */
 #define LR_C_SLOPE  50.0   /* cancellation, slope        (measured worst 15.6) */
 #define LR_C_VALUE  40.0   /* cancellation, other outputs (measured worst 10.7) */
-#define LR_C_DRIFT  11.0   /* #103 running-sum residue    (measured worst 3.63) */
+#define LR_C_DRIFT  11.0   /* residue before the first reseed + cancellation (worst 3.2) */
 #define LR_DEG      ( 180.0 / 3.14159265358979323846 )
 #define LR_N        2048
+
+/* (L10/L11, #254) The two reseed legs below assert RATIOS, not magnitudes, so
+ * neither pins a platform-dependent number and neither needs an oracle: each
+ * compares the shipped function against the shipped function on a different
+ * range or a different series.
+ *
+ * Both bounds are ~3x the worst ratio measured with the fix in place, over
+ * N = 4000, 8000 and 16000 and periods 2/5/14/30:
+ *
+ *                     with fix (worst)   interval only   no reseed
+ *   L10 last/first          2.0               1.2          5.1 .. 30.1
+ *   L11 spike/clean         1.3               44.4         5.0 .. 65.9
+ *
+ * The gap either side of each bound is what makes them separable: L10 goes red
+ * if the periodic re-anchor is removed, L11 goes red if the outlier trigger is
+ * removed, and neither substitutes for the other. That separation is proved by
+ * sabotage, not assumed -- see the block comment on each leg. */
+/* (L12) The share of bars a near-zero-mean series may rebuild on. Healthy is
+ * 1.0-2.0% at periods 14/30 (the periodic interval plus coincidental exactness);
+ * a cancelling denominator makes it 100.0%. 25 sits 12x above the one and 4x
+ * below the other. */
+#define LR_RESEED_REBUILD_PCT  25.0
+#define LR_RESEED_GROWTH  5.0   /* L10 last-quarter / first-quarter (worst 2.0) */
+#define LR_RESEED_CONTAM  4.0   /* L11 spiked / clean past the print (worst 1.1)*/
+#define LR_LONG_N         8000  /* long enough for the residue to separate      */
 
 /* The five outputs of one call, in one place, so every leg reads the same shape.
  * It does NOT by itself stop a leg testing a subset. L5 is the one that does:
@@ -215,10 +260,21 @@ static ErrorNumber test_linearreg_constant_window( void );
 static ErrorNumber test_linearreg_internal_consistency( void );
 static ErrorNumber test_linearreg_random_walk( void );
 static ErrorNumber test_linearreg_range_stability( void );
+static ErrorNumber test_linearreg_reseed_interval( void );
+static ErrorNumber test_linearreg_reseed_trigger( void );
+static ErrorNumber test_linearreg_reseed_denominator( void );
+static int lr_reseed_worst( const double *y, int n, int period, int fromBar,
+                            double *outFirst, double *outLast );
 
 /**** Local variables definitions.     ****/
 static LR_Out lr_out;
 static double lr_scratch[LR_N];
+/* Separate from lr_scratch/LR_Out: these two legs need a series far longer
+ * than LR_N and only ever read SLOPE, so inflating LR_N would cost five times
+ * the memory for four outputs they never look at. */
+static double lr_long[LR_LONG_N];
+static double lr_longSpiked[LR_LONG_N];
+static double lr_longSlope[LR_LONG_N];
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_linearreg( TA_History *history )
@@ -246,6 +302,12 @@ ErrorNumber test_func_linearreg( TA_History *history )
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed LINEARREG random-walk oracle (#251) (Code=%d)\n", __FILE__, retValue ); return retValue; }
    retValue = test_linearreg_range_stability();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed LINEARREG range stability (#251) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_linearreg_reseed_interval();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed LINEARREG reseed interval (#254) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_linearreg_reseed_trigger();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed LINEARREG reseed trigger (#254) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_linearreg_reseed_denominator();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed LINEARREG reseed denominator (#254) (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    return TA_TEST_PASS;
 }
@@ -871,37 +933,37 @@ static ErrorNumber test_linearreg_random_walk( void )
  * Reading a relative error against it, as that same draft did, overstates the
  * defect by orders of magnitude on a quantity that crosses zero.
  *
- * Measured absolute |full-range call - same bar computed alone|, geometric
- * random walk at $100, 1.5% steps, seed 0xBEEF. Bold = over the 1e-10 tier:
+ * WHAT THE CLASSIFICATION USED TO COST, and why #254 was worth doing. Measured
+ * absolute |full-range call - same bar computed alone|, geometric random walk at
+ * $100, 1.5% steps, seed 0xBEEF. Bold = over the 1e-10 tier:
  *
- *     bars     period 5     period 14    period 30
- *      252     2.67e-12     4.84e-13     4.84e-14
- *     1000     5.34e-11     5.46e-12     2.62e-13
+ *     bars     period 5     period 14    period 30      period 5, one 1000x print
+ *      252     2.67e-12     4.84e-13     4.84e-14      *4.45e-10*
+ *     1000     5.34e-11     5.46e-12     2.62e-13      *2.25e-09*
  *     2000    *1.62e-10*    1.19e-11     4.92e-13
- *     5000    *5.68e-10*    1.93e-11     6.83e-12
- *    20000    *2.07e-09*   *2.03e-10*    3.79e-11
+ *     5000    *5.68e-10*    1.93e-11     6.83e-12      *1.21e-08*
+ *    20000    *2.07e-09*   *2.03e-10*    3.79e-11      *4.82e-08*
  *
- * and with ONE 1000x bad print at bar 60, period 5: 4.45e-10 at 252 bars,
- * 2.25e-09 at 1000, 1.21e-08 at 5000, 4.82e-08 at 20000 -- over the tier at
- * every length, including the 252 bars of ta_regtest's own history.
+ * The surviving claim from #254 was narrower than "an unnoticed defect" and
+ * sharper: THE EPSILON CLASSIFICATION WAS CORPUS-LIMITED AND NOTHING SAID SO.
+ * "~1e-9 drift across ranges" reads as a fixed magnitude; it was not. The residue
+ * grew without bound in the length of the call, and its size was set by the
+ * largest value the sums had ever held rather than by the current window -- so
+ * the class held on the 252-bar history the gate uses, stopped holding at ~2000
+ * bars, and stopped holding AT 252 bars if the series carried a single large
+ * print, which is inside the corpus the gate already runs.
  *
- * So the surviving claim is narrower than "an unnoticed defect", and sharper:
- * THE EPSILON CLASSIFICATION IS CORPUS-LIMITED AND NOTHING SAYS SO. "~1e-9 drift
- * across ranges" reads as a fixed magnitude. It is not -- the residue grows
- * without bound in the length of the call, because SumY and SumXY are running
- * totals that are never recomputed, so each bar's rounding joins a residue no
- * later bar can subtract, and its size is set by the largest value the sums have
- * ever held rather than by the current window. The class therefore holds on the
- * 252-bar history the gate actually uses and stops holding at ~2000 bars, or at
- * 252 bars if the series contains a single large print.
+ * FIXED. The same table with the re-anchor in place, worst over all four periods:
+ * 2.8e-11 at 20000 bars and 6.2e-12 at 100000, on both corpora -- the residue is
+ * now bounded by one reseed interval rather than by the call, so the column stops
+ * growing instead of running to 1e-7. The class now holds at every length this
+ * library accepts, which is what it always claimed.
  *
- * This leg pins the growth law rather than any one number, so it stays useful
- * whichever way #254 is resolved: a fix makes it pass with orders of margin, and
- * a change that made the accumulation worse fails it. The repair, the one #118
- * and #242 already use elsewhere here, is a periodic re-anchor -- recompute both
- * sums from the window every N bars, which is the priming scan these functions
- * already contain. #254 carries the sizing question and the streaming-handle
- * consequence.
+ * This leg still pins the GROWTH LAW rather than any one number, so it keeps
+ * working from the other side: it now passes with orders of margin, and a change
+ * that reintroduced the accumulation fails it. L10 and L11 are the legs that pin
+ * the two mechanisms directly, and they are the ones to read first if this one
+ * ever goes red.
  *
  * Non-vacuity is structural: the comparison is against the SAME function called
  * on one window, so there is no oracle to be co-wrong with.
@@ -973,6 +1035,362 @@ static ErrorNumber test_linearreg_range_stability( void )
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
          }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* Build the geometric random walk both #254 legs run on. Same shape, seed and
+ * step size as test_linearreg_range_stability above, so the two files' numbers
+ * are comparable; only the length differs. */
+static void lr_reseed_corpus( double *dst, int n )
+{
+   int i;
+   ta_test_ref_lcg_seed( 0xBEEFu );
+   dst[0] = 100.0;
+   for( i = 1; i < n; i++ )
+      dst[i] = dst[i-1] * ( 1.0 + 0.015 * ta_test_ref_lcg_sym() );
+}
+
+/* Worst |full-range - single-window| SLOPE disagreement over y, split into the
+ * first and last quarter of the outputs.
+ *
+ * The single-window call (startIdx == endIdx == bar) produces its value from
+ * the priming scan alone -- no recurrence, no reseed, no history -- so it is
+ * the same function answering about the same bar with nothing accumulated.
+ * That is what makes both legs non-vacuous without an oracle: there is nothing
+ * here for a wrong implementation to be co-wrong with.
+ *
+ * When fromBar >= 0, only bars whose whole window sits STRICTLY AFTER fromBar
+ * are scored, and everything lands in *outLast. That is how L11 excludes the
+ * bars whose output legitimately contains the big print: while the print is in
+ * the window the slope really is ~1e5 and an absolute disagreement of 1e-9 on
+ * it is one ulp, not a residue. Measuring those bars would have made L11 look
+ * like it failed at spike sizes where nothing is wrong.
+ *
+ * Returns non-zero on an unexpected return code. */
+static int lr_reseed_worst( const double *y, int n, int period, int fromBar,
+                            double *outFirst, double *outLast )
+{
+   TA_Integer b, nb, b2, nb2;
+   TA_RetCode rc;
+   double one[8];
+   int k, nbOut;
+
+   *outFirst = 0.0;
+   *outLast  = 0.0;
+
+   rc = TA_LINEARREG_SLOPE( 0, n-1, y, period, &b, &nb, lr_longSlope );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "LINEARREG #254: full-range call rc=%d (period=%d, n=%d)\n",
+              (int)rc, period, n );
+      return 1;
+   }
+   nbOut = (int)nb;
+
+   for( k = 0; k < nbOut; k++ )
+   {
+      const int bar = (int)b + k;
+      double d;
+
+      if( fromBar >= 0 && bar - period + 1 <= fromBar ) continue;
+
+      rc = TA_LINEARREG_SLOPE( bar, bar, y, period, &b2, &nb2, one );
+      if( rc != TA_SUCCESS || nb2 != 1 || (int)b2 != bar )
+      {
+         printf( "LINEARREG #254: single-window call rc=%d beg=%d nb=%d "
+                 "(wanted SUCCESS,%d,1)\n", (int)rc, (int)b2, (int)nb2, bar );
+         return 1;
+      }
+      d = fabs( lr_longSlope[k] - one[0] );
+
+      if( fromBar >= 0 )                    { if( d > *outLast  ) *outLast  = d; }
+      else if( k < nbOut / 4 )              { if( d > *outFirst ) *outFirst = d; }
+      else if( k >= 3 * ( nbOut / 4 ) )     { if( d > *outLast  ) *outLast  = d; }
+   }
+   return 0;
+}
+
+/* (L10) #254 -- the PERIODIC re-anchor, every 32*period bars.
+ *
+ * The claim under test is not "the error is small" but "the error does not
+ * grow with how far into the call a bar sits". #103 made SumY and SumXY
+ * running totals that are never rebuilt, so every bar's rounding joins a
+ * residue no later bar can subtract: the disagreement between a full-range
+ * call and a single-window call at the same bar grows without bound in the
+ * length of the call. A periodic rebuild caps it at whatever accumulates over
+ * one interval, whatever the call length.
+ *
+ * So the leg compares the worst disagreement in the LAST quarter of a long
+ * call against the worst in the FIRST quarter. Bounded residue => a ratio near
+ * 1. Unbounded residue => a ratio that rises with N, which is exactly what the
+ * pre-fix code does.
+ *
+ * A ratio, deliberately, and not an absolute tier: the absolute figure depends
+ * on the price level, the period and the corpus, and #254's first draft was
+ * filed on an absolute number that turned out to be a unit error. A ratio of
+ * the same quantity to itself has no units to get wrong.
+ *
+ * WHY THIS IS NOT L9's TEST: L9 (range stability) checks that every bar sits
+ * under a bars^1.5 growth LAW. It passes with the drift present, because the
+ * law it pins is the drifting one -- LR_C_DRIFT is an allowance for exactly
+ * this defect. L10 asserts the growth is GONE. The two disagree on purpose,
+ * and L9's allowance is what shrinks when this leg is satisfied.
+ *
+ * SABOTAGE-PROVEN, both directions:
+ *   - delete the `barsSinceReseed` interval, keep the trigger: RED (the
+ *     trigger never fires on an ordinary price series, so the body degenerates
+ *     to today's unbounded recurrence).
+ *   - delete the trigger, keep the interval: GREEN -- correctly, because the
+ *     interval alone does bound growth on a clean series. L11 is the leg that
+ *     covers the trigger.
+ * Measured worst ratio with the fix: 2.0, against a 5.0 bound. */
+static ErrorNumber test_linearreg_reseed_interval( void )
+{
+   static const int periods[4] = { 2, 5, 14, 30 };
+   int p;
+
+   lr_reseed_corpus( lr_long, LR_LONG_N );
+
+   for( p = 0; p < 4; p++ )
+   {
+      const int period = periods[p];
+      double first, last;
+
+      if( lr_reseed_worst( lr_long, LR_LONG_N, period, -1, &first, &last ) )
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+
+      /* Compared as a product, never a quotient: with first == 0 (an exact
+       * recurrence) this passes only if last is 0 too, instead of dividing by
+       * zero or, worse, reporting a tidy 0.0 ratio for infinite growth. */
+      if( last > LR_RESEED_GROWTH * first )
+      {
+         printf( "LINEARREG #254 [reseed interval]: SLOPE period=%d over %d bars -- "
+                 "worst range disagreement grows down the call: first quarter %.3g, "
+                 "last quarter %.3g (ratio %.1f > %.1f). The running sums are not "
+                 "being re-anchored.\n",
+                 period, LR_LONG_N, first, last,
+                 first > 0.0 ? last / first : 0.0, LR_RESEED_GROWTH );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* (L11) #254 -- the OUTLIER TRIGGER, |period*trailingValue| > 100*|SumY|.
+ *
+ * The interval alone does not cover this and the measurement says so: the
+ * residue's magnitude is set by the largest value the sums have ever held, so
+ * one bad print inflates every later bar until the next rebuild -- up to
+ * 32*period bars later. Over that stretch the interval-only form leaves 31x
+ * (period 5) and 25x (period 14) more error than the same bars of the same
+ * series without the print. The trigger rebuilds on the bar the print leaves
+ * the window instead, which brings the ratio to 1.0.
+ *
+ * So this leg runs the SAME series twice, once with a 1000x print at bar 60,
+ * and compares the worst range disagreement over bars whose window is entirely
+ * PAST the print. Those bars have no legitimate reason to know the print ever
+ * happened; if they disagree with the clean run, they are carrying its residue.
+ *
+ * The comparison is against the clean run rather than a fixed number for the
+ * same reason L10 uses a ratio: it cancels the price level, the period and the
+ * corpus, and leaves only the contamination.
+ *
+ * WHY 100 AND NOT CORREL's 1e6: TA_CORREL's guard compares a departing SQUARED
+ * deviation against a sum of squares -- a degree-2 quantity, where 1e6 means a
+ * factor of 1e3 in the values. SumY is degree 1, so the same "three decimal
+ * digits" threshold is 1e3... and 100 is chosen below that, because a spike
+ * sweep showed the residue from a print too small to trip 1e3 still sits inside
+ * the interval's own bound, while 100 catches everything that does not. #242
+ * put an absolute guard on a quartic quantity; matching the degree is the
+ * lesson from it.
+ *
+ * WHY NOT A TIGHTER THRESHOLD: 10 was measured too. It buys nothing here (the
+ * spike corpus scores identically at 10 and 100) and costs real work on
+ * zero-mean input, where |SumY| passes through zero constantly: LINEARREG of an
+ * oscillator reseeds on 8.8% of bars at K=10 against 0.7% at K=100 and 0.1%
+ * for the interval alone. K=100 is where the trigger is nearly free on every
+ * corpus tested and still catches every print that matters.
+ *
+ * SABOTAGE-PROVEN, both directions:
+ *   - delete the trigger, keep the interval: RED at periods 5 and 14.
+ *   - delete the interval, keep the trigger: GREEN -- correctly; L10 covers it.
+ * Measured worst ratio with the fix: 1.3, against a 4.0 bound. */
+static ErrorNumber test_linearreg_reseed_trigger( void )
+{
+   static const int periods[4] = { 2, 5, 14, 30 };
+   enum { SPIKE_BAR = 60 };
+   int p, i;
+
+   lr_reseed_corpus( lr_long, LR_LONG_N );
+   for( i = 0; i < LR_LONG_N; i++ ) lr_longSpiked[i] = lr_long[i];
+   lr_longSpiked[SPIKE_BAR] *= 1000.0;
+
+   for( p = 0; p < 4; p++ )
+   {
+      const int period = periods[p];
+      double unusedFirst, clean, spiked;
+
+      if( lr_reseed_worst( lr_long, LR_LONG_N, period, SPIKE_BAR,
+                           &unusedFirst, &clean ) )
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      if( lr_reseed_worst( lr_longSpiked, LR_LONG_N, period, SPIKE_BAR,
+                           &unusedFirst, &spiked ) )
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+
+      if( spiked > LR_RESEED_CONTAM * clean )
+      {
+         printf( "LINEARREG #254 [reseed trigger]: SLOPE period=%d -- bars whose "
+                 "window is entirely past a 1000x print at bar %d still carry its "
+                 "residue: clean %.3g, spiked %.3g (ratio %.1f > %.1f). The print "
+                 "is not triggering a re-anchor when it leaves the window.\n",
+                 period, (int)SPIKE_BAR, clean, spiked,
+                 clean > 0.0 ? spiked / clean : 0.0, LR_RESEED_CONTAM );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* Count the bars of a full-range call whose SLOPE is BITWISE equal to the same
+ * bar computed alone. A single-window call produces its value from the priming
+ * scan, and a re-anchor rebuilds the sums with that identical scan, order and
+ * weighting -- so a rebuilt bar matches it exactly while a bar carried by the
+ * recurrence has drifted. The count is therefore a rebuild counter that needs
+ * no instrumentation inside the library, which is what lets this run in CI
+ * instead of a timing harness that would flap. */
+static int lr_rebuild_pct( const double *y, int n, int period, double *outPct )
+{
+   TA_Integer b, nb, b2, nb2;
+   TA_RetCode rc;
+   double one[8];
+   int k, same = 0;
+
+   *outPct = 0.0;
+   rc = TA_LINEARREG_SLOPE( 0, n-1, y, period, &b, &nb, lr_longSlope );
+   if( rc != TA_SUCCESS || nb <= 0 )
+   {
+      printf( "LINEARREG #254: full-range call rc=%d nb=%d\n", (int)rc, (int)nb );
+      return 1;
+   }
+   for( k = 0; k < (int)nb; k++ )
+   {
+      const int bar = (int)b + k;
+      rc = TA_LINEARREG_SLOPE( bar, bar, y, period, &b2, &nb2, one );
+      if( rc != TA_SUCCESS || nb2 != 1 )
+      {
+         printf( "LINEARREG #254: single-window call rc=%d nb=%d\n", (int)rc, (int)nb2 );
+         return 1;
+      }
+      if( memcmp( &lr_longSlope[k], &one[0], sizeof(double) ) == 0 ) same++;
+   }
+   *outPct = 100.0 * (double)same / (double)nb;
+   return 0;
+}
+
+/* (L12) #254 -- the trigger's DENOMINATOR must not be able to cancel.
+ *
+ * L10 and L11 pin that the sums are re-anchored ENOUGH. Nothing pinned that
+ * they are not re-anchored TOO MUCH, and that is a live failure mode rather
+ * than a hypothetical: the trigger's first shipped form divided by |SumY|, a
+ * SIGNED sum, which collapses toward zero on a zero-mean window while the
+ * departing value does not. The ratio is then unbounded, the rebuild fires on
+ * every bar, and the function silently returns to the O(n*period) cost #103
+ * removed -- measured 10.9x slower at period 30 on an alternating +/-1 series.
+ * Same shape of error as #242's absolute guard on a quartic quantity.
+ *
+ * The shipped form divides by sumAbs, a sum of MAGNITUDES, which is zero only
+ * when the whole window is zero -- and then the numerator is zero too and the
+ * test is false.
+ *
+ * WHY THIS IS NOT A TIMING TEST. Cost is what went wrong, but wall time on a
+ * shared CI runner is not a thing to assert on. A re-anchor rebuilds the sums
+ * with the priming scan's exact order and weighting, so a rebuilt bar is
+ * BITWISE equal to that bar computed alone. Healthy is 1.0-2.5%; the cancelling
+ * form is 100.0%. No clock is read.
+ *
+ * WHAT THE COUNT ACTUALLY IS, because "it counts rebuilds" is too strong: it
+ * counts rebuilds PLUS bars that coincidentally agree to the last bit. At
+ * period 30 the interval alone accounts for 1/(32*30) = 0.1% while the control
+ * reads 2.0%, so most of the floor is coincidence, not re-anchoring. That is
+ * harmless at a 50x separation but it is the reason the bound is 25 and not 5,
+ * and the reason this leg can only ever say "far too many", never "exactly N".
+ *
+ * The floor is also why the corpus must not be trivially exact. On an all-zero
+ * array every slope is exactly 0, so both sides match at every bar and the
+ * count reads 100% while the function is in fact re-anchoring on 0.1% of bars
+ * and running at full speed -- measured. That failure mode is loud (a false
+ * RED, not a false green), but a corpus edit that walked into it would waste a
+ * debugging cycle, so: keep the noise on the alternating arm.
+ *
+ * TWO ARMS, AND THE CONTROL IS THE POINT. The zero-mean arm is the probe; the
+ * price-walk arm is the control, and it reads the SAME 2.0-2.5% whether the
+ * denominator cancels or not. Without it a leg that simply counted rebuilds
+ * could not tell "the trigger is misfiring on this corpus" from "something
+ * changed the rebuild rate everywhere".
+ *
+ * ONLY EVEN PERIODS. On alternating +/-1 an odd window sums to +/-1, not to
+ * ~0, so it never drives the denominator down and the pathology does not
+ * appear -- measured 3.0% at period 5 in BOTH states. Period 2 is excluded for
+ * the opposite reason: its slope is y[t]-y[t-1], exact often enough that the
+ * healthy reading is already 36.3% and the signal is gone. 14 and 30 are where
+ * the two states are 2% against 100%.
+ *
+ * SABOTAGE-PROVEN: restoring the |SumY| denominator fails this leg at 100.0%
+ * while L10, L11 and every other leg in this file stay green -- they cannot
+ * see it, because a too-frequent rebuild makes the output MORE accurate, not
+ * less. That is exactly why this leg exists. */
+static ErrorNumber test_linearreg_reseed_denominator( void )
+{
+   static const int periods[2] = { 14, 30 };
+   int p, i;
+
+   /* Alternating +/-1 carrying 1e-9 of noise: the window sum lands at ~1e-9
+    * while every value is ~1, which is the regime a cancelling denominator
+    * cannot survive. The noise matters -- exact +/-1 makes the arithmetic
+    * exact too, and then the bitwise fingerprint reads 100% for a reason that
+    * has nothing to do with rebuilding. */
+   ta_test_ref_lcg_seed( 0xD1F5u );
+   for( i = 0; i < LR_LONG_N; i++ )
+      lr_long[i] = ( ( i & 1 ) ? -1.0 : 1.0 )
+                 * ( 1.0 + 1.0e-9 * ta_test_ref_lcg_sym() );
+
+   lr_reseed_corpus( lr_longSpiked, LR_LONG_N );   /* control: ordinary prices */
+
+   for( p = 0; p < 2; p++ )
+   {
+      const int period = periods[p];
+      double zeroMean, control;
+
+      if( lr_rebuild_pct( lr_long, LR_LONG_N, period, &zeroMean ) )
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      if( lr_rebuild_pct( lr_longSpiked, LR_LONG_N, period, &control ) )
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+
+      /* Vacuity guard. The whole leg rests on the bitwise fingerprint being
+       * able to distinguish a rebuilt bar from a carried one. If the control
+       * ever reads 0.0% the fingerprint has stopped matching anything -- a
+       * changed reseed scan order, say -- and `zeroMean` would then read 0.0%
+       * too and pass while checking nothing. Require the control to sit in the
+       * band it was measured in. */
+      if( control <= 0.0 || control > LR_RESEED_REBUILD_PCT )
+      {
+         printf( "LINEARREG #254 [reseed denominator]: SLOPE period=%d -- the price-walk "
+                 "control reads %.1f%%, outside the measured 1.0-2.5%% band. The bitwise "
+                 "rebuild fingerprint is no longer meaningful, so this leg cannot testify "
+                 "about the zero-mean arm (%.1f%%).\n", period, control, zeroMean );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      if( zeroMean > LR_RESEED_REBUILD_PCT )
+      {
+         printf( "LINEARREG #254 [reseed denominator]: SLOPE period=%d -- a near-zero-mean "
+                 "series re-anchors on %.1f%% of bars (limit %.1f%%); the price-walk control "
+                 "is %.1f%%. The trigger is dividing by a quantity that cancels, so it fires "
+                 "on every bar and the O(1) recurrence has become O(period) again.\n",
+                 period, zeroMean, LR_RESEED_REBUILD_PCT, control );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
    return TA_TEST_PASS;

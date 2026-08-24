@@ -186,7 +186,7 @@ hand a finite-window function the loose convergence tolerance and hide a real bu
 
 | Class | Tolerance | Who |
 |-------|-----------|-----|
-| `TA_STABLE_EXACT` | bit-exact (`==`) | fresh-recomputed finite window (IMI, price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, AVGDEV, vector math). **LINEARREG/TSF left this class in #103** — they now carry SumY/SumXY in an O(1) recurrence and sit at EPSILON; see the note in `test_codegen.c` `stability_class()` and issue #254 |
+| `TA_STABLE_EXACT` | bit-exact (`==`) | fresh-recomputed finite window (IMI, price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, AVGDEV, vector math). **LINEARREG/TSF left this class in #103** — they carry SumY/SumXY in an O(1) recurrence and sit at EPSILON. #254 re-anchored those sums (every `32*period` bars, and when a large value leaves the window), which is what makes the EPSILON class true at *any* call length rather than only on the 252-bar corpus; they stay at EPSILON because the re-anchor points are counted from each call's own start. See `test_codegen.c` `stability_class()` |
 | `TA_STABLE_EPSILON` | `1e-10` absolute | running-accumulator finite window + **default** (SMA, WMA, STDDEV, CORREL, CCI, ULTOSC, MFI, …) |
 | `TA_STABLE_CONVERGING` | warm-up envelope (`0.5/temp`, ignore-first-N), relative to the larger magnitude floored at 0.2 | recursive/IIR — anything in `UNSTABLE_MAP` |
 | `TA_STABLE_SKIP` | not compared | `get_integer_tolerance() == TA_DO_NOT_COMPARE` — the `TA_FUNC_FLG_PATH_DEP`-flagged set (#127): AD, ADOSC, OBV, NVI, PVI, SAR, SAREXT |

@@ -1632,8 +1632,23 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         /* NOTE: LINEARREG / LINEARREG_ANGLE / LINEARREG_INTERCEPT / LINEARREG_SLOPE
          * / TSF moved OUT of EXACT to the EPSILON default (perf #103): they now
          * carry SumY/SumXY in an O(1) sliding recurrence instead of re-summing the
-         * window each bar, so their output picks up ~1e-9 running-accumulator drift
-         * across ranges -- the same class as SMA/CORREL/STDDEV. */
+         * window each bar, so their output picks up running-accumulator drift
+         * across ranges -- the same class as SMA/CORREL/STDDEV.
+         *
+         * They STAY at EPSILON after #254, and the reason is not that nothing
+         * changed. #103's residue was unbounded in the length of the call, so the
+         * 1e-10 tier held only because ta_regtest's history is 252 bars: it broke
+         * at ~2000 bars, or at 252 with one large print. #254 re-anchors the sums
+         * every 32*period bars and on the bar a large value leaves the window,
+         * which bounds the residue by one interval instead of by the call --
+         * measured worst 6.2e-12 at 100000 bars, against 1.0e-07 before.
+         *
+         * EXACT is still wrong for them, because the re-anchor points are counted
+         * from the call's own start: two calls with different startIdx reseed on
+         * different bars and agree closely rather than bitwise. That is the same
+         * reason TA_VAR / TA_CORREL / TA_BETA sit here with the identical
+         * mechanism. What changed is that the class is now true at every length
+         * this library accepts rather than only on a short corpus. */
     };
 
     /* Finite window carried in a RUNNING ACCUMULATOR (running sum/total updated

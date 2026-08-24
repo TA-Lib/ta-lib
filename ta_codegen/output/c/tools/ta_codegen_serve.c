@@ -3794,18 +3794,25 @@ static int sv_steq_TA_LINEARREG( const struct TA_LINEARREG_Stream *a, const stru
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
    if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
    if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
    if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
-   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
-   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
-   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( sv_xtier_ne(a->sumAbs, b->sumAbs, z) ) { *w = "sumAbs"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
    }
    return 0;
 }
@@ -3817,18 +3824,25 @@ static int sv_steq_TA_LINEARREG_ANGLE( const struct TA_LINEARREG_ANGLE_Stream *a
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
    if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
    if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
    if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
-   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
-   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
-   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( sv_xtier_ne(a->sumAbs, b->sumAbs, z) ) { *w = "sumAbs"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
    }
    return 0;
 }
@@ -3840,18 +3854,25 @@ static int sv_steq_TA_LINEARREG_INTERCEPT( const struct TA_LINEARREG_INTERCEPT_S
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
    if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
    if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
    if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
-   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
-   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
-   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( sv_xtier_ne(a->sumAbs, b->sumAbs, z) ) { *w = "sumAbs"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
    }
    return 0;
 }
@@ -3863,18 +3884,25 @@ static int sv_steq_TA_LINEARREG_SLOPE( const struct TA_LINEARREG_SLOPE_Stream *a
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
    if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
    if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
    if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
-   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
-   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
-   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( sv_xtier_ne(a->sumAbs, b->sumAbs, z) ) { *w = "sumAbs"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
    }
    return 0;
 }
@@ -5003,18 +5031,25 @@ static int sv_steq_TA_TSF( const struct TA_TSF_Stream *a, const struct TA_TSF_St
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
    if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
    if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
    if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
-   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
-   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
-   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( sv_xtier_ne(a->sumAbs, b->sumAbs, z) ) { *w = "sumAbs"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
    }
    return 0;
 }
