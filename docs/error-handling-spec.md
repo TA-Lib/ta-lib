@@ -131,15 +131,6 @@ the whole corpus, on every test run.
 For C, Java and C# it is returned as `-1`.
 For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)`.
 
-**Why L2 is a rule and not a test detail.** A caller sizes its buffers from the
-lookback before it trusts the call, so a lookback that answers a plausible number
-for parameters the call then rejects is a lie a wrapper cannot detect — and the
-reverse, a rejection for parameters the call actually accepts, denies a usable
-call. The tiers derive the domain separately, which is exactly what lets them
-drift — and B4 and S5 are two separate derivations of it too, not one shared by
-construction, so a lookback that agrees with the batch tier is not thereby known
-to agree with the streaming opener.
-
 [28] Only the B4 half is asserted, and only for C: the boundary sweep
 (`ta_test_func/test_period_boundary.c`, group `PERIOD1/BOUNDARY`) compares the
 lookback tier's decision against the batch call (`TA_CallFunc`) for every
