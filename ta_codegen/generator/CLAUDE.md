@@ -39,12 +39,16 @@ include/ta_func.h        (generated public header)
 (which holds only the indicator definitions) and out of `output/` (100% generated):
 - `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` / `CandleSettings`
   scaffolding, copied verbatim into the Rust crate (`output/rust/library/src/ta_func/types.rs`).
-- `templates/rust/scratch_election.rs` — the value gate for the scratch-buffer
-  election (issue #146), copied verbatim and declared `#[cfg(test)]` in the
-  generated `mod.rs`, so it never ships in a release build. Run by
-  `cargo test --lib -p ta-lib`.
+- Four more, each copied verbatim and declared `#[cfg(test)]` in the generated
+  `mod.rs`, so none ships in a release build. All are run by
+  `cargo test --lib -p ta-lib`, which is the only thing that runs them —
+  `clippy --all-targets` compiles the test target without executing it:
+  `templates/rust/scratch_election.rs` (the scratch-buffer election value gate,
+  issue #146), `stream_finite.rs` (the streaming tier's non-finite input
+  rejection), `stream_out_range.rs` (a handle's `OutRange` against batch, issue
+  #241) and `div_zero.rs` (DIV's zero-divisor result, issue #249).
 
-Both Rust templates are listed in `main.rs`'s `RUST_TEMPLATE_MODULES` (and the
+Every Rust template is listed in `main.rs`'s `RUST_TEMPLATE_MODULES` (and the
 test-only ones in `RUST_TEST_ONLY_MODULES`) and in `RustBackend::clean_keep`, so
 `generate` copies them in and never deletes them. Adding another one means
 touching all three.

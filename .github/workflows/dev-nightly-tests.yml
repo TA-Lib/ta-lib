@@ -461,10 +461,12 @@ jobs:
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
-      # The Core/CoreBuilder API tests live in templates/rust/types.rs and ship
-      # inside the crate, but no job ran them: clippy --all-targets only builds
-      # the test target, and --doc skips it. They are the only gate on the Rust
-      # public-API contract (issue #144).
+      # This step is the ONLY thing anywhere that EXECUTES the crate's
+      # hand-written test modules (templates/rust/, copied in by `generate`):
+      # types.rs's Core/CoreBuilder API tests (#144), and the four #[cfg(test)]
+      # ones -- scratch_election (#146), stream_finite, stream_out_range (#241)
+      # and div_zero (#249). clippy --all-targets only COMPILES the test target
+      # and --doc skips it, so narrowing this step silently retires all five.
       - name: Run the generated crate's unit tests
         shell: bash
         run: cargo test --lib -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml

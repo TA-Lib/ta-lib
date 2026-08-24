@@ -1369,7 +1369,7 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     // (a class directory javac would not refresh, and a stale server binary).
     // The jar is the artifact; it gets built from nothing, every time.
     //
-    // Tests are skipped here, not run: the five suites are junit-free `main()`
+    // Tests are skipped here, not run: the suites are junit-free `main()`
     // classes, so surefire discovers them and executes zero methods. They are
     // compiled and run below, against the jar. (The Maven-native way to bind
     // tests to the packaged artifact is maven-failsafe-plugin, which uses the
@@ -2229,17 +2229,19 @@ fn csharp_test_tfms(test_dir: &Path) -> Vec<String> {
 
 /// The hand-written Rust library sources that ship inside the generated crate,
 /// copied verbatim from `ta_codegen/generator/templates/rust/`. `types.rs` holds
-/// `Core`/`CoreBuilder` and its API tests (issue #144); `scratch_election.rs` is
-/// a `#[cfg(test)]`-only module holding the value gate for the batch bodies'
-/// scratch-buffer election (issue #146). Both are listed in the Rust backend's
-/// `clean_keep`, so `generate` never deletes them.
+/// `Core`/`CoreBuilder` and its API tests (issue #144); the rest are
+/// `#[cfg(test)]`-only modules — DIV's zero-divisor result (issue #249), the
+/// batch bodies' scratch-buffer election (issue #146), the streaming tier's
+/// non-finite input rejection, and a handle's `OutRange` against batch (issue
+/// #241). All are listed in the Rust backend's `clean_keep`, so `generate` never
+/// deletes them.
 const RUST_TEMPLATE_MODULES: &[&str] =
-    &["types", "scratch_election", "stream_finite", "stream_out_range"];
+    &["types", "div_zero", "scratch_election", "stream_finite", "stream_out_range"];
 
 /// Of [`RUST_TEMPLATE_MODULES`], the ones that exist only for `cargo test` and so
 /// are declared `#[cfg(test)]` in the generated `mod.rs`.
 const RUST_TEST_ONLY_MODULES: &[&str] =
-    &["scratch_election", "stream_finite", "stream_out_range"];
+    &["div_zero", "scratch_election", "stream_finite", "stream_out_range"];
 
 /// Version of the `ta-lib-dispatch` support crate — deliberately decoupled from
 /// the repo `VERSION` the other three members track, because it changes only

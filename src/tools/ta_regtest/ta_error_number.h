@@ -440,6 +440,13 @@ typedef enum
   TA_STREAM_UFILL_SETUP_FAILED       = 1605,
   TA_STREAM_UFILL_VACUOUS            = 1606,
 
+  /* DIV's documented zero-divisor result (issue #249). */
+  TA_DIVZERO_BAD_RETCODE             = 1610,
+  TA_DIVZERO_BAD_SHAPE               = 1611,
+  TA_DIVZERO_BAD_VALUE               = 1612,
+  TA_DIVZERO_FLAG_MISSING            = 1613,
+  TA_DIVZERO_VACUOUS                 = 1614,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

@@ -623,6 +623,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_period_boundary.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_mavp.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_s_overflow.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_div_zero.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stream_finite.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite1.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite2.c"

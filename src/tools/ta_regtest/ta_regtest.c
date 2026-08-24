@@ -787,6 +787,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
    DO_TEST( test_func_mavp,     "MAVP/GROUPING" );
    DO_TEST( test_func_s_overflow, "MATH,ADD,SUB,MULT,DIV" );
+   DO_TEST( test_func_div_zero, "DIV,DIVZERO" );
    /* CDL* is a prefix claim: this one group covers every candlestick, so
     * naming any of them reaches it without the tag listing all 61. */
    DO_TEST( test_candlestick,   "All Candlesticks,CDL*" );
