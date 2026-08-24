@@ -172,30 +172,24 @@ static const char * const quExempt[] = { "LINEARREG_ANGLE" };
 #define QU_NB_EXEMPT ((int)(sizeof(quExempt)/sizeof(quExempt[0])))
 static int quExemptSeen[QU_NB_EXEMPT];
 
-/* KNOWN OPEN, not exempt (issue #253).
+/* KNOWN OPEN, not exempt (issue #253). Both fail this sweep, deliberately.
  *
- * Both divide by a moving average of their own input, and both still guard that
- * divide with the fixed TA_IS_ZERO band, so both fail this sweep. They are the
- * only two functions in the library that divide by an MA, and that is what
- * makes them different from the nineteen that were fixed: the band sits on a
- * quantity of the SAME order as the input, so it only fires on an input that is
- * itself ~1e-14 -- whereas every other member of the family guarded something
- * decades below its input (STOCHF's range/100 died at a price of 1e-8).
+ * Each divides by a moving average of its own input and still guards that
+ * divide with the fixed TA_IS_ZERO band. The band sits on a quantity of the
+ * SAME order as the input, so it only fires on an input that is itself ~1e-14
+ * -- unlike the rest of the family, which guarded something decades below its
+ * input (STOCHF's range/100 died at a price of 1e-8).
  *
- * Replacing it with an exact test is correct for the quote unit and NOT safe
- * yet: SMA, WMA, TRIMA and HMA maintain that average with a sliding sum, so on
- * a window whose true mean is zero the divisor is rounding residue -- measured
- * 1e-16 relative to the input at every magnitude -- and dividing residue by
- * residue puts PVO at +694 and -102. The band happens to mask exactly the
- * inputs below magnitude ~10; at 1e2 and above the garbage is already there
- * today. So the exact test would trade a defect that needs a price below 1e-14
- * for one that needs a volume below 10, which is the worse of the two.
+ * Replacing it with an exact test is NOT safe. SMA, WMA, TRIMA and HMA maintain
+ * that average with a sliding sum, so on a window whose true mean is zero the
+ * divisor is rounding residue -- 1e-16 relative to the input at every magnitude
+ * -- and dividing residue by residue puts PVO at +694 and -102. The band masks
+ * exactly the inputs below magnitude ~10; at 1e2 and above that is already the
+ * shipped behaviour. The exact test would trade a defect needing a price below
+ * 1e-14 for one needing a volume below 10.
  *
- * The honest fix is an exactness guarantee at zero from the finite-window
- * averages themselves (what #243 gave VAR so STDDEV could take a sqrt
- * unconditionally), not another threshold here. Until then both stay listed,
- * and the sweep ASSERTS they still fail -- so whoever lands that fix is told to
- * delete the entry rather than being left with a gate that went quietly green.
+ * So the band stays, and so do these entries. The sweep ASSERTS both still
+ * fail, so the pair cannot rot into a silent pass.
  */
 static const char * const quKnownOpen[] = { "PPO", "PVO" };
 #define QU_NB_KNOWN_OPEN ((int)(sizeof(quKnownOpen)/sizeof(quKnownOpen[0])))
