@@ -4558,15 +4558,21 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        }\n");
 
         // Right-sized warm-up views for the Open/OpenAndFill arms, bound ONCE
-        // outside the timing loop -- a zero-copy span slice, so building it
-        // unconditionally (unlike Java's null-when-unused) costs nothing.
+        // outside the timing loop. Guarded on bench_mode, same as Java's
+        // null-when-unused: endIdx+1 can exceed the array's real length on
+        // purpose (the index-range boundary sweep sends endIdx near
+        // TA_MAX_INDEX on a small array to prove the batch call's OWN
+        // validation rejects it) -- AsSpan's own bounds check would throw
+        // ArgumentOutOfRangeException before that validation ever runs if
+        // this were unconditional, on every plain batch call, not just the
+        // warm-up ones. `default` is a valid empty ReadOnlySpan<double>.
         // Java derives historyLen from array.length, and with use_preloaded the
         // buffer is refN-sized already; slicing to endIdx+1 matches what the
         // C/Rust/Java arms do for the same reason (measure the same range the
         // batch call does, not whatever --points happened to preload).
         for name in &input_names {
             s.push_str(&format!(
-                "        ReadOnlySpan<double> _warm_{name} = {name}.AsSpan(0, endIdx + 1);\n"
+                "        ReadOnlySpan<double> _warm_{name} = bench_mode == 0 ? default : {name}.AsSpan(0, endIdx + 1);\n"
             ));
         }
 

@@ -38381,8 +38381,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
@@ -38515,9 +38515,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -38650,7 +38650,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -38781,10 +38781,10 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -38915,8 +38915,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -39049,10 +39049,10 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -39188,9 +39188,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["ADX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -39324,9 +39324,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -39456,8 +39456,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -39583,7 +39583,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
@@ -39711,8 +39711,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -39843,8 +39843,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -39969,7 +39969,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -40091,7 +40091,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -40219,9 +40219,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["ATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -40349,7 +40349,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -40481,10 +40481,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -40612,7 +40612,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
         double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
@@ -40747,8 +40747,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -40882,10 +40882,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41019,9 +41019,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -41157,10 +41157,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41297,10 +41297,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41437,10 +41437,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41577,10 +41577,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41717,10 +41717,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41857,10 +41857,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -41997,10 +41997,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -42137,10 +42137,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -42278,10 +42278,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -42418,10 +42418,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -42558,10 +42558,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -42698,10 +42698,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -42838,10 +42838,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -42978,10 +42978,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -43118,10 +43118,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -43259,10 +43259,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -43399,10 +43399,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -43539,10 +43539,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -43679,10 +43679,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -43819,10 +43819,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -43960,10 +43960,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -44101,10 +44101,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -44241,10 +44241,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -44381,10 +44381,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -44521,10 +44521,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -44661,10 +44661,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -44801,10 +44801,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -44941,10 +44941,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45081,10 +45081,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45221,10 +45221,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45361,10 +45361,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45501,10 +45501,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45641,10 +45641,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45781,10 +45781,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -45921,10 +45921,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46061,10 +46061,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46201,10 +46201,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46341,10 +46341,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46481,10 +46481,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46621,10 +46621,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46761,10 +46761,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -46901,10 +46901,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -47042,10 +47042,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -47183,10 +47183,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -47324,10 +47324,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -47464,10 +47464,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -47604,10 +47604,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -47744,10 +47744,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -47884,10 +47884,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48024,10 +48024,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48164,10 +48164,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48304,10 +48304,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48444,10 +48444,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48584,10 +48584,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48724,10 +48724,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -48864,10 +48864,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49004,10 +49004,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49144,10 +49144,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49284,10 +49284,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49424,10 +49424,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49564,10 +49564,10 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49695,7 +49695,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -49826,10 +49826,10 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -49958,7 +49958,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["CMO"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -50082,7 +50082,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -50208,8 +50208,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -50334,7 +50334,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -50456,7 +50456,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -50578,7 +50578,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -50704,8 +50704,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -50835,9 +50835,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["DX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -50968,8 +50968,8 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -51094,7 +51094,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["EMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -51218,7 +51218,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -51340,7 +51340,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -51462,7 +51462,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -51585,7 +51585,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         core.unstablePeriod[(int)FunctionCatalog.Default["HT_DCPERIOD"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -51708,7 +51708,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         core.unstablePeriod[(int)FunctionCatalog.Default["HT_DCPHASE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -51831,7 +51831,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         core.unstablePeriod[(int)FunctionCatalog.Default["HT_PHASOR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -51957,7 +51957,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         core.unstablePeriod[(int)FunctionCatalog.Default["HT_SINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52083,7 +52083,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         core.unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDLINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52206,7 +52206,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         core.unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDMODE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52332,8 +52332,8 @@ public class TaCodegenServe {
             inOpen = GetDoubleArray(p, "inOpen");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52458,7 +52458,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["KAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -52582,7 +52582,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52705,7 +52705,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52828,7 +52828,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -52951,7 +52951,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -53074,7 +53074,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -53196,7 +53196,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -53318,7 +53318,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -53442,7 +53442,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
@@ -53573,7 +53573,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
@@ -53707,7 +53707,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -53836,7 +53836,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         double optInFastLimit = GetDouble(p, "optInFastLimit", 0.0);
         double optInSlowLimit = GetDouble(p, "optInSlowLimit", 0.0);
         core.unstablePeriod[(int)FunctionCatalog.Default["MAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
@@ -53970,9 +53970,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -54101,8 +54101,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         int optInMinPeriod = GetInt(p, "optInMinPeriod", 0);
         int optInMaxPeriod = GetInt(p, "optInMaxPeriod", 0);
         MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
@@ -54229,7 +54229,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -54352,7 +54352,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -54478,8 +54478,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -54612,10 +54612,10 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -54744,7 +54744,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -54870,8 +54870,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -54996,7 +54996,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -55119,7 +55119,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -55242,7 +55242,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -55368,7 +55368,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -55500,9 +55500,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["MINUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -55633,8 +55633,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["MINUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -55760,7 +55760,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -55886,8 +55886,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -56017,9 +56017,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["NATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -56150,8 +56150,8 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -56278,8 +56278,8 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -56409,9 +56409,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["PLUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -56542,8 +56542,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["PLUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -56669,7 +56669,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
@@ -56797,8 +56797,8 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -56922,7 +56922,7 @@ public class TaCodegenServe {
         } else {
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
         MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
@@ -57050,8 +57050,8 @@ public class TaCodegenServe {
             inOpen = GetDoubleArray(p, "inOpen");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inOpen = inOpen.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inOpen = bench_mode == 0 ? default : inOpen.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -57176,7 +57176,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -57299,7 +57299,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -57422,7 +57422,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -57545,7 +57545,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -57668,7 +57668,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         core.unstablePeriod[(int)FunctionCatalog.Default["RSI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -57795,8 +57795,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         double optInAcceleration = GetDouble(p, "optInAcceleration", 0.0);
         double optInMaximum = GetDouble(p, "optInMaximum", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -57925,8 +57925,8 @@ public class TaCodegenServe {
             inHigh = GetDoubleArray(p, "inHigh");
             inLow = GetDoubleArray(p, "inLow");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         double optInStartValue = GetDouble(p, "optInStartValue", 0.0);
         double optInOffsetOnReverse = GetDouble(p, "optInOffsetOnReverse", 0.0);
         double optInAccelerationInitLong = GetDouble(p, "optInAccelerationInitLong", 0.0);
@@ -58058,7 +58058,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -58180,7 +58180,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -58302,7 +58302,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -58431,9 +58431,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
         int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
@@ -58566,7 +58566,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -58688,7 +58688,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -58818,9 +58818,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
         MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", 0);
@@ -58960,9 +58960,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
         MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
@@ -59094,7 +59094,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
         int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
@@ -59226,8 +59226,8 @@ public class TaCodegenServe {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");
         }
-        ReadOnlySpan<double> _warm_inReal0 = inReal0.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inReal1 = inReal1.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal0 = bench_mode == 0 ? default : inReal0.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal1 = bench_mode == 0 ? default : inReal1.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -59351,7 +59351,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -59474,7 +59474,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInVFactor = GetDouble(p, "optInVFactor", 0.0);
         core.unstablePeriod[(int)FunctionCatalog.Default["T3"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
@@ -59599,7 +59599,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -59721,7 +59721,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -59843,7 +59843,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -59972,9 +59972,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -60100,7 +60100,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -60223,7 +60223,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -60346,7 +60346,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -60475,9 +60475,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -60609,9 +60609,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod1 = GetInt(p, "optInTimePeriod1", 0);
         int optInTimePeriod2 = GetInt(p, "optInTimePeriod2", 0);
         int optInTimePeriod3 = GetInt(p, "optInTimePeriod3", 0);
@@ -60740,7 +60740,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -60873,10 +60873,10 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -61007,8 +61007,8 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
             inVolume = GetDoubleArray(p, "inVolume");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inVolume = inVolume.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inVolume = bench_mode == 0 ? default : inVolume.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -61139,9 +61139,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -61273,9 +61273,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -61407,9 +61407,9 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
             inClose = GetDoubleArray(p, "inClose");
         }
-        ReadOnlySpan<double> _warm_inHigh = inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = inLow.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inClose = inClose.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -61536,7 +61536,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        ReadOnlySpan<double> _warm_inReal = inReal.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
