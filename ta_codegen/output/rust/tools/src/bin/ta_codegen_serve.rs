@@ -768,18 +768,12 @@ fn retcode_to_int(rc: RetCode) -> i32 {
 }
 
 fn json_f64_array(data: &[f64]) -> String {
-    let mut s = String::with_capacity(data.len() * 8 + 2);
-    s.push('[');
-    for (i, &v) in data.iter().enumerate() {
-        if i > 0 { s.push(','); }
-        match serde_json::Number::from_f64(v) {
-            Some(n) => s.push_str(&n.to_string()),
-            None => s.push_str(
-                if v.is_nan() { if v.is_sign_negative() { "-nan" } else { "nan" } }
-                else if v < 0.0 { "-inf" } else { "inf" }),
-        }
+    let mut s = String::with_capacity(data.len() * 16 + 2);
+    s.push('"');
+    for &v in data {
+        s.push_str(&format!("{:016x}", v.to_bits()));
     }
-    s.push(']');
+    s.push('"');
     s
 }
 

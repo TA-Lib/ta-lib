@@ -80,7 +80,8 @@ fn main() {
         }
         "build" => {
             let backend_filter = find_arg(&args, &["--backend"]);
-            build_servers(backend_filter.as_deref());
+            let servers_only = args.iter().any(|a| a == "--servers-only");
+            build_servers(backend_filter.as_deref(), servers_only);
         }
         "format" => {
             let func_filter = find_arg(&args, &["--func", "--function"]);
@@ -100,6 +101,7 @@ fn main() {
             eprintln!("  generate-servers  Only the JSON-RPC servers (narrowing, for `build`)");
             eprintln!("  generate-bench   Only the direct-call C benchmark binary source");
             eprintln!("  build            Compile generated server source into executables");
+            eprintln!("                   --servers-only skips the C benchmark binaries");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
             eprintln!("  stream-census    Report the IR-derived streamability per function");
             eprintln!("                   (--seed-yaml writes `streaming: true` for clean functions)");
@@ -1061,7 +1063,12 @@ fn verify_hand_maintained_funcunstid(
     }
 }
 
-fn build_servers(backend_filter: Option<&str>) {
+/// `servers_only` skips the two C benchmark binaries. They are the only extra
+/// artifacts any backend arm builds, they are two more whole-library `-flto`
+/// compiles (~3x the C server alone), and they share this function's `failures`
+/// counter -- so a caller that wants a server to talk to would otherwise pay for
+/// them and fail on a break that has nothing to do with it.
+fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
     let root = repo_root();
     let backends_to_build: Vec<&str> = match backend_filter {
         Some(b) => b.split(',').map(|s| s.trim()).collect(),
@@ -1128,7 +1135,7 @@ fn build_servers(backend_filter: Option<&str>) {
                 }
                 // Also build direct-call benchmark binary if source exists
                 let bench_src = out_base.join("c/tools/ta_bench_cg.c");
-                if bench_src.exists() {
+                if bench_src.exists() && !servers_only {
                     print!("  Building C bench... ");
                     let bench_dst = bin_dir.join("ta_bench_cg");
                     let bench_inc_c = out_base.join("c/tools");
@@ -1160,7 +1167,7 @@ fn build_servers(backend_filter: Option<&str>) {
                 }
                 // Also build the streaming benchmark binary if source exists
                 let sbench_src = out_base.join("c/tools/ta_bench_stream.c");
-                if sbench_src.exists() {
+                if sbench_src.exists() && !servers_only {
                     print!("  Building C stream bench... ");
                     let sbench_dst = bin_dir.join("ta_bench_stream");
                     let bench_inc_c = out_base.join("c/tools");

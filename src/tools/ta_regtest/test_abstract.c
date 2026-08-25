@@ -367,6 +367,13 @@ static double abstract_json_get_double(const char *json, const char *field)
     return strtod(p, NULL);
 }
 
+/* Real output arrays arrive as the lossless hex-bits string every ta_codegen
+ * server writes (issues #257/#258): concatenated 16-hex-char groups, one per
+ * f64's IEEE-754 bit pattern. The `[` arm reads a JSON number array — no
+ * server in this tree writes one any more, and it is kept only so a driver
+ * pointed at an older or third-party server reads values rather than none.
+ * Same shape as test_codegen.c's json_get_double_array, which carries the
+ * longer note. */
 static int abstract_json_get_double_array(const char *json, const char *field,
                                           double *out, int max_count)
 {
@@ -376,9 +383,30 @@ static int abstract_json_get_double_array(const char *json, const char *field,
     if( !p ) return 0;
     p += strlen(pattern);
     while( *p == ' ' ) p++;
+    int count = 0;
+    if( *p == '"' ) {
+        p++;
+        while( count < max_count && *p && *p != '"' ) {
+            unsigned long long bits = 0;
+            int k, bad = 0;
+            for( k = 0; k < 16 && p[k] && p[k] != '"'; k++ ) {
+                char c = p[k];
+                unsigned int v;
+                if     ( c >= '0' && c <= '9' ) v = (unsigned int)(c - '0');
+                else if( c >= 'a' && c <= 'f' ) v = (unsigned int)(c - 'a' + 10);
+                else if( c >= 'A' && c <= 'F' ) v = (unsigned int)(c - 'A' + 10);
+                else { bad = 1; break; }   /* reject, never decode as zero */
+                bits = (bits << 4) | v;
+            }
+            if( bad || k < 16 ) break;   /* malformed or truncated trailing group */
+            memcpy(&out[count], &bits, sizeof(double));
+            count++;
+            p += 16;
+        }
+        return count;
+    }
     if( *p != '[' ) return 0;
     p++;
-    int count = 0;
     while( *p && *p != ']' && count < max_count ) {
         while( *p == ' ' || *p == ',' ) p++;
         if( *p == ']' ) break;

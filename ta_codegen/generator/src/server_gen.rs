@@ -558,14 +558,24 @@ static const char *json_find_string(const char *json, const char *field,
     return start;
 }
 
+/* Real OUTPUT arrays ride the same lossless hex-bits transport the INPUT
+ * arrays have used since #115: one string of concatenated 16-hex-char groups,
+ * each one f64's IEEE-754 bit pattern (json_find_double_array's string arm is
+ * the read side). Decimal text could not carry either half of what an output
+ * has to carry -- %.15g rounds a finite double off by up to ~1-2 ULP (#257),
+ * and no decimal spelling exists at all for an infinity or for WHICH NaN a
+ * payload is (#258). Every backend now writes this same encoding, so the
+ * transport is lossless by construction rather than by whichever native
+ * formatter each language happens to ship. */
 static int json_write_double_array(char *buf, int buf_size, int pos,
                                     const double *data, int count) {
-    pos = json_appendc(buf, buf_size, pos, '[');
+    pos = json_appendc(buf, buf_size, pos, '"');
     for( int i = 0; i < count; i++ ) {
-        if( i > 0 ) pos = json_appendc(buf, buf_size, pos, ',');
-        pos = json_appendf(buf, buf_size, pos, "%.15g", data[i]);
+        unsigned long long bits;
+        memcpy(&bits, &data[i], sizeof(double));
+        pos = json_appendf(buf, buf_size, pos, "%016llx", bits);
     }
-    return json_appendc(buf, buf_size, pos, ']');
+    return json_appendc(buf, buf_size, pos, '"');
 }
 
 static int json_write_int_array(char *buf, int buf_size, int pos,
@@ -2730,8 +2740,9 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // want_hash mode (server_verify / issue #115): after the GUARDED call —
         // the same public API TA_CallFunc runs in-process for the golden — return
-        // a full-precision FNV digest of the raw output bytes instead of %.15g
-        // arrays, so a same-input C-vs-C build-flag drift becomes a hard mismatch.
+        // a full-precision FNV digest of the raw output bytes instead of the arrays
+        // themselves, so a same-input C-vs-C build-flag drift is ONE value to
+        // compare rather than outNBElement of them.
         // fuzz_hash_* live in fuzz_data.h, only present when not TA_REF_SERVE; the
         // frozen reference server never receives want_hash (server_verify drives
         // the four generated servers, not ta_ref_serve).
@@ -2817,7 +2828,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         s.push_str("            \"{\\\"retCode\\\":%d,\\\"outBegIdx\\\":%d,\\\"outNBElement\\\":%d,\\\"out_len\\\":%d,\\\"timing_ns\\\":%ld\",\n");
         s.push_str("            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);\n");
         // no_output: ta_bench only reads timing_ns, but serialising a 100k-element
-        // array as %.15g costs more than the call being measured. Suppressing the
+        // array costs more than the call being measured. Suppressing the
         // arrays keeps retCode/outBegIdx/outNBElement so the caller can still tell
         // a real result from an error.
         s.push_str("        if( !json_find_int(json, \"no_output\") ) {\n");
@@ -3338,13 +3349,22 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        return result;\n");
     s.push_str("    }\n\n");
 
+    // Real output arrays: the lossless hex-bits transport the inputs have used
+    // since #115 -- one string of concatenated 16-hex-char groups, each value's
+    // IEEE-754 bits. `sb.append(double)` (Double.toString) round-trips a FINITE
+    // value exactly, but prints every NaN as the same "NaN" token, so the
+    // payload `doubleToRawLongBits` (and therefore out_hash) sees was
+    // unrecoverable from the text (#258). doubleToRawLongBits does not
+    // canonicalize, so the bits written here are the bits hash mode hashes.
     s.push_str("    static String doubleArrayToJson(double[] arr, int count) {\n");
-    s.push_str("        StringBuilder sb = new StringBuilder(\"[\");\n");
+    s.push_str("        StringBuilder sb = new StringBuilder(count * 16 + 2);\n");
+    s.push_str("        sb.append('\"');\n");
     s.push_str("        for (int i = 0; i < count; i++) {\n");
-    s.push_str("            if (i > 0) sb.append(',');\n");
-    s.push_str("            sb.append(arr[i]);\n");
+    s.push_str("            long bits = Double.doubleToRawLongBits(arr[i]);\n");
+    s.push_str("            for (int n = 60; n >= 0; n -= 4)\n");
+    s.push_str("                sb.append(\"0123456789abcdef\".charAt((int) ((bits >>> n) & 0xfL)));\n");
     s.push_str("        }\n");
-    s.push_str("        sb.append(']');\n");
+    s.push_str("        sb.append('\"');\n");
     s.push_str("        return sb.toString();\n");
     s.push_str("    }\n\n");
 
@@ -4248,14 +4268,18 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("        h ^= h >> 33; return h;\n");
     s.push_str("    }\n\n");
 
-    // Array formatters. Default double.ToString() is shortest-round-trip on
-    // modern .NET, and the csproj pins InvariantGlobalization so the decimal
-    // separator cannot vary by locale.
+    // Array formatters. Real outputs ride the lossless hex-bits transport the
+    // inputs have used since #115 -- one string of concatenated 16-hex-char
+    // groups, each value's IEEE-754 bits. `double.ToString()` is
+    // shortest-round-trip on modern .NET and InvariantGlobalization pins the
+    // decimal separator, so it was correct today; hex bits make that a property
+    // of the format instead of of the runtime's formatter (#257/#258), and give
+    // NaN payloads and infinities a spelling decimal text has none for.
     s.push_str("    static string FormatArray(double[] arr, int count) {\n");
     s.push_str("        var parts = new string[count];\n");
     s.push_str("        for (int i = 0; i < count; i++)\n");
-    s.push_str("            parts[i] = arr[i].ToString();\n");
-    s.push_str("        return \"[\" + string.Join(\",\", parts) + \"]\";\n");
+    s.push_str("            parts[i] = BitConverter.DoubleToInt64Bits(arr[i]).ToString(\"x16\");\n");
+    s.push_str("        return \"\\\"\" + string.Concat(parts) + \"\\\"\";\n");
     s.push_str("    }\n\n");
     s.push_str("    static string FormatIntArray(int[] arr, int count) {\n");
     s.push_str("        var parts = new string[count];\n");
@@ -4964,7 +4988,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // src/tools/ta_regtest/fuzz_data.h. Powers the cross-language bitwise-parity
     // gate (--xlang-hash, issue #113): the server regenerates the driver's seed
     // inputs in-process (no JSON float parse) and returns a full-precision hash
-    // of its raw outputs (no %.15g rounding), so ~1e-10 FMA drift cannot hide.
+    // of its raw outputs, so ~1e-10 FMA drift is one value to compare, not many.
     s.push_str("// ---- fuzz_data.h port (issue #113 --xlang-hash) ----\n");
     s.push_str(RUST_FUZZ);
     s.push_str("\n// ---- end fuzz_data.h port ----\n\n");
@@ -5034,24 +5058,21 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    rc.as_c_int()\n");
     s.push_str("}\n\n");
 
-    // Helper: serialize an f64 slice as a JSON-ish array. Finite values use
-    // serde_json's (ryu) formatting; non-finite values emit bare `nan`/`-nan`/
-    // `inf`/`-inf` tokens to match the C server's `%.15g` output, which the test
-    // harness's strtod-based parser understands (serde_json's `null` would not
-    // advance the parser, ballooning the parsed element count).
+    // Helper: serialize an f64 slice as the lossless hex-bits transport the
+    // inputs have used since #115 -- one string of concatenated 16-hex-char
+    // groups, each value's IEEE-754 bits. serde_json's ryu formatting is
+    // shortest-round-trip for a finite value, but `Number::from_f64` has no
+    // number at all for a NaN or an infinity, which is why this used to fall
+    // back to bare `nan`/`inf` tokens the driver's strtod parser had to be
+    // taught. `to_bits` needs no fallback and no token: every f64 has a
+    // spelling, and it is the same one hash mode hashes (#257/#258).
     s.push_str("fn json_f64_array(data: &[f64]) -> String {\n");
-    s.push_str("    let mut s = String::with_capacity(data.len() * 8 + 2);\n");
-    s.push_str("    s.push('[');\n");
-    s.push_str("    for (i, &v) in data.iter().enumerate() {\n");
-    s.push_str("        if i > 0 { s.push(','); }\n");
-    s.push_str("        match serde_json::Number::from_f64(v) {\n");
-    s.push_str("            Some(n) => s.push_str(&n.to_string()),\n");
-    s.push_str("            None => s.push_str(\n");
-    s.push_str("                if v.is_nan() { if v.is_sign_negative() { \"-nan\" } else { \"nan\" } }\n");
-    s.push_str("                else if v < 0.0 { \"-inf\" } else { \"inf\" }),\n");
-    s.push_str("        }\n");
+    s.push_str("    let mut s = String::with_capacity(data.len() * 16 + 2);\n");
+    s.push_str("    s.push('\"');\n");
+    s.push_str("    for &v in data {\n");
+    s.push_str("        s.push_str(&format!(\"{:016x}\", v.to_bits()));\n");
     s.push_str("    }\n");
-    s.push_str("    s.push(']');\n");
+    s.push_str("    s.push('\"');\n");
     s.push_str("    s\n");
     s.push_str("}\n\n");
 
@@ -5498,9 +5519,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // [fuzz] out_hash mode (--xlang-hash, issue #113): after the GUARDED call —
         // the public API the C golden's TA_CallFunc also runs — return a
         // full-precision FNV digest of the raw outputs instead of the arrays, so a
-        // ~1e-10 cross-language divergence cannot be blurred by %.15g. full_output
-        // suppresses it (arrays to pinpoint a divergence). Hashes outputs in
-        // logical order; nothing unless the call succeeded.
+        // ~1e-10 cross-language divergence is one value to compare. full_output
+        // suppresses it (arrays to pinpoint WHICH element diverged). Hashes
+        // outputs in logical order; nothing unless the call succeeded.
         s.push_str("            if (gen_present != 0 || want_hash != 0) && full_output == 0 {\n");
         s.push_str("                let mut _oh = fuzz_hash_init();\n");
         s.push_str("                if matches!(rc, RetCode::Success) && outNBElement > 0 {\n");
@@ -5559,11 +5580,11 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str(").map_or(-1, |v| v as i64) };\n");
         }
 
-        // Build the response string manually (not via serde_json) so non-finite
-        // f64 outputs serialize as `nan`/`-nan`/`inf`/`-inf` — matching the C
-        // server's `%.15g` — rather than serde_json's `null` (which the test
-        // harness's strtod-based array parser cannot advance past, ballooning the
-        // element count). Finite values use json_f64_array (serde_json formatting).
+        // Built manually rather than via serde_json: an output array is not a
+        // JSON number array at all any more but the hex-bits string every
+        // backend now writes (json_f64_array), which serde_json has no shape
+        // for — and a non-finite f64 would have serialized as `null`, which is
+        // neither the value nor something the driver's parser can count.
         s.push_str("            let mut resp = format!(\"{{\\\"retCode\\\":{},\\\"outBegIdx\\\":{},\\\"outNBElement\\\":{},\\\"out_len\\\":{},\\\"lookback\\\":{},\\\"timing_ns\\\":{}\", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);\n");
 
         // Add output arrays to response

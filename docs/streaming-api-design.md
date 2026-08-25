@@ -787,10 +787,13 @@ Structural notes:
 
 ### Verification
 
-**Bit-identical comparison cannot ride the existing JSON path** — the C server
-emits `%.15g`, .NET emits `G15` (doubles need 17 significant digits to
-round-trip), inputs are sent at `%.15g`, and the comparator is epsilon-based.
-Changing those shared formatters would perturb every existing comparison.
+**Bit-identical comparison cannot ride the existing JSON path** — inputs are
+sent at `%.15g` and the comparator is epsilon-based, so the two sides compute
+on subtly different numbers. (At the time this was written the outputs were
+lossy too — the C server emitted `%.15g`, .NET `G15`, and doubles need 17
+significant digits to round-trip. That half is closed: every server writes
+hex-of-IEEE-bits for a real output array since #257/#258. The input half, and
+the epsilon comparator, are unchanged, so the conclusion below still holds.)
 Instead (implemented, riding the fuzz-064 seed-in idea one step further):
 
 - `stream_verify(funcName, params, gen_shape/seed/n, unstablePeriod,

@@ -363,14 +363,24 @@ static const char *json_find_string(const char *json, const char *field,
     return start;
 }
 
+/* Real OUTPUT arrays ride the same lossless hex-bits transport the INPUT
+ * arrays have used since #115: one string of concatenated 16-hex-char groups,
+ * each one f64's IEEE-754 bit pattern (json_find_double_array's string arm is
+ * the read side). Decimal text could not carry either half of what an output
+ * has to carry -- %.15g rounds a finite double off by up to ~1-2 ULP (#257),
+ * and no decimal spelling exists at all for an infinity or for WHICH NaN a
+ * payload is (#258). Every backend now writes this same encoding, so the
+ * transport is lossless by construction rather than by whichever native
+ * formatter each language happens to ship. */
 static int json_write_double_array(char *buf, int buf_size, int pos,
                                     const double *data, int count) {
-    pos = json_appendc(buf, buf_size, pos, '[');
+    pos = json_appendc(buf, buf_size, pos, '"');
     for( int i = 0; i < count; i++ ) {
-        if( i > 0 ) pos = json_appendc(buf, buf_size, pos, ',');
-        pos = json_appendf(buf, buf_size, pos, "%.15g", data[i]);
+        unsigned long long bits;
+        memcpy(&bits, &data[i], sizeof(double));
+        pos = json_appendf(buf, buf_size, pos, "%016llx", bits);
     }
-    return json_appendc(buf, buf_size, pos, ']');
+    return json_appendc(buf, buf_size, pos, '"');
 }
 
 static int json_write_int_array(char *buf, int buf_size, int pos,

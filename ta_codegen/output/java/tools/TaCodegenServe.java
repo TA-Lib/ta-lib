@@ -152654,12 +152654,14 @@ public class TaCodegenServe {
     }
 
     static String doubleArrayToJson(double[] arr, int count) {
-        StringBuilder sb = new StringBuilder("[");
+        StringBuilder sb = new StringBuilder(count * 16 + 2);
+        sb.append('"');
         for (int i = 0; i < count; i++) {
-            if (i > 0) sb.append(',');
-            sb.append(arr[i]);
+            long bits = Double.doubleToRawLongBits(arr[i]);
+            for (int n = 60; n >= 0; n -= 4)
+                sb.append("0123456789abcdef".charAt((int) ((bits >>> n) & 0xfL)));
         }
-        sb.append(']');
+        sb.append('"');
         return sb.toString();
     }
 

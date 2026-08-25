@@ -89,8 +89,8 @@ public class TaCodegenServe {
     static string FormatArray(double[] arr, int count) {
         var parts = new string[count];
         for (int i = 0; i < count; i++)
-            parts[i] = arr[i].ToString();
-        return "[" + string.Join(",", parts) + "]";
+            parts[i] = BitConverter.DoubleToInt64Bits(arr[i]).ToString("x16");
+        return "\"" + string.Concat(parts) + "\"";
     }
 
     static string FormatIntArray(int[] arr, int count) {

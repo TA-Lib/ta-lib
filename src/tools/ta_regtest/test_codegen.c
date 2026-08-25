@@ -536,15 +536,60 @@ int json_get_int(const char *json, const char *field)
     return atoi(val);
 }
 
+/* A real output array is a STRING of concatenated 16-hex-char groups, each one
+ * f64's IEEE-754 bit pattern — the lossless encoding the INPUT arrays have used
+ * since #115, now written by every server for outputs too (#257/#258). Decoded
+ * exactly: no strtod, so nothing rounds on the way in either.
+ *
+ * The `[` arm reads a JSON number array. Nothing in this tree writes one any
+ * more (all six servers this file drives are built from the current transport),
+ * and it is NOT a fallback that makes a lossy server acceptable — it is there
+ * so a driver pointed at an older or third-party server reads its values rather
+ * than zero of them, which several callers would not notice: they loop
+ * `i < parsed`, so a zero count compares nothing at all and reads green.
+ * What actually catches a server still writing decimal text is
+ * xlang_selfcheck_array_transport, where the SAME call's array and hash
+ * responses stop agreeing the moment one of them is rounded. */
 static int json_get_double_array(const char *json, const char *field,
                                  TA_Real *out, int max_count)
 {
     int len;
     const char *val = json_find_field(json, field, &len);
-    if( !val || *val != '[' ) return 0;
+    if( !val ) return 0;
 
     int count = 0;
     const char *p = val + 1;
+    if( *val == '"' )
+    {
+        while( count < max_count && *p && *p != '"' )
+        {
+            unsigned long long bits = 0;
+            int k, bad = 0;
+            for( k = 0; k < 16 && p[k] && p[k] != '"'; k++ )
+            {
+                char c = p[k];
+                unsigned int v;
+                if     ( c >= '0' && c <= '9' ) v = (unsigned int)(c - '0');
+                else if( c >= 'a' && c <= 'f' ) v = (unsigned int)(c - 'a' + 10);
+                else if( c >= 'A' && c <= 'F' ) v = (unsigned int)(c - 'A' + 10);
+                /* Reject, never decode as zero: this parser exists to read
+                 * servers this tree may not control, and a group like
+                 * "NaN0000000000000" would otherwise become a plausible
+                 * number that flows into the compare instead of a short count
+                 * the caller reports. Same rule as the servers' own scalar
+                 * reader, json_find_f64_bits. */
+                else { bad = 1; break; }
+                bits = (bits << 4) | v;
+            }
+            if( bad || k < 16 ) break;   /* malformed or truncated trailing group */
+            memcpy(&out[count], &bits, sizeof(double));
+            count++;
+            p += 16;
+        }
+        return count;
+    }
+    if( *val != '[' ) return 0;
+
     while( *p && *p != ']' && count < max_count )
     {
         while( *p == ' ' || *p == ',' ) p++;
@@ -1028,6 +1073,24 @@ static int codegen_ref_value_exempt(const char *name)
         || strcmp(name, "CORREL") == 0;
 }
 
+/* The response DECLARED outNBElement (checked against C's just above) — this
+ * asserts the array actually carried that many values. Both loops below are
+ * bounded by `i < parsed`, so without this a payload the parser could not read
+ * — a truncated response, a malformed hex group, an array spelling this reader
+ * does not know (a server predating #257/#258) — compares FEWER elements and
+ * reports success. At `parsed == 0` it compares nothing at all and the whole
+ * function reads green. Returns 1 when the caller should stop. */
+static int codegen_check_parsed(CodegenRangeTestParam *p, const char *fieldName, int parsed)
+{
+    if( parsed == p->lastNbElement ) return 0;
+    printf("CODEGEN MISMATCH [TA_%s]: %s carried %d value(s), but the response "
+           "declared outNBElement=%d — the array payload is truncated or "
+           "unreadable, NOT a value difference\n",
+           p->funcInfo->name, fieldName, parsed, (int)p->lastNbElement);
+    p->codegenError = TA_CODEGEN_NBELEMENT_MISMATCH;
+    return 1;
+}
+
 static void compare_codegen_output_generic(
     CodegenRangeTestParam *p,
     unsigned int outputNb)
@@ -1121,6 +1184,7 @@ static void compare_codegen_output_generic(
         TA_Integer cg_out[MAX_NB_TEST_ELEMENT];
         int parsed = json_get_int_array(p->responseBuf, fieldName,
                                          cg_out, MAX_NB_TEST_ELEMENT);
+        if( codegen_check_parsed(p, fieldName, parsed) ) return;
         for( int i = 0; i < p->lastNbElement && i < parsed; i++ )
         {
             if( p->outIntBufs[outputNb][i] != cg_out[i] )
@@ -1145,6 +1209,7 @@ static void compare_codegen_output_generic(
         TA_Real cg_out[MAX_NB_TEST_ELEMENT];
         int parsed = json_get_double_array(p->responseBuf, fieldName,
                                             cg_out, MAX_NB_TEST_ELEMENT);
+        if( codegen_check_parsed(p, fieldName, parsed) ) return;
         for( int i = 0; i < p->lastNbElement && i < parsed; i++ )
         {
             double cVal = p->outRealBufs[outputNb][i];
@@ -1155,8 +1220,9 @@ static void compare_codegen_output_generic(
                 /* Float leg: BOTH sides are the same server on the same
                  * float-widened inputs — its single-precision entry point vs its
                  * own double one — so equal computation must give equal doubles
-                 * and the only spread is the transport (<1e-11 through %.15g;
-                 * Java and C# serialise shortest-round-trip, i.e. exactly).
+                 * and the only spread is the transport (it was <1e-11 through
+                 * %.15g; output arrays are exact on every backend since
+                 * #257/#258).
                  *
                  * The old 1e-6 here dated from when this leg compared against the
                  * frozen single-precision reference, which computed IN float.
@@ -1177,9 +1243,10 @@ static void compare_codegen_output_generic(
                  * frozen reference found the cross-language / cross-version
                  * divergence is <1e-11 for all 161 functions EXCEPT LINEARREG_ANGLE
                  * (~4.4e-10, the authorized #103 O(1) sliding-sum recurrence vs the
-                 * frozen O(n) recompute). The 1e-6 floor was never a %.15g-transport
-                 * limit — the transport contributes <1e-11 — so 1e-9 holds with
-                 * margin: 1e-9 absolute below 1, 1e-9 relative above. Bit-exact
+                 * frozen O(n) recompute). The 1e-6 floor was never a transport
+                 * limit — the transport contributes <1e-11, and since #257/#258
+                 * only through the %.15g INPUTS — so 1e-9 holds with margin:
+                 * 1e-9 absolute below 1, 1e-9 relative above. Bit-exact
                  * cross-language parity on seed data is separately gated by
                  * --xlang-hash. */
                 threshold = CODEGEN_EPSILON_DOUBLE * fmax(1.0, fabs(cVal));
@@ -6397,6 +6464,10 @@ static int xlang_sentinel_on_choice_list(const TA_FuncInfo *fi, const double *va
 
 typedef struct {
     const char  *functionFilter;
+    /* Only the array-transport leg reads this: every other leg gets a
+     * pre-filtered sv[] (a row the filter excluded is never opened), but that
+     * leg opens a C row of its own and has to apply the filter itself. */
+    const char  *languageFilter;
     XlangServer *sv;
     int          nsv;
     /* C's own in-process tier check (issue #256's L2 for C, and the golden
@@ -6769,8 +6840,9 @@ static int xlang_illcond(const char *name, int shape)
  * #114): the driver already holds the exact seed-generated arrays, so it
  * serializes them directly rather than asking the server to regenerate. When
  * wantHash, the request carries want_hash so the server returns out_hash for the
- * bitwise path; otherwise it returns %.15g arrays (the Java-transcendental
- * tolerance path). Inputs map exactly as setup_inputs / build_json_request:
+ * bitwise path; otherwise it returns the arrays themselves (the
+ * Java-transcendental tolerance path) — lossless either way since #257/#258.
+ * Inputs map exactly as setup_inputs / build_json_request:
  * single or real0 = close, real1 = volume, price = OHLCV per flags. */
 static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
                                     const TA_History *hist, int nbBars,
@@ -7107,10 +7179,12 @@ static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp
  * transcendental may land on a different libm (Java's fdlibm, .NET's
  * unguaranteed Math.*), the same CODEGEN_TRANSCENDENTAL_TOL
  * server_verify()/--xlang-hash already tolerate there — relative for |v|>1,
- * absolute otherwise. A NaN carries no bit contract either way (issue #258:
- * a language whose plain-array transport round-trips one through decimal
- * text cannot reproduce its exact payload) — two NaNs of any payload are a
- * match, at any `tol`, same as `codegen_compare_tol`'s `isnan(c)==isnan(sv)`.
+ * absolute otherwise. A NaN carries no bit contract either way — two NaNs of
+ * any payload are a match, at any `tol`, same as `codegen_compare_tol`'s
+ * `isnan(c)==isnan(sv)`. That is a statement about the LIBMS, not about the
+ * wire any more: the transport reproduces a payload exactly since #258, but
+ * which payload fdlibm or .NET hands back for the same input was never
+ * specified.
  * Returns 1 on a real divergence, 0 otherwise; *benign counts the
  * signed-zero-only and NaN-payload-only elements. */
 static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
@@ -7699,24 +7773,35 @@ static void xlang_tier_gold_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
  * silently pass. If it does not round-trip, ANY comparison built on plain
  * arrays instead of the hash (including the tier-agreement leg above) reads
  * a false divergence that is really the wire format losing precision, not
- * the numerics — the exact trap that made the frozen v0.6.4 oracle need a
- * lossless hex-float shadow-patch (ta_test_legacy_data.h's own header note:
- * "the ordinary ta_codegen_serve_c emits %.15g, which is lossy and silently
- * costs ~1 ULP"). One default-parameter call per function is enough: this is
- * a transport property, not a data-dependent one — it fires whenever a
- * value's 16th+ significant digit is non-zero, which ordinary price data
- * almost always has. */
+ * the numerics — the exact trap that once made the frozen v0.6.4 oracle need
+ * a shadow-patched serializer of its own, because the ordinary C server's
+ * %.15g silently cost ~1 ULP.
+ *
+ * Every backend now writes real output arrays as hex-of-IEEE-bits (#257 for
+ * C's %.15g, #258 for Java's NaN token, both landing on ONE lossless format
+ * rather than four native formatters that happened to agree), so this leg is
+ * expected green and asserts on every value a call produces — a NaN payload
+ * and an infinity included, neither of which decimal text could carry.
+ *
+ * One default-parameter call per function is enough: this is a transport
+ * property, not a data-dependent one — it fires whenever a value's 16th+
+ * significant digit is non-zero, which ordinary price data almost always
+ * has. */
 typedef struct {
-    XlangCtx *ctx;
-    int       fails;
-    int       nans;   /* calls skipped for producing a NaN element -- see below */
+    XlangCtx   *ctx;
+    int         fails;
+    int         checks; /* (server, function) pairs actually compared -- printed so
+                         * a caller can see the leg was not vacuous */
+    XlangServer cSv;    /* this leg's own C row -- see xlang_selfcheck_array_transport */
 } XlangArrayTransportCtx;
 
-static void xlang_array_transport_check_one(XlangCtx *ctx, const TA_FuncInfo *fi,
-                                            XlangServer *sv, const TA_History *hist,
-                                            int n, const double *optVals, int *fails,
-                                            int *nans)
+static void xlang_array_transport_check_one(XlangArrayTransportCtx *actx,
+                                            const TA_FuncInfo *fi, XlangServer *sv,
+                                            const TA_History *hist, int n,
+                                            const double *optVals)
 {
+    XlangCtx *ctx = actx->ctx;
+    int *fails = &actx->fails;
     if( !sv->open ) return;
     int endIdx = n - 1;
 
@@ -7761,37 +7846,6 @@ static void xlang_array_transport_check_one(XlangCtx *ctx, const TA_FuncInfo *fi
         return;
     }
 
-    /* A NaN has no JSON number spelling, and the literal `"NaN"` token this
-     * puts on the wire carries only the fact that a value is not-a-number --
-     * not WHICH of the many bit patterns that satisfy that. A hash-mode call
-     * hashes the RAW bits directly (`codegen_output_hash`, doubleToRawLongBits
-     * equivalent), so a language whose plain-array writer round-trips a NaN
-     * through decimal text (Java's `Double.toString` — server_gen.rs's
-     * `doubleArrayToJson`; issue #258, ACOS/ASIN on this leg's price-shaped
-     * data) can legitimately produce a *different* NaN payload on each side
-     * of this comparison while being completely correct: NaN's bit pattern
-     * was never a value this transport asserts on, same as signed-zero's
-     * sign bit (issue #147). Skipped rather than compared, and counted so a
-     * change that starts or stops producing NaN here is visible.
-     *
-     * The skip is per CALL, not per element: `out_hash` is one combined hash
-     * over every output, so there is no way from here to tell whether a
-     * mismatch it might have produced was solely the NaN element or also a
-     * real precision loss in a finite one sharing this same call. That
-     * coarseness is acceptable for what this check specifically verifies
-     * (array-vs-hash transport fidelity) because it is not the only place
-     * verifying VALUES: the main `--xlang-hash` output-parity gate already
-     * bit-compares every server against the in-process golden through
-     * `codegen_output_hash` on every call, NaN-affected or not, so a real
-     * finite-element divergence on a NaN-affected call is still caught there
-     * even though this narrower self-check steps aside for it. */
-    for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
-    {
-        if( arr.isInt[o] ) continue;
-        for( int j = 0; j < arr.nbElement; j++ )
-            if( isnan(arr.real[o][j]) ) { (*nans)++; return; }
-    }
-
     const void *outBufs[LB_TIER_MAX_OUT];
     int outIsInt[LB_TIER_MAX_OUT];
     for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
@@ -7800,6 +7854,7 @@ static void xlang_array_transport_check_one(XlangCtx *ctx, const TA_FuncInfo *fi
         outBufs[o] = arr.isInt[o] ? (const void *)arr.intg[o] : (const void *)arr.real[o];
     }
     unsigned long long arrayHash = codegen_output_hash(fi->nbOutput, outIsInt, outBufs, arr.nbElement);
+    actx->checks++;
 
     if( arrayHash != serverHash )
     {
@@ -7849,26 +7904,81 @@ static void xlang_array_transport_one(const TA_FuncInfo *fi, void *opaqueData)
                      ? fuzz_canon15(oi->defaultValue) : (double)(int)oi->defaultValue;
     }
 
-    /* C has no server dispatch in this gate (it is the in-process golden, see
-     * xlang_tier_native_check) and so no plain-array JSON leg to self-check
-     * here -- its own transport is #257, tracked independently. */
     for( int s = 0; s < ctx->nsv; s++ )
-        xlang_array_transport_check_one(ctx, fi, &ctx->sv[s], &hist, N, optVals,
-                                        &actx->fails, &actx->nans);
+        xlang_array_transport_check_one(actx, fi, &ctx->sv[s], &hist, N, optVals);
+    xlang_array_transport_check_one(actx, fi, &actx->cSv, &hist, N, optVals);
 }
 
 static int xlang_selfcheck_array_transport(XlangCtx *ctx)
 {
-    XlangArrayTransportCtx actx = { ctx, 0, 0 };
+    XlangArrayTransportCtx actx;
+    memset(&actx, 0, sizeof(actx));
+    actx.ctx = ctx;
+
+    /* C is a server ROW here, uniquely in this gate. Everywhere else in
+     * --xlang-hash it is the in-process golden and deliberately not in sv[]
+     * (it would be compared against itself). This leg is the exception because
+     * it asserts a property of a SERVER'S WIRE FORMAT, not of the library's
+     * numerics -- and C's writer is precisely the one that was lossy (#257),
+     * which stayed invisible for as long as nothing asked the C server for an
+     * array. Spawned and closed here, so sv[]/nsv and the per-language
+     * reporting table below stay untouched.
+     *
+     * A stale bin/ta_codegen_serve_c cannot make this read green: the check is
+     * self-contained per server (its own array response re-hashed against its
+     * own out_hash for the same call), so the worst a stale binary can do is
+     * fail for an unrelated reason. */
+    actx.cSv.name = "c";
+    actx.cSv.display = "C";
+    actx.cSv.argv = argv_c;
+
     printf("Array-transport self-check (plain array vs out_hash, per server)...\n");
+    if( !ctx->languageFilter || language_matches_filter(ctx->languageFilter, "c") )
+    {
+        if( codegen_pipe_open(&actx.cSv.cp, actx.cSv.argv) == TA_TEST_PASS )
+            actx.cSv.open = 1;
+        else
+        {
+            /* NOT counted as a transport mismatch: the two want opposite
+             * fixes, and the whole point of splitting this leg's counter from
+             * the input-port one was that naming the wrong cause costs a
+             * debugging cycle. `ctx->error` alone stops the gate and is what
+             * the final verdict returns. */
+            printf("  FAILED to start C server (%s) for the array-transport "
+                   "self-check. Build the servers first (scripts/build.py "
+                   "xlang-hash).\n", actx.cSv.argv[0]);
+            if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_ALLOC_FAILED;
+            return 0;
+        }
+    }
+
     TA_ForEachFunc(xlang_array_transport_one, &actx);
+    /* The other rows report a recovered crash in the per-server table below;
+     * this one is not in that table, so it would otherwise be swallowed --
+     * xlang_call restarts a dead server and retries, and a call that then
+     * succeeds leaves no trace at all. */
+    if( actx.cSv.restarts )
+        printf("  (C server restarted %d time(s) during this leg)\n", actx.cSv.restarts);
+    if( actx.cSv.open ) codegen_pipe_close(&actx.cSv.cp);
+    /* Zero comparisons is a FAILURE, not an OK with a zero in it. Every early
+     * return in this leg is silent by design -- a function with an integer
+     * input has no fuzz source, and a default-parameter call that rejects or
+     * produces no elements has nothing to hash -- so a filter selecting only
+     * such functions would otherwise print OK having asserted nothing. The
+     * main sweep's own non-vacuity guard does not cover this: it counts the
+     * gate's cases, which stay healthy while this leg sits idle. */
+    if( actx.checks == 0 )
+    {
+        printf("  ARRAY TRANSPORT VACUOUS: zero (server, function) pair(s) compared "
+               "— every function reaching this leg was skipped (integer input, or a "
+               "default-parameter call that rejected or produced no elements). "
+               "Widen --function/--language.\n");
+        return 1;
+    }
     if( !actx.fails )
-        printf("  array transport: OK (every open server's plain-array response "
-               "re-hashes to its own out_hash)\n");
-    if( actx.nans )
-        printf("  (%d call(s) skipped: plain-array response contained a NaN, whose "
-               "payload bits JSON text cannot carry -- not a transport property this "
-               "check can assert on)\n", actx.nans);
+        printf("  array transport: OK (%d (server, function) pair(s); every open "
+               "server's plain-array response re-hashes to its own out_hash)\n",
+               actx.checks);
     return actx.fails;
 }
 
@@ -8563,6 +8673,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     XlangCtx ctx;
     memset(&ctx, 0, sizeof(ctx));
     ctx.functionFilter = functionFilter;
+    ctx.languageFilter = languageFilter;
     ctx.sv = servers;
     ctx.nsv = nsv;
     ctx.reqBuf = malloc(JSON_BUF_SIZE);
@@ -8606,7 +8717,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
 
-    int inFails = 0;
+    int inFails = 0, transportFails = 0;
     if( ctx.error == TA_TEST_PASS )
         inFails = xlang_selfcheck_inputs(&ctx);
     /* Same treatment as the input-port check above, for the same reason: a
@@ -8615,11 +8726,16 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * below is not actually affected by this specific leg, but failing fast
      * here is simpler than threading a second, narrower skip condition
      * through the rest of this function for a check that -- once the
-     * underlying transport is fixed -- should never fire again. */
+     * underlying transport is fixed -- should never fire again.
+     *
+     * Counted apart from inFails so the skip line names the leg that actually
+     * failed: the two want opposite fixes (a drifted fuzz_gen port vs a lossy
+     * array writer), and pointing at the wrong one costs a debugging cycle. */
     if( inFails == 0 && ctx.error == TA_TEST_PASS )
-        inFails += xlang_selfcheck_array_transport(&ctx);
+        transportFails = xlang_selfcheck_array_transport(&ctx);
 
-    if( inFails == 0 && ctx.error == TA_TEST_PASS )
+    int preFails = inFails + transportFails;
+    if( preFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("\nOutput parity gate (%d function(s) x shapes x seeds x sizes x params x subranges)...\n",
                codegen_function_count());
@@ -8628,6 +8744,14 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     else if( inFails > 0 )
         printf("\nSkipping the output gate: %d input-port mismatch(es) make output "
                "hashes meaningless — fix the ported fuzz_gen first.\n", inFails);
+    else if( transportFails > 0 )
+        printf("\nSkipping the output gate: the array-transport self-check failed "
+               "(%d) — the line(s) just above name the server and the reason "
+               "(a lossy wire format, or a leg that compared nothing). Nothing read "
+               "through a plain array can be trusted until it is fixed.\n",
+               transportFails);
+    else
+        printf("\nSkipping the output gate: a pre-check could not run (see above).\n");
 
     for( int s = 0; s < nsv; s++ )
         if( servers[s].open ) codegen_pipe_close(&servers[s].cp);
@@ -8694,7 +8818,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     free(ctx.reqBuf); free(ctx.respBuf);
     free(ctx.tierReqBuf); free(ctx.tierRespBuf);
 
-    if( totalCases == 0 && inFails == 0 )
+    if( totalCases == 0 && preFails == 0 )
     {
         printf("FAIL — zero comparisons (over-narrow filter or servers down?).\n");
         return TA_CODEGEN_OUTPUT_MISMATCH;
@@ -8805,7 +8929,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                ctx.sentEnumCases, ctx.lbSentEnumCases);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
-    if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
+    if( totalMism == 0 && preFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — %lld function(s) swept: every server matches the in-process C "
                "library: BIT-IDENTICAL (zero tolerance), Java+C# transcendentals "
@@ -8813,8 +8937,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                ctx.funcsSwept, CODEGEN_TRANSCENDENTAL_TOL);
         return TA_TEST_PASS;
     }
-    printf("FAIL — %lld output mismatch(es) + %d input-port mismatch(es) across %d function(s).\n",
-           totalMism, inFails, ctx.funcsWithFailures);
+    printf("FAIL — %lld output mismatch(es) + %d input-port mismatch(es) + %d "
+           "array-transport failure(s) across %d function(s).\n",
+           totalMism, inFails, transportFails, ctx.funcsWithFailures);
     return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
 }
 

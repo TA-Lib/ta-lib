@@ -131,7 +131,7 @@
  *   they absorb exist only because v0.6.4 predates the explicit-fma() contract
  *   (PR #96); the libm floors are the one part that may need to survive.
  *
- *   Two traps a regeneration must not fall into, both found the hard way here:
+ *   One trap a regeneration must not fall into, found the hard way here:
  *
  *   - The server names real inputs POSITIONALLY (inReal, or inReal0/inReal1
  *     when there are several), NOT by the ta_abstract input name. MAVP is the
@@ -141,9 +141,6 @@
  *     went undetected here until a case existed whose periods did not saturate
  *     to optInMaxPeriod, because saturated garbage and saturated `high` give
  *     the same answer.
- *   - ta_064_serve is shadow-patched to emit lossless hex floats; the ordinary
- *     ta_codegen_serve_c emits %.15g and silently costs ~1 ULP. Only the former
- *     is safe to freeze from.
  *
  * GENERATED -- do not hand-edit values. Hand-editing the COMMENTS and the
  *   tolerance table in ta_test_legacy.c is expected and is where the

@@ -362,8 +362,9 @@ static ErrorNumber sync_compatibility(int pipeIdx)
  *
  * Inputs are always serialized losslessly (hex-of-IEEE-bits). When wantHash,
  * the request carries "want_hash":1 so the server returns an out_hash digest of
- * its raw outputs instead of %.15g arrays (the bitwise path); otherwise it
- * returns arrays (the Java-transcendental tolerance path). Returns -1 if the
+ * its raw outputs instead of the arrays (the bitwise path); otherwise it
+ * returns the arrays, themselves lossless since #257/#258 (the
+ * Java-transcendental tolerance path). Returns -1 if the
  * function is not in ta_abstract (graceful skip). */
 static int build_request(const char *funcName,
                          TA_Integer startIdx, TA_Integer endIdx,
@@ -551,7 +552,7 @@ static unsigned long long sv_golden_hash(const char *funcName,
 /* ---- Tolerance-based element compare (Java transcendental path only) ----
  *
  * fdlibm != system libm means Java cannot be bit-compared on the transcendental
- * calls, so its %.15g arrays are element-compared at `tol` (integers still
+ * calls, so its output arrays are element-compared at `tol` (integers still
  * exact) via the shared codegen_compare_tol — the same primitive --xlang-hash's
  * Java leg uses. This wrapper just reconstructs the C outputs in logical order
  * and translates the verdict into server_verify's messages and error codes. */

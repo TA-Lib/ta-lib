@@ -145,8 +145,9 @@ def build(root, bin_dir, lib_a):
     serve_src = os.path.join(c_out, "tools", "ta_codegen_serve.c")
     abstract_src = os.path.join(root, "ta_codegen", "generator", "templates", "c", "ta_abstract_serve.c")
 
-    # 1. Main transport: strip generated .c includes, add ref headers + init,
-    #    emit exact hex-float (%a) for the full_output debug arrays.
+    # 1. Main transport: strip generated .c includes, add ref headers + init.
+    #    The full_output debug arrays need no patch of their own any more --
+    #    see the hex-bits assertion below.
     with open(serve_src) as f:
         src = f.read()
     # VALUES only. ta_func/ and ta_common/ come from the frozen lib_a, but
@@ -173,11 +174,15 @@ def build(root, bin_dir, lib_a):
     src = src.replace('int main(void) {',
                       'int main(void) { TA_Initialize(); '
                       'TA_RestoreCandleDefaultSettings(TA_AllCandleSettings);')
-    patched = src.replace('json_appendf(buf, buf_size, pos, "%.15g", data[i]);',
-                          'json_appendf(buf, buf_size, pos, "%a", data[i]);')
-    if patched == src:
-        die("output serializer pattern not found — %a patch NOT applied")
-    src = patched
+    # No output-serializer patch any more: json_write_double_array writes the
+    # 16-hex-char IEEE-754 bits of every value (issues #257/#258), so the
+    # transport this oracle is frozen FROM is already exact. It used to be
+    # %.15g here and was shadow-patched to %a, which is the whole reason a
+    # freeze taken from the ordinary server silently cost ~1 ULP. Asserted, not
+    # assumed: if the writer ever goes back to decimal text, this dies rather
+    # than quietly freezing rounded values.
+    if '"%016llx", bits' not in src:
+        die("output serializer is not the hex-bits writer — a freeze from it would be lossy")
     with open(os.path.join(bin_dir, "_ta_064_serve.c"), "w") as f:
         f.write(src)
 
