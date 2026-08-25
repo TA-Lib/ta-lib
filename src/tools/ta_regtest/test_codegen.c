@@ -4428,7 +4428,13 @@ static ErrorNumber test_codegen_for_language(
                        ctx.streamStateFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
-            if( ctx.error == TA_TEST_PASS && ctx.streamStateFunctions == 0 &&
+            /* `streamFunctions != 0` first: a --function filter that legitimately
+             * selects zero streaming functions (the hand-written PERIOD1/BOUNDARY
+             * group, run alone) must read as nothing-to-check, not as the leg
+             * silently not firing -- unlike the PARTIAL check above, this one has
+             * no ratio to fall back on when the denominator itself is zero. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamFunctions != 0 &&
+                ctx.streamStateFunctions == 0 &&
                 codegen_lang_has_stream_state_probe(lang->name) )
             {
                 printf("STREAM STATE VACUOUS: the %s server offers the "
