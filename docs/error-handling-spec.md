@@ -124,20 +124,39 @@ the whole corpus, on every test run.
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | L1 | An optional parameter is outside its documented domain | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
-| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B4, or the streaming opener (`Open`/`OpenAndFill`) would reject them under S5 | the lookback rejection signal | ✅ [28] | | | |
-| L3 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
+| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B4, or the streaming opener (`Open`/`OpenAndFill`) would reject them under S5 | the lookback rejection signal | ✅ [28] | ✅ [28] | ✅ [28] | ✅ [28] |
+| L3 | …and, for Rust/Java/C#, the same accept-or-reject decision — and, wherever both it and C accept, the Batch/`OpenAndFill` output — matches what C produces for the identical parameters (the "Golden Check") | the lookback rejection signal | — | ✅ [29] | ✅ [29] | ✅ [29] |
+| L4 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
 
 **Rejection Signal**
 For C, Java and C# it is returned as `-1`.
 For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)`.
 
-[28] Only the B4 half is asserted, and only for C: the boundary sweep
-(`ta_test_func/test_period_boundary.c`, group `PERIOD1/BOUNDARY`) compares the
-lookback tier's decision against the batch call (`TA_CallFunc`) for every
-optional parameter of every function, counting the swept cases. Nothing
-compares it against `_Open`/`OpenAndFill` (S5), in any backend — the sweep has
-no streaming leg at all. Issue #256 covers closing both halves, across all
-four backends.
+[28] Same-backend agreement, all four backends (issue #256's B4+S5):
+`xlang_lookback_leg` (`test_codegen.c`, under `--xlang-hash`) compares each
+backend's own Lookback verdict against that SAME backend's own Batch and
+`Open`/`OpenAndFill` calls, over its existing out-of-range/sentinel/boundary
+vector battery. Rust/Java/C# go through their JSON-RPC servers
+(`xlang_tier_self_check`); C has no server here and runs natively in-process
+instead (`xlang_tier_native_check`): Batch through `TA_CallFunc`/
+`TA_ParamHolder` — the same path the Lookback call above already uses —
+and `Open`/`OpenAndFill` through `ta_stream_frame.h`'s generated dispatch
+table, compiled straight into `ta_regtest` so it can never go stale against
+the library under test. A separate, narrower check
+(`server_verify_lookback_parity`, `server_verify.c`, under `--codegen`)
+additionally compares C's Lookback against its own Batch call through a
+spawned C server, for every optional parameter of every function in the
+hand-written test suite.
+
+[29] `xlang_tier_gold_check` (`test_codegen.c`, under `--xlang-hash`), riding
+the same battery: for each vector, compares each of Rust/Java/C#'s
+Batch/`Open`/`OpenAndFill` accept-or-reject decision against what C's native
+in-process call (`xlang_tier_native_check`, [28]) produced for the identical
+vector, and — wherever both accepted — the Batch and `OpenAndFill` output data
+too, at that backend's transcendental tolerance (`CODEGEN_TRANSCENDENTAL_TOL`,
+the same one `server_verify` uses elsewhere). Both this and the same-backend
+check in [28] are asserted non-vacuous — a zero count in either fails the run.
+Issue #256 closed.
 
 ### 2.2 Batch tier
 

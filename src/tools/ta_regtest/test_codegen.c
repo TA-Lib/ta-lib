@@ -47,6 +47,7 @@ static int  g_floatCapableLangTested = 0;
 #include "ta_abstract.h"
 #include "ta_utility.h"  /* TA_IS_ZERO / TA_IS_ZERO_SCALED / TA_IS_ZERO_OR_NEG (predicate parity truth) */
 #include "fuzz_data.h"   /* shared, byte-identical input generator + output hasher */
+#include "ta_stream_frame.h"  /* in-process Open/OpenAndFill/Close dispatch (issue #256) */
 #include "../ta_alloc_check.h"
 
 /* Timing now comes from each server's JSON-RPC timing_ns field (the reference
@@ -6398,6 +6399,16 @@ typedef struct {
     const char  *functionFilter;
     XlangServer *sv;
     int          nsv;
+    /* C's own in-process tier check (issue #256's L2 for C, and the golden
+     * half of L3) -- NOT part of `sv[]`/`nsv`: those drive the main
+     * per-language hash comparison and its reporting table, and folding C
+     * into that array would make it compare against itself there too. No
+     * server, no spawn, no staleness risk: Batch runs via paramHolder/
+     * TA_CallFunc exactly like this leg's own Lookback golden already does,
+     * and Open/OpenAndFill run through ta_stream_frame.h's generated
+     * TA_StreamTable, compiled straight into ta_regtest (xlang_tier_native_check). */
+    long long    cNativeCases;
+    long long    cNativeMism;
     char        *reqBuf;
     char        *respBuf;
     /* Dedicated buffers for the tier-agreement leg (#256) below — NEVER
@@ -6459,7 +6470,20 @@ typedef struct {
     long long    tierDataCases;      /* batch vs OpenAndFill output DATA compared
                                       * (both tiers accepted the same vector)      */
     long long    tierBenign;         /* of tierDataCases, elements that differed
-                                      * only in the sign of zero (issue #147)      */
+                                      * only in the sign of zero (issue #147) or
+                                      * carried a differing NaN payload (#258)     */
+
+    /* Golden Check (issue #256's L3): does a real server's batch/Open/
+     * OpenAndFill retCode -- and, where both accepted, the batch output DATA
+     * -- match what C's native in-process call produces for the SAME vector
+     * (xlang_tier_native_check)? Compared at that server's transcendental
+     * tolerance (Java/C#), same rule server_verify()/--xlang-hash already use
+     * elsewhere. */
+    long long    l3BatchCases;
+    long long    l3OpenCases;
+    long long    l3OAFCases;
+    long long    l3DataCases;
+    long long    l3Benign;           /* same two benign classes as tierBenign */
     int          reportedThisFunc;
     int          funcsWithFailures;
     ErrorNumber  error;
@@ -6915,6 +6939,40 @@ static void lb_tier_buf_init(void)
     g_lbTierInit = 1;
 }
 
+/* Which fixed LB_TIER_N buffer feeds a given flattened input array slot --
+ * the SINGLE definition xlang_build_tier_request's JSON payload and
+ * xlang_tier_native_check's direct TA_StreamTable call both draw from, so the
+ * two can never end up feeding a "same vector" comparison from different
+ * data (issue #256's L3 depends on this: a drift here would manufacture a
+ * value mismatch that is really a data mismatch, not a real divergence). */
+static const TA_Real *xlang_tier_price_buf(TA_InputFlags flag)
+{
+    switch( flag )
+    {
+        case TA_IN_PRICE_OPEN:         return g_lbTierO;
+        case TA_IN_PRICE_HIGH:         return g_lbTierH;
+        case TA_IN_PRICE_LOW:          return g_lbTierL;
+        case TA_IN_PRICE_CLOSE:        return g_lbTierC;
+        case TA_IN_PRICE_VOLUME:       return g_lbTierV;
+        case TA_IN_PRICE_OPENINTEREST: return g_lbTierOI;
+        default:                       return g_lbTierC;
+    }
+}
+
+/* A genuinely distinct buffer per plain-real slot -- MULT/ADD/SUB/DIV need at
+ * least 2, and this stays correct for any future function with more instead
+ * of quietly repeating the same array past slot 1. MAVP's `inPeriods` rides
+ * this arm too: it is TA_Input_Real like any other (ta_codegen's CLAUDE.md —
+ * "the server names real inputs positionally, not by the ta_abstract input
+ * name"), not a distinct ta_abstract input type. */
+static const TA_Real *xlang_tier_real_buf(int realIndex)
+{
+    static const TA_Real *const realSlots[] = {
+        g_lbTierC, g_lbTierV, g_lbTierO, g_lbTierH, g_lbTierL, g_lbTierOI
+    };
+    return realSlots[realIndex % 6];
+}
+
 /* Build one tier-agreement request: the plain TA_<name> method over the fixed
  * LB_TIER_N-bar buffer, always full-array (never want_hash — the values
  * themselves are what gets compared, same-server). benchMode: 0 = batch,
@@ -6942,36 +7000,30 @@ static void xlang_build_tier_request(char *buf, const TA_FuncInfo *fi,
         TA_GetInputParameterInfo(fi->handle, i, &ii);
         if( ii->type == TA_Input_Price )
         {
-            const struct { TA_InputFlags flag; const char *key; const TA_Real *data; } comp[] = {
-                { TA_IN_PRICE_OPEN,         "inOpen",         g_lbTierO  },
-                { TA_IN_PRICE_HIGH,         "inHigh",         g_lbTierH  },
-                { TA_IN_PRICE_LOW,          "inLow",          g_lbTierL  },
-                { TA_IN_PRICE_CLOSE,        "inClose",        g_lbTierC  },
-                { TA_IN_PRICE_VOLUME,       "inVolume",       g_lbTierV  },
-                { TA_IN_PRICE_OPENINTEREST, "inOpenInterest", g_lbTierOI },
+            static const struct { TA_InputFlags flag; const char *key; } comp[] = {
+                { TA_IN_PRICE_OPEN,         "inOpen"         },
+                { TA_IN_PRICE_HIGH,         "inHigh"         },
+                { TA_IN_PRICE_LOW,          "inLow"          },
+                { TA_IN_PRICE_CLOSE,        "inClose"        },
+                { TA_IN_PRICE_VOLUME,       "inVolume"       },
+                { TA_IN_PRICE_OPENINTEREST, "inOpenInterest" },
             };
             for( int c = 0; c < 6; c++ )
                 if( ii->flags & comp[c].flag )
                 {
                     pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":", comp[c].key);
                     pos = codegen_write_hexbits_array(buf, JSON_BUF_SIZE, pos,
-                                                       comp[c].data, LB_TIER_N);
+                                                       xlang_tier_price_buf(comp[c].flag), LB_TIER_N);
                 }
         }
         else if( ii->type == TA_Input_Real )
         {
-            /* A genuinely distinct buffer per slot -- MULT/ADD/SUB/DIV need at
-             * least 2, and this stays correct for any future function with
-             * more instead of quietly repeating the same array past slot 1. */
-            static const TA_Real *const realSlots[] = {
-                g_lbTierC, g_lbTierV, g_lbTierO, g_lbTierH, g_lbTierL, g_lbTierOI
-            };
-            const TA_Real *data = realSlots[realCount % 6];
             if( totalRealInputs == 1 )
                 pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"inReal\":");
             else
                 pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"inReal%d\":", realCount);
-            pos = codegen_write_hexbits_array(buf, JSON_BUF_SIZE, pos, data, LB_TIER_N);
+            pos = codegen_write_hexbits_array(buf, JSON_BUF_SIZE, pos,
+                                              xlang_tier_real_buf(realCount), LB_TIER_N);
             realCount++;
         }
     }
@@ -7039,15 +7091,30 @@ static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp
     }
 }
 
-/* Compare two full responses from the SAME server (batch vs OpenAndFill) on
- * the SAME accepted vector — same server, same params, same data, so any bit
- * difference is real EXCEPT the one documented exception: a batch rescan and
- * a stream fill may legitimately keep the opposite sign of zero (issue #147,
- * "Signed zero: a value contract, not a bit contract" — stream_verify counts
- * exactly this same OpenAndFill-vs-batch case as benign). Returns 1 on a real
- * divergence, 0 otherwise; *benign counts the signed-zero-only elements. */
+/* Compare two full responses on the SAME accepted vector. `a` is always the
+ * reference side (this same backend's own batch, for `tol == 0.0`; C's
+ * native golden, for `tol > 0`) and `b` the side under test — load-bearing,
+ * because the tolerance below scales by `a`'s magnitude only, exactly
+ * matching `codegen_compare_tol`'s `t = (fabs(c) > 1.0) ? tol * fabs(c) :
+ * tol` (scaling by `max(|a|,|b|)` instead would let a real bug in `b` widen
+ * its own tolerance window). `tol == 0.0` is the SAME-SERVER contract (batch
+ * vs its own OpenAndFill — same params, same data, so any bit difference is
+ * real except the one documented exception: a batch rescan and a stream fill
+ * may legitimately keep the opposite sign of zero, issue #147, "Signed zero:
+ * a value contract, not a bit contract" — stream_verify counts exactly this
+ * same OpenAndFill-vs-batch case as benign). `tol > 0` is the CROSS-LANGUAGE
+ * contract (issue #256's L3, a server vs C's golden): a call reaching a
+ * transcendental may land on a different libm (Java's fdlibm, .NET's
+ * unguaranteed Math.*), the same CODEGEN_TRANSCENDENTAL_TOL
+ * server_verify()/--xlang-hash already tolerate there — relative for |v|>1,
+ * absolute otherwise. A NaN carries no bit contract either way (issue #258:
+ * a language whose plain-array transport round-trips one through decimal
+ * text cannot reproduce its exact payload) — two NaNs of any payload are a
+ * match, at any `tol`, same as `codegen_compare_tol`'s `isnan(c)==isnan(sv)`.
+ * Returns 1 on a real divergence, 0 otherwise; *benign counts the
+ * signed-zero-only and NaN-payload-only elements. */
 static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
-                                const LbTierResp *b, long long *benign)
+                                const LbTierResp *b, double tol, long long *benign)
 {
     if( a->begIdx != b->begIdx || a->nbElement != b->nbElement ) return 1;
     int n = a->nbElement;
@@ -7064,7 +7131,14 @@ static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
             {
                 double x = a->real[o][j], y = b->real[o][j];
                 if( memcmp(&x, &y, sizeof(double)) == 0 ) continue;
+                if( isnan(x) && isnan(y) ) { (*benign)++; continue; }
+                if( isnan(x) != isnan(y) ) return 1;
                 if( x == y ) { (*benign)++; continue; }   /* +0.0 vs -0.0 */
+                if( tol > 0.0 )
+                {
+                    double t = (fabs(x) > 1.0) ? tol * fabs(x) : tol;
+                    if( fabs(x - y) <= t ) continue;
+                }
                 return 1;
             }
         }
@@ -7072,16 +7146,748 @@ static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
     return 0;
 }
 
+/* Raw results of one same-server tier probe (batch + Open + OpenAndFill),
+ * returned so the caller can do more with them: xlang_tier_self_check's own
+ * same-backend consistency check, and xlang_tier_gold_check's cross-language
+ * one right after it. */
+typedef struct {
+    LbTierResp batchR;
+    int        haveBatch;
+    int        openRc;
+    int        haveOpen;
+    LbTierResp oafR;
+    int        haveOaf;
+} XlangTierResults;
+
+/* Same-backend tier agreement (issue #256's L2, B4+S5): calls batch/Open/
+ * OpenAndFill on `sv` for `optVals`, and checks each retCode against
+ * `lookbackVerdict` — THIS SAME backend's own lookback-tier answer (>= 0
+ * accepted, < 0 rejected). For a real (Rust/Java/C#) server: the property is
+ * "does this backend agree with itself across tiers", so it needs no golden.
+ * C runs the analogous check natively instead — xlang_tier_native_check,
+ * below — since there is no C server to call here (see that function's own
+ * doc comment). Returns the raw responses in *out so the caller can also run
+ * the cross-language Golden Check (xlang_tier_gold_check) against them. */
+static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
+                                  const double *optVals, XlangServer *sv,
+                                  long long lookbackVerdict, XlangTierResults *out)
+{
+    memset(out, 0, sizeof(*out));
+    int rejected = (lookbackVerdict < 0);
+    /* Streaming carries an extra rejection axis batch/lookback do NOT share:
+     * S6 (docs/error-handling-spec.md) — Open and OpenAndFill reject outright
+     * (TA_INSUFFICIENT_HISTORY) when the fixed LB_TIER_N-bar buffer is
+     * shorter than the lookback, where batch just returns a coherent EMPTY
+     * success. A lookback that fits the params but exceeds the buffer (DEMA/
+     * TEMA/T3/MAMA used as an MAType dispatch target can need far more than
+     * SMA/EMA) is therefore an EXPECTED streaming reject, not a divergence —
+     * measured live: APO/MACDEXT/STOCHRSI at their default periods with one
+     * of those as the dispatch MAType. */
+    int streamRejected = rejected || (lookbackVerdict >= LB_TIER_N);
+
+    xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 0);
+    if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+    {
+        xlang_tier_parse(funcInfo, ctx->tierRespBuf, &out->batchR);
+        out->haveBatch = 1;
+        sv->cases++;
+        ctx->tierBatchCases++;
+        int batchRejected = (out->batchR.rc != TA_SUCCESS);
+        if( batchRejected != rejected )
+        {
+            sv->mism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG TIER MISMATCH TA_%s  lookback vs BATCH on %s: "
+                       "lookback %s, batch retCode=%d (%s)  params:",
+                       funcInfo->name, sv->display,
+                       rejected ? "rejected" : "accepted", out->batchR.rc,
+                       batchRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+    }
+    else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+
+    /* Open/OpenAndFill exist only for streamable functions — every function
+     * today, but read from the metadata rather than assume it, since it is a
+     * declared flag (streaming: true), not a library-wide constant. */
+    if( funcInfo->flags & TA_FUNC_FLG_STREAM )
+    {
+        xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 1);
+        if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+        {
+            /* Open's own value never reaches a JSON field (every backend's
+             * bench_mode==1 arm computes it and discards it — server_gen.rs's
+             * warm-up-arm emitters), so only its accept/reject decision is
+             * checkable here. */
+            out->openRc = json_get_int(ctx->tierRespBuf, "retCode");
+            out->haveOpen = 1;
+            sv->cases++;
+            ctx->tierOpenCases++;
+            int openRejected = (out->openRc != TA_SUCCESS);
+            if( openRejected != streamRejected )
+            {
+                sv->mism++;
+                if( ctx->reportedThisFunc < 3 )
+                {
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG TIER MISMATCH TA_%s  lookback vs OPEN on %s: "
+                           "lookback %s (streaming: %s), Open retCode=%d (%s)  params:",
+                           funcInfo->name, sv->display,
+                           rejected ? "rejected" : "accepted",
+                           streamRejected ? "rejected" : "accepted", out->openRc,
+                           openRejected ? "rejected" : "accepted");
+                    xlang_print_params(funcInfo, optVals);
+                    printf("\n");
+                }
+            }
+        }
+        else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+
+        xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 2);
+        if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+        {
+            xlang_tier_parse(funcInfo, ctx->tierRespBuf, &out->oafR);
+            out->haveOaf = 1;
+            sv->cases++;
+            ctx->tierOAFCases++;
+            int oafRejected = (out->oafR.rc != TA_SUCCESS);
+            if( oafRejected != streamRejected )
+            {
+                sv->mism++;
+                if( ctx->reportedThisFunc < 3 )
+                {
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG TIER MISMATCH TA_%s  lookback vs OPENANDFILL on "
+                           "%s: lookback %s (streaming: %s), OpenAndFill retCode=%d "
+                           "(%s)  params:",
+                           funcInfo->name, sv->display,
+                           rejected ? "rejected" : "accepted",
+                           streamRejected ? "rejected" : "accepted", out->oafR.rc,
+                           oafRejected ? "rejected" : "accepted");
+                    xlang_print_params(funcInfo, optVals);
+                    printf("\n");
+                }
+            }
+        }
+        else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+
+        /* Data-match bonus: whenever this vector was ACCEPTED, batch and
+         * OpenAndFill both produced a real array over the same fixed buffer —
+         * compare them bit-exact (issue #147's benign signed-zero exception
+         * aside). The boundary/limit-case vectors here are rarely exercised
+         * by the ordinary success-focused batch/hash comparisons. */
+        if( out->haveBatch && out->haveOaf &&
+            out->batchR.rc == TA_SUCCESS && out->oafR.rc == TA_SUCCESS )
+        {
+            long long benignHere = 0;
+            sv->cases++;
+            ctx->tierDataCases++;
+            if( xlang_tier_data_diff(funcInfo, &out->batchR, &out->oafR, 0.0, &benignHere) )
+            {
+                sv->mism++;
+                if( ctx->reportedThisFunc < 3 )
+                {
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG TIER DATA MISMATCH TA_%s  BATCH vs OPENANDFILL "
+                           "on %s (begIdx %d/%d nbElem %d/%d)  params:",
+                           funcInfo->name, sv->display, out->batchR.begIdx, out->oafR.begIdx,
+                           out->batchR.nbElement, out->oafR.nbElement);
+                    xlang_print_params(funcInfo, optVals);
+                    printf("\n");
+                }
+            }
+            ctx->tierBenign += benignHere;
+        }
+    }
+}
+
+/* Max flattened input array count any function needs here (the widest today
+ * is 4 — the OHLC candlesticks); generous headroom over that so a future
+ * function cannot silently overflow `in[]` below. */
+#define NATIVE_TIER_MAX_IN 8
+
+/* Native counterpart of xlang_build_tier_request's input walk: same order
+ * (TA_GetInputParameterInfo's declaration order, price bundles expanded),
+ * same xlang_tier_price_buf/xlang_tier_real_buf assignment — but collecting
+ * raw pointers for a direct TA_StreamTable call instead of writing JSON, so
+ * xlang_tier_native_check's Open/OpenAndFill run over the IDENTICAL data
+ * every server's JSON request carries for the same vector. Returns the
+ * flattened input count, or -1 on overflow (see NATIVE_TIER_MAX_IN). */
+static int xlang_native_tier_inputs(const TA_FuncInfo *fi, const double *in[], int maxIn)
+{
+    static const TA_InputFlags priceFlags[] = {
+        TA_IN_PRICE_OPEN, TA_IN_PRICE_HIGH, TA_IN_PRICE_LOW,
+        TA_IN_PRICE_CLOSE, TA_IN_PRICE_VOLUME, TA_IN_PRICE_OPENINTEREST
+    };
+    int realCount = 0, n = 0;
+    for( unsigned int i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type == TA_Input_Price )
+        {
+            for( int c = 0; c < 6; c++ )
+                if( ii->flags & priceFlags[c] )
+                {
+                    if( n >= maxIn ) return -1;
+                    in[n++] = xlang_tier_price_buf(priceFlags[c]);
+                }
+        }
+        else if( ii->type == TA_Input_Real )
+        {
+            if( n >= maxIn ) return -1;
+            in[n++] = xlang_tier_real_buf(realCount);
+            realCount++;
+        }
+    }
+    return n;
+}
+
+/* Linear scan of the generated TA_StreamTable (176 entries today) by name.
+ * Called at most once per (function, vector) pair here — utterly negligible
+ * next to the pipe round-trips the same loop already makes for every real
+ * server. NULL for a function that declares no streaming API (none exist
+ * today, but this is read from the metadata, not assumed — see
+ * xlang_tier_self_check's identical note on TA_FUNC_FLG_STREAM). */
+static const TA_StreamEntry *xlang_stream_entry(const char *name)
+{
+    for( int i = 0; i < TA_STREAM_TABLE_SIZE; i++ )
+        if( strcmp(TA_StreamTable[i].name, name) == 0 )
+            return &TA_StreamTable[i];
+    return NULL;
+}
+
+/* Native, in-process equivalent of xlang_tier_self_check, for C itself
+ * (issue #256's L2 for C, and the golden half of L3). There is no "C server"
+ * to spawn and compare against here: unlike Rust/Java/C#, C never rides the
+ * JSON-RPC transport at all in this gate, so it needs no XlangServer and no
+ * xlang_call. Batch runs via paramHolder/TA_CallFunc — exactly like this
+ * leg's own Lookback golden already does, a few lines up in
+ * xlang_lookback_leg. Open/OpenAndFill run through ta_stream_frame.h's
+ * generated TA_StreamTable, compiled straight into ta_regtest: never a
+ * spawned server, so — unlike the cGold-server design this replaced — it can
+ * never go stale against the library this very binary is linked against.
+ * Fills the same XlangTierResults shape xlang_tier_self_check does, over the
+ * exact same LB_TIER_N data every server's JSON request uses
+ * (xlang_native_tier_inputs), so xlang_tier_gold_check can compare either one
+ * against it unmodified. */
+static void xlang_tier_native_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
+                                    TA_ParamHolder *paramHolder, const double *optVals,
+                                    long long lookbackVerdict, XlangTierResults *out)
+{
+    memset(out, 0, sizeof(*out));
+    int rejected = (lookbackVerdict < 0);
+    int streamRejected = rejected || (lookbackVerdict >= LB_TIER_N);
+
+    /* ---- Batch ---- */
+    double batchReal[LB_TIER_MAX_OUT][LB_TIER_N];
+    TA_Integer batchInt[LB_TIER_MAX_OUT][LB_TIER_N];
+    /* Rebind INPUTS to the same LB_TIER_N buffers Open/OpenAndFill use below
+     * (via setup_inputs, whose own price/real assignment coincides with
+     * xlang_tier_price_buf/xlang_tier_real_buf for every input count that
+     * exists today) -- paramHolder otherwise still carries whatever
+     * setup_inputs bound it to at function entry (ctx->history's much larger
+     * corpus), which would silently make this Batch call read completely
+     * different data than the OpenAndFill call it is about to be compared
+     * against. */
+    TA_History lbHist;
+    memset(&lbHist, 0, sizeof(lbHist));
+    lbHist.open = g_lbTierO; lbHist.high = g_lbTierH; lbHist.low = g_lbTierL;
+    lbHist.close = g_lbTierC; lbHist.volume = g_lbTierV; lbHist.openInterest = g_lbTierOI;
+    lbHist.nbBars = LB_TIER_N;
+    setup_inputs(paramHolder, funcInfo, &lbHist);
+    xlang_set_opt_params(paramHolder, funcInfo, optVals);
+    for( unsigned int o = 0; o < funcInfo->nbOutput && o < LB_TIER_MAX_OUT; o++ )
+    {
+        const TA_OutputParameterInfo *oi;
+        TA_GetOutputParameterInfo(funcInfo->handle, o, &oi);
+        out->batchR.isInt[o] = (oi->type == TA_Output_Integer);
+        if( out->batchR.isInt[o] )
+            TA_SetOutputParamIntegerPtr(paramHolder, o, batchInt[o]);
+        else
+            TA_SetOutputParamRealPtr(paramHolder, o, batchReal[o]);
+    }
+    TA_Integer begB = 0, nbB = 0;
+    out->batchR.rc = TA_CallFunc(paramHolder, 0, LB_TIER_N - 1, &begB, &nbB);
+    out->batchR.begIdx = begB;
+    out->batchR.nbElement = nbB;
+    for( unsigned int o = 0; o < funcInfo->nbOutput && o < LB_TIER_MAX_OUT; o++ )
+    {
+        if( out->batchR.isInt[o] )
+            memcpy(out->batchR.intg[o], batchInt[o], sizeof(batchInt[o]));
+        else
+            memcpy(out->batchR.real[o], batchReal[o], sizeof(batchReal[o]));
+    }
+    out->haveBatch = 1;
+    ctx->cNativeCases++;
+    ctx->tierBatchCases++;
+    {
+        int batchRejected = (out->batchR.rc != TA_SUCCESS);
+        if( batchRejected != rejected )
+        {
+            ctx->cNativeMism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG TIER MISMATCH TA_%s  lookback vs BATCH on C (native): "
+                       "lookback %s, batch retCode=%d (%s)  params:",
+                       funcInfo->name, rejected ? "rejected" : "accepted", out->batchR.rc,
+                       batchRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+    }
+
+    if( !(funcInfo->flags & TA_FUNC_FLG_STREAM) ) return;
+    const TA_StreamEntry *entry = xlang_stream_entry(funcInfo->name);
+    if( !entry ) return;
+
+    const double *in[NATIVE_TIER_MAX_IN];
+    if( xlang_native_tier_inputs(funcInfo, in, NATIVE_TIER_MAX_IN) < 0 ) return;
+
+    double optArr[FUZZ_MAX_OPT];
+    for( unsigned int i = 0; i < funcInfo->nbOptInput && i < FUZZ_MAX_OPT; i++ )
+        optArr[i] = optVals[i];
+
+    /* ---- Open: only its accept/reject decision is checkable — same reason
+     * as xlang_tier_self_check's Open leg (its value never reaches a JSON
+     * field there either; here there is simply nowhere to put it beyond a
+     * scalar this function immediately discards). ---- */
+    {
+        void *stream = NULL;
+        double scalarReal[LB_TIER_MAX_OUT];
+        TA_Integer scalarInt[LB_TIER_MAX_OUT];
+        double *outReal[LB_TIER_MAX_OUT];
+        TA_Integer *outIntg[LB_TIER_MAX_OUT];
+        for( int o = 0; o < LB_TIER_MAX_OUT; o++ ) { outReal[o] = &scalarReal[o]; outIntg[o] = &scalarInt[o]; }
+        TA_RetCode openRc = entry->open(&stream, in, LB_TIER_N, optArr,
+                                        entry->outIsInteger ? NULL : outReal,
+                                        entry->outIsInteger ? outIntg : NULL);
+        if( stream ) entry->close(stream);
+        out->openRc = openRc;
+        out->haveOpen = 1;
+        ctx->cNativeCases++;
+        ctx->tierOpenCases++;
+        int openRejected = (openRc != TA_SUCCESS);
+        if( openRejected != streamRejected )
+        {
+            ctx->cNativeMism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG TIER MISMATCH TA_%s  lookback vs OPEN on C (native): "
+                       "lookback %s (streaming: %s), Open retCode=%d (%s)  params:",
+                       funcInfo->name, rejected ? "rejected" : "accepted",
+                       streamRejected ? "rejected" : "accepted", openRc,
+                       openRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+    }
+
+    /* ---- OpenAndFill, plus the batch-vs-OpenAndFill data-match bonus ---- */
+    {
+        void *stream = NULL;
+        double oafReal[LB_TIER_MAX_OUT][LB_TIER_N];
+        TA_Integer oafInt[LB_TIER_MAX_OUT][LB_TIER_N];
+        double *outReal[LB_TIER_MAX_OUT];
+        TA_Integer *outIntg[LB_TIER_MAX_OUT];
+        for( int o = 0; o < LB_TIER_MAX_OUT; o++ ) { outReal[o] = oafReal[o]; outIntg[o] = oafInt[o]; }
+        TA_Integer oafBeg = 0, oafNb = 0;
+        TA_RetCode oafRc = entry->openAndFill(&stream, in, LB_TIER_N, optArr, &oafBeg, &oafNb,
+                                              entry->outIsInteger ? NULL : outReal,
+                                              entry->outIsInteger ? outIntg : NULL);
+        if( stream ) entry->close(stream);
+        out->oafR.rc = oafRc;
+        out->oafR.begIdx = oafBeg;
+        out->oafR.nbElement = oafNb;
+        for( unsigned int o = 0; o < funcInfo->nbOutput && o < LB_TIER_MAX_OUT; o++ )
+        {
+            out->oafR.isInt[o] = entry->outIsInteger;
+            if( entry->outIsInteger )
+                memcpy(out->oafR.intg[o], oafInt[o], sizeof(oafInt[o]));
+            else
+                memcpy(out->oafR.real[o], oafReal[o], sizeof(oafReal[o]));
+        }
+        out->haveOaf = 1;
+        ctx->cNativeCases++;
+        ctx->tierOAFCases++;
+        int oafRejected = (oafRc != TA_SUCCESS);
+        if( oafRejected != streamRejected )
+        {
+            ctx->cNativeMism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG TIER MISMATCH TA_%s  lookback vs OPENANDFILL on C "
+                       "(native): lookback %s (streaming: %s), OpenAndFill retCode=%d "
+                       "(%s)  params:",
+                       funcInfo->name, rejected ? "rejected" : "accepted",
+                       streamRejected ? "rejected" : "accepted", oafRc,
+                       oafRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+
+        if( out->haveBatch && out->batchR.rc == TA_SUCCESS && oafRc == TA_SUCCESS )
+        {
+            long long benignHere = 0;
+            ctx->cNativeCases++;
+            ctx->tierDataCases++;
+            if( xlang_tier_data_diff(funcInfo, &out->batchR, &out->oafR, 0.0, &benignHere) )
+            {
+                ctx->cNativeMism++;
+                if( ctx->reportedThisFunc < 3 )
+                {
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG TIER DATA MISMATCH TA_%s  BATCH vs OPENANDFILL on C "
+                           "(native) (begIdx %d/%d nbElem %d/%d)  params:",
+                           funcInfo->name, out->batchR.begIdx, out->oafR.begIdx,
+                           out->batchR.nbElement, out->oafR.nbElement);
+                    xlang_print_params(funcInfo, optVals);
+                    printf("\n");
+                }
+            }
+            ctx->tierBenign += benignHere;
+        }
+    }
+}
+
+/* Cross-language Golden Check (issue #256's L3): does `sv`'s batch/Open/
+ * OpenAndFill retCode — and, where both accepted, the batch/OpenAndFill
+ * output data — match what C's own native in-process call
+ * (`g`, from xlang_tier_native_check) produced for the SAME vector? Data is
+ * compared at `sv`'s transcendental tolerance (Java's fdlibm, C#'s
+ * unguaranteed Math.*), the same rule server_verify()/--xlang-hash already
+ * use elsewhere — never for Open, which carries no data to compare (see
+ * xlang_tier_self_check). */
+static void xlang_tier_gold_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
+                                  const double *optVals, XlangServer *sv,
+                                  const XlangTierResults *g, const XlangTierResults *r)
+{
+    double tol = ( sv->tolTranscendental &&
+                   codegen_call_is_transcendental(funcInfo->handle, optVals,
+                                                  (int)funcInfo->nbOptInput) )
+                 ? CODEGEN_TRANSCENDENTAL_TOL : 0.0;
+
+    if( g->haveBatch && r->haveBatch )
+    {
+        int goldRejected = (g->batchR.rc != TA_SUCCESS);
+        int srvRejected  = (r->batchR.rc != TA_SUCCESS);
+        sv->cases++;
+        ctx->l3BatchCases++;
+        if( goldRejected != srvRejected )
+        {
+            sv->mism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG GOLDEN CHECK MISMATCH TA_%s  BATCH C(golden) vs %s: "
+                       "retCode %d/%d (%s/%s)  params:",
+                       funcInfo->name, sv->display, g->batchR.rc, r->batchR.rc,
+                       goldRejected ? "rejected" : "accepted",
+                       srvRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+        else if( !goldRejected )
+        {
+            long long benignHere = 0;
+            sv->cases++;
+            ctx->l3DataCases++;
+            if( xlang_tier_data_diff(funcInfo, &g->batchR, &r->batchR, tol, &benignHere) )
+            {
+                sv->mism++;
+                if( ctx->reportedThisFunc < 3 )
+                {
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG GOLDEN CHECK DATA MISMATCH TA_%s  BATCH C(golden) vs %s "
+                           "(begIdx %d/%d nbElem %d/%d)  params:",
+                           funcInfo->name, sv->display, g->batchR.begIdx, r->batchR.begIdx,
+                           g->batchR.nbElement, r->batchR.nbElement);
+                    xlang_print_params(funcInfo, optVals);
+                    printf("\n");
+                }
+            }
+            ctx->l3Benign += benignHere;
+        }
+    }
+
+    if( g->haveOpen && r->haveOpen )
+    {
+        int goldRejected = (g->openRc != TA_SUCCESS);
+        int srvRejected  = (r->openRc != TA_SUCCESS);
+        sv->cases++;
+        ctx->l3OpenCases++;
+        if( goldRejected != srvRejected )
+        {
+            sv->mism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG GOLDEN CHECK MISMATCH TA_%s  OPEN C(golden) vs %s: "
+                       "retCode %d/%d (%s/%s)  params:",
+                       funcInfo->name, sv->display, g->openRc, r->openRc,
+                       goldRejected ? "rejected" : "accepted",
+                       srvRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+    }
+
+    if( g->haveOaf && r->haveOaf )
+    {
+        int goldRejected = (g->oafR.rc != TA_SUCCESS);
+        int srvRejected  = (r->oafR.rc != TA_SUCCESS);
+        sv->cases++;
+        ctx->l3OAFCases++;
+        if( goldRejected != srvRejected )
+        {
+            sv->mism++;
+            if( ctx->reportedThisFunc < 3 )
+            {
+                ctx->reportedThisFunc++;
+                printf("  XLANG GOLDEN CHECK MISMATCH TA_%s  OPENANDFILL C(golden) vs %s: "
+                       "retCode %d/%d (%s/%s)  params:",
+                       funcInfo->name, sv->display, g->oafR.rc, r->oafR.rc,
+                       goldRejected ? "rejected" : "accepted",
+                       srvRejected ? "rejected" : "accepted");
+                xlang_print_params(funcInfo, optVals);
+                printf("\n");
+            }
+        }
+        else if( !goldRejected )
+        {
+            long long benignHere = 0;
+            sv->cases++;
+            ctx->l3DataCases++;
+            if( xlang_tier_data_diff(funcInfo, &g->oafR, &r->oafR, tol, &benignHere) )
+            {
+                sv->mism++;
+                if( ctx->reportedThisFunc < 3 )
+                {
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG GOLDEN CHECK DATA MISMATCH TA_%s  OPENANDFILL C(golden) vs "
+                           "%s (begIdx %d/%d nbElem %d/%d)  params:",
+                           funcInfo->name, sv->display, g->oafR.begIdx, r->oafR.begIdx,
+                           g->oafR.nbElement, r->oafR.nbElement);
+                    xlang_print_params(funcInfo, optVals);
+                    printf("\n");
+                }
+            }
+            ctx->l3Benign += benignHere;
+        }
+    }
+}
+
+/* Array-transport self-check (found 2026-08-25 via the tier-agreement leg
+ * above): does a server's PLAIN (non-hash) array response round-trip
+ * losslessly enough to reproduce a LOCALLY-COMPUTED hash of those SAME
+ * parsed-back values matching the SAME call's own server-reported out_hash?
+ * Purely self-contained per server — no golden, no cross-language, so a
+ * stale server binary cannot make this read green when it should not: the
+ * worst a stale server can do here is fail for an unrelated reason, never
+ * silently pass. If it does not round-trip, ANY comparison built on plain
+ * arrays instead of the hash (including the tier-agreement leg above) reads
+ * a false divergence that is really the wire format losing precision, not
+ * the numerics — the exact trap that made the frozen v0.6.4 oracle need a
+ * lossless hex-float shadow-patch (ta_test_legacy_data.h's own header note:
+ * "the ordinary ta_codegen_serve_c emits %.15g, which is lossy and silently
+ * costs ~1 ULP"). One default-parameter call per function is enough: this is
+ * a transport property, not a data-dependent one — it fires whenever a
+ * value's 16th+ significant digit is non-zero, which ordinary price data
+ * almost always has. */
+typedef struct {
+    XlangCtx *ctx;
+    int       fails;
+    int       nans;   /* calls skipped for producing a NaN element -- see below */
+} XlangArrayTransportCtx;
+
+static void xlang_array_transport_check_one(XlangCtx *ctx, const TA_FuncInfo *fi,
+                                            XlangServer *sv, const TA_History *hist,
+                                            int n, const double *optVals, int *fails,
+                                            int *nans)
+{
+    if( !sv->open ) return;
+    int endIdx = n - 1;
+
+    xlang_build_hex_request(ctx->tierReqBuf, fi, hist, n, 0, endIdx, optVals, 0, 1);
+    if( !xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+    {
+        (*fails)++;
+        if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+        return;
+    }
+    int hashPresent = 0;
+    unsigned long long serverHash = xlang_parse_hash(ctx->tierRespBuf, "out_hash", &hashPresent);
+    if( !hashPresent )
+    {
+        printf("  ARRAY TRANSPORT PROTOCOL MISSING [%s] TA_%s: hash-mode response has "
+               "no out_hash (%.120s)\n", sv->display, fi->name, ctx->tierRespBuf);
+        (*fails)++;
+        return;
+    }
+
+    xlang_build_hex_request(ctx->tierReqBuf, fi, hist, n, 0, endIdx, optVals, 0, 0);
+    if( !xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
+    {
+        (*fails)++;
+        if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+        return;
+    }
+    LbTierResp arr;
+    memset(&arr, 0, sizeof(arr));
+    xlang_tier_parse(fi, ctx->tierRespBuf, &arr);
+    if( arr.rc != TA_SUCCESS || arr.nbElement <= 0 )
+        return;   /* nothing to hash; the boundary vectors elsewhere cover reject/empty */
+    if( arr.nbElement > LB_TIER_N )
+    {
+        /* Never silently truncate/overread: N is capped at LB_TIER_N above
+         * specifically so this cannot happen -- a server reporting MORE
+         * elements than the request could have produced is its own bug,
+         * distinct from (and worth not confusing with) a transport mismatch. */
+        printf("  ARRAY TRANSPORT OVERFLOW [%s] TA_%s: server reported %d elements "
+               "for a %d-bar request\n", sv->display, fi->name, arr.nbElement, n);
+        (*fails)++;
+        return;
+    }
+
+    /* A NaN has no JSON number spelling, and the literal `"NaN"` token this
+     * puts on the wire carries only the fact that a value is not-a-number --
+     * not WHICH of the many bit patterns that satisfy that. A hash-mode call
+     * hashes the RAW bits directly (`codegen_output_hash`, doubleToRawLongBits
+     * equivalent), so a language whose plain-array writer round-trips a NaN
+     * through decimal text (Java's `Double.toString` — server_gen.rs's
+     * `doubleArrayToJson`; issue #258, ACOS/ASIN on this leg's price-shaped
+     * data) can legitimately produce a *different* NaN payload on each side
+     * of this comparison while being completely correct: NaN's bit pattern
+     * was never a value this transport asserts on, same as signed-zero's
+     * sign bit (issue #147). Skipped rather than compared, and counted so a
+     * change that starts or stops producing NaN here is visible.
+     *
+     * The skip is per CALL, not per element: `out_hash` is one combined hash
+     * over every output, so there is no way from here to tell whether a
+     * mismatch it might have produced was solely the NaN element or also a
+     * real precision loss in a finite one sharing this same call. That
+     * coarseness is acceptable for what this check specifically verifies
+     * (array-vs-hash transport fidelity) because it is not the only place
+     * verifying VALUES: the main `--xlang-hash` output-parity gate already
+     * bit-compares every server against the in-process golden through
+     * `codegen_output_hash` on every call, NaN-affected or not, so a real
+     * finite-element divergence on a NaN-affected call is still caught there
+     * even though this narrower self-check steps aside for it. */
+    for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
+    {
+        if( arr.isInt[o] ) continue;
+        for( int j = 0; j < arr.nbElement; j++ )
+            if( isnan(arr.real[o][j]) ) { (*nans)++; return; }
+    }
+
+    const void *outBufs[LB_TIER_MAX_OUT];
+    int outIsInt[LB_TIER_MAX_OUT];
+    for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
+    {
+        outIsInt[o] = arr.isInt[o];
+        outBufs[o] = arr.isInt[o] ? (const void *)arr.intg[o] : (const void *)arr.real[o];
+    }
+    unsigned long long arrayHash = codegen_output_hash(fi->nbOutput, outIsInt, outBufs, arr.nbElement);
+
+    if( arrayHash != serverHash )
+    {
+        (*fails)++;
+        printf("  ARRAY TRANSPORT MISMATCH [%s] TA_%s: array response re-hashes to "
+               "%016llx, server's own hash-mode call for the IDENTICAL vector reported "
+               "%016llx — the plain-array wire format is losing precision on the way out\n",
+               sv->display, fi->name, arrayHash, serverHash);
+    }
+}
+
+static void xlang_array_transport_one(const TA_FuncInfo *fi, void *opaqueData)
+{
+    XlangArrayTransportCtx *actx = (XlangArrayTransportCtx *)opaqueData;
+    XlangCtx *ctx = actx->ctx;
+
+    if( !codegen_matches_filter(ctx->functionFilter, fi->name) ) return;
+
+    for( unsigned int i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type == TA_Input_Integer ) return;   /* no fuzz data source */
+    }
+
+    /* Capped at LB_TIER_N, NOT a free choice: LbTierResp (reused here from the
+     * tier-agreement leg above) sizes its arrays to that constant, and a
+     * larger N would parse past it into uninitialized stack memory -- which
+     * is exactly what happened here before this fix: it hashed garbage past
+     * element 50 and got the SAME wrong hash for C and Rust alike, since
+     * "garbage" was really just whatever the stack held from the previous
+     * call, not anything language-specific. */
+    enum { N = LB_TIER_N };
+    fuzz_gen(FUZZ_RANDWALK, 1, N, g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
+    TA_History hist;
+    memset(&hist, 0, sizeof(hist));
+    hist.open = g_fzBuf[0]; hist.high = g_fzBuf[1]; hist.low = g_fzBuf[2];
+    hist.close = g_fzBuf[3]; hist.volume = g_fzBuf[4]; hist.openInterest = g_fzBuf[5];
+    hist.nbBars = N;
+
+    double optVals[FUZZ_MAX_OPT];
+    for( unsigned int i = 0; i < fi->nbOptInput && i < FUZZ_MAX_OPT; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        optVals[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
+                     ? fuzz_canon15(oi->defaultValue) : (double)(int)oi->defaultValue;
+    }
+
+    /* C has no server dispatch in this gate (it is the in-process golden, see
+     * xlang_tier_native_check) and so no plain-array JSON leg to self-check
+     * here -- its own transport is #257, tracked independently. */
+    for( int s = 0; s < ctx->nsv; s++ )
+        xlang_array_transport_check_one(ctx, fi, &ctx->sv[s], &hist, N, optVals,
+                                        &actx->fails, &actx->nans);
+}
+
+static int xlang_selfcheck_array_transport(XlangCtx *ctx)
+{
+    XlangArrayTransportCtx actx = { ctx, 0, 0 };
+    printf("Array-transport self-check (plain array vs out_hash, per server)...\n");
+    TA_ForEachFunc(xlang_array_transport_one, &actx);
+    if( !actx.fails )
+        printf("  array transport: OK (every open server's plain-array response "
+               "re-hashes to its own out_hash)\n");
+    if( actx.nans )
+        printf("  (%d call(s) skipped: plain-array response contained a NaN, whose "
+               "payload bits JSON text cannot carry -- not a transport property this "
+               "check can assert on)\n", actx.nans);
+    return actx.fails;
+}
+
 /* One lookback-tier sweep for a function: every parameter vector, every
- * server — cross-language against the in-process C golden (issue #148), AND,
- * per server, same-server against that server's own Batch/Open/OpenAndFill
- * (issue #256's B4+S5). The second half needs no golden: the property is
- * "does this server agree with itself across tiers", not "does it match C".
- * `vec`/`kind` already carry exactly the battery this wants — min/min+1/
- * min+7/default±1/default+3 boundary values (fuzz_build_vectors), every
- * out-of-range vector, and every default-sentinel vector — a limit-case-heavy
- * battery the ordinary --xlang-hash batch comparison barely reaches (it is
- * weighted toward successful calls at seeded shapes/sizes). */
+ * server — cross-language against the in-process C golden (issue #148), plus
+ * two more properties per vector, riding the SAME limit-case-heavy battery
+ * (`vec`/`kind` already carry min/min+1/min+7/default±1/default+3 boundary
+ * values from fuzz_build_vectors, every out-of-range vector, and every
+ * default-sentinel vector — the ordinary --xlang-hash batch comparison barely
+ * reaches this shape; it is weighted toward successful calls at seeded
+ * shapes/sizes):
+ *
+ *  - L2 (same-backend): does EACH backend — including C itself, checked
+ *    in-process via xlang_tier_native_check — agree with itself across
+ *    Lookback/Batch/Open/OpenAndFill (issue #256's B4+S5).
+ *  - L3 ("Golden Check", cross-language): does each of Rust/Java/C#'s Batch/
+ *    Open/OpenAndFill result match what C's native in-process call produced
+ *    for the SAME vector.
+ */
 static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
                                TA_ParamHolder *paramHolder,
                                const double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT],
@@ -7145,6 +7951,17 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
         int enumSent = ( kind[k] == FUZZ_VEC_SENTINEL )
                        && xlang_sentinel_on_choice_list(funcInfo, vec[k]);
 
+        lb_tier_buf_init();
+
+        /* C's own in-process check (issue #256): its own Lookback/Batch/
+         * Open/OpenAndFill agreement (L2) closes the one gap the per-server
+         * loop below cannot reach on its own — C never rides a server pipe
+         * here — and its Batch/Open/OpenAndFill results become the reference
+         * every OTHER server is checked against (L3), below. Always
+         * available (no spawn, so no failure mode to gate on). */
+        XlangTierResults goldResults;
+        xlang_tier_native_check(ctx, funcInfo, paramHolder, vec[k], gold, &goldResults);
+
         for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
         {
             XlangServer *sv = &ctx->sv[sIdx];
@@ -7194,152 +8011,17 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
                 }
             }
 
-            /* ---- Same-server tier agreement (issue #256) ----
+            /* ---- Same-backend tier agreement (issue #256's L2) ----
              * `srv` (this server's OWN lookback verdict, just parsed above) is
-             * the reference from here on — not `gold`. No cross-language
-             * comparison in this half: a backend validating its own params
-             * differently from C is server_verify()'s explicitly-declined
-             * question (server_verify.c), not this one. */
-            {
-                int srvRejected = (srv < 0);
-                /* Streaming carries an extra rejection axis batch/lookback do
-                 * NOT share: S6 (docs/error-handling-spec.md) — Open and
-                 * OpenAndFill reject outright (TA_INSUFFICIENT_HISTORY) when
-                 * the fixed LB_TIER_N-bar buffer is shorter than the lookback,
-                 * where batch just returns a coherent EMPTY success. A vector
-                 * whose lookback fits the params but exceeds the buffer (DEMA/
-                 * TEMA/T3/MAMA used as an MAType dispatch target can need far
-                 * more than SMA/EMA) is therefore an EXPECTED streaming
-                 * reject, not a divergence — measured live: APO/MACDEXT/
-                 * STOCHRSI at their default periods with one of those as the
-                 * dispatch MAType. */
-                int srvStreamRejected = srvRejected || (srv >= LB_TIER_N);
-                LbTierResp batchR, oafR;
-                int haveBatch = 0, haveOaf = 0;
+             * the reference here — not `gold`. No cross-language comparison in
+             * this half: a backend validating its own params differently from
+             * C is server_verify()'s explicitly-declined question
+             * (server_verify.c), not this one. */
+            XlangTierResults r;
+            xlang_tier_self_check(ctx, funcInfo, vec[k], sv, srv, &r);
 
-                lb_tier_buf_init();
-
-                xlang_build_tier_request(ctx->tierReqBuf, funcInfo, vec[k], 0);
-                if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
-                {
-                    xlang_tier_parse(funcInfo, ctx->tierRespBuf, &batchR);
-                    haveBatch = 1;
-                    sv->cases++;
-                    ctx->tierBatchCases++;
-                    int batchRejected = (batchR.rc != TA_SUCCESS);
-                    if( batchRejected != srvRejected )
-                    {
-                        sv->mism++;
-                        if( ctx->reportedThisFunc < 3 )
-                        {
-                            ctx->reportedThisFunc++;
-                            printf("  XLANG TIER MISMATCH TA_%s  lookback vs BATCH on %s: "
-                                   "lookback %s, batch retCode=%d (%s)  params:",
-                                   funcInfo->name, sv->display,
-                                   srvRejected ? "rejected" : "accepted", batchR.rc,
-                                   batchRejected ? "rejected" : "accepted");
-                            xlang_print_params(funcInfo, vec[k]);
-                            printf("\n");
-                        }
-                    }
-                }
-                else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
-
-                /* Open/OpenAndFill exist only for streamable functions — every
-                 * function today, but read from the metadata rather than assume
-                 * it, since it is a declared flag (streaming: true), not a
-                 * library-wide constant. */
-                if( funcInfo->flags & TA_FUNC_FLG_STREAM )
-                {
-                    xlang_build_tier_request(ctx->tierReqBuf, funcInfo, vec[k], 1);
-                    if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
-                    {
-                        /* Open's own value never reaches a JSON field (every
-                         * backend's bench_mode==1 arm computes it and discards
-                         * it — server_gen.rs's warm-up-arm emitters), so only
-                         * its accept/reject decision is checkable here. */
-                        int openRc = json_get_int(ctx->tierRespBuf, "retCode");
-                        sv->cases++;
-                        ctx->tierOpenCases++;
-                        int openRejected = (openRc != TA_SUCCESS);
-                        if( openRejected != srvStreamRejected )
-                        {
-                            sv->mism++;
-                            if( ctx->reportedThisFunc < 3 )
-                            {
-                                ctx->reportedThisFunc++;
-                                printf("  XLANG TIER MISMATCH TA_%s  lookback vs OPEN on %s: "
-                                       "lookback %s (streaming: %s), Open retCode=%d (%s)  params:",
-                                       funcInfo->name, sv->display,
-                                       srvRejected ? "rejected" : "accepted",
-                                       srvStreamRejected ? "rejected" : "accepted", openRc,
-                                       openRejected ? "rejected" : "accepted");
-                                xlang_print_params(funcInfo, vec[k]);
-                                printf("\n");
-                            }
-                        }
-                    }
-                    else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
-
-                    xlang_build_tier_request(ctx->tierReqBuf, funcInfo, vec[k], 2);
-                    if( xlang_call(sv, ctx->tierReqBuf, ctx->tierRespBuf) )
-                    {
-                        xlang_tier_parse(funcInfo, ctx->tierRespBuf, &oafR);
-                        haveOaf = 1;
-                        sv->cases++;
-                        ctx->tierOAFCases++;
-                        int oafRejected = (oafR.rc != TA_SUCCESS);
-                        if( oafRejected != srvStreamRejected )
-                        {
-                            sv->mism++;
-                            if( ctx->reportedThisFunc < 3 )
-                            {
-                                ctx->reportedThisFunc++;
-                                printf("  XLANG TIER MISMATCH TA_%s  lookback vs OPENANDFILL on "
-                                       "%s: lookback %s (streaming: %s), OpenAndFill retCode=%d "
-                                       "(%s)  params:",
-                                       funcInfo->name, sv->display,
-                                       srvRejected ? "rejected" : "accepted",
-                                       srvStreamRejected ? "rejected" : "accepted", oafR.rc,
-                                       oafRejected ? "rejected" : "accepted");
-                                xlang_print_params(funcInfo, vec[k]);
-                                printf("\n");
-                            }
-                        }
-                    }
-                    else if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
-
-                    /* Data-match bonus: whenever this vector was ACCEPTED, batch
-                     * and OpenAndFill both produced a real array over the same
-                     * fixed buffer — compare them bit-exact (issue #147's
-                     * benign signed-zero exception aside). This is exactly the
-                     * check the "don't lose the opportunity" ask was about: the
-                     * boundary/limit-case vectors here are rarely exercised by
-                     * the ordinary success-focused batch/hash comparisons. */
-                    if( haveBatch && haveOaf &&
-                        batchR.rc == TA_SUCCESS && oafR.rc == TA_SUCCESS )
-                    {
-                        long long benignHere = 0;
-                        sv->cases++;
-                        ctx->tierDataCases++;
-                        if( xlang_tier_data_diff(funcInfo, &batchR, &oafR, &benignHere) )
-                        {
-                            sv->mism++;
-                            if( ctx->reportedThisFunc < 3 )
-                            {
-                                ctx->reportedThisFunc++;
-                                printf("  XLANG TIER DATA MISMATCH TA_%s  BATCH vs OPENANDFILL "
-                                       "on %s (begIdx %d/%d nbElem %d/%d)  params:",
-                                       funcInfo->name, sv->display, batchR.begIdx, oafR.begIdx,
-                                       batchR.nbElement, oafR.nbElement);
-                                xlang_print_params(funcInfo, vec[k]);
-                                printf("\n");
-                            }
-                        }
-                        ctx->tierBenign += benignHere;
-                    }
-                }
-            }
+            /* ---- Cross-language Golden Check (issue #256's L3) ---- */
+            xlang_tier_gold_check(ctx, funcInfo, vec[k], sv, &goldResults, &r);
         }
     }
 }
@@ -7490,6 +8172,15 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     /* Lookback tier first — same vectors, no data needed (issue #148). */
     xlang_lookback_leg(funcInfo, ctx, paramHolder, (const double (*)[FUZZ_MAX_OPT])vec,
                        kind, nvec);
+    /* xlang_lookback_leg's native Batch check (xlang_tier_native_check, #256)
+     * rebinds paramHolder's INPUT pointers to its own tiny LB_TIER_N buffers
+     * for the duration of that check. Restore them to `hist` (g_fzBuf) before
+     * the main loop below, which assumes the ONE setup_inputs() call above
+     * still holds — it never re-binds inputs itself, only outputs (per call,
+     * inside the `ri` loop), so left unrestored every comparison after the
+     * lookback leg would silently run over stale 50-bar tier data instead of
+     * each iteration's freshly generated corpus. */
+    setup_inputs(paramHolder, funcInfo, &hist);
 
     for( int ui = 0; ui < nUnst; ui++ )
     for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
@@ -7918,6 +8609,15 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     int inFails = 0;
     if( ctx.error == TA_TEST_PASS )
         inFails = xlang_selfcheck_inputs(&ctx);
+    /* Same treatment as the input-port check above, for the same reason: a
+     * mismatch here means plain-array output cannot be trusted, so anything
+     * built on it downstream would be reading noise. The hash-only main sweep
+     * below is not actually affected by this specific leg, but failing fast
+     * here is simpler than threading a second, narrower skip condition
+     * through the rest of this function for a check that -- once the
+     * underlying transport is fixed -- should never fire again. */
+    if( inFails == 0 && ctx.error == TA_TEST_PASS )
+        inFails += xlang_selfcheck_array_transport(&ctx);
 
     if( inFails == 0 && ctx.error == TA_TEST_PASS )
     {
@@ -7932,11 +8632,20 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     for( int s = 0; s < nsv; s++ )
         if( servers[s].open ) codegen_pipe_close(&servers[s].cp);
 
-    long long totalMism = 0, totalCases = 0, totalRestarts = 0;
+    /* C's own native-check cases/mism (issue #256's L2 for C, plus L3's
+     * golden half) seed the totals -- NOT added after printing the
+     * per-server rows below, or a Golden Check mismatch would print loudly
+     * and then vanish from the PASS/FAIL verdict at the bottom of this
+     * function, which reads totalMism alone. No restart count: there is no
+     * process to restart. */
+    long long totalMism = ctx.cNativeMism, totalCases = ctx.cNativeCases, totalRestarts = 0;
     printf("\n---------------------------------------------\n");
     printf("golden cases: %lld   (in-process C library; %lld with non-empty output = %.0f%% non-vacuous)\n",
            ctx.comparisons, ctx.nonEmpty,
            ctx.comparisons ? 100.0 * (double)ctx.nonEmpty / (double)ctx.comparisons : 0.0);
+    if( ctx.cNativeCases > 0 )
+        printf("C   : %lld cases, %lld mismatch(es)  [native in-process, issue #256]\n",
+               ctx.cNativeCases, ctx.cNativeMism);
     for( int s = 0; s < nsv; s++ )
     {
         if( servers[s].cases == 0 && !servers[s].open && !languageFilter ) continue;
@@ -7972,10 +8681,15 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "sentinel — Java: MAType is a real enum and Core takes MAType, so "
                "(MAType)Integer.MIN_VALUE cannot be constructed. Type safety discharges "
                "#162 there rather than a check.)\n", ctx.sentEnumSkipped);
-    printf("tier agreement (#256): lookback vs %lld batch / %lld Open / %lld OpenAndFill "
-           "retCode, %lld batch-vs-OpenAndFill data compare(s) (%lld benign signed-zero)\n",
+    printf("tier agreement (#256's L2): lookback vs %lld batch / %lld Open / %lld "
+           "OpenAndFill retCode, %lld batch/OpenAndFill data compare(s) (%lld benign "
+           "signed-zero/NaN-payload) — every backend including C's own server\n",
            ctx.tierBatchCases, ctx.tierOpenCases, ctx.tierOAFCases,
            ctx.tierDataCases, ctx.tierBenign);
+    printf("golden check (#256's L3): %lld batch / %lld Open / %lld OpenAndFill retCode "
+           "vs C's own server, %lld data compare(s) (%lld benign signed-zero/NaN-payload)\n",
+           ctx.l3BatchCases, ctx.l3OpenCases, ctx.l3OAFCases,
+           ctx.l3DataCases, ctx.l3Benign);
 
     free(ctx.reqBuf); free(ctx.respBuf);
     free(ctx.tierReqBuf); free(ctx.tierRespBuf);
@@ -8058,6 +8772,19 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "data-compare %lld — same-server lookback/batch/Open/OpenAndFill agreement "
                "(#256) is not being gated at all.\n",
                ctx.tierBatchCases, ctx.tierOpenCases, ctx.tierOAFCases, ctx.tierDataCases);
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    /* The cross-language Golden Check (#256's L3) needs its own floor for the
+     * same reason: it rides the same per-vector loop, and nothing above
+     * checks it separately. */
+    if( !functionFilter && ctx.comparisons > 0 &&
+        (ctx.l3BatchCases == 0 || ctx.l3OpenCases == 0 || ctx.l3OAFCases == 0 ||
+         ctx.l3DataCases == 0) )
+    {
+        printf("FAIL — VACUOUS GOLDEN CHECK: batch %lld / Open %lld / OpenAndFill %lld / "
+               "data-compare %lld — the cross-language Batch/Open/OpenAndFill comparison "
+               "against C's own server (#256's L3) is not being gated at all.\n",
+               ctx.l3BatchCases, ctx.l3OpenCases, ctx.l3OAFCases, ctx.l3DataCases);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
     /* The choice-list sentinel needs a floor of its OWN. It is a strict subset of
