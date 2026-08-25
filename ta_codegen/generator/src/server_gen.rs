@@ -4525,12 +4525,14 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        int use_preloaded = GetInt(p, \"use_preloaded\", 0);\n");
         s.push_str("        int bench_iters = GetInt(p, \"iters\", 1);\n");
         s.push_str("        if (bench_iters < 1) bench_iters = 1;\n");
-        // ta_bench --mode=open/openfill has nothing to measure here: the C#
-        // backend has no streaming API at all (no *_Open / *_OpenAndFill).
-        // Answer honestly rather than silently timing the batch call and
-        // reporting it as a warm-up number.
-        s.push_str("        if (GetInt(p, \"bench_mode\", 0) != 0)\n");
-        s.push_str("            return \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\";\n");
+        // bench_mode (ta_bench --mode): 0 = batch (default), 1 = the streaming
+        // warm-up <N>_Open, 2 = <N>_OpenAndFill (issue #256 -- C# now HAS a
+        // streaming API; this used to unconditionally answer "unsupported_mode"
+        // from before it did, silently timing nothing for --mode=open/openfill
+        // here). Handles are GC-managed (no Close), and the public Open/
+        // OpenAndFill throw instead of returning a code, same as the batch
+        // call below -- the arms convert the throw into a RetCode the same way.
+        s.push_str("        int bench_mode = GetInt(p, \"bench_mode\", 0);\n");
 
         // Inputs: preloaded reference data or from the request.
         for name in &input_names {
@@ -4554,6 +4556,19 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str(&format!("            {name} = GetDoubleArray(p, \"{name}\");\n"));
         }
         s.push_str("        }\n");
+
+        // Right-sized warm-up views for the Open/OpenAndFill arms, bound ONCE
+        // outside the timing loop -- a zero-copy span slice, so building it
+        // unconditionally (unlike Java's null-when-unused) costs nothing.
+        // Java derives historyLen from array.length, and with use_preloaded the
+        // buffer is refN-sized already; slicing to endIdx+1 matches what the
+        // C/Rust/Java arms do for the same reason (measure the same range the
+        // batch call does, not whatever --points happened to preload).
+        for name in &input_names {
+            s.push_str(&format!(
+                "        ReadOnlySpan<double> _warm_{name} = {name}.AsSpan(0, endIdx + 1);\n"
+            ));
+        }
 
         // Optional params (enum params read as int, cast to the enum type).
         // An absent field defaults to 0/0.0, matching the C and Java servers
@@ -4650,6 +4665,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             for k in 0..outputs.len() {
                 pub_args.push_str(&format!(", outArr{k}"));
             }
+            s.push_str("            if (bench_mode == 0) {\n");
             s.push_str("            if (GetInt(p, \"timed\", 0) != 0) {\n");
             s.push_str("                try {\n");
             s.push_str(&format!("                    rc = core.{base}_Impl({call_args});\n"));
@@ -4666,6 +4682,45 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("                    rc = RetCode.Success;\n");
             s.push_str("                } catch (Exception _e) when (_e is ITaLibFailure) {\n");
             s.push_str("                    rc = ((ITaLibFailure)_e).RetCode;\n");
+            s.push_str("                    outBegIdx = 0;\n");
+            s.push_str("                    outNBElement = 0;\n");
+            s.push_str("                }\n");
+            s.push_str("            }\n");
+            // --- warm-up arms (ta_bench --mode=open / openfill), issue #256.
+            // Handles are GC-managed (no Close) and the public Open/OpenAndFill
+            // throw instead of returning a code, so these arms convert the
+            // throw into a RetCode the same way the batch call above does.
+            let mut open_args: Vec<String> =
+                input_names.iter().map(|n| format!("_warm_{n}")).collect();
+            for opt in &func.optional_inputs {
+                open_args.push(opt.name.clone());
+            }
+            let ins = open_args.join(", ");
+            let mut fill_args = open_args.clone();
+            for k in 0..outputs.len() {
+                fill_args.push(format!("outArr{k}"));
+            }
+            let fill = fill_args.join(", ");
+            s.push_str("            } else if (bench_mode == 1) {\n");
+            s.push_str("                try {\n");
+            s.push_str(&format!("                    core.{base}_Open({ins});\n"));
+            s.push_str("                    rc = RetCode.Success;\n");
+            s.push_str("                } catch (Exception _e3) when (_e3 is ITaLibFailure) {\n");
+            s.push_str("                    rc = ((ITaLibFailure)_e3).RetCode;\n");
+            s.push_str("                }\n");
+            s.push_str("            } else {\n");
+            s.push_str("                try {\n");
+            // The fill reports its range via the returned handle's OutRange
+            // property -- unpack it into the same two locals the batch arm
+            // sets, which the response builder below reads.
+            s.push_str(&format!(
+                "                    Core.{base}_Stream _wh = core.{base}_OpenAndFill({fill});\n"
+            ));
+            s.push_str("                    outBegIdx = _wh.OutRange.BegIdx;\n");
+            s.push_str("                    outNBElement = _wh.OutRange.Count;\n");
+            s.push_str("                    rc = RetCode.Success;\n");
+            s.push_str("                } catch (Exception _e3) when (_e3 is ITaLibFailure) {\n");
+            s.push_str("                    rc = ((ITaLibFailure)_e3).RetCode;\n");
             s.push_str("                    outBegIdx = 0;\n");
             s.push_str("                    outNBElement = 0;\n");
             s.push_str("                }\n");
