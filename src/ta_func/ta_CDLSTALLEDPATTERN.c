@@ -662,7 +662,7 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_OpenImpl( struct TA_CDLSTALLEDPATTERN_Str
       sp->ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
       sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 3;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(298); }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -675,7 +675,7 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_OpenImpl( struct TA_CDLSTALLEDPATTERN_Str
       }
       sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
       sp->ringCap_BodyShortTrailingIdx = (int)(i - BodyShortTrailingIdx);
-      if( sp->ringCap_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(299); }
       { size_t allocN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
         sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -689,7 +689,7 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_OpenImpl( struct TA_CDLSTALLEDPATTERN_Str
       sp->ringPos_BodyShortTrailingIdx = 0;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(300); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -703,7 +703,7 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_OpenImpl( struct TA_CDLSTALLEDPATTERN_Str
       sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
       sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(301); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLSTALLEDPATTERN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

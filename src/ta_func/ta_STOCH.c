@@ -1075,7 +1075,7 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(385); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

@@ -140,7 +140,7 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(314);
    if( (int)optInTimePeriod > (int)(sizeof(local_mfv_flow)/sizeof(double)) )
    {
       mfv_flow = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -306,7 +306,7 @@ TA_RetCode TA_S_CMF( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(314);
    if( (int)optInTimePeriod > (int)(sizeof(local_mfv_flow)/sizeof(double)) )
    {
       mfv_flow = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -541,7 +541,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       {
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(314);
       if( (int)optInTimePeriod > (int)(sizeof(local_mfv_flow)/sizeof(double)) )
       {
          mfv_flow = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -651,7 +651,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       sp->mfv_Idx = mfv_Idx;
       sp->maxIdx_mfv = maxIdx_mfv;
       sp->cbSize_mfv = maxIdx_mfv + 1;
-      if( sp->cbSize_mfv < 1 || sp->cbSize_mfv > historyLen + 1 ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_mfv < 1 || sp->cbSize_mfv > historyLen + 1 ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(315); }
       sp->cb_mfv_flow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mfv );
       if( !sp->cb_mfv_flow ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_mfv_flow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mfv );

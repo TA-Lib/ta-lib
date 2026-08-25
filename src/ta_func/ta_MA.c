@@ -757,7 +757,7 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
       break;
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
-      return TA_INTERNAL_ERROR;
+      return TA_INTERNAL_ERROR(343);
    }
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
@@ -797,7 +797,7 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       return TA_HMA_Peek( (const TA_HMA_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
-      return TA_INTERNAL_ERROR;
+      return TA_INTERNAL_ERROR(344);
    }
 }
 
@@ -856,7 +856,7 @@ TA_LIB_API TA_RetCode TA_MA_UpdateAndFill( TA_MA_Stream *stream, const double in
          break;
       default:
          /* Unreachable: Open rejects arms without a sub-stream. */
-         return TA_INTERNAL_ERROR;
+         return TA_INTERNAL_ERROR(345);
       }
       if( retCode != TA_SUCCESS ) return retCode;
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;

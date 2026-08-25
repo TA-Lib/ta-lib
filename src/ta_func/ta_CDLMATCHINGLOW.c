@@ -394,7 +394,7 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
       sp->EqualPeriodTotal = EqualPeriodTotal;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLMATCHINGLOW_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLMATCHINGLOW_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(273); }
       { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
         sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLMATCHINGLOW_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

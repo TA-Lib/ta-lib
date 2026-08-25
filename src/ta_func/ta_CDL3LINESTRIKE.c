@@ -453,7 +453,7 @@ static TA_RetCode TA_CDL3LINESTRIKE_OpenImpl( struct TA_CDL3LINESTRIKE_Stream **
       memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

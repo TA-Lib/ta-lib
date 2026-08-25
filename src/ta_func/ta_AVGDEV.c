@@ -320,7 +320,7 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->winCap_i = (int)(optInTimePeriod);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(190); }
       sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inReal ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );

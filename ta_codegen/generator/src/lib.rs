@@ -21,6 +21,7 @@ pub mod emit;
 pub mod flag_sync;
 pub mod formatter;
 pub mod helper_registry;
+pub mod internal_error_ids;
 pub mod ir;
 pub mod naming;
 pub mod parser;

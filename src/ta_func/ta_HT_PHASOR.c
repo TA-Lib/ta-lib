@@ -1400,7 +1400,7 @@ static TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_Stream **stream, co
       sp->rad2Deg = rad2Deg;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_PHASOR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_PHASOR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(329); }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_PHASOR_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

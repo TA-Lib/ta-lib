@@ -786,7 +786,7 @@ static TA_RetCode TA_VAR_OpenImpl( struct TA_VAR_Stream **stream, const double i
       sp->windowStart = windowStart;
       sp->i = i;
       sp->xCap = (int)(i - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(394); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

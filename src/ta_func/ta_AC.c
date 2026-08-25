@@ -176,7 +176,7 @@ TA_LIB_API TA_RetCode TA_AC( int    startIdx,
       return TA_SUCCESS;
    }
    /* Allocate a circular buffer equal to the requested signal period. */
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(181);
    if( (int)optInSignalPeriod > (int)(sizeof(local_oscBuffer)/sizeof(double)) )
    {
       oscBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -357,7 +357,7 @@ TA_RetCode TA_S_AC( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(181);
    if( (int)optInSignalPeriod > (int)(sizeof(local_oscBuffer)/sizeof(double)) )
    {
       oscBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -635,7 +635,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
          return TA_INSUFFICIENT_HISTORY;
       }
       /* Allocate a circular buffer equal to the requested signal period. */
-      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(137);
+      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(181);
       if( (int)optInSignalPeriod > (int)(sizeof(local_oscBuffer)/sizeof(double)) )
       {
          oscBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -761,7 +761,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       sp->oscBuffer_Idx = oscBuffer_Idx;
       sp->maxIdx_oscBuffer = maxIdx_oscBuffer;
       sp->ringCap_trailingFastIdx = (int)(i - trailingFastIdx);
-      if( sp->ringCap_trailingFastIdx < 0 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingFastIdx < 0 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(182); }
       { size_t allocN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);
         sp->ring_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingFastIdx_derived ) { TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -774,7 +774,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       }
       sp->ringPos_trailingFastIdx = 0;
       sp->ringCap_trailingSlowIdx = (int)(i - trailingSlowIdx);
-      if( sp->ringCap_trailingSlowIdx < 0 || sp->ringCap_trailingSlowIdx > historyLen ) { TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingSlowIdx < 0 || sp->ringCap_trailingSlowIdx > historyLen ) { TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(183); }
       { size_t allocN = (size_t)(sp->ringCap_trailingSlowIdx > 0 ? sp->ringCap_trailingSlowIdx : 1);
         sp->ring_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingSlowIdx_derived ) { TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -787,7 +787,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       }
       sp->ringPos_trailingSlowIdx = 0;
       sp->cbSize_oscBuffer = maxIdx_oscBuffer + 1;
-      if( sp->cbSize_oscBuffer < 1 || sp->cbSize_oscBuffer > historyLen + 1 ) { if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_oscBuffer < 1 || sp->cbSize_oscBuffer > historyLen + 1 ) { if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(184); }
       sp->cb_oscBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_oscBuffer );
       if( !sp->cb_oscBuffer ) { if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_oscBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_oscBuffer );

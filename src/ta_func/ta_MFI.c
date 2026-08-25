@@ -136,7 +136,7 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
       return TA_BAD_PARAM;
 
    /* Id, Type, Static Size */
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(351);
    if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
    {
       mflow_positive = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -366,7 +366,7 @@ TA_RetCode TA_S_MFI( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(351);
    if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
    {
       mflow_positive = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -621,7 +621,7 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       int today;
       int nullRun = 0;
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(351);
       if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
       {
          mflow_positive = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -804,7 +804,7 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       sp->mflow_Idx = mflow_Idx;
       sp->maxIdx_mflow = maxIdx_mflow;
       sp->cbSize_mflow = maxIdx_mflow + 1;
-      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(352); }
       sp->cb_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
       if( !sp->cb_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );

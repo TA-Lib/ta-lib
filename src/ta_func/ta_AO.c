@@ -541,7 +541,7 @@ static TA_RetCode TA_AO_OpenImpl( struct TA_AO_Stream **stream, const double inH
       sp->sumFast = sumFast;
       sp->sumSlow = sumSlow;
       sp->ringCap_trailingFastIdx = (int)(i - trailingFastIdx);
-      if( sp->ringCap_trailingFastIdx < 0 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AO_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingFastIdx < 0 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AO_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(186); }
       { size_t allocN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);
         sp->ring_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingFastIdx_derived ) { TA_AO_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -554,7 +554,7 @@ static TA_RetCode TA_AO_OpenImpl( struct TA_AO_Stream **stream, const double inH
       }
       sp->ringPos_trailingFastIdx = 0;
       sp->ringCap_trailingSlowIdx = (int)(i - trailingSlowIdx);
-      if( sp->ringCap_trailingSlowIdx < 0 || sp->ringCap_trailingSlowIdx > historyLen ) { TA_AO_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingSlowIdx < 0 || sp->ringCap_trailingSlowIdx > historyLen ) { TA_AO_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(187); }
       { size_t allocN = (size_t)(sp->ringCap_trailingSlowIdx > 0 ? sp->ringCap_trailingSlowIdx : 1);
         sp->ring_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingSlowIdx_derived ) { TA_AO_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

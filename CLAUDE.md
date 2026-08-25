@@ -52,6 +52,12 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 
 No hand-coded string literals for type definitions or scaffolding in the codegen.
 
+`internal_error_ids.yaml` is the one file here that `generate` also **writes**:
+it hands each C internal-error guard its `TA_INTERNAL_ERROR(<id>)`, so the number
+a caller reports keeps naming the same guard across releases. Append-only — a
+full C run assigns the new keys and drops the dead ones; never renumber an
+existing entry by hand.
+
 The managed backends have **two** batch tiers: `public OutRange <N>(...)`, which
 validates array lengths and throws on a rejection, and `<N>_Impl` — the
 transcribed numerics, package-private in Java and `internal` in C#, keeping C's

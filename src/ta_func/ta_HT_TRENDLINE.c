@@ -1562,7 +1562,7 @@ static TA_RetCode TA_HT_TRENDLINE_OpenImpl( struct TA_HT_TRENDLINE_Stream **stre
       sp->smoothPeriod = smoothPeriod;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(332); }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1572,7 +1572,7 @@ static TA_RetCode TA_HT_TRENDLINE_OpenImpl( struct TA_HT_TRENDLINE_Stream **stre
       }
       sp->ringPos_trailingWMAIdx = 0;
       sp->winCap_i = (int)(50);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(333); }
       sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inReal ) { TA_HT_TRENDLINE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );

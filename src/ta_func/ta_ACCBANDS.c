@@ -616,7 +616,7 @@ static TA_RetCode TA_ACCBANDS_OpenImpl( struct TA_ACCBANDS_Stream **stream, cons
       sp->periodTotalMiddle = periodTotalMiddle;
       sp->periodTotalLower = periodTotalLower;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(185); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

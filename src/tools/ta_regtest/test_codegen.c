@@ -244,6 +244,12 @@ static void record_retcode( int langIndex, int code )
     int b;
     if( langIndex < 0 || langIndex >= (int)NUM_LANGUAGES )
         return;
+    /* Every C internal-error site carries its own id (issue #259), so C reports
+     * TA_INTERNAL_ERROR+id while the other three report the bare 5000. Fold the
+     * whole trapped band onto the bucket: `== 5000` would file C's under
+     * "other", which is the exact mistake the id form makes easy to write. */
+    if( code >= 5000 && code <= 5999 )
+        code = 5000;
     for( b = 0; b < RC_BUCKETS - 1; b++ )
         if( RC_CODE[b] == code ) { g_retCodeSeen[langIndex][b]++; return; }
     g_retCodeSeen[langIndex][RC_BUCKETS - 1]++;

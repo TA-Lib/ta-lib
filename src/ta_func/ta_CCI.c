@@ -146,7 +146,7 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
    /* Allocate a circular buffer equal to the requested
     * period.
     */
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(192);
    if( (int)optInTimePeriod > (int)(sizeof(local_circBuffer)/sizeof(double)) )
    {
       circBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -288,7 +288,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(192);
    if( (int)optInTimePeriod > (int)(sizeof(local_circBuffer)/sizeof(double)) )
    {
       circBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -495,7 +495,7 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(192);
       if( (int)optInTimePeriod > (int)(sizeof(local_circBuffer)/sizeof(double)) )
       {
          circBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -587,7 +587,7 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       sp->circBuffer_Idx = circBuffer_Idx;
       sp->maxIdx_circBuffer = maxIdx_circBuffer;
       sp->cbSize_circBuffer = maxIdx_circBuffer + 1;
-      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(193); }
       sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
       if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );

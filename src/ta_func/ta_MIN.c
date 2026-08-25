@@ -145,7 +145,7 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(363);
    if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
    {
       sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -158,7 +158,7 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
    {
       sufLowest = &local_sufLowest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(364);
    if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
    {
       preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -308,7 +308,7 @@ TA_RetCode TA_S_MIN( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(363);
    if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
    {
       sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -321,7 +321,7 @@ TA_RetCode TA_S_MIN( int    startIdx,
    {
       sufLowest = &local_sufLowest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(364);
    if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
    {
       preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -591,7 +591,7 @@ static TA_RetCode TA_MIN_OpenImpl( struct TA_MIN_Stream **stream, const double i
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MIN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MIN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(365); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

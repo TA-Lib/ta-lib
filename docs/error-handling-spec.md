@@ -480,11 +480,16 @@ An internal error means the library found an inconsistency in its **own** state.
 It is a bug in TA-Lib, not in the call: nothing the caller changes will avoid it,
 and it is worth reporting. Twelve batch functions per backend carry such a guard,
 and none is reachable today — they test a period below 1, which B3's declared floor
-already refuses.
+already refuses. A stream opener carries one more for each ring, window,
+circular buffer and rolling-extremum span it captures, each checking that span
+against the history it was handed, and a dispatching or dual-mode opener one for
+the arm its own `Open` has already refused.
 
-C returns `TA_INTERNAL_ERROR + <site id>`, not the bare member — the id names the
-guard that fired. `TA_INTERNAL_ERROR` is 5000 and `TA_UNKNOWN_ERR` is the only
-member above it, so a C caller must test `>= TA_INTERNAL_ERROR` rather than
+C returns `TA_INTERNAL_ERROR + <site id>`, not the bare member, at **every** one
+of them — the id names the guard that fired, and
+`ta_codegen/input/internal_error_ids.yaml` maps it back to the function and the
+state field it guards. `TA_INTERNAL_ERROR` is 5000 and `TA_UNKNOWN_ERR` is the
+only member above it, so a C caller must test `>= TA_INTERNAL_ERROR` rather than
 `==`. The other three carry no id: Rust returns `Err(RetCode::InternalError)`,
 and Java and C# raise `IllegalStateException` / `InvalidOperationException` with
 `TA_INTERNAL_ERROR` recoverable from the thrown object.

@@ -380,6 +380,10 @@ pub fn generate(
         })
         .collect();
     let _circbuf_order = CircBufOrderGuard::new(circbuf_order, idx_unused);
+    // Names this function for every `TA_INTERNAL_ERROR(<id>)` the emitters below
+    // ask the ledger for -- the batch bodies, the TA_S_ bodies and, through the
+    // call at the end, the whole streaming section.
+    let _site_scope = crate::internal_error_ids::FuncScope::new(&func.name);
 
     let mut out = String::new();
     out.push_str(&gen_header());
@@ -1277,7 +1281,8 @@ impl StatementEmitter for CStmt<'_> {
                 let et0 = c_type_name(first_t);
                 let mut s = String::new();
                 s.push_str(&format!(
-                    "{pad}if( {sz} < 1 ) return TA_INTERNAL_ERROR(137);\n"
+                    "{pad}if( {sz} < 1 ) return TA_INTERNAL_ERROR({eid});\n",
+                    eid = crate::internal_error_ids::site(&format!("circbuf.{id}"))
                 ));
                 s.push_str(&format!(
                     "{pad}if( (int){sz} > (int)(sizeof(local_{first})/sizeof({et0})) )\n{pad}{{\n"
