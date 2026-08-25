@@ -146,7 +146,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B5 | A buffer is too short for what the call reads or writes | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B5a | A range shorter than the lookback produces nothing, so it needs no output space — but the input must still reach `endIdx` | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
-| B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` | &nbsp; | — | — | — |
+| B7 | A scratch allocation failed. Only C reports it | `TA_ALLOC_ERR` | ✅ | — | — | — |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors") | `TA_INTERNAL_ERROR` | ✅ | ✅ | ✅ | ✅ |
 
 **Range.** A real or integer parameter's range is the `range:` its .yaml
@@ -612,7 +612,9 @@ Each ✅ rests on two independent checks; neither alone is enough.
    documented output-domain hole). C's memory-unsafe rules are probed with
    guard-paged buffers, so a read or write past a declared length faults instead
    of silently corrupting neighbouring memory, and each such scenario runs in a
-   forked child so a crash is an observation rather than the end of the run.
+   forked child so a crash is an observation rather than the end of the run. An
+   allocation failure (B7) is probed with an interposed `malloc` that fails above a
+   size threshold, against a non-allocating control that must still succeed.
 
 2. **A structural check over the whole generated corpus** — a probe on one
    function says nothing about the other 173. Verified mechanically, from the
