@@ -190,27 +190,15 @@ algorithm never reads is not required.
 [3] A `Span<T>` cannot be absent. A null array converts to an empty span and is
 reported by B5 instead, which names the buffer and both sizes.
 
-[4] C is handed bare pointers and has no sizes; it cannot make this check. Not a
-defect — a property of the ABI, and the reason B5 exists in the other backends.
-What happens instead is Part 3.
+[4] C has no sizes to check against — a property of the ABI, not a defect. Part 3
+has what happens instead.
 
-[5] Rust asserts exactly this bound, but the failure is a **panic**, not a reported
-error. It is memory-safe (the crate forbids `unsafe`, so a violated bound can
-never be undefined behaviour) and the assert is load-bearing for code generation
-— it is the proof that lets LLVM elide the per-access bounds checks. The assert
-is skipped when the range is shorter than the lookback, so rule B5a applies to
-Rust as it does to C.
+[5] Rust panics rather than reporting: the assert is what lets LLVM elide the
+per-access bounds checks. It is skipped on a sub-lookback range, so B5a applies
+to Rust as it does to C.
 
-[6] Rule B5a is the one bound where **Java and C# check more than C and Rust
-do**, and the spec takes the stricter reading as the norm. Measured: a 30-bar
-average requested over bars 0..2 with a 2-bar input succeeds with zero values in
-C and Rust, and is rejected in Java and C#. C answers `Success` there only
-because it has no size to check against, and an empty result reads as "no data
-yet" rather than "your `endIdx` is wrong". The rationale is recorded on
-`Core.clampedStart` in both backends. The OUTPUT bound genuinely does switch off
-on such a range — nothing is produced, so any output length will do — and all
-four agree on that. *Except at length zero*, where C and Java accept and Rust
-and C# reject a second empty output as aliased: Appendix D item 11.
+[6] The one bound where Java and C# check more than C and Rust do; the spec takes
+the stricter reading as the norm. Rationale on `Core.clampedStart`.
 
 [7] The borrow checker forbids a safe caller from aliasing two output slices at
 all; the pointer-equality guard in the internal tier covers the FFI boundary.
