@@ -180,8 +180,8 @@ refuse it in the managed backends only. The cost is that "required" in B4 means
 `TA_BAD_PARAM` and no runtime probe can separate; `testBatchArgumentContract`
 (`test_internals.c`) and `BatchApiTest` for B4.
 
-[1] Slices cannot be null, and the index/count pair is returned rather than
-written through pointers.
+[1] Slices cannot be null, and the index/count pair (`OutRange`) is returned
+rather than written through pointers.
 
 [2] Java raises rather than returning a code, so it reports this as a
 `NullPointerException` naming the function and the argument — the code is on the
