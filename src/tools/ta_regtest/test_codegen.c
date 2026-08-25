@@ -491,7 +491,7 @@ int codegen_write_hexbits_array(char *buf, int buf_size, int pos,
     return codegen_appendc(buf, buf_size, pos, '"');
 }
 
-static const char *json_find_field(const char *json, const char *field, int *len)
+const char *json_find_field(const char *json, const char *field, int *len)
 {
     char pattern[256];
     snprintf(pattern, sizeof(pattern), "\"%s\":", field);
@@ -527,7 +527,7 @@ static const char *json_find_field(const char *json, const char *field, int *len
     return start;
 }
 
-static int json_get_int(const char *json, const char *field)
+int json_get_int(const char *json, const char *field)
 {
     int len;
     const char *val = json_find_field(json, field, &len);

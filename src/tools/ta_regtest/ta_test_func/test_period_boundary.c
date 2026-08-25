@@ -170,7 +170,8 @@ typedef struct
    int nbParamTested;
    int nbFail;
    int nbServerEmpty;   /* empty-output cases cross-checked vs the servers (#142) */
-   int nbLookbackParity;/* cases where lookback and call were compared */
+   int nbLookbackParity;/* cases where lookback and call were compared (in-process C) */
+   int nbLookbackParityServer; /* cases where the SAME check ran against the servers (#256) */
 } PBSweepCtx;
 
 /* Diagnostic: when the environment variable PB_SWEEP_LIST_ALL is set, the
@@ -213,6 +214,11 @@ static ErrorNumber testLinearRegRampOverflowProbe( void );
 static int pbBuildServerInputs( const TA_FuncInfo *funcInfo,
                                 const TA_History *history,
                                 const TA_Real *inputs[], int maxInputs );
+static void pbBuildSweptOptVector( const TA_FuncHandle *handle,
+                                   unsigned int nbOptInput,
+                                   unsigned int paramNb, int isReal,
+                                   int ivalue, TA_Real dvalue,
+                                   double svOpt[PB_MAX_OPT] );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -2072,6 +2078,26 @@ static ErrorNumber pbScanOutputsFinite( const char *label,
    return TA_TEST_PASS;
 }
 
+/* Build a full optional-parameter vector: every param at its ta_abstract default
+ * except `paramNb`, forced to the value the case under test set on paramHolder.
+ * Shared by the empty-output server_verify leg and the lookback-parity leg
+ * below -- both need the SAME vector paramHolder was actually set to. */
+static void pbBuildSweptOptVector( const TA_FuncHandle *handle,
+                                   unsigned int nbOptInput,
+                                   unsigned int paramNb, int isReal,
+                                   int ivalue, TA_Real dvalue,
+                                   double svOpt[PB_MAX_OPT] )
+{
+   unsigned int j;
+   for( j = 0; j < nbOptInput; j++ )
+   {
+      const TA_OptInputParameterInfo *oi;
+      TA_GetOptInputParameterInfo( handle, j, &oi );
+      svOpt[j] = oi->defaultValue;
+   }
+   svOpt[paramNb] = isReal ? dvalue : (double)ivalue;
+}
+
 /* Build the NULL-terminated inputs[] array server_verify expects, mirroring the
  * paramHolder wiring below: a Price input expands to its used OHLCV+OI
  * components in that fixed order (identical to server_verify's PRICE_COMPONENTS),
@@ -2261,6 +2287,43 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
       return;
    }
 
+   /* Same rule, one server at a time (issue #256): does THIS server's own
+    * lookback tier agree with THIS server's own batch tier for the SAME
+    * vector? Independent of what C or any other server says -- server_verify()
+    * deliberately skips reject cases across languages (parameter validation is
+    * implementation-specific), but a language disagreeing with ITSELF is
+    * always a bug. Runs for every swept case, matching the in-process check
+    * above -- including PB_EXPECT_REJECT, which server_verify() never reaches
+    * (its early call-tier rejection returns before server_verify would fire). */
+   if( server_verify_active() && funcInfo->nbOptInput <= PB_MAX_OPT )
+   {
+      const TA_Real *svInputs[PB_MAX_INPUT];
+      double         svOpt[PB_MAX_OPT];
+      ErrorNumber    svErr;
+
+      if( pbBuildServerInputs( funcInfo, history, svInputs, PB_MAX_INPUT ) < 0 )
+      {
+         printf( "\nFail: %s: too many inputs for lookback-parity server verify\n", label );
+         pbFail( ctx );
+         TA_ParamHolderFree( paramHolder );
+         return;
+      }
+      pbBuildSweptOptVector( handle, funcInfo->nbOptInput, paramNb, isReal,
+                             ivalue, dvalue, svOpt );
+
+      svErr = server_verify_lookback_parity( funcInfo->name, 0, endIdx,
+                                             (int)history->nbBars, svInputs,
+                                             svOpt, (int)funcInfo->nbOptInput );
+      if( svErr != TA_TEST_PASS )
+      {
+         printf( "Fail: %s: lookback-parity server verification\n", label );
+         pbFail( ctx );
+         TA_ParamHolderFree( paramHolder );
+         return;
+      }
+      ctx->nbLookbackParityServer++;
+   }
+
    if( expect == PB_EXPECT_REJECT )
    {
       if( retCode != TA_BAD_PARAM )
@@ -2347,13 +2410,8 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
 
          /* Full optional-parameter vector: every parameter at the default the
           * paramHolder used, the swept one at its probed value. */
-         for( j = 0; j < funcInfo->nbOptInput; j++ )
-         {
-            const TA_OptInputParameterInfo *oi;
-            TA_GetOptInputParameterInfo( handle, j, &oi );
-            svOpt[j] = oi->defaultValue;
-         }
-         svOpt[paramNb] = isReal ? dvalue : (double)ivalue;
+         pbBuildSweptOptVector( handle, funcInfo->nbOptInput, paramNb, isReal,
+                                ivalue, dvalue, svOpt );
 
          for( j = 0; j < funcInfo->nbOutput && j < PB_MAX_OUTPUT; j++ )
          {
@@ -2567,6 +2625,7 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    ctx.nbParamTested = 0;
    ctx.nbFail = 0;
    ctx.nbLookbackParity = 0;
+   ctx.nbLookbackParityServer = 0;
    ctx.nbServerEmpty = 0;
    g_pbListAll = ( getenv( "PB_SWEEP_LIST_ALL" ) != NULL );
 
@@ -2596,6 +2655,22 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
       printf( "\nFail: boundary sweep compared %d lookback(s) for %d swept value(s)\n",
               ctx.nbLookbackParity, ctx.nbParamTested );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* Same-server lookback/batch parity (#256), against every active language
+    * server. Every swept case must reach it, same equality as the in-process
+    * check above -- a case that silently stopped being compared would look
+    * exactly like a pass. */
+   if( server_verify_active() )
+   {
+      if( ctx.nbLookbackParityServer != ctx.nbParamTested )
+      {
+         printf( "\nFail: boundary sweep server-compared %d lookback(s) for %d swept "
+                 "value(s)\n", ctx.nbLookbackParityServer, ctx.nbParamTested );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      printf( "  boundary sweep: %d lookback/batch case(s) compared per server (#256)\n",
+              ctx.nbLookbackParityServer );
    }
 
    /* The period > input-length empty-output contract must be exercised against

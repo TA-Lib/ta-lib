@@ -153,4 +153,12 @@ CTolVerdict codegen_compare_tol(const char *resp,
                                 TA_RetCode goldRc, int goldBeg, int goldNb,
                                 double tol, CTolDetail *detail);
 
+/* ---- Minimal JSON field reader, shared with server_verify.c ----
+ * `json_find_field` returns NULL when the field is absent (presence, not just a
+ * parsed value) -- a missing field must fail loudly rather than a caller reading
+ * a default int as if it were a real answer. `json_get_int` is the atoi
+ * convenience once presence does not matter. */
+const char *json_find_field(const char *json, const char *field, int *len);
+int json_get_int(const char *json, const char *field);
+
 #endif

@@ -69,4 +69,35 @@ ErrorNumber server_verify(
     const TA_Integer *outInteger[]
 );
 
+/* Lookback-tier vs batch-tier agreement, WITHIN one server (issue #256).
+ *
+ * A different property from server_verify() above: that function deliberately
+ * skips reject cases ("parameter validation is implementation-specific and may
+ * differ between C and server") because it compares ACROSS languages. This
+ * checks the property that must hold regardless: does server X's own
+ * abstract_get_lookback verdict for a parameter vector (accept iff lookback >=
+ * 0) agree with server X's own batch-call verdict for the SAME vector (accept
+ * iff retCode == Success)? A caller sizes its buffers from the lookback before
+ * trusting the batch call, so a lookback that answers a plausible number for
+ * parameters the batch call will reject is a lie a wrapper cannot detect --
+ * the same rule test_period_boundary.c's pbSweepRunCase already asserts
+ * in-process for C (TA_GetLookback vs TA_CallFunc), extended here to each
+ * generated server. No cross-language comparison and no output values: `inputs`
+ * only needs to be shape-valid (a batch request must serialize SOME array of
+ * the right length), so callers reuse whatever data they already have on hand.
+ *
+ * funcName/startIdx/endIdx/nbBars/inputs/optParams/nbOptParams: same meaning as
+ * server_verify() above. Returns TA_TEST_PASS on agreement (or if no servers
+ * are active).
+ */
+ErrorNumber server_verify_lookback_parity(
+    const char    *funcName,
+    TA_Integer     startIdx,
+    TA_Integer     endIdx,
+    int            nbBars,
+    const TA_Real *inputs[],
+    const double   optParams[],
+    int            nbOptParams
+);
+
 #endif

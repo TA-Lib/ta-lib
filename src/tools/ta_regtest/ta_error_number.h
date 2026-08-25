@@ -355,6 +355,9 @@ typedef enum
   TA_SV_BEGIDX_MISMATCH              = 1301,
   TA_SV_NBELEMENT_MISMATCH           = 1302,
   TA_SV_OUTPUT_MISMATCH              = 1303,
+  TA_SV_LOOKBACK_PARITY_MISMATCH     = 1304,  /* issue #256: one server's own
+                                                  lookback tier disagrees with its
+                                                  own batch tier */
 
   /* Single-precision (TA_S_) vector-arithmetic overflow guard (PR #33) */
   TA_S_OVERFLOW_BAD_RETCODE          = 1400,
