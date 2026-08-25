@@ -152,7 +152,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 **Range.** A real or integer parameter's range is the `range:` its .yaml
 declares; an enum parameter's is the declared member set of its type.
 
-Four candlestick patterns declare an OHLC series their algorithm never reads;
+Some candlestick patterns declare an OHLC series their algorithm never reads;
 those legs are exempt from B4 and B5, so a short or absent one is accepted —
 "required" means required by the body, not declared in the signature.
 
