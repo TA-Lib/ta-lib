@@ -154562,6 +154562,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
         int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
@@ -154603,6 +154604,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -154611,7 +154617,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -154623,8 +154635,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AC_Open(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -154641,6 +154655,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AC(startIdx, endIdx, f_inHigh, f_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -154651,6 +154670,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -154695,6 +154715,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -154737,6 +154758,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ACCBANDS_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
             } catch (RuntimeException _e) {
@@ -154745,7 +154771,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _pr.begIdx();
@@ -154757,8 +154789,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ACCBANDS_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -154777,6 +154811,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ACCBANDS(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _fr.begIdx();
@@ -154787,6 +154826,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -154827,6 +154867,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -154864,6 +154905,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ACOS_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -154872,7 +154918,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ACOS(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -154884,8 +154936,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ACOS_Open(_warm_inReal);
@@ -154900,6 +154954,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ACOS(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -154910,6 +154969,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -154958,6 +155018,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -154998,6 +155059,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AD_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155006,7 +155072,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155018,8 +155090,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AD_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
@@ -155040,6 +155114,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AD(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155050,6 +155129,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155090,6 +155170,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -155128,6 +155209,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ADD_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155136,7 +155222,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ADD(startIdx, endIdx, inReal0, inReal1, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155148,8 +155240,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ADD_Open(_warm_inReal0, _warm_inReal1);
@@ -155166,6 +155260,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ADD(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155176,6 +155275,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155224,6 +155324,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -155266,6 +155367,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ADOSC_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155274,7 +155380,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155286,8 +155398,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ADOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod);
@@ -155308,6 +155422,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ADOSC(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155318,6 +155437,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155362,6 +155482,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[0] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -155403,6 +155524,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ADX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155411,7 +155537,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155423,8 +155555,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ADX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -155443,6 +155577,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ADX(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155453,6 +155592,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155497,6 +155637,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -155537,6 +155678,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ADXR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155545,7 +155691,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155557,8 +155709,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ADXR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -155577,6 +155731,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ADXR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155587,6 +155746,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155627,6 +155787,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -155667,6 +155828,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AO_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155675,7 +155841,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155687,8 +155859,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AO_Open(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod);
@@ -155705,6 +155879,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AO(startIdx, endIdx, f_inHigh, f_inLow, optInFastPeriod, optInSlowPeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155715,6 +155894,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155751,9 +155931,12 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
+        MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -155791,6 +155974,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.APO_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -155799,7 +155987,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -155811,8 +156005,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.APO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -155827,6 +156023,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.APO(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -155837,6 +156038,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -155877,6 +156079,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -155917,6 +156120,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AROON_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -155925,7 +156133,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -155937,8 +156151,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AROON_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -155955,6 +156171,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AROON(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -155965,6 +156186,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156007,6 +156229,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -156046,6 +156269,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AROONOSC_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156054,7 +156282,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156066,8 +156300,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AROONOSC_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -156084,6 +156320,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AROONOSC(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156094,6 +156335,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156130,6 +156372,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -156167,6 +156410,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ASIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156175,7 +156423,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ASIN(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156187,8 +156441,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ASIN_Open(_warm_inReal);
@@ -156203,6 +156459,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ASIN(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156213,6 +156474,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156249,6 +156511,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -156286,6 +156549,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ATAN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156294,7 +156562,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ATAN(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156306,8 +156580,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ATAN_Open(_warm_inReal);
@@ -156322,6 +156598,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ATAN(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156332,6 +156613,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156376,6 +156658,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[2] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -156417,6 +156700,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ATR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156425,7 +156713,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156437,8 +156731,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -156457,6 +156753,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ATR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156467,6 +156768,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156503,6 +156805,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -156541,6 +156844,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156549,7 +156857,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156561,8 +156875,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AVGDEV_Open(_warm_inReal, optInTimePeriod);
@@ -156577,6 +156893,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AVGDEV(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156587,6 +156908,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156635,6 +156957,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -156675,6 +156998,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.AVGPRICE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156683,7 +157011,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156695,8 +157029,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.AVGPRICE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156717,6 +157053,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.AVGPRICE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156727,6 +157068,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156763,10 +157105,13 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInNbDevUp = jsonDouble(json, "optInNbDevUp");
         double optInNbDevDn = jsonDouble(json, "optInNbDevDn");
-        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
+        MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -156806,6 +157151,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.BBANDS_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
             } catch (RuntimeException _e) {
@@ -156814,7 +157164,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
                 outBegIdx.value = _pr.begIdx();
@@ -156826,8 +157182,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.BBANDS_Open(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -156842,6 +157200,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.BBANDS(startIdx, endIdx, f_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
                 outBegIdx.value = _fr.begIdx();
@@ -156852,6 +157215,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -156896,6 +157260,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -156935,6 +157300,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.BETA_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -156943,7 +157313,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -156955,8 +157331,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.BETA_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
@@ -156973,6 +157351,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.BETA(startIdx, endIdx, f_inReal0, f_inReal1, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -156983,6 +157366,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157031,6 +157415,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -157071,6 +157456,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.BOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157079,7 +157469,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.BOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157091,8 +157487,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.BOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157113,6 +157511,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.BOP(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157123,6 +157526,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157167,6 +157571,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -157207,6 +157612,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CCI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157215,7 +157625,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157227,8 +157643,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CCI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -157247,6 +157665,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CCI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157257,6 +157680,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157305,6 +157729,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -157345,6 +157770,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL2CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157353,7 +157783,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157365,8 +157801,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157387,6 +157825,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL2CROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157397,6 +157840,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157445,6 +157889,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -157485,6 +157930,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL3BLACKCROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157493,7 +157943,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL3BLACKCROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157505,8 +157961,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3BLACKCROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157527,6 +157985,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL3BLACKCROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157537,6 +158000,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157585,6 +158049,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -157625,6 +158090,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL3INSIDE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157633,7 +158103,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL3INSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157645,8 +158121,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3INSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157667,6 +158145,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL3INSIDE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157677,6 +158160,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157725,6 +158209,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -157765,6 +158250,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL3LINESTRIKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157773,7 +158263,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157785,8 +158281,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3LINESTRIKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157807,6 +158305,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL3LINESTRIKE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157817,6 +158320,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -157865,6 +158369,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -157905,6 +158410,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL3OUTSIDE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -157913,7 +158423,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -157925,8 +158441,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3OUTSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157947,6 +158465,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL3OUTSIDE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -157957,6 +158480,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158005,6 +158529,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -158045,6 +158570,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL3STARSINSOUTH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158053,7 +158583,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158065,8 +158601,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3STARSINSOUTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158087,6 +158625,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL3STARSINSOUTH(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158097,6 +158640,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158145,6 +158689,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -158185,6 +158730,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDL3WHITESOLDIERS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158193,7 +158743,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDL3WHITESOLDIERS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158205,8 +158761,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3WHITESOLDIERS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158227,6 +158785,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDL3WHITESOLDIERS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158237,6 +158800,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158285,6 +158849,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -158326,6 +158891,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLABANDONEDBABY_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158334,7 +158904,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158346,8 +158922,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLABANDONEDBABY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -158368,6 +158946,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLABANDONEDBABY(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158378,6 +158961,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158426,6 +159010,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -158466,6 +159051,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLADVANCEBLOCK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158474,7 +159064,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158486,8 +159082,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLADVANCEBLOCK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158508,6 +159106,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLADVANCEBLOCK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158518,6 +159121,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158566,6 +159170,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -158606,6 +159211,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLBELTHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158614,7 +159224,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLBELTHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158626,8 +159242,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLBELTHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158648,6 +159266,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLBELTHOLD(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158658,6 +159281,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158706,6 +159330,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -158746,6 +159371,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLBREAKAWAY_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158754,7 +159384,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLBREAKAWAY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158766,8 +159402,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLBREAKAWAY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158788,6 +159426,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLBREAKAWAY(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158798,6 +159441,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158846,6 +159490,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -158886,6 +159531,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLCLOSINGMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -158894,7 +159544,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -158906,8 +159562,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLCLOSINGMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158928,6 +159586,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -158938,6 +159601,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -158986,6 +159650,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -159026,6 +159691,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLCONCEALBABYSWALL_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159034,7 +159704,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLCONCEALBABYSWALL(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159046,8 +159722,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLCONCEALBABYSWALL_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159068,6 +159746,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLCONCEALBABYSWALL(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159078,6 +159761,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159126,6 +159810,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -159166,6 +159851,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLCOUNTERATTACK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159174,7 +159864,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLCOUNTERATTACK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159186,8 +159882,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLCOUNTERATTACK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159208,6 +159906,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLCOUNTERATTACK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159218,6 +159921,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159266,6 +159970,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -159307,6 +160012,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLDARKCLOUDCOVER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159315,7 +160025,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159327,8 +160043,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDARKCLOUDCOVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -159349,6 +160067,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLDARKCLOUDCOVER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159359,6 +160082,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159407,6 +160131,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -159447,6 +160172,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159455,7 +160185,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159467,8 +160203,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159489,6 +160227,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159499,6 +160242,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159547,6 +160291,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -159587,6 +160332,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159595,7 +160345,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159607,8 +160363,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159629,6 +160387,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLDOJISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159639,6 +160402,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159687,6 +160451,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -159727,6 +160492,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLDRAGONFLYDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159735,7 +160505,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLDRAGONFLYDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159747,8 +160523,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDRAGONFLYDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159769,6 +160547,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLDRAGONFLYDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159779,6 +160562,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159827,6 +160611,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -159867,6 +160652,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLENGULFING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -159875,7 +160665,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -159887,8 +160683,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLENGULFING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159909,6 +160707,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLENGULFING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -159919,6 +160722,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -159967,6 +160771,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -160008,6 +160813,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLEVENINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160016,7 +160826,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLEVENINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160028,8 +160844,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLEVENINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -160050,6 +160868,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLEVENINGDOJISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160060,6 +160883,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160108,6 +160932,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -160149,6 +160974,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160157,7 +160987,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160169,8 +161005,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLEVENINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -160191,6 +161029,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLEVENINGSTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160201,6 +161044,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160249,6 +161093,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -160289,6 +161134,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLGAPSIDESIDEWHITE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160297,7 +161147,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160309,8 +161165,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLGAPSIDESIDEWHITE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160331,6 +161189,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160341,6 +161204,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160389,6 +161253,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -160429,6 +161294,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLGRAVESTONEDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160437,7 +161307,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160449,8 +161325,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLGRAVESTONEDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160471,6 +161349,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLGRAVESTONEDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160481,6 +161364,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160529,6 +161413,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -160569,6 +161454,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHAMMER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160577,7 +161467,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160589,8 +161485,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160611,6 +161509,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHAMMER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160621,6 +161524,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160669,6 +161573,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -160709,6 +161614,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHANGINGMAN_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160717,7 +161627,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHANGINGMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160729,8 +161645,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHANGINGMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160751,6 +161669,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHANGINGMAN(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160761,6 +161684,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160809,6 +161733,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -160849,6 +161774,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHARAMI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160857,7 +161787,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHARAMI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -160869,8 +161805,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHARAMI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160891,6 +161829,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHARAMI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -160901,6 +161844,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -160949,6 +161893,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -160989,6 +161934,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHARAMICROSS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -160997,7 +161947,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHARAMICROSS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161009,8 +161965,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHARAMICROSS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161031,6 +161989,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHARAMICROSS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161041,6 +162004,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161089,6 +162053,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161129,6 +162094,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHIGHWAVE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161137,7 +162107,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHIGHWAVE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161149,8 +162125,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHIGHWAVE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161171,6 +162149,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHIGHWAVE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161181,6 +162164,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161229,6 +162213,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161269,6 +162254,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHIKKAKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161277,7 +162267,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161289,8 +162285,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHIKKAKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161311,6 +162309,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHIKKAKE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161321,6 +162324,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161369,6 +162373,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161409,6 +162414,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHIKKAKEMOD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161417,7 +162427,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161429,8 +162445,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHIKKAKEMOD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161451,6 +162469,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHIKKAKEMOD(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161461,6 +162484,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161509,6 +162533,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161549,6 +162574,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLHOMINGPIGEON_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161557,7 +162587,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLHOMINGPIGEON(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161569,8 +162605,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHOMINGPIGEON_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161591,6 +162629,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLHOMINGPIGEON(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161601,6 +162644,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161649,6 +162693,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161689,6 +162734,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLIDENTICAL3CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161697,7 +162747,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLIDENTICAL3CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161709,8 +162765,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLIDENTICAL3CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161731,6 +162789,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLIDENTICAL3CROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161741,6 +162804,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161789,6 +162853,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161829,6 +162894,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLINNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161837,7 +162907,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLINNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161849,8 +162925,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLINNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161871,6 +162949,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLINNECK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -161881,6 +162964,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -161929,6 +163013,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -161969,6 +163054,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLINVERTEDHAMMER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -161977,7 +163067,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -161989,8 +163085,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLINVERTEDHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162011,6 +163109,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLINVERTEDHAMMER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162021,6 +163124,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162069,6 +163173,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162109,6 +163214,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLKICKING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162117,7 +163227,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162129,8 +163245,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLKICKING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162151,6 +163269,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLKICKING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162161,6 +163284,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162209,6 +163333,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162249,6 +163374,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLKICKINGBYLENGTH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162257,7 +163387,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLKICKINGBYLENGTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162269,8 +163405,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLKICKINGBYLENGTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162291,6 +163429,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLKICKINGBYLENGTH(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162301,6 +163444,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162349,6 +163493,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162389,6 +163534,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLLADDERBOTTOM_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162397,7 +163547,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162409,8 +163565,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLLADDERBOTTOM_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162431,6 +163589,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLLADDERBOTTOM(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162441,6 +163604,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162489,6 +163653,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162529,6 +163694,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLLONGLEGGEDDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162537,7 +163707,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162549,8 +163725,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLLONGLEGGEDDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162571,6 +163749,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162581,6 +163764,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162629,6 +163813,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162669,6 +163854,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLLONGLINE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162677,7 +163867,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLLONGLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162689,8 +163885,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLLONGLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162711,6 +163909,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLLONGLINE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162721,6 +163924,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162769,6 +163973,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162809,6 +164014,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162817,7 +164027,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162829,8 +164045,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162851,6 +164069,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLMARUBOZU(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -162861,6 +164084,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -162909,6 +164133,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -162949,6 +164174,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLMATCHINGLOW_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -162957,7 +164187,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -162969,8 +164205,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMATCHINGLOW_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162991,6 +164229,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLMATCHINGLOW(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163001,6 +164244,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163049,6 +164293,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -163090,6 +164335,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLMATHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163098,7 +164348,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163110,8 +164366,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMATHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -163132,6 +164390,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLMATHOLD(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163142,6 +164405,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163190,6 +164454,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -163231,6 +164496,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLMORNINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163239,7 +164509,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLMORNINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163251,8 +164527,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMORNINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -163273,6 +164551,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLMORNINGDOJISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163283,6 +164566,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163331,6 +164615,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         double optInPenetration = jsonDouble(json, "optInPenetration");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -163372,6 +164657,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLMORNINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163380,7 +164670,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLMORNINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163392,8 +164688,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMORNINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -163414,6 +164712,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLMORNINGSTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163424,6 +164727,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163472,6 +164776,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -163512,6 +164817,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLONNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163520,7 +164830,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLONNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163532,8 +164848,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLONNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -163554,6 +164872,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLONNECK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163564,6 +164887,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163612,6 +164936,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -163652,6 +164977,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLPIERCING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163660,7 +164990,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLPIERCING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163672,8 +165008,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLPIERCING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -163694,6 +165032,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLPIERCING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163704,6 +165047,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163752,6 +165096,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -163792,6 +165137,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLRICKSHAWMAN_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163800,7 +165150,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLRICKSHAWMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163812,8 +165168,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLRICKSHAWMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -163834,6 +165192,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLRICKSHAWMAN(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163844,6 +165207,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -163892,6 +165256,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -163932,6 +165297,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLRISEFALL3METHODS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -163940,7 +165310,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -163952,8 +165328,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLRISEFALL3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -163974,6 +165352,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLRISEFALL3METHODS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -163984,6 +165367,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164032,6 +165416,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164072,6 +165457,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLSEPARATINGLINES_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164080,7 +165470,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLSEPARATINGLINES(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164092,8 +165488,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSEPARATINGLINES_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164114,6 +165512,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLSEPARATINGLINES(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164124,6 +165527,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164172,6 +165576,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164212,6 +165617,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLSHOOTINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164220,7 +165630,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164232,8 +165648,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSHOOTINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164254,6 +165672,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLSHOOTINGSTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164264,6 +165687,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164312,6 +165736,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164352,6 +165777,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLSHORTLINE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164360,7 +165790,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLSHORTLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164372,8 +165808,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSHORTLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164394,6 +165832,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLSHORTLINE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164404,6 +165847,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164452,6 +165896,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164492,6 +165937,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLSPINNINGTOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164500,7 +165950,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164512,8 +165968,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSPINNINGTOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164534,6 +165992,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLSPINNINGTOP(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164544,6 +166007,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164592,6 +166056,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164632,6 +166097,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLSTALLEDPATTERN_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164640,7 +166110,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLSTALLEDPATTERN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164652,8 +166128,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSTALLEDPATTERN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164674,6 +166152,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLSTALLEDPATTERN(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164684,6 +166167,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164732,6 +166216,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164772,6 +166257,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLSTICKSANDWICH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164780,7 +166270,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLSTICKSANDWICH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164792,8 +166288,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSTICKSANDWICH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164814,6 +166312,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLSTICKSANDWICH(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164824,6 +166327,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -164872,6 +166376,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -164912,6 +166417,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLTAKURI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -164920,7 +166430,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -164932,8 +166448,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTAKURI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -164954,6 +166472,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLTAKURI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -164964,6 +166487,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165012,6 +166536,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165052,6 +166577,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLTASUKIGAP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165060,7 +166590,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLTASUKIGAP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165072,8 +166608,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTASUKIGAP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -165094,6 +166632,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLTASUKIGAP(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165104,6 +166647,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165152,6 +166696,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165192,6 +166737,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLTHRUSTING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165200,7 +166750,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLTHRUSTING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165212,8 +166768,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTHRUSTING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -165234,6 +166792,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLTHRUSTING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165244,6 +166807,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165292,6 +166856,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165332,6 +166897,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLTRISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165340,7 +166910,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165352,8 +166928,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTRISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -165374,6 +166952,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLTRISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165384,6 +166967,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165432,6 +167016,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165472,6 +167057,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLUNIQUE3RIVER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165480,7 +167070,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165492,8 +167088,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLUNIQUE3RIVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -165514,6 +167112,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLUNIQUE3RIVER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165524,6 +167127,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165572,6 +167176,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165612,6 +167217,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLUPSIDEGAP2CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165620,7 +167230,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165632,8 +167248,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLUPSIDEGAP2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -165654,6 +167272,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165664,6 +167287,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165712,6 +167336,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165752,6 +167377,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CDLXSIDEGAP3METHODS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165760,7 +167390,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165772,8 +167408,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CDLXSIDEGAP3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -165794,6 +167432,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165804,6 +167447,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165840,6 +167484,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -165877,6 +167522,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CEIL_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -165885,7 +167535,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CEIL(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -165897,8 +167553,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CEIL_Open(_warm_inReal);
@@ -165913,6 +167571,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CEIL(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -165923,6 +167586,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -165971,6 +167635,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -166012,6 +167677,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CMF_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166020,7 +167690,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166032,8 +167708,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CMF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
@@ -166054,6 +167732,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CMF(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166064,6 +167747,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166100,6 +167784,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[3] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -166139,6 +167824,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CMO_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166147,7 +167837,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CMO(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166159,8 +167855,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CMO_Open(_warm_inReal, optInTimePeriod);
@@ -166175,6 +167873,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CMO(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166185,6 +167888,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166221,6 +167925,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -166259,6 +167964,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166267,7 +167977,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CMOU(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166279,8 +167995,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CMOU_Open(_warm_inReal, optInTimePeriod);
@@ -166295,6 +168013,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CMOU(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166305,6 +168028,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166345,6 +168069,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -166384,6 +168109,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166392,7 +168122,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166404,8 +168140,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.CORREL_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
@@ -166422,6 +168160,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.CORREL(startIdx, endIdx, f_inReal0, f_inReal1, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166432,6 +168175,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166468,6 +168212,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -166505,6 +168250,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.COS_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166513,7 +168263,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.COS(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166525,8 +168281,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.COS_Open(_warm_inReal);
@@ -166541,6 +168299,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.COS(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166551,6 +168314,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166587,6 +168351,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -166624,6 +168389,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166632,7 +168402,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.COSH(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166644,8 +168420,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.COSH_Open(_warm_inReal);
@@ -166660,6 +168438,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.COSH(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166670,6 +168453,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166706,6 +168490,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -166744,6 +168529,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.DEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166752,7 +168542,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166764,8 +168560,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.DEMA_Open(_warm_inReal, optInTimePeriod);
@@ -166780,6 +168578,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.DEMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166790,6 +168593,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166830,6 +168634,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -166868,6 +168673,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.DIV_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -166876,7 +168686,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.DIV(startIdx, endIdx, inReal0, inReal1, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -166888,8 +168704,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.DIV_Open(_warm_inReal0, _warm_inReal1);
@@ -166906,6 +168724,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.DIV(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -166916,6 +168739,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -166960,6 +168784,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[4] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -167001,6 +168826,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.DX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167009,7 +168839,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167021,8 +168857,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.DX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -167041,6 +168879,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.DX(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167051,6 +168894,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167091,6 +168935,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -167130,6 +168975,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.EFI_Impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167138,7 +168988,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167150,8 +169006,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.EFI_Open(_warm_inClose, _warm_inVolume, optInTimePeriod);
@@ -167168,6 +169026,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.EFI(startIdx, endIdx, f_inClose, f_inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167178,6 +169041,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167214,6 +169078,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[5] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -167253,6 +169118,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.EMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167261,7 +169131,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.EMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167273,8 +169149,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.EMA_Open(_warm_inReal, optInTimePeriod);
@@ -167289,6 +169167,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.EMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167299,6 +169182,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167335,6 +169219,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -167372,6 +169257,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.EXP_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167380,7 +169270,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.EXP(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167392,8 +169288,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.EXP_Open(_warm_inReal);
@@ -167408,6 +169306,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.EXP(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167418,6 +169321,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167454,6 +169358,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -167491,6 +169396,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.FLOOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167499,7 +169409,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.FLOOR(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167511,8 +169427,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.FLOOR_Open(_warm_inReal);
@@ -167527,6 +169445,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.FLOOR(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167537,6 +169460,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167573,6 +169497,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -167611,6 +169536,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167619,7 +169549,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167631,8 +169567,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HMA_Open(_warm_inReal, optInTimePeriod);
@@ -167647,6 +169585,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167657,6 +169600,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167693,6 +169637,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         core.unstablePeriod[6] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -167731,6 +169676,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HT_DCPERIOD_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167739,7 +169689,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HT_DCPERIOD(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167751,8 +169707,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HT_DCPERIOD_Open(_warm_inReal);
@@ -167767,6 +169725,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HT_DCPERIOD(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167777,6 +169740,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167813,6 +169777,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         core.unstablePeriod[7] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -167851,6 +169816,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -167859,7 +169829,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HT_DCPHASE(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -167871,8 +169847,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HT_DCPHASE_Open(_warm_inReal);
@@ -167887,6 +169865,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HT_DCPHASE(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -167897,6 +169880,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -167933,6 +169917,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         core.unstablePeriod[8] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -167972,6 +169957,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -167980,7 +169970,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HT_PHASOR(startIdx, endIdx, inReal, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -167992,8 +169988,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HT_PHASOR_Open(_warm_inReal);
@@ -168008,6 +170006,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HT_PHASOR(startIdx, endIdx, f_inReal, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -168018,6 +170021,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168056,6 +170060,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         core.unstablePeriod[9] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168095,6 +170100,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HT_SINE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -168103,7 +170113,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HT_SINE(startIdx, endIdx, inReal, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -168115,8 +170131,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HT_SINE_Open(_warm_inReal);
@@ -168131,6 +170149,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HT_SINE(startIdx, endIdx, f_inReal, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -168141,6 +170164,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168179,6 +170203,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         core.unstablePeriod[10] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168217,6 +170242,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HT_TRENDLINE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168225,7 +170255,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HT_TRENDLINE(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168237,8 +170273,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HT_TRENDLINE_Open(_warm_inReal);
@@ -168253,6 +170291,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HT_TRENDLINE(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168263,6 +170306,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168299,6 +170343,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         core.unstablePeriod[11] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168337,6 +170382,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.HT_TRENDMODE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168345,7 +170395,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.HT_TRENDMODE(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168357,8 +170413,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.HT_TRENDMODE_Open(_warm_inReal);
@@ -168373,6 +170431,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.HT_TRENDMODE(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168383,6 +170446,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168423,6 +170487,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168462,6 +170527,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.IMI_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168470,7 +170540,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168482,8 +170558,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.IMI_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
@@ -168500,6 +170578,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.IMI(startIdx, endIdx, f_inOpen, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168510,6 +170593,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168546,6 +170630,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[13] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -168585,6 +170670,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168593,7 +170683,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168605,8 +170701,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.KAMA_Open(_warm_inReal, optInTimePeriod);
@@ -168621,6 +170719,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.KAMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168631,6 +170734,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168667,6 +170771,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168705,6 +170810,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.LINEARREG_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168713,7 +170823,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168725,8 +170841,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_Open(_warm_inReal, optInTimePeriod);
@@ -168741,6 +170859,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.LINEARREG(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168751,6 +170874,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168787,6 +170911,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168825,6 +170950,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.LINEARREG_ANGLE_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168833,7 +170963,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168845,8 +170981,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_ANGLE_Open(_warm_inReal, optInTimePeriod);
@@ -168861,6 +170999,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.LINEARREG_ANGLE(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168871,6 +171014,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -168907,6 +171051,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -168945,6 +171090,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.LINEARREG_INTERCEPT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -168953,7 +171103,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.LINEARREG_INTERCEPT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -168965,8 +171121,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_INTERCEPT_Open(_warm_inReal, optInTimePeriod);
@@ -168981,6 +171139,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.LINEARREG_INTERCEPT(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -168991,6 +171154,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169027,6 +171191,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -169065,6 +171230,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.LINEARREG_SLOPE_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -169073,7 +171243,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -169085,8 +171261,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_SLOPE_Open(_warm_inReal, optInTimePeriod);
@@ -169101,6 +171279,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.LINEARREG_SLOPE(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -169111,6 +171294,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169147,6 +171331,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -169184,6 +171369,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.LN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -169192,7 +171382,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.LN(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -169204,8 +171400,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.LN_Open(_warm_inReal);
@@ -169220,6 +171418,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.LN(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -169230,6 +171433,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169266,6 +171470,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -169303,6 +171508,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -169311,7 +171521,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.LOG10(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -169323,8 +171539,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.LOG10_Open(_warm_inReal);
@@ -169339,6 +171557,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.LOG10(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -169349,6 +171572,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169385,8 +171609,11 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
-        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
+        MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -169424,6 +171651,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -169432,7 +171664,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -169444,8 +171682,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MA_Open(_warm_inReal, optInTimePeriod, optInMAType);
@@ -169460,6 +171700,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MA(startIdx, endIdx, f_inReal, optInTimePeriod, optInMAType, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -169470,6 +171715,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169506,6 +171752,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
         int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
@@ -169548,6 +171795,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MACD_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
             } catch (RuntimeException _e) {
@@ -169556,7 +171808,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _pr.begIdx();
@@ -169568,8 +171826,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MACD_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -169584,6 +171844,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MACD(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _fr.begIdx();
@@ -169594,6 +171859,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169634,12 +171900,19 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
-        MAType optInFastMAType = MAType.values()[jsonInt(json, "optInFastMAType")];
+        int _raw_optInFastMAType = jsonInt(json, "optInFastMAType");
+        if (_raw_optInFastMAType < 0 || _raw_optInFastMAType >= MAType.values().length) _optRejected = true;
+        MAType optInFastMAType = MAType.values()[_optRejected ? 0 : _raw_optInFastMAType];
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        MAType optInSlowMAType = MAType.values()[jsonInt(json, "optInSlowMAType")];
+        int _raw_optInSlowMAType = jsonInt(json, "optInSlowMAType");
+        if (_raw_optInSlowMAType < 0 || _raw_optInSlowMAType >= MAType.values().length) _optRejected = true;
+        MAType optInSlowMAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowMAType];
         int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
-        MAType optInSignalMAType = MAType.values()[jsonInt(json, "optInSignalMAType")];
+        int _raw_optInSignalMAType = jsonInt(json, "optInSignalMAType");
+        if (_raw_optInSignalMAType < 0 || _raw_optInSignalMAType >= MAType.values().length) _optRejected = true;
+        MAType optInSignalMAType = MAType.values()[_optRejected ? 0 : _raw_optInSignalMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -169679,6 +171952,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MACDEXT_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
             } catch (RuntimeException _e) {
@@ -169687,7 +171965,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
                 outBegIdx.value = _pr.begIdx();
@@ -169699,8 +171983,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MACDEXT_Open(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -169715,6 +172001,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MACDEXT(startIdx, endIdx, f_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
                 outBegIdx.value = _fr.begIdx();
@@ -169725,6 +172016,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169765,6 +172057,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -169805,6 +172098,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MACDFIX_Impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
             } catch (RuntimeException _e) {
@@ -169813,7 +172111,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _pr.begIdx();
@@ -169825,8 +172129,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MACDFIX_Open(_warm_inReal, optInSignalPeriod);
@@ -169841,6 +172147,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MACDFIX(startIdx, endIdx, f_inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _fr.begIdx();
@@ -169851,6 +172162,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -169891,6 +172203,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         double optInFastLimit = jsonDouble(json, "optInFastLimit");
         double optInSlowLimit = jsonDouble(json, "optInSlowLimit");
         core.unstablePeriod[14] = jsonInt(json, "unstablePeriod");
@@ -169932,6 +172245,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -169940,7 +172258,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -169952,8 +172276,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MAMA_Open(_warm_inReal, optInFastLimit, optInSlowLimit);
@@ -169968,6 +172294,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MAMA(startIdx, endIdx, f_inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -169978,6 +172309,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170024,6 +172356,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -170063,6 +172396,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170071,7 +172409,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170083,8 +172427,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MARKETFI_Open(_warm_inHigh, _warm_inLow, _warm_inVolume);
@@ -170103,6 +172449,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MARKETFI(startIdx, endIdx, f_inHigh, f_inLow, f_inVolume, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170113,6 +172464,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170153,9 +172505,12 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         int optInMinPeriod = jsonInt(json, "optInMinPeriod");
         int optInMaxPeriod = jsonInt(json, "optInMaxPeriod");
-        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
+        MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -170194,6 +172549,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MAVP_Impl(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170202,7 +172562,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MAVP(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170214,8 +172580,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MAVP_Open(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -170232,6 +172600,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MAVP(startIdx, endIdx, f_inReal0, f_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170242,6 +172615,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170278,6 +172652,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -170316,6 +172691,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MAX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170324,7 +172704,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170336,8 +172722,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MAX_Open(_warm_inReal, optInTimePeriod);
@@ -170352,6 +172740,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MAX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170362,6 +172755,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170398,6 +172792,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -170436,6 +172831,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170444,7 +172844,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170456,8 +172862,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MAXINDEX_Open(_warm_inReal, optInTimePeriod);
@@ -170472,6 +172880,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MAXINDEX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170482,6 +172895,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170522,6 +172936,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -170560,6 +172975,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MEDPRICE_Impl(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170568,7 +172988,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MEDPRICE(startIdx, endIdx, inHigh, inLow, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170580,8 +173006,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MEDPRICE_Open(_warm_inHigh, _warm_inLow);
@@ -170598,6 +173026,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MEDPRICE(startIdx, endIdx, f_inHigh, f_inLow, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170608,6 +173041,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170656,6 +173090,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -170697,6 +173132,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170705,7 +173145,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170717,8 +173163,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MFI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
@@ -170739,6 +173187,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MFI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170749,6 +173202,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170785,6 +173239,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -170823,6 +173278,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170831,7 +173291,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170843,8 +173309,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MIDPOINT_Open(_warm_inReal, optInTimePeriod);
@@ -170859,6 +173327,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MIDPOINT(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170869,6 +173342,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -170909,6 +173383,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -170948,6 +173423,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MIDPRICE_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -170956,7 +173436,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -170968,8 +173454,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MIDPRICE_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -170986,6 +173474,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MIDPRICE(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -170996,6 +173489,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171032,6 +173526,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -171070,6 +173565,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -171078,7 +173578,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MIN(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -171090,8 +173596,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MIN_Open(_warm_inReal, optInTimePeriod);
@@ -171106,6 +173614,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MIN(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -171116,6 +173629,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171152,6 +173666,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -171190,6 +173705,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MININDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -171198,7 +173718,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MININDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -171210,8 +173736,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MININDEX_Open(_warm_inReal, optInTimePeriod);
@@ -171226,6 +173754,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MININDEX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -171236,6 +173769,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171272,6 +173806,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -171311,6 +173846,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MINMAX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -171319,7 +173859,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MINMAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -171331,8 +173877,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MINMAX_Open(_warm_inReal, optInTimePeriod);
@@ -171347,6 +173895,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MINMAX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -171357,6 +173910,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171395,6 +173949,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -171434,6 +173989,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MINMAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -171442,7 +174002,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -171454,8 +174020,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MINMAXINDEX_Open(_warm_inReal, optInTimePeriod);
@@ -171470,6 +174038,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MINMAXINDEX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -171480,6 +174053,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171526,6 +174100,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[16] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -171567,6 +174142,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MINUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -171575,7 +174155,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MINUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -171587,8 +174173,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MINUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -171607,6 +174195,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MINUS_DI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -171617,6 +174210,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171657,6 +174251,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[17] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -171697,6 +174292,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MINUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -171705,7 +174305,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -171717,8 +174323,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MINUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -171735,6 +174343,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MINUS_DM(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -171745,6 +174358,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171781,6 +174395,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -171819,6 +174434,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MOM_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -171827,7 +174447,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MOM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -171839,8 +174465,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MOM_Open(_warm_inReal, optInTimePeriod);
@@ -171855,6 +174483,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MOM(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -171865,6 +174498,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -171905,6 +174539,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -171943,6 +174578,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.MULT_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -171951,7 +174591,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.MULT(startIdx, endIdx, inReal0, inReal1, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -171963,8 +174609,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.MULT_Open(_warm_inReal0, _warm_inReal1);
@@ -171981,6 +174629,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.MULT(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -171991,6 +174644,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172035,6 +174689,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[18] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -172076,6 +174731,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.NATR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172084,7 +174744,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172096,8 +174762,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.NATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -172116,6 +174784,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.NATR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172126,6 +174799,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172166,6 +174840,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -172204,6 +174879,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.NVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172212,7 +174892,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.NVI(startIdx, endIdx, inClose, inVolume, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172224,8 +174910,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.NVI_Open(_warm_inClose, _warm_inVolume);
@@ -172242,6 +174930,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.NVI(startIdx, endIdx, f_inClose, f_inVolume, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172252,6 +174945,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172292,6 +174986,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -172330,6 +175025,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.OBV_Impl(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172338,7 +175038,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.OBV(startIdx, endIdx, inReal, inVolume, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172350,8 +175056,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.OBV_Open(_warm_inReal, _warm_inVolume);
@@ -172368,6 +175076,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.OBV(startIdx, endIdx, f_inReal, f_inVolume, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172378,6 +175091,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172422,6 +175136,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[19] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -172463,6 +175178,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.PLUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172471,7 +175191,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172483,8 +175209,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.PLUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -172503,6 +175231,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.PLUS_DI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172513,6 +175246,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172553,6 +175287,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[20] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -172593,6 +175328,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.PLUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172601,7 +175341,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172613,8 +175359,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.PLUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -172631,6 +175379,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.PLUS_DM(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172641,6 +175394,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172677,9 +175431,12 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
+        MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -172717,6 +175474,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.PPO_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172725,7 +175487,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.PPO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172737,8 +175505,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.PPO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -172753,6 +175523,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.PPO(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172763,6 +175538,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172803,6 +175579,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -172841,6 +175618,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.PVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172849,7 +175631,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.PVI(startIdx, endIdx, inClose, inVolume, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172861,8 +175649,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.PVI_Open(_warm_inClose, _warm_inVolume);
@@ -172879,6 +175669,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.PVI(startIdx, endIdx, f_inClose, f_inVolume, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -172889,6 +175684,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -172925,9 +175721,12 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
-        MAType optInMAType = MAType.values()[jsonInt(json, "optInMAType")];
+        int _raw_optInMAType = jsonInt(json, "optInMAType");
+        if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) _optRejected = true;
+        MAType optInMAType = MAType.values()[_optRejected ? 0 : _raw_optInMAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -172965,6 +175764,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.PVO_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -172973,7 +175777,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -172985,8 +175795,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.PVO_Open(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -173001,6 +175813,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.PVO(startIdx, endIdx, f_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173011,6 +175828,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173051,6 +175869,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -173090,6 +175909,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.QSTICK_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173098,7 +175922,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173110,8 +175940,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.QSTICK_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
@@ -173128,6 +175960,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.QSTICK(startIdx, endIdx, f_inOpen, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173138,6 +175975,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173174,6 +176012,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -173212,6 +176051,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ROC_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173220,7 +176064,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ROC(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173232,8 +176082,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ROC_Open(_warm_inReal, optInTimePeriod);
@@ -173248,6 +176100,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ROC(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173258,6 +176115,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173294,6 +176152,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -173332,6 +176191,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ROCP_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173340,7 +176204,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ROCP(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173352,8 +176222,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ROCP_Open(_warm_inReal, optInTimePeriod);
@@ -173368,6 +176240,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ROCP(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173378,6 +176255,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173414,6 +176292,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -173452,6 +176331,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ROCR_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173460,7 +176344,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ROCR(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173472,8 +176362,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ROCR_Open(_warm_inReal, optInTimePeriod);
@@ -173488,6 +176380,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ROCR(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173498,6 +176395,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173534,6 +176432,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -173572,6 +176471,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ROCR100_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173580,7 +176484,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ROCR100(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173592,8 +176502,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ROCR100_Open(_warm_inReal, optInTimePeriod);
@@ -173608,6 +176520,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ROCR100(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173618,6 +176535,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173654,6 +176572,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         core.unstablePeriod[21] = jsonInt(json, "unstablePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -173693,6 +176612,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173701,7 +176625,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.RSI(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173713,8 +176643,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.RSI_Open(_warm_inReal, optInTimePeriod);
@@ -173729,6 +176661,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.RSI(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173739,6 +176676,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173779,6 +176717,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         double optInAcceleration = jsonDouble(json, "optInAcceleration");
         double optInMaximum = jsonDouble(json, "optInMaximum");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -173819,6 +176758,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SAR_Impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173827,7 +176771,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173839,8 +176789,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SAR_Open(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum);
@@ -173857,6 +176809,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SAR(startIdx, endIdx, f_inHigh, f_inLow, optInAcceleration, optInMaximum, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -173867,6 +176824,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -173907,6 +176865,7 @@ public class TaCodegenServe {
             double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
             inLow = _tmp_inLow;
         }
+        boolean _optRejected = false;
         double optInStartValue = jsonDouble(json, "optInStartValue");
         double optInOffsetOnReverse = jsonDouble(json, "optInOffsetOnReverse");
         double optInAccelerationInitLong = jsonDouble(json, "optInAccelerationInitLong");
@@ -173953,6 +176912,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -173961,7 +176925,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -173973,8 +176943,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SAREXT_Open(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -173991,6 +176963,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SAREXT(startIdx, endIdx, f_inHigh, f_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -174001,6 +176978,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174037,6 +177015,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -174074,6 +177053,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -174082,7 +177066,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SIN(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -174094,8 +177084,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SIN_Open(_warm_inReal);
@@ -174110,6 +177102,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SIN(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -174120,6 +177117,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174156,6 +177154,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -174193,6 +177192,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SINH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -174201,7 +177205,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SINH(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -174213,8 +177223,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SINH_Open(_warm_inReal);
@@ -174229,6 +177241,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SINH(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -174239,6 +177256,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174275,6 +177293,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -174313,6 +177332,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -174321,7 +177345,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -174333,8 +177363,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SMA_Open(_warm_inReal, optInTimePeriod);
@@ -174349,6 +177381,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -174359,6 +177396,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174403,6 +177441,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         int optInFastPeriod = jsonInt(json, "optInFastPeriod");
         int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
@@ -174447,6 +177486,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SMI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -174455,7 +177499,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SMI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -174467,8 +177517,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SMI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -174487,6 +177539,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SMI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -174497,6 +177554,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174535,6 +177593,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -174572,6 +177631,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SQRT_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -174580,7 +177644,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SQRT(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -174592,8 +177662,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SQRT_Open(_warm_inReal);
@@ -174608,6 +177680,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SQRT(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -174618,6 +177695,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174654,6 +177732,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInNbDev = jsonDouble(json, "optInNbDev");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -174693,6 +177772,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.STDDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -174701,7 +177785,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -174713,8 +177803,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.STDDEV_Open(_warm_inReal, optInTimePeriod, optInNbDev);
@@ -174729,6 +177821,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.STDDEV(startIdx, endIdx, f_inReal, optInTimePeriod, optInNbDev, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -174739,6 +177836,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174783,11 +177881,16 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInSlowK_Period = jsonInt(json, "optInSlowK_Period");
-        MAType optInSlowK_MAType = MAType.values()[jsonInt(json, "optInSlowK_MAType")];
+        int _raw_optInSlowK_MAType = jsonInt(json, "optInSlowK_MAType");
+        if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) _optRejected = true;
+        MAType optInSlowK_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowK_MAType];
         int optInSlowD_Period = jsonInt(json, "optInSlowD_Period");
-        MAType optInSlowD_MAType = MAType.values()[jsonInt(json, "optInSlowD_MAType")];
+        int _raw_optInSlowD_MAType = jsonInt(json, "optInSlowD_MAType");
+        if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) _optRejected = true;
+        MAType optInSlowD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -174828,6 +177931,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.STOCH_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -174836,7 +177944,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -174848,8 +177962,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.STOCH_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -174868,6 +177984,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.STOCH(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -174878,6 +177999,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -174924,9 +178046,12 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInFastD_Period = jsonInt(json, "optInFastD_Period");
-        MAType optInFastD_MAType = MAType.values()[jsonInt(json, "optInFastD_MAType")];
+        int _raw_optInFastD_MAType = jsonInt(json, "optInFastD_MAType");
+        if (_raw_optInFastD_MAType < 0 || _raw_optInFastD_MAType >= MAType.values().length) _optRejected = true;
+        MAType optInFastD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInFastD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -174967,6 +178092,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.STOCHF_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -174975,7 +178105,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -174987,8 +178123,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.STOCHF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -175007,6 +178145,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.STOCHF(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -175017,6 +178160,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175055,10 +178199,13 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         int optInFastK_Period = jsonInt(json, "optInFastK_Period");
         int optInFastD_Period = jsonInt(json, "optInFastD_Period");
-        MAType optInFastD_MAType = MAType.values()[jsonInt(json, "optInFastD_MAType")];
+        int _raw_optInFastD_MAType = jsonInt(json, "optInFastD_MAType");
+        if (_raw_optInFastD_MAType < 0 || _raw_optInFastD_MAType >= MAType.values().length) _optRejected = true;
+        MAType optInFastD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInFastD_MAType];
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -175097,6 +178244,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.STOCHRSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
             } catch (RuntimeException _e) {
@@ -175105,7 +178257,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
                 outBegIdx.value = _pr.begIdx();
@@ -175117,8 +178275,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.STOCHRSI_Open(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -175133,6 +178293,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.STOCHRSI(startIdx, endIdx, f_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
                 outBegIdx.value = _fr.begIdx();
@@ -175143,6 +178308,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175185,6 +178351,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal1 = jsonDoubleArray(json, "inReal1");
             inReal1 = _tmp_inReal1;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -175223,6 +178390,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SUB_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175231,7 +178403,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SUB(startIdx, endIdx, inReal0, inReal1, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175243,8 +178421,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SUB_Open(_warm_inReal0, _warm_inReal1);
@@ -175261,6 +178441,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SUB(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -175271,6 +178456,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175307,6 +178493,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -175345,6 +178532,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.SUM_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175353,7 +178545,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.SUM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175365,8 +178563,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.SUM_Open(_warm_inReal, optInTimePeriod);
@@ -175381,6 +178581,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.SUM(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -175391,6 +178596,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175427,6 +178633,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInVFactor = jsonDouble(json, "optInVFactor");
         core.unstablePeriod[23] = jsonInt(json, "unstablePeriod");
@@ -175467,6 +178674,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175475,7 +178687,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175487,8 +178705,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.T3_Open(_warm_inReal, optInTimePeriod, optInVFactor);
@@ -175503,6 +178723,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.T3(startIdx, endIdx, f_inReal, optInTimePeriod, optInVFactor, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -175513,6 +178738,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175549,6 +178775,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -175586,6 +178813,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TAN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175594,7 +178826,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TAN(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175606,8 +178844,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TAN_Open(_warm_inReal);
@@ -175622,6 +178862,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TAN(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -175632,6 +178877,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175668,6 +178914,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -175705,6 +178952,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TANH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175713,7 +178965,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TANH(startIdx, endIdx, inReal, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175725,8 +178983,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TANH_Open(_warm_inReal);
@@ -175741,6 +179001,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TANH(startIdx, endIdx, f_inReal, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -175751,6 +179016,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175787,6 +179053,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -175825,6 +179092,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175833,7 +179105,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175845,8 +179123,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TEMA_Open(_warm_inReal, optInTimePeriod);
@@ -175861,6 +179141,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TEMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -175871,6 +179156,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -175915,6 +179201,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -175954,6 +179241,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TRANGE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -175962,7 +179254,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TRANGE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -175974,8 +179272,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TRANGE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -175994,6 +179294,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TRANGE(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176004,6 +179309,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176040,6 +179346,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -176078,6 +179385,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TRIMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176086,7 +179398,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176098,8 +179416,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TRIMA_Open(_warm_inReal, optInTimePeriod);
@@ -176114,6 +179434,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TRIMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176124,6 +179449,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176160,6 +179486,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -176198,6 +179525,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176206,7 +179538,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TRIX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176218,8 +179556,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TRIX_Open(_warm_inReal, optInTimePeriod);
@@ -176234,6 +179574,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TRIX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176244,6 +179589,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176280,6 +179626,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -176318,6 +179665,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TSF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176326,7 +179678,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TSF(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176338,8 +179696,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TSF_Open(_warm_inReal, optInTimePeriod);
@@ -176354,6 +179714,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TSF(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176364,6 +179729,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176408,6 +179774,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -176447,6 +179814,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.TYPPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176455,7 +179827,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176467,8 +179845,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.TYPPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -176487,6 +179867,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.TYPPRICE(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176497,6 +179882,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176541,6 +179927,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod1 = jsonInt(json, "optInTimePeriod1");
         int optInTimePeriod2 = jsonInt(json, "optInTimePeriod2");
         int optInTimePeriod3 = jsonInt(json, "optInTimePeriod3");
@@ -176583,6 +179970,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.ULTOSC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176591,7 +179983,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176603,8 +180001,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.ULTOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -176623,6 +180023,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.ULTOSC(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176633,6 +180038,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176669,6 +180075,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         double optInNbDev = jsonDouble(json, "optInNbDev");
         // The output buffers are sized to the count the call actually PRODUCES --
@@ -176708,6 +180115,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176716,7 +180128,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176728,8 +180146,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.VAR_Open(_warm_inReal, optInTimePeriod, optInNbDev);
@@ -176744,6 +180164,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.VAR(startIdx, endIdx, f_inReal, optInTimePeriod, optInNbDev, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176754,6 +180179,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176802,6 +180228,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -176842,6 +180269,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.VWAP_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176850,7 +180282,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.VWAP(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176862,8 +180300,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.VWAP_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
@@ -176884,6 +180324,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.VWAP(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -176894,6 +180339,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -176934,6 +180380,7 @@ public class TaCodegenServe {
             double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
             inVolume = _tmp_inVolume;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -176973,6 +180420,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.VWMA_Impl(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -176981,7 +180433,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -176993,8 +180451,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.VWMA_Open(_warm_inReal, _warm_inVolume, optInTimePeriod);
@@ -177011,6 +180471,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.VWMA(startIdx, endIdx, f_inReal, f_inVolume, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -177021,6 +180486,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -177065,6 +180531,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -177104,6 +180571,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.WAD_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -177112,7 +180584,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.WAD(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -177124,8 +180602,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.WAD_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -177144,6 +180624,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.WAD(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -177154,6 +180639,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -177198,6 +180684,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -177237,6 +180724,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.WCLPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -177245,7 +180737,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -177257,8 +180755,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.WCLPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -177277,6 +180777,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.WCLPRICE(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -177287,6 +180792,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -177331,6 +180837,7 @@ public class TaCodegenServe {
             double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
             inClose = _tmp_inClose;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -177371,6 +180878,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.WILLR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -177379,7 +180891,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.WILLR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -177391,8 +180909,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.WILLR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -177411,6 +180931,11 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.WILLR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -177421,6 +180946,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }
@@ -177457,6 +180983,7 @@ public class TaCodegenServe {
             double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
             inReal = _tmp_inReal;
         }
+        boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -177495,6 +181022,11 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 rc = core.WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
             } catch (RuntimeException _e) {
@@ -177503,7 +181035,13 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _pr = core.WMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _pr.begIdx();
@@ -177515,8 +181053,10 @@ public class TaCodegenServe {
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
             }
+            }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
         else { try {
             if (bench_mode == 1) {
                 core.WMA_Open(_warm_inReal, optInTimePeriod);
@@ -177531,6 +181071,11 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
             try {
                 OutRange _fr = core.WMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
@@ -177541,6 +181086,7 @@ public class TaCodegenServe {
                 rc = ((TaLibFailure) _e).retCode();
                 outBegIdx.value = 0;
                 outNBElement.value = 0;
+            }
             }
             usedFloat = 1;
         }

@@ -3621,7 +3621,15 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
         s.push_str("        }\n");
 
-        // Optional params
+        // Optional params. `_optRejected` (issue #256) catches an out-of-list
+        // enum value BEFORE it reaches `.values()[...]` -- unlike the sv_<func>
+        // and absBind()/computeLookback() paths, nothing here wrapped that index
+        // in a try/catch, so an out-of-range optInMAType threw
+        // ArrayIndexOutOfBoundsException out of the JSON parse itself, before the
+        // library's own exception normalisation ever ran. Declared unconditionally
+        // (read unconditionally below) rather than only for functions with an enum
+        // param, so it is never an unused local either way.
+        s.push_str("        boolean _optRejected = false;\n");
         for opt in &func.optional_inputs {
             if opt.param_type == ParamType::Real {
                 s.push_str(&format!(
@@ -3629,10 +3637,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                     opt.name, opt.name
                 ));
             } else if let ParamType::Enum(ref enum_name) = opt.param_type {
-                // Enum params: read as int, convert to enum type
+                // Enum params: read as a raw int first, and reject out-of-list
+                // before converting to the enum type. On rejection the enum local
+                // is bound to a placeholder in-range value (index 0) purely so the
+                // rest of this method still compiles and runs its normal shape;
+                // `_optRejected` is what actually forces the BadParam response
+                // below, and the placeholder is never observed in one.
                 s.push_str(&format!(
-                    "        {} {} = {}.values()[jsonInt(json, \"{}\")];\n",
-                    enum_name, opt.name, enum_name, opt.name
+                    "        int _raw_{0} = jsonInt(json, \"{0}\");\n\
+                     \x20       if (_raw_{0} < 0 || _raw_{0} >= {1}.values().length) _optRejected = true;\n\
+                     \x20       {1} {0} = {1}.values()[_optRejected ? 0 : _raw_{0}];\n",
+                    opt.name, enum_name
                 ));
             } else {
                 s.push_str(&format!(
@@ -3742,6 +3757,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             }
             s.push_str("        if (bench_mode == 0) {\n");
             s.push_str("        if (jsonInt(json, \"timed\") != 0) {\n");
+            s.push_str("            if (_optRejected) {\n");
+            s.push_str("                rc = RetCode.BadParam;\n");
+            s.push_str("                outBegIdx.value = 0;\n");
+            s.push_str("                outNBElement.value = 0;\n");
+            s.push_str("            } else {\n");
             s.push_str("            try {\n");
             s.push_str(&format!("                rc = core.{func_base}_Impl({core_args});\n"));
             s.push_str("            } catch (RuntimeException _e) {\n");
@@ -3750,7 +3770,13 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            }\n");
+            s.push_str("            }\n");
             s.push_str("        } else {\n");
+            s.push_str("            if (_optRejected) {\n");
+            s.push_str("                rc = RetCode.BadParam;\n");
+            s.push_str("                outBegIdx.value = 0;\n");
+            s.push_str("                outNBElement.value = 0;\n");
+            s.push_str("            } else {\n");
             s.push_str("            try {\n");
             s.push_str(&format!("                OutRange _pr = core.{func_base}({pub_args});\n"));
             s.push_str("                outBegIdx.value = _pr.begIdx();\n");
@@ -3761,6 +3787,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
+            s.push_str("            }\n");
             s.push_str("            }\n");
             s.push_str("        }\n");
             s.push_str("        }\n");
@@ -3787,6 +3814,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 fill_args.push(format!("outArr{k}"));
             }
             let fill = fill_args.join(", ");
+            s.push_str("        else if (_optRejected) { rc = RetCode.BadParam; }\n");
             s.push_str("        else { try {\n");
             s.push_str("            if (bench_mode == 1) {\n");
             s.push_str(&format!(
@@ -3822,6 +3850,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
         // The float leg is a CORRECTNESS leg, so it takes the public overload
         // for the same reason the double one does. Normalised here, same shape.
+        s.push_str("            if (_optRejected) {\n");
+        s.push_str("                rc = RetCode.BadParam;\n");
+        s.push_str("                outBegIdx.value = 0;\n");
+        s.push_str("                outNBElement.value = 0;\n");
+        s.push_str("            } else {\n");
         s.push_str("            try {\n");
         {
             let mut f_args = String::from("startIdx, endIdx");
@@ -3845,6 +3878,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            }\n");
         }
+        s.push_str("            }\n");
         s.push_str("            usedFloat = 1;\n");
         s.push_str("        }\n");
 
