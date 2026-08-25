@@ -3230,7 +3230,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("    static void checkLength(String funcName, String argName, int actual, int required) {\n");
     s.push_str("        if (actual < 0) {\n");
-    s.push_str("            throw new TaLibNullArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
+    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("        if (actual < required) {\n");
     s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName\n");

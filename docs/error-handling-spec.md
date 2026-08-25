@@ -145,27 +145,30 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B4 | A required argument was not supplied — an input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
 | B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[6] | ✅<br>[7] | ✅<br>&nbsp; |
-| B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` ⚠️ | ✅<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
+| B6a | An output is **omitted** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
+| B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. No automated test covers it: provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors") | `TA_INTERNAL_ERROR` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 **Range.** A real or integer parameter's range is the `range:` its .yaml
 declares; an enum parameter's is the declared member set of its type.
 
-Some candlestick patterns declare an OHLC series their algorithm never reads;
-those legs are exempt from B4 and B5, so a short or absent one is accepted —
-"required" means required by the body, not declared in the signature.
+Some candlestick patterns declare an OHLC series their algorithm never reads.
+Rust, Java and C# exempt those legs from B4 and B5, so a short or absent one is
+accepted; C checks them like any other input. Being a three-way exemption rather
+than a rule is the defect, not which side is right — see #260.
 
-**Implementation**: `c_batch_prologue_orders_parameters_before_presence`
-(ta_codegen's suite) for the B3-before-B4 order, which both answer
-`TA_BAD_PARAM` and no runtime probe can separate; `testBatchArgumentContract`
-(`test_internals.c`) and `BatchApiTest` for B4.
+**Implementation**: `testIndexRange`, `checkOutputAliasRejected`,
+`testBatchArgumentContract` (`test_abstract.c`, `test_internals.c`);
+`c_batch_prologue_orders_parameters_before_presence` (ta_codegen's suite);
+`BatchApiTest` (Java, C#); `no_phantom_io` (Rust).
 
 [1] Slices cannot be null, and the index/count pair (`OutRange`) is returned
 rather than written through pointers.
 
-[2] Java raises rather than returning a code, so it reports this as a
-`NullPointerException` naming the function and the argument — the code is on the
-thrown object (Appendix A). It does not cover the never-indexed legs above.
+[2] Reported like any other `TA_BAD_PARAM`, naming the function and the
+argument. Java used to spell an absent argument as a `NullPointerException`,
+which made B3 and B4 distinguishable in Java and nowhere else. It does not cover
+the never-indexed legs above.
 
 [3] A `Span<T>` cannot be absent. A null array converts to an empty span and is
 reported by B5 instead, which names the buffer and both sizes.
@@ -177,10 +180,10 @@ has what happens instead.
 per-access bounds checks. It is skipped on a sub-lookback range, so the input
 bound goes unchecked there in Rust as it does in C.
 
-[6] **No run-time error, because the call cannot be written.** Two `&mut [f64]`
-cannot alias, so the borrow checker rejects it at compile time. The
-crate-private tier still guards on pointer equality and answers `BadParam`, for
-a caller arriving through FFI.
+[6] **The condition cannot be written**: two `&mut [f64]` cannot alias, so the
+borrow checker rejects it at compile time. The `as_ptr()` guard behind the public
+entry point therefore never fires on a real alias — but it does fire on distinct
+zero-length outputs, which share a dangling pointer (Appendix F).
 
 [7] **A run-time error.** Two Java arrays are either the same object or
 disjoint, so reference equality catches every case this rule covers.
@@ -563,7 +566,7 @@ Each ✅ rests on two independent checks; neither alone is enough.
    | Rust batch: `startIdx` guard → `endIdx` guard → bounds asserts (following the FMA dispatcher to the real core) | 174 / 174 |
    | Java batch: clamp (which raises B3), then every length check, then the core | 348 / 348 |
    | C# batch: clamp, then every length check, then the core | 348 / 348 |
-   | C# cores carrying an overlap guard wherever one is expressible | 110 guarded, 0 unguarded, 64 not expressible |
+   | C# cores carrying an overlap guard wherever one is expressible | no core unguarded where the type expresses it |
    | Short-history arm reports the catch-all (C, Rust) / the borrowed code (Java, C#) | 172 streaming functions per backend, no backend mixing the two |
 
    The 348 counts are 174 functions × the double and float overloads, so the
@@ -615,7 +618,7 @@ inferred.
 | ~~8~~ | all | S6 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S3) down with it — see footnote [12]. |
 | 9 | Rust, Java, C# | S8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
 | ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
-| 11 | C#, Rust | B6 | Two **empty** output buffers are rejected as aliased. C# says so explicitly (`a.IsEmpty && b.IsEmpty` is a clause of the guard); Rust does it incidentally, because the guard compares `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejects *some* empty pairs and accepts others — which is worse than either). C and Java accept them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this is a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Unreachable until #236 step 2 sized the harness's output buffers to the produced count, which is why the servers floor that length at one. |
+| 11 | C#, Rust | B6 | Two **empty** output buffers are rejected as aliased. C# says so explicitly (`a.IsEmpty && b.IsEmpty` is a clause of the guard); Rust does it incidentally, because the guard compares `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejects *some* empty pairs and accepts others — which is worse than either). C and Java accept them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this is a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Unreachable until #236 step 2 sized the harness's output buffers to the produced count, which is why the servers floor that length at one. Superseded by rule B6a: an omitted output is a declaration, not an alias — Appendix F, #262. |
 | 12 | Java, C# | B5 | **MA** is **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answers `TA_BAD_PARAM` before any array is reached, so the probe cannot tell "read nothing" from "never ran". The public API is unaffected — reached through the caller's own wrapper the callee's check is provably redundant, same `endIdx`, same array. **Was ten functions**; nine are resolved. Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` cannot: it is a dispatch function, and the generator admits only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on — so a guard there is a generator change, not an edit to `ma.c`. The one remaining route is giving the input bound the sub-lookback escape the output bound has, converging with C and Rust and giving up the stricter reading B5 adopted. The list is explicit and its size asserted in both suites, so the debt cannot grow silently. |
 
 Item 9 is the one that still changes what a *correct* caller can do: it turns a
@@ -668,3 +671,42 @@ of the guarantee, kept because it costs one call on a type that already answers 
 question. **Callers must not rely on it**: the same call is unspecified in C, and
 inexpressible in Java and Rust. If uniformity is ever preferred over the extra
 safety, removing it is the change — not adding the check elsewhere.
+
+---
+
+## Appendix F — Omitted outputs
+
+An indicator may declare an output a caller can decline. `MAMA`'s `outFAMA` is
+the only one today, marked `flags: [nullable]` in `ta_codegen/input/mama/mama.yaml`.
+Declining it is not the same as passing a buffer too small: the caller is saying
+*do not compute this*, and the body's writes to it are guarded instead.
+
+**How a caller spells "omitted" is not the same in every language**, and that is
+the whole difficulty:
+
+| backend | can express "omitted" distinctly from "empty"? |
+|---|---|
+| C | **Yes** — `NULL` is not a valid zero-length buffer |
+| Java | **Yes** — `null` is not `new double[0]` |
+| Rust | **No** — an omitted output and an empty one are both a zero-length slice |
+| C# | **No** — both are an empty `Span<T>` |
+
+Two consequences follow, and both are open:
+
+**Only C honours the declaration.** C skips the null check for a nullable output
+(`ta_MAMA.c:183` checks `outMAMA` and not `outFAMA`) and guards each write. Java
+and C# length-check `outFAMA` like any other output, so the same call is accepted
+in C and rejected in the managed backends. Rust has no way to decline it at all.
+
+**A zero-length output is ambiguous where null is unspellable.** Rust and C#
+cannot tell "I decline this output" from "nothing is produced, so I sized it
+zero", and today neither reads the `nullable` flag. Rust's `as_ptr()` aliasing
+guard makes this visible: three separately allocated empty `Vec`s all report the
+same dangling pointer, so `ACCBANDS` over a range shorter than its lookback —
+a call B5 explicitly permits with zero-length outputs — answers `BadParam`.
+Measured: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Distinct
+zero-length *subslices* of one buffer have real addresses and are accepted, so
+Rust rejects some empty triples and accepts others.
+
+Rule B6a states the intended contract. No backend implements it yet, which is
+why all four cells are deviations rather than passes — #262.

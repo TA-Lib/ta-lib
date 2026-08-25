@@ -467,9 +467,12 @@ jobs:
       # ones -- scratch_election (#146), stream_finite, stream_out_range (#241)
       # and div_zero (#249). clippy --all-targets only COMPILES the test target
       # and --doc skips it, so narrowing this step silently retires all five.
-      - name: Run the generated crate's unit tests
+      #
+      # `--tests`, not `--lib`: the latter excludes tests/, which is where the
+      # generated phantom-I/O sweep lives. It ran nowhere until this was widened.
+      - name: Run the generated crate's unit and integration tests
         shell: bash
-        run: cargo test --lib -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+        run: cargo test --tests -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.

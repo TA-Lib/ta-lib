@@ -237,9 +237,9 @@ public class BatchApiTest {
             () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "period below range -> IllegalArgument");
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 50, (double[]) null, 10, out),
-            "null input -> NullPointerException");
+            "null input -> IllegalArgument");
 
         // Two outputs sharing one array has no correct answer (issue #108).
         final double[] shared = new double[100];
@@ -315,21 +315,21 @@ public class BatchApiTest {
         final double[] in = closes(200);
         final double[] out = new double[200];
 
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
-            "null input -> NullPointerException naming it", "SMA", "inReal");
-        checkThrows(NullPointerException.class,
+            "null input names it", "SMA", "inReal");
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 199, in, 10, (double[]) null),
-            "null output -> NullPointerException naming it", "SMA", "outReal");
-        checkThrows(NullPointerException.class,
+            "null output names it", "SMA", "outReal");
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 199, (float[]) null, 10, out),
-            "null float input -> NullPointerException naming it", "SMA", "inReal");
+            "null float input names it", "SMA", "inReal");
         // An argument that does not exist is a bug however little of it would
         // have been read: the null check outlives the lookback short-circuit
         // that switches the LENGTH check off.
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 9, in, 30, (double[]) null),
-            "null output on a range that produces nothing -> NullPointerException",
+            "null output on a range that produces nothing is still rejected",
             "SMA", "outReal");
     }
 
@@ -516,9 +516,9 @@ public class BatchApiTest {
             () -> Core.DEFAULT.CDLDOJI(0, 199, o, h, l, c, new int[3]),
             "short int[] output -> IllegalArgument",
             "CDLDOJI", "outInteger", "3", String.valueOf(produced));
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.CDLDOJI(0, 199, o, h, l, c, (int[]) null),
-            "null int[] output -> NullPointerException", "outInteger");
+            "null int[] output -> IllegalArgument", "outInteger");
     }
 
     /** The float overload carries the identical checks, on its own array type. */
@@ -766,7 +766,7 @@ public class BatchApiTest {
         // The control, and what makes the three above about ORDER rather than
         // about the null check having been deleted: with the indices valid, the
         // null IS the diagnosis.
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
             "a valid range still reports the null", "SMA", "inReal");
     }
@@ -794,20 +794,17 @@ public class BatchApiTest {
         // The control: with the period valid, the buffer IS the diagnosis. Without
         // it the two above would pass against a wrapper that had simply stopped
         // checking buffers.
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
             "a valid period still reports the null", "SMA", "inReal");
     }
 
     /**
      * A null enum parameter is rejected as a parameter outside its domain,
-     * naming the function and the parameter. It is B3 like any other parameter
-     * rejection, so it is an {@link IllegalArgumentException} carrying
-     * {@link RetCode#BadParam} — NOT the {@link NullPointerException} the array
-     * rules raise. Left to itself it reaches the {@code switch} inside the
-     * function's own {@code _Lookback} and surfaces as a bare
-     * {@code NullPointerException} naming neither. Java is the only backend
-     * where this is expressible at all.
+     * naming the function and the parameter. Left to itself it reaches the
+     * {@code switch} inside the function's own {@code _Lookback} and surfaces as
+     * a bare {@link NullPointerException} naming neither. Java is the only
+     * backend where this is expressible at all.
      */
     static void aNullEnumIsNamed() {
         final double[] in = closes(200);
@@ -819,11 +816,6 @@ public class BatchApiTest {
         checkCode(RetCode.BadParam,
             () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
             "a null enum carries BadParam");
-        // The array rules keep their own spelling, so the line above is about
-        // this rejection's type and not about NullPointerException being gone.
-        checkThrows(NullPointerException.class,
-            () -> Core.DEFAULT.MA(0, 199, in, 10, MAType.SMA, (double[]) null),
-            "a null output is still a NullPointerException", "MA", "outReal");
         // ...and neither outranks the index rules.
         checkThrows(IndexOutOfBoundsException.class,
             () -> Core.DEFAULT.MA(-1, 199, in, 10, null, out),
