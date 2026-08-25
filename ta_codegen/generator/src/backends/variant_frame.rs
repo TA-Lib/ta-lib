@@ -68,7 +68,7 @@ const LICENSE: &str = "\
 /// A price bundle is already expanded to one input per component by
 /// `parser::yaml`, which tags each with the component it carries — so the kind
 /// is read off that tag rather than reconstructed from the abstract grouping.
-fn input_kind(name: &str, component: Option<PriceComponent>) -> &'static str {
+pub(crate) fn input_kind(name: &str, component: Option<PriceComponent>) -> &'static str {
     if let Some(comp) = component {
         return match comp {
             PriceComponent::Open => "TA_VIN_OPEN",
@@ -90,7 +90,7 @@ fn input_kind(name: &str, component: Option<PriceComponent>) -> &'static str {
 }
 
 /// Flattened input slots for `func`: `(c_kind, name)` per array parameter.
-fn flat_inputs(func: &FuncDef) -> Vec<(&'static str, String)> {
+pub(crate) fn flat_inputs(func: &FuncDef) -> Vec<(&'static str, String)> {
     let mut out = Vec::new();
     for input in &func.inputs {
         match &input.param_type {
