@@ -3821,8 +3821,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 "                core.{func_base}_Open({ins});\n"
             ));
             s.push_str("            } else {\n");
+            // The fill reports its range via the returned handle's outRange()
+            // (issue #256) -- unpack it into the same two locals the batch arm
+            // sets, which the response builder below reads. Discarding the
+            // handle (as before) left outBegIdx/outNBElement at whatever the
+            // batch/float legs happened to leave them, invisible to ta_bench
+            // (timing-only) but wrong for anything that reads the value, same
+            // shape as the Rust arm's `Ok((_h, r)) => outBegIdx = r.beg_idx`.
             s.push_str(&format!(
-                "                core.{func_base}_OpenAndFill({fill});\n"
+                "                Core.{func_base}_Stream _wh = core.{func_base}_OpenAndFill({fill});\n\
+                 \x20               outBegIdx.value = _wh.outRange().begIdx();\n\
+                 \x20               outNBElement.value = _wh.outRange().count();\n"
             ));
             s.push_str("            }\n");
             s.push_str("            rc = RetCode.Success;\n");

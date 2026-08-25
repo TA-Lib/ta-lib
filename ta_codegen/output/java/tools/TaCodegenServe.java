@@ -154643,7 +154643,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AC_Open(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             } else {
-                core.AC_OpenAndFill(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
+                Core.AC_Stream _wh = core.AC_OpenAndFill(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -154797,7 +154799,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ACCBANDS_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ACCBANDS_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0, outArr1, outArr2);
+                Core.ACCBANDS_Stream _wh = core.ACCBANDS_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -154944,7 +154948,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ACOS_Open(_warm_inReal);
             } else {
-                core.ACOS_OpenAndFill(_warm_inReal, outArr0);
+                Core.ACOS_Stream _wh = core.ACOS_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -155098,7 +155104,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AD_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
             } else {
-                core.AD_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, outArr0);
+                Core.AD_Stream _wh = core.AD_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -155248,7 +155256,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ADD_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.ADD_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                Core.ADD_Stream _wh = core.ADD_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -155406,7 +155416,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ADOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod);
             } else {
-                core.ADOSC_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
+                Core.ADOSC_Stream _wh = core.ADOSC_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -155563,7 +155575,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ADX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ADX_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.ADX_Stream _wh = core.ADX_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -155717,7 +155731,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ADXR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ADXR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.ADXR_Stream _wh = core.ADXR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -155867,7 +155883,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AO_Open(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod);
             } else {
-                core.AO_OpenAndFill(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, outArr0);
+                Core.AO_Stream _wh = core.AO_OpenAndFill(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156013,7 +156031,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.APO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
             } else {
-                core.APO_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                Core.APO_Stream _wh = core.APO_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156159,7 +156179,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AROON_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.AROON_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0, outArr1);
+                Core.AROON_Stream _wh = core.AROON_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156308,7 +156330,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AROONOSC_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.AROONOSC_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                Core.AROONOSC_Stream _wh = core.AROONOSC_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156449,7 +156473,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ASIN_Open(_warm_inReal);
             } else {
-                core.ASIN_OpenAndFill(_warm_inReal, outArr0);
+                Core.ASIN_Stream _wh = core.ASIN_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156588,7 +156614,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ATAN_Open(_warm_inReal);
             } else {
-                core.ATAN_OpenAndFill(_warm_inReal, outArr0);
+                Core.ATAN_Stream _wh = core.ATAN_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156739,7 +156767,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ATR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.ATR_Stream _wh = core.ATR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -156883,7 +156913,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AVGDEV_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.AVGDEV_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.AVGDEV_Stream _wh = core.AVGDEV_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157037,7 +157069,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.AVGPRICE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.AVGPRICE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.AVGPRICE_Stream _wh = core.AVGPRICE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157190,7 +157224,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.BBANDS_Open(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
             } else {
-                core.BBANDS_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
+                Core.BBANDS_Stream _wh = core.BBANDS_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157339,7 +157375,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.BETA_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
             } else {
-                core.BETA_OpenAndFill(_warm_inReal0, _warm_inReal1, optInTimePeriod, outArr0);
+                Core.BETA_Stream _wh = core.BETA_OpenAndFill(_warm_inReal0, _warm_inReal1, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157495,7 +157533,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.BOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.BOP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.BOP_Stream _wh = core.BOP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157651,7 +157691,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CCI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.CCI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.CCI_Stream _wh = core.CCI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157809,7 +157851,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL2CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL2CROWS_Stream _wh = core.CDL2CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -157969,7 +158013,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL3BLACKCROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3BLACKCROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL3BLACKCROWS_Stream _wh = core.CDL3BLACKCROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -158129,7 +158175,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL3INSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3INSIDE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL3INSIDE_Stream _wh = core.CDL3INSIDE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -158289,7 +158337,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL3LINESTRIKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3LINESTRIKE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL3LINESTRIKE_Stream _wh = core.CDL3LINESTRIKE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -158449,7 +158499,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL3OUTSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3OUTSIDE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL3OUTSIDE_Stream _wh = core.CDL3OUTSIDE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -158609,7 +158661,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL3STARSINSOUTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3STARSINSOUTH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL3STARSINSOUTH_Stream _wh = core.CDL3STARSINSOUTH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -158769,7 +158823,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDL3WHITESOLDIERS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3WHITESOLDIERS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDL3WHITESOLDIERS_Stream _wh = core.CDL3WHITESOLDIERS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -158930,7 +158986,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLABANDONEDBABY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLABANDONEDBABY_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLABANDONEDBABY_Stream _wh = core.CDLABANDONEDBABY_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -159090,7 +159148,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLADVANCEBLOCK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLADVANCEBLOCK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLADVANCEBLOCK_Stream _wh = core.CDLADVANCEBLOCK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -159250,7 +159310,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLBELTHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLBELTHOLD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLBELTHOLD_Stream _wh = core.CDLBELTHOLD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -159410,7 +159472,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLBREAKAWAY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLBREAKAWAY_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLBREAKAWAY_Stream _wh = core.CDLBREAKAWAY_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -159570,7 +159634,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLCLOSINGMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLCLOSINGMARUBOZU_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLCLOSINGMARUBOZU_Stream _wh = core.CDLCLOSINGMARUBOZU_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -159730,7 +159796,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLCONCEALBABYSWALL_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLCONCEALBABYSWALL_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLCONCEALBABYSWALL_Stream _wh = core.CDLCONCEALBABYSWALL_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -159890,7 +159958,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLCOUNTERATTACK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLCOUNTERATTACK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLCOUNTERATTACK_Stream _wh = core.CDLCOUNTERATTACK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -160051,7 +160121,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLDARKCLOUDCOVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLDARKCLOUDCOVER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLDARKCLOUDCOVER_Stream _wh = core.CDLDARKCLOUDCOVER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -160211,7 +160283,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLDOJI_Stream _wh = core.CDLDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -160371,7 +160445,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLDOJISTAR_Stream _wh = core.CDLDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -160531,7 +160607,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLDRAGONFLYDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLDRAGONFLYDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLDRAGONFLYDOJI_Stream _wh = core.CDLDRAGONFLYDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -160691,7 +160769,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLENGULFING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLENGULFING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLENGULFING_Stream _wh = core.CDLENGULFING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -160852,7 +160932,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLEVENINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLEVENINGDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLEVENINGDOJISTAR_Stream _wh = core.CDLEVENINGDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161013,7 +161095,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLEVENINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLEVENINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLEVENINGSTAR_Stream _wh = core.CDLEVENINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161173,7 +161257,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLGAPSIDESIDEWHITE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLGAPSIDESIDEWHITE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLGAPSIDESIDEWHITE_Stream _wh = core.CDLGAPSIDESIDEWHITE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161333,7 +161419,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLGRAVESTONEDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLGRAVESTONEDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLGRAVESTONEDOJI_Stream _wh = core.CDLGRAVESTONEDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161493,7 +161581,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHAMMER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHAMMER_Stream _wh = core.CDLHAMMER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161653,7 +161743,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHANGINGMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHANGINGMAN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHANGINGMAN_Stream _wh = core.CDLHANGINGMAN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161813,7 +161905,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHARAMI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHARAMI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHARAMI_Stream _wh = core.CDLHARAMI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -161973,7 +162067,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHARAMICROSS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHARAMICROSS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHARAMICROSS_Stream _wh = core.CDLHARAMICROSS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -162133,7 +162229,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHIGHWAVE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHIGHWAVE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHIGHWAVE_Stream _wh = core.CDLHIGHWAVE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -162293,7 +162391,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHIKKAKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHIKKAKE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHIKKAKE_Stream _wh = core.CDLHIKKAKE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -162453,7 +162553,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHIKKAKEMOD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHIKKAKEMOD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHIKKAKEMOD_Stream _wh = core.CDLHIKKAKEMOD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -162613,7 +162715,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLHOMINGPIGEON_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHOMINGPIGEON_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLHOMINGPIGEON_Stream _wh = core.CDLHOMINGPIGEON_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -162773,7 +162877,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLIDENTICAL3CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLIDENTICAL3CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLIDENTICAL3CROWS_Stream _wh = core.CDLIDENTICAL3CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -162933,7 +163039,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLINNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLINNECK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLINNECK_Stream _wh = core.CDLINNECK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -163093,7 +163201,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLINVERTEDHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLINVERTEDHAMMER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLINVERTEDHAMMER_Stream _wh = core.CDLINVERTEDHAMMER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -163253,7 +163363,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLKICKING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLKICKING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLKICKING_Stream _wh = core.CDLKICKING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -163413,7 +163525,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLKICKINGBYLENGTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLKICKINGBYLENGTH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLKICKINGBYLENGTH_Stream _wh = core.CDLKICKINGBYLENGTH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -163573,7 +163687,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLLADDERBOTTOM_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLLADDERBOTTOM_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLLADDERBOTTOM_Stream _wh = core.CDLLADDERBOTTOM_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -163733,7 +163849,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLLONGLEGGEDDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLLONGLEGGEDDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLLONGLEGGEDDOJI_Stream _wh = core.CDLLONGLEGGEDDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -163893,7 +164011,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLLONGLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLLONGLINE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLLONGLINE_Stream _wh = core.CDLLONGLINE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -164053,7 +164173,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLMARUBOZU_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLMARUBOZU_Stream _wh = core.CDLMARUBOZU_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -164213,7 +164335,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLMATCHINGLOW_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLMATCHINGLOW_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLMATCHINGLOW_Stream _wh = core.CDLMATCHINGLOW_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -164374,7 +164498,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLMATHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLMATHOLD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLMATHOLD_Stream _wh = core.CDLMATHOLD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -164535,7 +164661,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLMORNINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLMORNINGDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLMORNINGDOJISTAR_Stream _wh = core.CDLMORNINGDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -164696,7 +164824,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLMORNINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLMORNINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                Core.CDLMORNINGSTAR_Stream _wh = core.CDLMORNINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -164856,7 +164986,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLONNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLONNECK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLONNECK_Stream _wh = core.CDLONNECK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165016,7 +165148,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLPIERCING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLPIERCING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLPIERCING_Stream _wh = core.CDLPIERCING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165176,7 +165310,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLRICKSHAWMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLRICKSHAWMAN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLRICKSHAWMAN_Stream _wh = core.CDLRICKSHAWMAN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165336,7 +165472,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLRISEFALL3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLRISEFALL3METHODS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLRISEFALL3METHODS_Stream _wh = core.CDLRISEFALL3METHODS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165496,7 +165634,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLSEPARATINGLINES_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSEPARATINGLINES_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLSEPARATINGLINES_Stream _wh = core.CDLSEPARATINGLINES_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165656,7 +165796,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLSHOOTINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSHOOTINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLSHOOTINGSTAR_Stream _wh = core.CDLSHOOTINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165816,7 +165958,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLSHORTLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSHORTLINE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLSHORTLINE_Stream _wh = core.CDLSHORTLINE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -165976,7 +166120,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLSPINNINGTOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSPINNINGTOP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLSPINNINGTOP_Stream _wh = core.CDLSPINNINGTOP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -166136,7 +166282,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLSTALLEDPATTERN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSTALLEDPATTERN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLSTALLEDPATTERN_Stream _wh = core.CDLSTALLEDPATTERN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -166296,7 +166444,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLSTICKSANDWICH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSTICKSANDWICH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLSTICKSANDWICH_Stream _wh = core.CDLSTICKSANDWICH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -166456,7 +166606,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLTAKURI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTAKURI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLTAKURI_Stream _wh = core.CDLTAKURI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -166616,7 +166768,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLTASUKIGAP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTASUKIGAP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLTASUKIGAP_Stream _wh = core.CDLTASUKIGAP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -166776,7 +166930,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLTHRUSTING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTHRUSTING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLTHRUSTING_Stream _wh = core.CDLTHRUSTING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -166936,7 +167092,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLTRISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTRISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLTRISTAR_Stream _wh = core.CDLTRISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -167096,7 +167254,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLUNIQUE3RIVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLUNIQUE3RIVER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLUNIQUE3RIVER_Stream _wh = core.CDLUNIQUE3RIVER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -167256,7 +167416,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLUPSIDEGAP2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLUPSIDEGAP2CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLUPSIDEGAP2CROWS_Stream _wh = core.CDLUPSIDEGAP2CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -167416,7 +167578,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CDLXSIDEGAP3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLXSIDEGAP3METHODS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.CDLXSIDEGAP3METHODS_Stream _wh = core.CDLXSIDEGAP3METHODS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -167561,7 +167725,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CEIL_Open(_warm_inReal);
             } else {
-                core.CEIL_OpenAndFill(_warm_inReal, outArr0);
+                Core.CEIL_Stream _wh = core.CEIL_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -167716,7 +167882,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CMF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
             } else {
-                core.CMF_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+                Core.CMF_Stream _wh = core.CMF_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -167863,7 +168031,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CMO_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.CMO_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.CMO_Stream _wh = core.CMO_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168003,7 +168173,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CMOU_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.CMOU_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.CMOU_Stream _wh = core.CMOU_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168148,7 +168320,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.CORREL_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
             } else {
-                core.CORREL_OpenAndFill(_warm_inReal0, _warm_inReal1, optInTimePeriod, outArr0);
+                Core.CORREL_Stream _wh = core.CORREL_OpenAndFill(_warm_inReal0, _warm_inReal1, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168289,7 +168463,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.COS_Open(_warm_inReal);
             } else {
-                core.COS_OpenAndFill(_warm_inReal, outArr0);
+                Core.COS_Stream _wh = core.COS_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168428,7 +168604,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.COSH_Open(_warm_inReal);
             } else {
-                core.COSH_OpenAndFill(_warm_inReal, outArr0);
+                Core.COSH_Stream _wh = core.COSH_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168568,7 +168746,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.DEMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.DEMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.DEMA_Stream _wh = core.DEMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168712,7 +168892,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.DIV_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.DIV_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                Core.DIV_Stream _wh = core.DIV_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -168865,7 +169047,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.DX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.DX_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.DX_Stream _wh = core.DX_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169014,7 +169198,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.EFI_Open(_warm_inClose, _warm_inVolume, optInTimePeriod);
             } else {
-                core.EFI_OpenAndFill(_warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+                Core.EFI_Stream _wh = core.EFI_OpenAndFill(_warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169157,7 +169343,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.EMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.EMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.EMA_Stream _wh = core.EMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169296,7 +169484,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.EXP_Open(_warm_inReal);
             } else {
-                core.EXP_OpenAndFill(_warm_inReal, outArr0);
+                Core.EXP_Stream _wh = core.EXP_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169435,7 +169625,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.FLOOR_Open(_warm_inReal);
             } else {
-                core.FLOOR_OpenAndFill(_warm_inReal, outArr0);
+                Core.FLOOR_Stream _wh = core.FLOOR_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169575,7 +169767,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.HMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.HMA_Stream _wh = core.HMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169715,7 +169909,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HT_DCPERIOD_Open(_warm_inReal);
             } else {
-                core.HT_DCPERIOD_OpenAndFill(_warm_inReal, outArr0);
+                Core.HT_DCPERIOD_Stream _wh = core.HT_DCPERIOD_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169855,7 +170051,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HT_DCPHASE_Open(_warm_inReal);
             } else {
-                core.HT_DCPHASE_OpenAndFill(_warm_inReal, outArr0);
+                Core.HT_DCPHASE_Stream _wh = core.HT_DCPHASE_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -169996,7 +170194,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HT_PHASOR_Open(_warm_inReal);
             } else {
-                core.HT_PHASOR_OpenAndFill(_warm_inReal, outArr0, outArr1);
+                Core.HT_PHASOR_Stream _wh = core.HT_PHASOR_OpenAndFill(_warm_inReal, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170139,7 +170339,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HT_SINE_Open(_warm_inReal);
             } else {
-                core.HT_SINE_OpenAndFill(_warm_inReal, outArr0, outArr1);
+                Core.HT_SINE_Stream _wh = core.HT_SINE_OpenAndFill(_warm_inReal, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170281,7 +170483,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HT_TRENDLINE_Open(_warm_inReal);
             } else {
-                core.HT_TRENDLINE_OpenAndFill(_warm_inReal, outArr0);
+                Core.HT_TRENDLINE_Stream _wh = core.HT_TRENDLINE_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170421,7 +170625,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.HT_TRENDMODE_Open(_warm_inReal);
             } else {
-                core.HT_TRENDMODE_OpenAndFill(_warm_inReal, outArr0);
+                Core.HT_TRENDMODE_Stream _wh = core.HT_TRENDMODE_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170566,7 +170772,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.IMI_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
             } else {
-                core.IMI_OpenAndFill(_warm_inOpen, _warm_inClose, optInTimePeriod, outArr0);
+                Core.IMI_Stream _wh = core.IMI_OpenAndFill(_warm_inOpen, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170709,7 +170917,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.KAMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.KAMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.KAMA_Stream _wh = core.KAMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170849,7 +171059,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.LINEARREG_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.LINEARREG_Stream _wh = core.LINEARREG_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -170989,7 +171201,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.LINEARREG_ANGLE_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_ANGLE_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.LINEARREG_ANGLE_Stream _wh = core.LINEARREG_ANGLE_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171129,7 +171343,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.LINEARREG_INTERCEPT_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_INTERCEPT_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.LINEARREG_INTERCEPT_Stream _wh = core.LINEARREG_INTERCEPT_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171269,7 +171485,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.LINEARREG_SLOPE_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_SLOPE_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.LINEARREG_SLOPE_Stream _wh = core.LINEARREG_SLOPE_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171408,7 +171626,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.LN_Open(_warm_inReal);
             } else {
-                core.LN_OpenAndFill(_warm_inReal, outArr0);
+                Core.LN_Stream _wh = core.LN_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171547,7 +171767,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.LOG10_Open(_warm_inReal);
             } else {
-                core.LOG10_OpenAndFill(_warm_inReal, outArr0);
+                Core.LOG10_Stream _wh = core.LOG10_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171690,7 +171912,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MA_Open(_warm_inReal, optInTimePeriod, optInMAType);
             } else {
-                core.MA_OpenAndFill(_warm_inReal, optInTimePeriod, optInMAType, outArr0);
+                Core.MA_Stream _wh = core.MA_OpenAndFill(_warm_inReal, optInTimePeriod, optInMAType, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171834,7 +172058,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MACD_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             } else {
-                core.MACD_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                Core.MACD_Stream _wh = core.MACD_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -171991,7 +172217,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MACDEXT_Open(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
             } else {
-                core.MACDEXT_OpenAndFill(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
+                Core.MACDEXT_Stream _wh = core.MACDEXT_OpenAndFill(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -172137,7 +172365,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MACDFIX_Open(_warm_inReal, optInSignalPeriod);
             } else {
-                core.MACDFIX_OpenAndFill(_warm_inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
+                Core.MACDFIX_Stream _wh = core.MACDFIX_OpenAndFill(_warm_inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -172284,7 +172514,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MAMA_Open(_warm_inReal, optInFastLimit, optInSlowLimit);
             } else {
-                core.MAMA_OpenAndFill(_warm_inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
+                Core.MAMA_Stream _wh = core.MAMA_OpenAndFill(_warm_inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -172435,7 +172667,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MARKETFI_Open(_warm_inHigh, _warm_inLow, _warm_inVolume);
             } else {
-                core.MARKETFI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inVolume, outArr0);
+                Core.MARKETFI_Stream _wh = core.MARKETFI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inVolume, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -172588,7 +172822,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MAVP_Open(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
             } else {
-                core.MAVP_OpenAndFill(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
+                Core.MAVP_Stream _wh = core.MAVP_OpenAndFill(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -172730,7 +172966,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MAX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MAX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.MAX_Stream _wh = core.MAX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -172870,7 +173108,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MAXINDEX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MAXINDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.MAXINDEX_Stream _wh = core.MAXINDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173014,7 +173254,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MEDPRICE_Open(_warm_inHigh, _warm_inLow);
             } else {
-                core.MEDPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, outArr0);
+                Core.MEDPRICE_Stream _wh = core.MEDPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173171,7 +173413,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MFI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
             } else {
-                core.MFI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+                Core.MFI_Stream _wh = core.MFI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173317,7 +173561,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MIDPOINT_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MIDPOINT_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.MIDPOINT_Stream _wh = core.MIDPOINT_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173462,7 +173708,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MIDPRICE_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.MIDPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                Core.MIDPRICE_Stream _wh = core.MIDPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173604,7 +173852,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MIN_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MIN_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.MIN_Stream _wh = core.MIN_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173744,7 +173994,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MININDEX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MININDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.MININDEX_Stream _wh = core.MININDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -173885,7 +174137,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MINMAX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MINMAX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0, outArr1);
+                Core.MINMAX_Stream _wh = core.MINMAX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174028,7 +174282,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MINMAXINDEX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MINMAXINDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0, outArr1);
+                Core.MINMAXINDEX_Stream _wh = core.MINMAXINDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174181,7 +174437,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MINUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.MINUS_DI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.MINUS_DI_Stream _wh = core.MINUS_DI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174331,7 +174589,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MINUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.MINUS_DM_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                Core.MINUS_DM_Stream _wh = core.MINUS_DM_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174473,7 +174733,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MOM_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MOM_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.MOM_Stream _wh = core.MOM_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174617,7 +174879,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.MULT_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.MULT_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                Core.MULT_Stream _wh = core.MULT_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174770,7 +175034,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.NATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.NATR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.NATR_Stream _wh = core.NATR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -174918,7 +175184,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.NVI_Open(_warm_inClose, _warm_inVolume);
             } else {
-                core.NVI_OpenAndFill(_warm_inClose, _warm_inVolume, outArr0);
+                Core.NVI_Stream _wh = core.NVI_OpenAndFill(_warm_inClose, _warm_inVolume, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175064,7 +175332,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.OBV_Open(_warm_inReal, _warm_inVolume);
             } else {
-                core.OBV_OpenAndFill(_warm_inReal, _warm_inVolume, outArr0);
+                Core.OBV_Stream _wh = core.OBV_OpenAndFill(_warm_inReal, _warm_inVolume, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175217,7 +175487,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.PLUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.PLUS_DI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.PLUS_DI_Stream _wh = core.PLUS_DI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175367,7 +175639,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.PLUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.PLUS_DM_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                Core.PLUS_DM_Stream _wh = core.PLUS_DM_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175513,7 +175787,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.PPO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
             } else {
-                core.PPO_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                Core.PPO_Stream _wh = core.PPO_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175657,7 +175933,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.PVI_Open(_warm_inClose, _warm_inVolume);
             } else {
-                core.PVI_OpenAndFill(_warm_inClose, _warm_inVolume, outArr0);
+                Core.PVI_Stream _wh = core.PVI_OpenAndFill(_warm_inClose, _warm_inVolume, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175803,7 +176081,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.PVO_Open(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
             } else {
-                core.PVO_OpenAndFill(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                Core.PVO_Stream _wh = core.PVO_OpenAndFill(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -175948,7 +176228,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.QSTICK_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
             } else {
-                core.QSTICK_OpenAndFill(_warm_inOpen, _warm_inClose, optInTimePeriod, outArr0);
+                Core.QSTICK_Stream _wh = core.QSTICK_OpenAndFill(_warm_inOpen, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176090,7 +176372,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ROC_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROC_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.ROC_Stream _wh = core.ROC_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176230,7 +176514,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ROCP_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROCP_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.ROCP_Stream _wh = core.ROCP_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176370,7 +176656,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ROCR_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROCR_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.ROCR_Stream _wh = core.ROCR_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176510,7 +176798,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ROCR100_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROCR100_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.ROCR100_Stream _wh = core.ROCR100_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176651,7 +176941,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.RSI_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.RSI_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.RSI_Stream _wh = core.RSI_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176797,7 +177089,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SAR_Open(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum);
             } else {
-                core.SAR_OpenAndFill(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum, outArr0);
+                Core.SAR_Stream _wh = core.SAR_OpenAndFill(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -176951,7 +177245,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SAREXT_Open(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
             } else {
-                core.SAREXT_OpenAndFill(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
+                Core.SAREXT_Stream _wh = core.SAREXT_OpenAndFill(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177092,7 +177388,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SIN_Open(_warm_inReal);
             } else {
-                core.SIN_OpenAndFill(_warm_inReal, outArr0);
+                Core.SIN_Stream _wh = core.SIN_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177231,7 +177529,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SINH_Open(_warm_inReal);
             } else {
-                core.SINH_OpenAndFill(_warm_inReal, outArr0);
+                Core.SINH_Stream _wh = core.SINH_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177371,7 +177671,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.SMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.SMA_Stream _wh = core.SMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177525,7 +177827,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SMI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             } else {
-                core.SMI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
+                Core.SMI_Stream _wh = core.SMI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177670,7 +177974,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SQRT_Open(_warm_inReal);
             } else {
-                core.SQRT_OpenAndFill(_warm_inReal, outArr0);
+                Core.SQRT_Stream _wh = core.SQRT_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177811,7 +178117,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.STDDEV_Open(_warm_inReal, optInTimePeriod, optInNbDev);
             } else {
-                core.STDDEV_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDev, outArr0);
+                Core.STDDEV_Stream _wh = core.STDDEV_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDev, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -177970,7 +178278,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.STOCH_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             } else {
-                core.STOCH_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
+                Core.STOCH_Stream _wh = core.STOCH_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178131,7 +178441,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.STOCHF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             } else {
-                core.STOCHF_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                Core.STOCHF_Stream _wh = core.STOCHF_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178283,7 +178595,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.STOCHRSI_Open(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             } else {
-                core.STOCHRSI_OpenAndFill(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                Core.STOCHRSI_Stream _wh = core.STOCHRSI_OpenAndFill(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178429,7 +178743,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SUB_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.SUB_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                Core.SUB_Stream _wh = core.SUB_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178571,7 +178887,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.SUM_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.SUM_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.SUM_Stream _wh = core.SUM_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178713,7 +179031,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.T3_Open(_warm_inReal, optInTimePeriod, optInVFactor);
             } else {
-                core.T3_OpenAndFill(_warm_inReal, optInTimePeriod, optInVFactor, outArr0);
+                Core.T3_Stream _wh = core.T3_OpenAndFill(_warm_inReal, optInTimePeriod, optInVFactor, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178852,7 +179172,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TAN_Open(_warm_inReal);
             } else {
-                core.TAN_OpenAndFill(_warm_inReal, outArr0);
+                Core.TAN_Stream _wh = core.TAN_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -178991,7 +179313,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TANH_Open(_warm_inReal);
             } else {
-                core.TANH_OpenAndFill(_warm_inReal, outArr0);
+                Core.TANH_Stream _wh = core.TANH_OpenAndFill(_warm_inReal, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -179131,7 +179455,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TEMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TEMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.TEMA_Stream _wh = core.TEMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -179280,7 +179606,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TRANGE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.TRANGE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.TRANGE_Stream _wh = core.TRANGE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -179424,7 +179752,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TRIMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TRIMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.TRIMA_Stream _wh = core.TRIMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -179564,7 +179894,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TRIX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TRIX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.TRIX_Stream _wh = core.TRIX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -179704,7 +180036,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TSF_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TSF_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.TSF_Stream _wh = core.TSF_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -179853,7 +180187,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.TYPPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.TYPPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.TYPPRICE_Stream _wh = core.TYPPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180009,7 +180345,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.ULTOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
             } else {
-                core.ULTOSC_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
+                Core.ULTOSC_Stream _wh = core.ULTOSC_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180154,7 +180492,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.VAR_Open(_warm_inReal, optInTimePeriod, optInNbDev);
             } else {
-                core.VAR_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDev, outArr0);
+                Core.VAR_Stream _wh = core.VAR_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDev, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180308,7 +180648,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.VWAP_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
             } else {
-                core.VWAP_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, outArr0);
+                Core.VWAP_Stream _wh = core.VWAP_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180459,7 +180801,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.VWMA_Open(_warm_inReal, _warm_inVolume, optInTimePeriod);
             } else {
-                core.VWMA_OpenAndFill(_warm_inReal, _warm_inVolume, optInTimePeriod, outArr0);
+                Core.VWMA_Stream _wh = core.VWMA_OpenAndFill(_warm_inReal, _warm_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180610,7 +180954,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.WAD_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.WAD_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.WAD_Stream _wh = core.WAD_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180763,7 +181109,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.WCLPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.WCLPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                Core.WCLPRICE_Stream _wh = core.WCLPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -180917,7 +181265,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.WILLR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.WILLR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                Core.WILLR_Stream _wh = core.WILLR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
@@ -181061,7 +181411,9 @@ public class TaCodegenServe {
             if (bench_mode == 1) {
                 core.WMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.WMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                Core.WMA_Stream _wh = core.WMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
