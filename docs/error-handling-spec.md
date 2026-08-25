@@ -146,7 +146,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B5 | A buffer is too short for what the call reads or writes | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B5a | A range shorter than the lookback produces nothing, so it needs no output space — but the input must still reach `endIdx` | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
-| B7 | A scratch allocation failed. Only C reports it | `TA_ALLOC_ERR` | ✅ | — | — | — |
+| B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` | ✅ | — | — | — |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors") | `TA_INTERNAL_ERROR` | ✅ | ✅ | ✅ | ✅ |
 
 **Range.** A real or integer parameter's range is the `range:` its .yaml
