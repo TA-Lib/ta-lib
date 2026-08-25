@@ -143,7 +143,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — an input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
-| B5 | A buffer is too short for what the call reads or writes | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
+| B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`) | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B5a | A range shorter than the lookback produces nothing, so it needs no output space — but the input must still reach `endIdx` | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
 | B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` ⚠️ | ✅<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
@@ -152,28 +152,9 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 **Range.** A real or integer parameter's range is the `range:` its .yaml
 declares; an enum parameter's is the declared member set of its type.
 
-**Capacity (B5), precisely.** Every input the body indexes must reach `endIdx`.
-Every output must hold **the count actually produced** — `endIdx - max(startIdx,
-lookback) + 1` — which on a range starting below the lookback is shorter than
-the requested range, and is `0` when the range is shorter than the lookback
-(rule N1), at which point any output length will do — including none, on the
-two backends that accept a zero-length output at all (Appendix D item 11).
-
-*The body indexes* is doing work in that sentence. Four candlestick patterns
-declare an OHLC series their algorithm never reads — **CDL3OUTSIDE**,
-**CDLENGULFING** and **CDLXSIDEGAP3METHODS** (`inHigh`, `inLow`), and
-**CDLHIKKAKE** (`inOpen`): seven legs, eight public overloads per managed
-backend. Those legs are exempt from B5 **and from B4**, so a short or absent
-one is accepted. Measured: `CDLHIKKAKE(0, 99, null, high, low, close, out)`
-returns 95 values in Java, while the control — a short `inClose`, which the body
-does read — is rejected naming the buffer and both sizes.
-
-Deliberate, and shared: the exemption is computed once
-(`backends::common::indexed_input_names`) and consumed by the Rust assert
-preamble and the Java and C# checks alike, so all three agree on which legs are
-load-bearing. Checking them would refuse a call the algorithm can answer, and
-refuse it in the managed backends only. The cost is that "required" in B4 means
-*required by this function's body*, not *declared in its signature*.
+Four candlestick patterns declare an OHLC series their algorithm never reads;
+those legs are exempt from B4 and B5, so a short or absent one is accepted —
+"required" means required by the body, not declared in the signature.
 
 **Implementation**: `c_batch_prologue_orders_parameters_before_presence`
 (ta_codegen's suite) for the B3-before-B4 order, which both answer
@@ -185,9 +166,7 @@ rather than written through pointers.
 
 [2] Java raises rather than returning a code, so it reports this as a
 `NullPointerException` naming the function and the argument — the code is on the
-thrown object (Appendix A). It does not cover the never-indexed legs described
-under **Capacity (B5)** above, which are not checked at all — an argument the
-algorithm never reads is not required.
+thrown object (Appendix A). It does not cover the never-indexed legs above.
 
 [3] A `Span<T>` cannot be absent. A null array converts to an empty span and is
 reported by B5 instead, which names the buffer and both sizes.
