@@ -574,6 +574,123 @@ fn test_c_synth_private_omits_validation() {
     );
 }
 
+/// The validation prologue of one C batch entry point: from the `startIdx` guard
+/// to the blank line that closes the checks. The index guards are followed by a
+/// blank line of their own, so the prologue ends at the SECOND one.
+fn c_batch_prologues(c: &str) -> Vec<&str> {
+    const HEAD: &str = "if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )";
+    let mut out = Vec::new();
+    let mut from = 0;
+    while let Some(rel) = c[from..].find(HEAD) {
+        let start = from + rel;
+        let first = start
+            + c[start..]
+                .find("\n\n")
+                .expect("the index guards end in a blank line");
+        let end = first
+            + 2
+            + c[first + 2..]
+                .find("\n\n")
+                .expect("a prologue ends in a blank line");
+        out.push(&c[start..end]);
+        from = end;
+    }
+    out
+}
+
+/// `docs/error-handling-spec.md` 2.2: B1, B2, then B3 — an optional parameter
+/// outside its documented domain — and only then B4, a required argument that was
+/// not supplied.
+///
+/// The parameter rule leads because it is the one every backend can express: a
+/// Rust slice and a C# span cannot be absent, so B4 is C's and Java's alone, and
+/// putting it last is what lets a multi-fault call report the same condition in
+/// all four.
+///
+/// Structural, and it has to be: B3 and B4 both answer `TA_BAD_PARAM`, so no
+/// runtime probe can see the order between them. The range out-parameters are
+/// part of B4 — an absent one used to be dereferenced.
+#[test]
+fn c_batch_prologue_orders_parameters_before_presence() {
+    const OUT_META: &str = "if( !outBegIdx || !outNBElement )";
+    let mut prologues = 0usize;
+    let mut with_params = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, enums)) = try_load_indicator(&name) else {
+            continue;
+        };
+        let Some(out) = try_generate_all(&func, &enums) else {
+            continue;
+        };
+        for prologue in c_batch_prologues(&out.c) {
+            prologues += 1;
+            let where_ = format!("{}: {prologue}", func.name);
+
+            let start = prologue
+                .find("TA_OUT_OF_RANGE_START_INDEX")
+                .unwrap_or_else(|| panic!("{where_}\nno startIdx guard"));
+            let end = prologue
+                .find("TA_OUT_OF_RANGE_END_INDEX")
+                .unwrap_or_else(|| panic!("{where_}\nno endIdx guard"));
+            assert!(start < end, "{where_}\nB1 must precede B2");
+
+            let meta = prologue
+                .find(OUT_META)
+                .unwrap_or_else(|| panic!("{where_}\nthe range out-parameters are unchecked"));
+            let mut presence = vec![meta];
+            let mut inputs = Vec::new();
+            for input in &func.inputs {
+                let at = prologue
+                    .find(&format!("if( !{} )", input.name))
+                    .unwrap_or_else(|| panic!("{where_}\n{} is unchecked", input.name));
+                inputs.push(at);
+                presence.push(at);
+            }
+            let mut outputs = Vec::new();
+            for output in &func.outputs {
+                if output.is_nullable() {
+                    continue;
+                }
+                let at = prologue
+                    .find(&format!("if( !{} )", output.name))
+                    .unwrap_or_else(|| panic!("{where_}\n{} is unchecked", output.name));
+                outputs.push(at);
+                presence.push(at);
+            }
+            let first_presence = *presence.iter().min().expect("out-meta is always present");
+            assert!(end < first_presence, "{where_}\nB2 must precede B4");
+
+            // The last sentinel substitution sits in the last parameter's block,
+            // and its range check is the line right after it — so every presence
+            // check has to follow it.
+            let last_param = prologue
+                .rfind("TA_INTEGER_DEFAULT")
+                .into_iter()
+                .chain(prologue.rfind("TA_REAL_DEFAULT"))
+                .max();
+            if let Some(at) = last_param {
+                with_params += 1;
+                assert!(end < at, "{where_}\nB2 must precede B3");
+                assert!(at < first_presence, "{where_}\nB3 must precede B4");
+            }
+            if let (Some(last_in), Some(first_out)) =
+                (inputs.iter().max(), outputs.iter().min())
+            {
+                assert!(last_in < first_out, "{where_}\ninputs precede outputs");
+            }
+        }
+    }
+
+    // Two per function, double and float. Literal floors: derived ones move with
+    // whatever the scan happens to find.
+    assert!(prologues >= 340, "only {prologues} C batch prologues scanned");
+    assert!(
+        with_params >= 150,
+        "only {with_params} prologues carried parameter validation — B3 is barely covered"
+    );
+}
+
 #[test]
 fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");

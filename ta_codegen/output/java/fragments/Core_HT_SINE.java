@@ -848,9 +848,9 @@
                             double outLeadSine[] )
    {
       requireIndexRange("HT_SINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_SINE", startIdx, HT_SINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_SINE", "inReal", inReal, guardInLen);
       requireLength("HT_SINE", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
@@ -911,9 +911,9 @@
                             double outLeadSine[] )
    {
       requireIndexRange("HT_SINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_SINE", startIdx, HT_SINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_SINE", "inReal", inReal, guardInLen);
       requireLength("HT_SINE", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);

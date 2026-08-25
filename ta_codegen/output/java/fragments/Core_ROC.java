@@ -214,9 +214,9 @@
                         double outReal[] )
    {
       requireIndexRange("ROC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROC", startIdx, ROC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROC", "inReal", inReal, guardInLen);
       requireLength("ROC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -279,9 +279,9 @@
                         double outReal[] )
    {
       requireIndexRange("ROC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROC", startIdx, ROC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROC", "inReal", inReal, guardInLen);
       requireLength("ROC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

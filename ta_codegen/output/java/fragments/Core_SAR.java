@@ -523,9 +523,9 @@
                         double outReal[] )
    {
       requireIndexRange("SAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAR", startIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAR", "inHigh", inHigh, guardInLen);
       requireLength("SAR", "inLow", inLow, guardInLen);
       requireLength("SAR", "outReal", outReal, guardOutLen);
@@ -596,9 +596,9 @@
                         double outReal[] )
    {
       requireIndexRange("SAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAR", startIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAR", "inHigh", inHigh, guardInLen);
       requireLength("SAR", "inLow", inLow, guardInLen);
       requireLength("SAR", "outReal", outReal, guardOutLen);

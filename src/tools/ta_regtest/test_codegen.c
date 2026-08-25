@@ -6459,7 +6459,7 @@ typedef struct {
     long long    lbOorCases;         /* ... of which on an out-of-range vector     */
     long long    lbSentCases;        /* ... of which on a default-sentinel vector  */
 
-    /* Same-server tier agreement (issue #256's B4+S5), riding THIS leg's
+    /* Same-server tier agreement (issue #256's B3+S5), riding THIS leg's
      * limit-case vector battery rather than a fresh one — see
      * xlang_lookback_leg's doc comment. Lookback (`srv`, above) is the
      * reference; these four count how many (vector, server) pairs actually
@@ -6917,7 +6917,7 @@ static long long xlang_lookback_norm(const char *resp, int *present)
 }
 
 /* ---- Same-server tier agreement: Lookback vs Batch vs Open vs OpenAndFill
- * (issue #256, completing L2's B4+S5) ---------------------------------------
+ * (issue #256, completing L2's B3+S5) ---------------------------------------
  *
  * A fixed, tiny history, built ONCE and read-only afterward: these calls only
  * need to reach the parameter-validation prologue (plus a little real
@@ -7159,7 +7159,7 @@ typedef struct {
     int        haveOaf;
 } XlangTierResults;
 
-/* Same-backend tier agreement (issue #256's L2, B4+S5): calls batch/Open/
+/* Same-backend tier agreement (issue #256's L2, B3+S5): calls batch/Open/
  * OpenAndFill on `sv` for `optVals`, and checks each retCode against
  * `lookbackVerdict` — THIS SAME backend's own lookback-tier answer (>= 0
  * accepted, < 0 rejected). For a real (Rust/Java/C#) server: the property is
@@ -7883,7 +7883,7 @@ static int xlang_selfcheck_array_transport(XlangCtx *ctx)
  *
  *  - L2 (same-backend): does EACH backend — including C itself, checked
  *    in-process via xlang_tier_native_check — agree with itself across
- *    Lookback/Batch/Open/OpenAndFill (issue #256's B4+S5).
+ *    Lookback/Batch/Open/OpenAndFill (issue #256's B3+S5).
  *  - L3 ("Golden Check", cross-language): does each of Rust/Java/C#'s Batch/
  *    Open/OpenAndFill result match what C's native in-process call produced
  *    for the SAME vector.

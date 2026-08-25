@@ -129,9 +129,9 @@
                              double outReal[] )
    {
       requireIndexRange("MEDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MEDPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MEDPRICE", startIdx, MEDPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
       requireLength("MEDPRICE", "inLow", inLow, guardInLen);
       requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
@@ -192,9 +192,9 @@
                              double outReal[] )
    {
       requireIndexRange("MEDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MEDPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MEDPRICE", startIdx, MEDPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
       requireLength("MEDPRICE", "inLow", inLow, guardInLen);
       requireLength("MEDPRICE", "outReal", outReal, guardOutLen);

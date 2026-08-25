@@ -194,9 +194,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLXSIDEGAP3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLXSIDEGAP3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLXSIDEGAP3METHODS", startIdx, CDLXSIDEGAP3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLXSIDEGAP3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "inClose", inClose, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "outInteger", outInteger, guardOutLen);
@@ -265,9 +265,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLXSIDEGAP3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLXSIDEGAP3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLXSIDEGAP3METHODS", startIdx, CDLXSIDEGAP3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLXSIDEGAP3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "inClose", inClose, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "outInteger", outInteger, guardOutLen);

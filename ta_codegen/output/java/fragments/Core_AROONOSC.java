@@ -307,9 +307,9 @@
                              double outReal[] )
    {
       requireIndexRange("AROONOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROONOSC", startIdx, AROONOSC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
       requireLength("AROONOSC", "inLow", inLow, guardInLen);
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
@@ -378,9 +378,9 @@
                              double outReal[] )
    {
       requireIndexRange("AROONOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROONOSC", startIdx, AROONOSC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
       requireLength("AROONOSC", "inLow", inLow, guardInLen);
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);

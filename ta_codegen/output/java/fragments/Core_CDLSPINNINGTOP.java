@@ -211,9 +211,9 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLSPINNINGTOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSPINNINGTOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, CDLSPINNINGTOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
       requireLength("CDLSPINNINGTOP", "inHigh", inHigh, guardInLen);
       requireLength("CDLSPINNINGTOP", "inLow", inLow, guardInLen);
@@ -281,9 +281,9 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLSPINNINGTOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSPINNINGTOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, CDLSPINNINGTOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
       requireLength("CDLSPINNINGTOP", "inHigh", inHigh, guardInLen);
       requireLength("CDLSPINNINGTOP", "inLow", inLow, guardInLen);

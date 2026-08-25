@@ -261,9 +261,9 @@
                                      int outInteger[] )
    {
       requireIndexRange("CDLCOUNTERATTACK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCOUNTERATTACK", startIdx, CDLCOUNTERATTACK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCOUNTERATTACK", "inOpen", inOpen, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inHigh", inHigh, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inLow", inLow, guardInLen);
@@ -333,9 +333,9 @@
                                      int outInteger[] )
    {
       requireIndexRange("CDLCOUNTERATTACK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCOUNTERATTACK", startIdx, CDLCOUNTERATTACK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCOUNTERATTACK", "inOpen", inOpen, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inHigh", inHigh, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inLow", inLow, guardInLen);

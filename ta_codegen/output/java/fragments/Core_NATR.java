@@ -447,9 +447,9 @@
                          double outReal[] )
    {
       requireIndexRange("NATR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NATR", startIdx, NATR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NATR", "inHigh", inHigh, guardInLen);
       requireLength("NATR", "inLow", inLow, guardInLen);
       requireLength("NATR", "inClose", inClose, guardInLen);
@@ -519,9 +519,9 @@
                          double outReal[] )
    {
       requireIndexRange("NATR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NATR", startIdx, NATR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NATR", "inHigh", inHigh, guardInLen);
       requireLength("NATR", "inLow", inLow, guardInLen);
       requireLength("NATR", "inClose", inClose, guardInLen);

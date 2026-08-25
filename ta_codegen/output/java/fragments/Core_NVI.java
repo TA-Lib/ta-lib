@@ -188,9 +188,9 @@
                         double outReal[] )
    {
       requireIndexRange("NVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NVI", startIdx, NVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NVI", "inClose", inClose, guardInLen);
       requireLength("NVI", "inVolume", inVolume, guardInLen);
       requireLength("NVI", "outReal", outReal, guardOutLen);
@@ -259,9 +259,9 @@
                         double outReal[] )
    {
       requireIndexRange("NVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NVI", startIdx, NVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NVI", "inClose", inClose, guardInLen);
       requireLength("NVI", "inVolume", inVolume, guardInLen);
       requireLength("NVI", "outReal", outReal, guardOutLen);

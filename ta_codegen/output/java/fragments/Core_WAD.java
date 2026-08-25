@@ -232,9 +232,9 @@
                         double outReal[] )
    {
       requireIndexRange("WAD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WAD", startIdx, WAD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WAD", "inHigh", inHigh, guardInLen);
       requireLength("WAD", "inLow", inLow, guardInLen);
       requireLength("WAD", "inClose", inClose, guardInLen);
@@ -319,9 +319,9 @@
                         double outReal[] )
    {
       requireIndexRange("WAD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WAD", startIdx, WAD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WAD", "inHigh", inHigh, guardInLen);
       requireLength("WAD", "inLow", inLow, guardInLen);
       requireLength("WAD", "inClose", inClose, guardInLen);

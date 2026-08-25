@@ -697,9 +697,9 @@ fn body_name(base: &str) -> String {
 /// actually produced — `endIdx - max(startIdx, lookback) + 1`, the produced
 /// count, not the width of the requested range.
 ///
-/// `clampedStart` is `max(startIdx, lookback)`, or `-1` when the core will reject
-/// the call itself — the one case that must not be pre-empted, because the core
-/// owns that diagnosis.
+/// `clampedStart` is `max(startIdx, lookback)`; it throws the parameter rejection
+/// when the lookback signals one, which rule L2 makes exactly the batch tier's own
+/// B3 decision on the same parameters.
 ///
 /// The `_assertStart > endIdx ||` escape in front of the Rust asserts is applied
 /// to the OUTPUT bound only. A range shorter than the lookback produces no values,
@@ -716,12 +716,10 @@ fn body_name(base: &str) -> String {
 /// A null array is rejected either way — the length check is conditional, the
 /// contract that an argument exists is not.
 ///
-/// **Order.** `requireIndexRange` comes first, then the presence of any non-buffer
-/// argument, then the buffer checks: the specification evaluates B1/B2 before
-/// B3, and this wrapper used to run the presence check ahead of both, so an
-/// absent buffer pre-empted an out-of-range index (open item 3). The null enum
-/// check (item 4) has to sit ahead of the `_Lookback` call below, because that is
-/// where a null one is first dereferenced.
+/// **Order.** The index rules (B1, B2), then the optional parameters (B3), then
+/// the buffers (B4, B5). A null enum is a parameter out of its domain, and its
+/// check has to sit ahead of the `_Lookback` call below, because that is where a
+/// null one is first dereferenced.
 fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
     let indexed = super::common::indexed_input_names(func);
     let inputs: Vec<&str> = func
@@ -750,15 +748,15 @@ fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
     let _ = writeln!(
         out,
-        "      int guardStart = clampedStart(startIdx, endIdx, {base_name}_Lookback({}));",
+        "      int guardStart = clampedStart(\"{base_name}\", startIdx, {base_name}_Lookback({}));",
         lb_args.join(", ")
     );
     if !inputs.is_empty() {
-        out.push_str("      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;\n");
+        out.push_str("      int guardInLen = endIdx + 1;\n");
     }
     if !func.outputs.is_empty() {
         out.push_str(
-            "      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;\n",
+            "      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;\n",
         );
     }
     for name in inputs {

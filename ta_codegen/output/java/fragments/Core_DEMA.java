@@ -327,9 +327,9 @@
                          double outReal[] )
    {
       requireIndexRange("DEMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DEMA", startIdx, DEMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DEMA", "inReal", inReal, guardInLen);
       requireLength("DEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -393,9 +393,9 @@
                          double outReal[] )
    {
       requireIndexRange("DEMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DEMA", startIdx, DEMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DEMA", "inReal", inReal, guardInLen);
       requireLength("DEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

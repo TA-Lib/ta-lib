@@ -290,35 +290,43 @@ public final class Core {
    }
 
    /**
-    * Rule B3 for an argument that is not a buffer — today, an enum parameter.
+    * Rule B3 for an enum parameter, whose domain is its declared member set and
+    * so excludes null.
     *
     * <p>Java is the only backend where this can happen: C# enums are value
-    * types, C's are integers, and Rust's cannot be absent. A null one used to
-    * reach the {@code switch} inside the function's own {@code _Lookback} and
-    * surface as a bare {@link NullPointerException} naming neither the function
-    * nor the parameter ({@code docs/error-handling-spec.md}, open item 4).
+    * types, C's are integers, and Rust's cannot be absent. Left to itself a null
+    * one reaches the {@code switch} inside the function's own {@code _Lookback}
+    * and surfaces as a bare {@link NullPointerException} naming neither the
+    * function nor the parameter.
     *
-    * <p>It reports {@link RetCode#BadParam}, the code C answers for an absent
-    * argument it can detect, and it runs after {@link Core#requireIndexRange}
-    * so the specified order holds.
+    * <p>It is an {@link IllegalArgumentException} carrying
+    * {@link RetCode#BadParam}, the same as every other B3 rejection — the domain
+    * is what null falls outside of, so nothing here is special enough to warrant
+    * its own exception type. {@code MAType.DEFAULT}, not null, is how a caller
+    * asks for the documented default. It runs after
+    * {@link Core#requireIndexRange} so the specified order holds.
     */
    static void requireArgument(String funcName, String argName, Object argument) {
       if (argument == null) {
-         throw new TaLibNullArgumentException(funcName + ": " + argName + " is null",
+         throw new TaLibArgumentException(funcName + ": " + argName + " is null",
                RetCode.BadParam);
       }
    }
 
    /**
-    * The requested start after the lookback clamp — {@code max(startIdx,
-    * lookback)} — or {@code -1} when the core will reject the call before it
-    * reaches the algorithm.
+    * Rule B3 for the numeric optional parameters, and the requested start after
+    * the lookback clamp — {@code max(startIdx, lookback)} — for the buffer
+    * bounds that follow it.
     *
-    * <p>{@code -1} means <i>check no length at all</i>: a negative or
-    * out-of-range index, {@code endIdx < startIdx}, or the {@code -1} a lookback
-    * returns for an out-of-range optional parameter. The core owns that
-    * diagnosis and {@link Core#failure} translates it, so pre-empting it would
-    * replace a documented exception with a length complaint.
+    * <p>A negative {@code lookback} is the rejection signal
+    * {@code <N>_Lookback} returns for a parameter outside its documented domain,
+    * and rule L2 makes that decision identical to the one the core would reach
+    * on the same parameters. Raising it here is what puts B3 ahead of the buffer
+    * rules: without it a null array reported the array, and the caller never saw
+    * the parameter that was also wrong.
+    *
+    * <p>Callers run {@link Core#requireIndexRange} first, so the indices are
+    * already known good and the clamp cannot come back negative.
     *
     * <p>A result <i>above</i> {@code endIdx} is not an error: it says the range
     * is shorter than the lookback, so the call produces no values. That switches
@@ -338,9 +346,9 @@ public final class Core {
     * a safety net — {@code NoPhantomIoTest} pins that no core reads anything on
     * a sub-lookback range, so there is nothing here for it to catch.
     */
-   static int clampedStart(int startIdx, int endIdx, int lookback) {
-      if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX) {
-         return -1;
+   static int clampedStart(String funcName, int startIdx, int lookback) {
+      if (lookback < 0) {
+         throw failure(funcName, RetCode.BadParam);
       }
       return startIdx > lookback ? startIdx : lookback;
    }
@@ -356,9 +364,9 @@ public final class Core {
     * output buffer already half written and no {@link OutRange} to say how far
     * the call got.
     *
-    * <p>{@code required} is {@code 0} when {@link Core#clampedStart} found no
-    * length worth checking, which leaves only the null check — an argument that
-    * does not exist is a bug regardless of how much of it would have been read.
+    * <p>{@code required} is {@code 0} on a range that produces nothing, which
+    * leaves only the null check — an argument that does not exist is a bug
+    * regardless of how much of it would have been read.
     */
    static void requireLength(String funcName, String argName, double[] array, int required) {
       checkLength(funcName, argName, array == null ? -1 : array.length, required);
@@ -845,9 +853,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("AC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AC", startIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AC", "inHigh", inHigh, guardInLen);
       requireLength("AC", "inLow", inLow, guardInLen);
       requireLength("AC", "outReal", outReal, guardOutLen);
@@ -937,9 +945,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("AC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AC", startIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AC", "inHigh", inHigh, guardInLen);
       requireLength("AC", "inLow", inLow, guardInLen);
       requireLength("AC", "outReal", outReal, guardOutLen);
@@ -1843,9 +1851,9 @@ public final class Core {
                              double outRealLowerBand[] )
    {
       requireIndexRange("ACCBANDS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ACCBANDS_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ACCBANDS", startIdx, ACCBANDS_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ACCBANDS", "inHigh", inHigh, guardInLen);
       requireLength("ACCBANDS", "inLow", inLow, guardInLen);
       requireLength("ACCBANDS", "inClose", inClose, guardInLen);
@@ -1921,9 +1929,9 @@ public final class Core {
                              double outRealLowerBand[] )
    {
       requireIndexRange("ACCBANDS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ACCBANDS_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ACCBANDS", startIdx, ACCBANDS_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ACCBANDS", "inHigh", inHigh, guardInLen);
       requireLength("ACCBANDS", "inLow", inLow, guardInLen);
       requireLength("ACCBANDS", "inClose", inClose, guardInLen);
@@ -2544,9 +2552,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ACOS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ACOS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ACOS", startIdx, ACOS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ACOS", "inReal", inReal, guardInLen);
       requireLength("ACOS", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -2606,9 +2614,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ACOS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ACOS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ACOS", startIdx, ACOS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ACOS", "inReal", inReal, guardInLen);
       requireLength("ACOS", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -3031,9 +3039,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("AD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AD", startIdx, AD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AD", "inHigh", inHigh, guardInLen);
       requireLength("AD", "inLow", inLow, guardInLen);
       requireLength("AD", "inClose", inClose, guardInLen);
@@ -3100,9 +3108,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("AD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AD", startIdx, AD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AD", "inHigh", inHigh, guardInLen);
       requireLength("AD", "inLow", inLow, guardInLen);
       requireLength("AD", "inClose", inClose, guardInLen);
@@ -3510,9 +3518,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ADD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADD", startIdx, ADD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADD", "inReal0", inReal0, guardInLen);
       requireLength("ADD", "inReal1", inReal1, guardInLen);
       requireLength("ADD", "outReal", outReal, guardOutLen);
@@ -3571,9 +3579,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ADD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADD", startIdx, ADD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADD", "inReal0", inReal0, guardInLen);
       requireLength("ADD", "inReal1", inReal1, guardInLen);
       requireLength("ADD", "outReal", outReal, guardOutLen);
@@ -4170,9 +4178,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("ADOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADOSC", startIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADOSC", "inHigh", inHigh, guardInLen);
       requireLength("ADOSC", "inLow", inLow, guardInLen);
       requireLength("ADOSC", "inClose", inClose, guardInLen);
@@ -4248,9 +4256,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("ADOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADOSC", startIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADOSC", "inHigh", inHigh, guardInLen);
       requireLength("ADOSC", "inLow", inLow, guardInLen);
       requireLength("ADOSC", "inClose", inClose, guardInLen);
@@ -5359,9 +5367,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ADX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADX", startIdx, ADX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADX", "inHigh", inHigh, guardInLen);
       requireLength("ADX", "inLow", inLow, guardInLen);
       requireLength("ADX", "inClose", inClose, guardInLen);
@@ -5439,9 +5447,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ADX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADX", startIdx, ADX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADX", "inHigh", inHigh, guardInLen);
       requireLength("ADX", "inLow", inLow, guardInLen);
       requireLength("ADX", "inClose", inClose, guardInLen);
@@ -6347,9 +6355,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ADXR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADXR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADXR", startIdx, ADXR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADXR", "inHigh", inHigh, guardInLen);
       requireLength("ADXR", "inLow", inLow, guardInLen);
       requireLength("ADXR", "inClose", inClose, guardInLen);
@@ -6423,9 +6431,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ADXR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADXR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADXR", startIdx, ADXR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADXR", "inHigh", inHigh, guardInLen);
       requireLength("ADXR", "inLow", inLow, guardInLen);
       requireLength("ADXR", "inClose", inClose, guardInLen);
@@ -7086,9 +7094,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("AO", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AO", startIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AO", "inHigh", inHigh, guardInLen);
       requireLength("AO", "inLow", inLow, guardInLen);
       requireLength("AO", "outReal", outReal, guardOutLen);
@@ -7169,9 +7177,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("AO", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AO", startIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AO", "inHigh", inHigh, guardInLen);
       requireLength("AO", "inLow", inLow, guardInLen);
       requireLength("AO", "outReal", outReal, guardOutLen);
@@ -7908,9 +7916,9 @@ public final class Core {
    {
       requireIndexRange("APO", startIdx, endIdx);
       requireArgument("APO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("APO", startIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("APO", "inReal", inReal, guardInLen);
       requireLength("APO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -7988,9 +7996,9 @@ public final class Core {
    {
       requireIndexRange("APO", startIdx, endIdx);
       requireArgument("APO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("APO", startIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("APO", "inReal", inReal, guardInLen);
       requireLength("APO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -8650,9 +8658,9 @@ public final class Core {
                           double outAroonUp[] )
    {
       requireIndexRange("AROON", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROON_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROON", startIdx, AROON_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROON", "inHigh", inHigh, guardInLen);
       requireLength("AROON", "inLow", inLow, guardInLen);
       requireLength("AROON", "outAroonDown", outAroonDown, guardOutLen);
@@ -8725,9 +8733,9 @@ public final class Core {
                           double outAroonUp[] )
    {
       requireIndexRange("AROON", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROON_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROON", startIdx, AROON_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROON", "inHigh", inHigh, guardInLen);
       requireLength("AROON", "inLow", inLow, guardInLen);
       requireLength("AROON", "outAroonDown", outAroonDown, guardOutLen);
@@ -9526,9 +9534,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("AROONOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROONOSC", startIdx, AROONOSC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
       requireLength("AROONOSC", "inLow", inLow, guardInLen);
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
@@ -9597,9 +9605,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("AROONOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROONOSC", startIdx, AROONOSC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
       requireLength("AROONOSC", "inLow", inLow, guardInLen);
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
@@ -10200,9 +10208,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ASIN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ASIN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ASIN", startIdx, ASIN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ASIN", "inReal", inReal, guardInLen);
       requireLength("ASIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -10263,9 +10271,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ASIN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ASIN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ASIN", startIdx, ASIN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ASIN", "inReal", inReal, guardInLen);
       requireLength("ASIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -10618,9 +10626,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ATAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ATAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ATAN", startIdx, ATAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ATAN", "inReal", inReal, guardInLen);
       requireLength("ATAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -10676,9 +10684,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ATAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ATAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ATAN", startIdx, ATAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ATAN", "inReal", inReal, guardInLen);
       requireLength("ATAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -11295,9 +11303,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ATR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ATR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ATR", startIdx, ATR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ATR", "inHigh", inHigh, guardInLen);
       requireLength("ATR", "inLow", inLow, guardInLen);
       requireLength("ATR", "inClose", inClose, guardInLen);
@@ -11367,9 +11375,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ATR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ATR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ATR", startIdx, ATR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ATR", "inHigh", inHigh, guardInLen);
       requireLength("ATR", "inLow", inLow, guardInLen);
       requireLength("ATR", "inClose", inClose, guardInLen);
@@ -11977,9 +11985,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("AVGDEV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AVGDEV_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AVGDEV", startIdx, AVGDEV_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AVGDEV", "inReal", inReal, guardInLen);
       requireLength("AVGDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -12041,9 +12049,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("AVGDEV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AVGDEV_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AVGDEV", startIdx, AVGDEV_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AVGDEV", "inReal", inReal, guardInLen);
       requireLength("AVGDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -12490,9 +12498,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("AVGPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AVGPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AVGPRICE", startIdx, AVGPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AVGPRICE", "inOpen", inOpen, guardInLen);
       requireLength("AVGPRICE", "inHigh", inHigh, guardInLen);
       requireLength("AVGPRICE", "inLow", inLow, guardInLen);
@@ -12559,9 +12567,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("AVGPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AVGPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AVGPRICE", startIdx, AVGPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AVGPRICE", "inOpen", inOpen, guardInLen);
       requireLength("AVGPRICE", "inHigh", inHigh, guardInLen);
       requireLength("AVGPRICE", "inLow", inLow, guardInLen);
@@ -13490,9 +13498,9 @@ public final class Core {
    {
       requireIndexRange("BBANDS", startIdx, endIdx);
       requireArgument("BBANDS", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BBANDS", startIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BBANDS", "inReal", inReal, guardInLen);
       requireLength("BBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
       requireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
@@ -13588,9 +13596,9 @@ public final class Core {
    {
       requireIndexRange("BBANDS", startIdx, endIdx);
       requireArgument("BBANDS", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BBANDS", startIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BBANDS", "inReal", inReal, guardInLen);
       requireLength("BBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
       requireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
@@ -14708,9 +14716,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("BETA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, BETA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BETA", startIdx, BETA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BETA", "inReal0", inReal0, guardInLen);
       requireLength("BETA", "inReal1", inReal1, guardInLen);
       requireLength("BETA", "outReal", outReal, guardOutLen);
@@ -14778,9 +14786,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("BETA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, BETA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BETA", startIdx, BETA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BETA", "inReal0", inReal0, guardInLen);
       requireLength("BETA", "inReal1", inReal1, guardInLen);
       requireLength("BETA", "outReal", outReal, guardOutLen);
@@ -15805,9 +15813,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("BOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, BOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BOP", startIdx, BOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BOP", "inOpen", inOpen, guardInLen);
       requireLength("BOP", "inHigh", inHigh, guardInLen);
       requireLength("BOP", "inLow", inLow, guardInLen);
@@ -15871,9 +15879,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("BOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, BOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BOP", startIdx, BOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BOP", "inOpen", inOpen, guardInLen);
       requireLength("BOP", "inHigh", inHigh, guardInLen);
       requireLength("BOP", "inLow", inLow, guardInLen);
@@ -16451,9 +16459,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("CCI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CCI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CCI", startIdx, CCI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CCI", "inHigh", inHigh, guardInLen);
       requireLength("CCI", "inLow", inLow, guardInLen);
       requireLength("CCI", "inClose", inClose, guardInLen);
@@ -16524,9 +16532,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("CCI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CCI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CCI", startIdx, CCI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CCI", "inHigh", inHigh, guardInLen);
       requireLength("CCI", "inLow", inLow, guardInLen);
       requireLength("CCI", "inClose", inClose, guardInLen);
@@ -17164,9 +17172,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDL2CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL2CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL2CROWS", startIdx, CDL2CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL2CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDL2CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDL2CROWS", "inLow", inLow, guardInLen);
@@ -17236,9 +17244,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDL2CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL2CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL2CROWS", startIdx, CDL2CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL2CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDL2CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDL2CROWS", "inLow", inLow, guardInLen);
@@ -17899,9 +17907,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDL3BLACKCROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3BLACKCROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3BLACKCROWS", startIdx, CDL3BLACKCROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3BLACKCROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDL3BLACKCROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDL3BLACKCROWS", "inLow", inLow, guardInLen);
@@ -17969,9 +17977,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDL3BLACKCROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3BLACKCROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3BLACKCROWS", startIdx, CDL3BLACKCROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3BLACKCROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDL3BLACKCROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDL3BLACKCROWS", "inLow", inLow, guardInLen);
@@ -18695,9 +18703,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDL3INSIDE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3INSIDE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3INSIDE", startIdx, CDL3INSIDE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3INSIDE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3INSIDE", "inHigh", inHigh, guardInLen);
       requireLength("CDL3INSIDE", "inLow", inLow, guardInLen);
@@ -18769,9 +18777,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDL3INSIDE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3INSIDE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3INSIDE", startIdx, CDL3INSIDE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3INSIDE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3INSIDE", "inHigh", inHigh, guardInLen);
       requireLength("CDL3INSIDE", "inLow", inLow, guardInLen);
@@ -19495,9 +19503,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDL3LINESTRIKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3LINESTRIKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, CDL3LINESTRIKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3LINESTRIKE", "inHigh", inHigh, guardInLen);
       requireLength("CDL3LINESTRIKE", "inLow", inLow, guardInLen);
@@ -19569,9 +19577,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDL3LINESTRIKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3LINESTRIKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, CDL3LINESTRIKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3LINESTRIKE", "inHigh", inHigh, guardInLen);
       requireLength("CDL3LINESTRIKE", "inLow", inLow, guardInLen);
@@ -20218,9 +20226,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDL3OUTSIDE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3OUTSIDE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3OUTSIDE", startIdx, CDL3OUTSIDE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3OUTSIDE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3OUTSIDE", "inClose", inClose, guardInLen);
       requireLength("CDL3OUTSIDE", "outInteger", outInteger, guardOutLen);
@@ -20289,9 +20297,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDL3OUTSIDE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3OUTSIDE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3OUTSIDE", startIdx, CDL3OUTSIDE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3OUTSIDE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3OUTSIDE", "inClose", inClose, guardInLen);
       requireLength("CDL3OUTSIDE", "outInteger", outInteger, guardOutLen);
@@ -20940,9 +20948,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDL3STARSINSOUTH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3STARSINSOUTH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3STARSINSOUTH", startIdx, CDL3STARSINSOUTH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3STARSINSOUTH", "inOpen", inOpen, guardInLen);
       requireLength("CDL3STARSINSOUTH", "inHigh", inHigh, guardInLen);
       requireLength("CDL3STARSINSOUTH", "inLow", inLow, guardInLen);
@@ -21014,9 +21022,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDL3STARSINSOUTH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3STARSINSOUTH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3STARSINSOUTH", startIdx, CDL3STARSINSOUTH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3STARSINSOUTH", "inOpen", inOpen, guardInLen);
       requireLength("CDL3STARSINSOUTH", "inHigh", inHigh, guardInLen);
       requireLength("CDL3STARSINSOUTH", "inLow", inLow, guardInLen);
@@ -22035,9 +22043,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDL3WHITESOLDIERS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3WHITESOLDIERS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, CDL3WHITESOLDIERS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inHigh", inHigh, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inLow", inLow, guardInLen);
@@ -22107,9 +22115,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDL3WHITESOLDIERS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3WHITESOLDIERS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, CDL3WHITESOLDIERS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inHigh", inHigh, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inLow", inLow, guardInLen);
@@ -23103,9 +23111,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLABANDONEDBABY", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLABANDONEDBABY_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLABANDONEDBABY", startIdx, CDLABANDONEDBABY_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLABANDONEDBABY", "inOpen", inOpen, guardInLen);
       requireLength("CDLABANDONEDBABY", "inHigh", inHigh, guardInLen);
       requireLength("CDLABANDONEDBABY", "inLow", inLow, guardInLen);
@@ -23180,9 +23188,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLABANDONEDBABY", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLABANDONEDBABY_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLABANDONEDBABY", startIdx, CDLABANDONEDBABY_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLABANDONEDBABY", "inOpen", inOpen, guardInLen);
       requireLength("CDLABANDONEDBABY", "inHigh", inHigh, guardInLen);
       requireLength("CDLABANDONEDBABY", "inLow", inLow, guardInLen);
@@ -24140,9 +24148,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLADVANCEBLOCK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLADVANCEBLOCK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLADVANCEBLOCK", startIdx, CDLADVANCEBLOCK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLADVANCEBLOCK", "inOpen", inOpen, guardInLen);
       requireLength("CDLADVANCEBLOCK", "inHigh", inHigh, guardInLen);
       requireLength("CDLADVANCEBLOCK", "inLow", inLow, guardInLen);
@@ -24212,9 +24220,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLADVANCEBLOCK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLADVANCEBLOCK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLADVANCEBLOCK", startIdx, CDLADVANCEBLOCK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLADVANCEBLOCK", "inOpen", inOpen, guardInLen);
       requireLength("CDLADVANCEBLOCK", "inHigh", inHigh, guardInLen);
       requireLength("CDLADVANCEBLOCK", "inLow", inLow, guardInLen);
@@ -25219,9 +25227,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLBELTHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBELTHOLD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBELTHOLD", startIdx, CDLBELTHOLD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLBELTHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLBELTHOLD", "inLow", inLow, guardInLen);
@@ -25296,9 +25304,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLBELTHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBELTHOLD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBELTHOLD", startIdx, CDLBELTHOLD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLBELTHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLBELTHOLD", "inLow", inLow, guardInLen);
@@ -25959,9 +25967,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLBREAKAWAY", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBREAKAWAY_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBREAKAWAY", startIdx, CDLBREAKAWAY_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBREAKAWAY", "inOpen", inOpen, guardInLen);
       requireLength("CDLBREAKAWAY", "inHigh", inHigh, guardInLen);
       requireLength("CDLBREAKAWAY", "inLow", inLow, guardInLen);
@@ -26032,9 +26040,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLBREAKAWAY", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBREAKAWAY_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBREAKAWAY", startIdx, CDLBREAKAWAY_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBREAKAWAY", "inOpen", inOpen, guardInLen);
       requireLength("CDLBREAKAWAY", "inHigh", inHigh, guardInLen);
       requireLength("CDLBREAKAWAY", "inLow", inLow, guardInLen);
@@ -26734,9 +26742,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLCLOSINGMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCLOSINGMARUBOZU_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, CDLCLOSINGMARUBOZU_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inHigh", inHigh, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inLow", inLow, guardInLen);
@@ -26809,9 +26817,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLCLOSINGMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCLOSINGMARUBOZU_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, CDLCLOSINGMARUBOZU_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inHigh", inHigh, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inLow", inLow, guardInLen);
@@ -27490,9 +27498,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, CDLCONCEALBABYSWALL_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inHigh", inHigh, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inLow", inLow, guardInLen);
@@ -27560,9 +27568,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, CDLCONCEALBABYSWALL_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inHigh", inHigh, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inLow", inLow, guardInLen);
@@ -28295,9 +28303,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLCOUNTERATTACK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCOUNTERATTACK", startIdx, CDLCOUNTERATTACK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCOUNTERATTACK", "inOpen", inOpen, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inHigh", inHigh, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inLow", inLow, guardInLen);
@@ -28367,9 +28375,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLCOUNTERATTACK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCOUNTERATTACK", startIdx, CDLCOUNTERATTACK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCOUNTERATTACK", "inOpen", inOpen, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inHigh", inHigh, guardInLen);
       requireLength("CDLCOUNTERATTACK", "inLow", inLow, guardInLen);
@@ -29096,9 +29104,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLDARKCLOUDCOVER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDARKCLOUDCOVER", startIdx, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDARKCLOUDCOVER", "inOpen", inOpen, guardInLen);
       requireLength("CDLDARKCLOUDCOVER", "inHigh", inHigh, guardInLen);
       requireLength("CDLDARKCLOUDCOVER", "inLow", inLow, guardInLen);
@@ -29171,9 +29179,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLDARKCLOUDCOVER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDARKCLOUDCOVER", startIdx, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDARKCLOUDCOVER", "inOpen", inOpen, guardInLen);
       requireLength("CDLDARKCLOUDCOVER", "inHigh", inHigh, guardInLen);
       requireLength("CDLDARKCLOUDCOVER", "inLow", inLow, guardInLen);
@@ -29786,9 +29794,9 @@ public final class Core {
                             int outInteger[] )
    {
       requireIndexRange("CDLDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDOJI", startIdx, CDLDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLDOJI", "inLow", inLow, guardInLen);
@@ -29856,9 +29864,9 @@ public final class Core {
                             int outInteger[] )
    {
       requireIndexRange("CDLDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDOJI", startIdx, CDLDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLDOJI", "inLow", inLow, guardInLen);
@@ -30472,9 +30480,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDOJISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDOJISTAR", startIdx, CDLDOJISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLDOJISTAR", "inLow", inLow, guardInLen);
@@ -30553,9 +30561,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDOJISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDOJISTAR", startIdx, CDLDOJISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLDOJISTAR", "inLow", inLow, guardInLen);
@@ -31270,9 +31278,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLDRAGONFLYDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDRAGONFLYDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDRAGONFLYDOJI", startIdx, CDLDRAGONFLYDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDRAGONFLYDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLDRAGONFLYDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLDRAGONFLYDOJI", "inLow", inLow, guardInLen);
@@ -31349,9 +31357,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLDRAGONFLYDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDRAGONFLYDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDRAGONFLYDOJI", startIdx, CDLDRAGONFLYDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDRAGONFLYDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLDRAGONFLYDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLDRAGONFLYDOJI", "inLow", inLow, guardInLen);
@@ -31984,9 +31992,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLENGULFING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLENGULFING", startIdx, CDLENGULFING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
       requireLength("CDLENGULFING", "inClose", inClose, guardInLen);
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
@@ -32056,9 +32064,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLENGULFING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLENGULFING", startIdx, CDLENGULFING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
       requireLength("CDLENGULFING", "inClose", inClose, guardInLen);
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
@@ -32677,9 +32685,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLEVENINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLEVENINGDOJISTAR", startIdx, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLEVENINGDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLEVENINGDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLEVENINGDOJISTAR", "inLow", inLow, guardInLen);
@@ -32753,9 +32761,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLEVENINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLEVENINGDOJISTAR", startIdx, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLEVENINGDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLEVENINGDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLEVENINGDOJISTAR", "inLow", inLow, guardInLen);
@@ -33613,9 +33621,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLEVENINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLEVENINGSTAR", startIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLEVENINGSTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLEVENINGSTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLEVENINGSTAR", "inLow", inLow, guardInLen);
@@ -33688,9 +33696,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLEVENINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLEVENINGSTAR", startIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLEVENINGSTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLEVENINGSTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLEVENINGSTAR", "inLow", inLow, guardInLen);
@@ -34461,9 +34469,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLGAPSIDESIDEWHITE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLGAPSIDESIDEWHITE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLGAPSIDESIDEWHITE", startIdx, CDLGAPSIDESIDEWHITE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLGAPSIDESIDEWHITE", "inOpen", inOpen, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inHigh", inHigh, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inLow", inLow, guardInLen);
@@ -34534,9 +34542,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLGAPSIDESIDEWHITE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLGAPSIDESIDEWHITE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLGAPSIDESIDEWHITE", startIdx, CDLGAPSIDESIDEWHITE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLGAPSIDESIDEWHITE", "inOpen", inOpen, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inHigh", inHigh, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inLow", inLow, guardInLen);
@@ -35275,9 +35283,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLGRAVESTONEDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLGRAVESTONEDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLGRAVESTONEDOJI", startIdx, CDLGRAVESTONEDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLGRAVESTONEDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLGRAVESTONEDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLGRAVESTONEDOJI", "inLow", inLow, guardInLen);
@@ -35354,9 +35362,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLGRAVESTONEDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLGRAVESTONEDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLGRAVESTONEDOJI", startIdx, CDLGRAVESTONEDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLGRAVESTONEDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLGRAVESTONEDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLGRAVESTONEDOJI", "inLow", inLow, guardInLen);
@@ -36104,9 +36112,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLHAMMER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHAMMER_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHAMMER", startIdx, CDLHAMMER_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHAMMER", "inOpen", inOpen, guardInLen);
       requireLength("CDLHAMMER", "inHigh", inHigh, guardInLen);
       requireLength("CDLHAMMER", "inLow", inLow, guardInLen);
@@ -36175,9 +36183,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLHAMMER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHAMMER_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHAMMER", startIdx, CDLHAMMER_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHAMMER", "inOpen", inOpen, guardInLen);
       requireLength("CDLHAMMER", "inHigh", inHigh, guardInLen);
       requireLength("CDLHAMMER", "inLow", inLow, guardInLen);
@@ -37089,9 +37097,9 @@ public final class Core {
                                   int outInteger[] )
    {
       requireIndexRange("CDLHANGINGMAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHANGINGMAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHANGINGMAN", startIdx, CDLHANGINGMAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHANGINGMAN", "inOpen", inOpen, guardInLen);
       requireLength("CDLHANGINGMAN", "inHigh", inHigh, guardInLen);
       requireLength("CDLHANGINGMAN", "inLow", inLow, guardInLen);
@@ -37161,9 +37169,9 @@ public final class Core {
                                   int outInteger[] )
    {
       requireIndexRange("CDLHANGINGMAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHANGINGMAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHANGINGMAN", startIdx, CDLHANGINGMAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHANGINGMAN", "inOpen", inOpen, guardInLen);
       requireLength("CDLHANGINGMAN", "inHigh", inHigh, guardInLen);
       requireLength("CDLHANGINGMAN", "inLow", inLow, guardInLen);
@@ -38039,9 +38047,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLHARAMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHARAMI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHARAMI", startIdx, CDLHARAMI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMI", "inOpen", inOpen, guardInLen);
       requireLength("CDLHARAMI", "inHigh", inHigh, guardInLen);
       requireLength("CDLHARAMI", "inLow", inLow, guardInLen);
@@ -38110,9 +38118,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLHARAMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHARAMI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHARAMI", startIdx, CDLHARAMI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMI", "inOpen", inOpen, guardInLen);
       requireLength("CDLHARAMI", "inHigh", inHigh, guardInLen);
       requireLength("CDLHARAMI", "inLow", inLow, guardInLen);
@@ -38880,9 +38888,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLHARAMICROSS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHARAMICROSS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHARAMICROSS", startIdx, CDLHARAMICROSS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMICROSS", "inOpen", inOpen, guardInLen);
       requireLength("CDLHARAMICROSS", "inHigh", inHigh, guardInLen);
       requireLength("CDLHARAMICROSS", "inLow", inLow, guardInLen);
@@ -38952,9 +38960,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLHARAMICROSS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHARAMICROSS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHARAMICROSS", startIdx, CDLHARAMICROSS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMICROSS", "inOpen", inOpen, guardInLen);
       requireLength("CDLHARAMICROSS", "inHigh", inHigh, guardInLen);
       requireLength("CDLHARAMICROSS", "inLow", inLow, guardInLen);
@@ -39693,9 +39701,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLHIGHWAVE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIGHWAVE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIGHWAVE", startIdx, CDLHIGHWAVE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIGHWAVE", "inOpen", inOpen, guardInLen);
       requireLength("CDLHIGHWAVE", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIGHWAVE", "inLow", inLow, guardInLen);
@@ -39771,9 +39779,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLHIGHWAVE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIGHWAVE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIGHWAVE", startIdx, CDLHIGHWAVE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIGHWAVE", "inOpen", inOpen, guardInLen);
       requireLength("CDLHIGHWAVE", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIGHWAVE", "inLow", inLow, guardInLen);
@@ -40471,9 +40479,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIKKAKE", startIdx, CDLHIKKAKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKE", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIKKAKE", "inLow", inLow, guardInLen);
       requireLength("CDLHIKKAKE", "inClose", inClose, guardInLen);
@@ -40541,9 +40549,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIKKAKE", startIdx, CDLHIKKAKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKE", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIKKAKE", "inLow", inLow, guardInLen);
       requireLength("CDLHIKKAKE", "inClose", inClose, guardInLen);
@@ -41237,9 +41245,9 @@ public final class Core {
                                   int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKEMOD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKEMOD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIKKAKEMOD", startIdx, CDLHIKKAKEMOD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKEMOD", "inOpen", inOpen, guardInLen);
       requireLength("CDLHIKKAKEMOD", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIKKAKEMOD", "inLow", inLow, guardInLen);
@@ -41307,9 +41315,9 @@ public final class Core {
                                   int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKEMOD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKEMOD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIKKAKEMOD", startIdx, CDLHIKKAKEMOD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKEMOD", "inOpen", inOpen, guardInLen);
       requireLength("CDLHIKKAKEMOD", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIKKAKEMOD", "inLow", inLow, guardInLen);
@@ -42061,9 +42069,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLHOMINGPIGEON", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHOMINGPIGEON_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHOMINGPIGEON", startIdx, CDLHOMINGPIGEON_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHOMINGPIGEON", "inOpen", inOpen, guardInLen);
       requireLength("CDLHOMINGPIGEON", "inHigh", inHigh, guardInLen);
       requireLength("CDLHOMINGPIGEON", "inLow", inLow, guardInLen);
@@ -42135,9 +42143,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLHOMINGPIGEON", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHOMINGPIGEON_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHOMINGPIGEON", startIdx, CDLHOMINGPIGEON_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHOMINGPIGEON", "inOpen", inOpen, guardInLen);
       requireLength("CDLHOMINGPIGEON", "inHigh", inHigh, guardInLen);
       requireLength("CDLHOMINGPIGEON", "inLow", inLow, guardInLen);
@@ -42890,9 +42898,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLIDENTICAL3CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLIDENTICAL3CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, CDLIDENTICAL3CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inLow", inLow, guardInLen);
@@ -42961,9 +42969,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLIDENTICAL3CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLIDENTICAL3CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, CDLIDENTICAL3CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inLow", inLow, guardInLen);
@@ -43750,9 +43758,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLINNECK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLINNECK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLINNECK", startIdx, CDLINNECK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLINNECK", "inOpen", inOpen, guardInLen);
       requireLength("CDLINNECK", "inHigh", inHigh, guardInLen);
       requireLength("CDLINNECK", "inLow", inLow, guardInLen);
@@ -43826,9 +43834,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLINNECK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLINNECK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLINNECK", startIdx, CDLINNECK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLINNECK", "inOpen", inOpen, guardInLen);
       requireLength("CDLINNECK", "inHigh", inHigh, guardInLen);
       requireLength("CDLINNECK", "inLow", inLow, guardInLen);
@@ -44580,9 +44588,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLINVERTEDHAMMER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLINVERTEDHAMMER_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLINVERTEDHAMMER", startIdx, CDLINVERTEDHAMMER_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLINVERTEDHAMMER", "inOpen", inOpen, guardInLen);
       requireLength("CDLINVERTEDHAMMER", "inHigh", inHigh, guardInLen);
       requireLength("CDLINVERTEDHAMMER", "inLow", inLow, guardInLen);
@@ -44651,9 +44659,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLINVERTEDHAMMER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLINVERTEDHAMMER_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLINVERTEDHAMMER", startIdx, CDLINVERTEDHAMMER_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLINVERTEDHAMMER", "inOpen", inOpen, guardInLen);
       requireLength("CDLINVERTEDHAMMER", "inHigh", inHigh, guardInLen);
       requireLength("CDLINVERTEDHAMMER", "inLow", inLow, guardInLen);
@@ -45441,9 +45449,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLKICKING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLKICKING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLKICKING", startIdx, CDLKICKING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLKICKING", "inOpen", inOpen, guardInLen);
       requireLength("CDLKICKING", "inHigh", inHigh, guardInLen);
       requireLength("CDLKICKING", "inLow", inLow, guardInLen);
@@ -45511,9 +45519,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLKICKING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLKICKING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLKICKING", startIdx, CDLKICKING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLKICKING", "inOpen", inOpen, guardInLen);
       requireLength("CDLKICKING", "inHigh", inHigh, guardInLen);
       requireLength("CDLKICKING", "inLow", inLow, guardInLen);
@@ -46269,9 +46277,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLKICKINGBYLENGTH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLKICKINGBYLENGTH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLKICKINGBYLENGTH", startIdx, CDLKICKINGBYLENGTH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLKICKINGBYLENGTH", "inOpen", inOpen, guardInLen);
       requireLength("CDLKICKINGBYLENGTH", "inHigh", inHigh, guardInLen);
       requireLength("CDLKICKINGBYLENGTH", "inLow", inLow, guardInLen);
@@ -46336,9 +46344,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLKICKINGBYLENGTH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLKICKINGBYLENGTH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLKICKINGBYLENGTH", startIdx, CDLKICKINGBYLENGTH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLKICKINGBYLENGTH", "inOpen", inOpen, guardInLen);
       requireLength("CDLKICKINGBYLENGTH", "inHigh", inHigh, guardInLen);
       requireLength("CDLKICKINGBYLENGTH", "inLow", inLow, guardInLen);
@@ -47062,9 +47070,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLLADDERBOTTOM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLLADDERBOTTOM_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLLADDERBOTTOM", startIdx, CDLLADDERBOTTOM_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLADDERBOTTOM", "inOpen", inOpen, guardInLen);
       requireLength("CDLLADDERBOTTOM", "inHigh", inHigh, guardInLen);
       requireLength("CDLLADDERBOTTOM", "inLow", inLow, guardInLen);
@@ -47135,9 +47143,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLLADDERBOTTOM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLLADDERBOTTOM_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLLADDERBOTTOM", startIdx, CDLLADDERBOTTOM_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLADDERBOTTOM", "inOpen", inOpen, guardInLen);
       requireLength("CDLLADDERBOTTOM", "inHigh", inHigh, guardInLen);
       requireLength("CDLLADDERBOTTOM", "inLow", inLow, guardInLen);
@@ -47819,9 +47827,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLLONGLEGGEDDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLLONGLEGGEDDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLLONGLEGGEDDOJI", startIdx, CDLLONGLEGGEDDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLONGLEGGEDDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLLONGLEGGEDDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLLONGLEGGEDDOJI", "inLow", inLow, guardInLen);
@@ -47895,9 +47903,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLLONGLEGGEDDOJI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLLONGLEGGEDDOJI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLLONGLEGGEDDOJI", startIdx, CDLLONGLEGGEDDOJI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLONGLEGGEDDOJI", "inOpen", inOpen, guardInLen);
       requireLength("CDLLONGLEGGEDDOJI", "inHigh", inHigh, guardInLen);
       requireLength("CDLLONGLEGGEDDOJI", "inLow", inLow, guardInLen);
@@ -48569,9 +48577,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLLONGLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLLONGLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLLONGLINE", startIdx, CDLLONGLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLONGLINE", "inOpen", inOpen, guardInLen);
       requireLength("CDLLONGLINE", "inHigh", inHigh, guardInLen);
       requireLength("CDLLONGLINE", "inLow", inLow, guardInLen);
@@ -48637,9 +48645,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLLONGLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLLONGLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLLONGLINE", startIdx, CDLLONGLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLONGLINE", "inOpen", inOpen, guardInLen);
       requireLength("CDLLONGLINE", "inHigh", inHigh, guardInLen);
       requireLength("CDLLONGLINE", "inLow", inLow, guardInLen);
@@ -49316,9 +49324,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMARUBOZU_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMARUBOZU", startIdx, CDLMARUBOZU_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMARUBOZU", "inOpen", inOpen, guardInLen);
       requireLength("CDLMARUBOZU", "inHigh", inHigh, guardInLen);
       requireLength("CDLMARUBOZU", "inLow", inLow, guardInLen);
@@ -49390,9 +49398,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMARUBOZU_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMARUBOZU", startIdx, CDLMARUBOZU_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMARUBOZU", "inOpen", inOpen, guardInLen);
       requireLength("CDLMARUBOZU", "inHigh", inHigh, guardInLen);
       requireLength("CDLMARUBOZU", "inLow", inLow, guardInLen);
@@ -50044,9 +50052,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLMATCHINGLOW", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMATCHINGLOW_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMATCHINGLOW", startIdx, CDLMATCHINGLOW_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATCHINGLOW", "inOpen", inOpen, guardInLen);
       requireLength("CDLMATCHINGLOW", "inHigh", inHigh, guardInLen);
       requireLength("CDLMATCHINGLOW", "inLow", inLow, guardInLen);
@@ -50118,9 +50126,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLMATCHINGLOW", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMATCHINGLOW_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMATCHINGLOW", startIdx, CDLMATCHINGLOW_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATCHINGLOW", "inOpen", inOpen, guardInLen);
       requireLength("CDLMATCHINGLOW", "inHigh", inHigh, guardInLen);
       requireLength("CDLMATCHINGLOW", "inLow", inLow, guardInLen);
@@ -50812,9 +50820,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLMATHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMATHOLD", startIdx, CDLMATHOLD_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLMATHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLMATHOLD", "inLow", inLow, guardInLen);
@@ -50888,9 +50896,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLMATHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMATHOLD", startIdx, CDLMATHOLD_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLMATHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLMATHOLD", "inLow", inLow, guardInLen);
@@ -51783,9 +51791,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inLow", inLow, guardInLen);
@@ -51862,9 +51870,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inLow", inLow, guardInLen);
@@ -52726,9 +52734,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLMORNINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMORNINGSTAR", startIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGSTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLMORNINGSTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLMORNINGSTAR", "inLow", inLow, guardInLen);
@@ -52805,9 +52813,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLMORNINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMORNINGSTAR", startIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGSTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLMORNINGSTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLMORNINGSTAR", "inLow", inLow, guardInLen);
@@ -53576,9 +53584,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLONNECK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLONNECK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLONNECK", startIdx, CDLONNECK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
       requireLength("CDLONNECK", "inHigh", inHigh, guardInLen);
       requireLength("CDLONNECK", "inLow", inLow, guardInLen);
@@ -53651,9 +53659,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLONNECK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLONNECK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLONNECK", startIdx, CDLONNECK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
       requireLength("CDLONNECK", "inHigh", inHigh, guardInLen);
       requireLength("CDLONNECK", "inLow", inLow, guardInLen);
@@ -54357,9 +54365,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLPIERCING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLPIERCING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLPIERCING", startIdx, CDLPIERCING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
       requireLength("CDLPIERCING", "inHigh", inHigh, guardInLen);
       requireLength("CDLPIERCING", "inLow", inLow, guardInLen);
@@ -54428,9 +54436,9 @@ public final class Core {
                                 int outInteger[] )
    {
       requireIndexRange("CDLPIERCING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLPIERCING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLPIERCING", startIdx, CDLPIERCING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
       requireLength("CDLPIERCING", "inHigh", inHigh, guardInLen);
       requireLength("CDLPIERCING", "inLow", inLow, guardInLen);
@@ -55126,9 +55134,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLRICKSHAWMAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLRICKSHAWMAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLRICKSHAWMAN", startIdx, CDLRICKSHAWMAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLRICKSHAWMAN", "inOpen", inOpen, guardInLen);
       requireLength("CDLRICKSHAWMAN", "inHigh", inHigh, guardInLen);
       requireLength("CDLRICKSHAWMAN", "inLow", inLow, guardInLen);
@@ -55197,9 +55205,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLRICKSHAWMAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLRICKSHAWMAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLRICKSHAWMAN", startIdx, CDLRICKSHAWMAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLRICKSHAWMAN", "inOpen", inOpen, guardInLen);
       requireLength("CDLRICKSHAWMAN", "inHigh", inHigh, guardInLen);
       requireLength("CDLRICKSHAWMAN", "inLow", inLow, guardInLen);
@@ -55997,9 +56005,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLRISEFALL3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLRISEFALL3METHODS", startIdx, CDLRISEFALL3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
@@ -56072,9 +56080,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLRISEFALL3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLRISEFALL3METHODS", startIdx, CDLRISEFALL3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
@@ -56930,9 +56938,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLSEPARATINGLINES", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSEPARATINGLINES_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSEPARATINGLINES", startIdx, CDLSEPARATINGLINES_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSEPARATINGLINES", "inOpen", inOpen, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inHigh", inHigh, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inLow", inLow, guardInLen);
@@ -57003,9 +57011,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLSEPARATINGLINES", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSEPARATINGLINES_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSEPARATINGLINES", startIdx, CDLSEPARATINGLINES_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSEPARATINGLINES", "inOpen", inOpen, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inHigh", inHigh, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inLow", inLow, guardInLen);
@@ -57822,9 +57830,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLSHOOTINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSHOOTINGSTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSHOOTINGSTAR", startIdx, CDLSHOOTINGSTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSHOOTINGSTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLSHOOTINGSTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLSHOOTINGSTAR", "inLow", inLow, guardInLen);
@@ -57895,9 +57903,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLSHOOTINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSHOOTINGSTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSHOOTINGSTAR", startIdx, CDLSHOOTINGSTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSHOOTINGSTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLSHOOTINGSTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLSHOOTINGSTAR", "inLow", inLow, guardInLen);
@@ -58666,9 +58674,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLSHORTLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSHORTLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSHORTLINE", startIdx, CDLSHORTLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSHORTLINE", "inOpen", inOpen, guardInLen);
       requireLength("CDLSHORTLINE", "inHigh", inHigh, guardInLen);
       requireLength("CDLSHORTLINE", "inLow", inLow, guardInLen);
@@ -58741,9 +58749,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLSHORTLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSHORTLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSHORTLINE", startIdx, CDLSHORTLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSHORTLINE", "inOpen", inOpen, guardInLen);
       requireLength("CDLSHORTLINE", "inHigh", inHigh, guardInLen);
       requireLength("CDLSHORTLINE", "inLow", inLow, guardInLen);
@@ -59387,9 +59395,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLSPINNINGTOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSPINNINGTOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, CDLSPINNINGTOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
       requireLength("CDLSPINNINGTOP", "inHigh", inHigh, guardInLen);
       requireLength("CDLSPINNINGTOP", "inLow", inLow, guardInLen);
@@ -59457,9 +59465,9 @@ public final class Core {
                                    int outInteger[] )
    {
       requireIndexRange("CDLSPINNINGTOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSPINNINGTOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, CDLSPINNINGTOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
       requireLength("CDLSPINNINGTOP", "inHigh", inHigh, guardInLen);
       requireLength("CDLSPINNINGTOP", "inLow", inLow, guardInLen);
@@ -60157,9 +60165,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLSTALLEDPATTERN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSTALLEDPATTERN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSTALLEDPATTERN", startIdx, CDLSTALLEDPATTERN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTALLEDPATTERN", "inOpen", inOpen, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inHigh", inHigh, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inLow", inLow, guardInLen);
@@ -60229,9 +60237,9 @@ public final class Core {
                                       int outInteger[] )
    {
       requireIndexRange("CDLSTALLEDPATTERN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSTALLEDPATTERN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSTALLEDPATTERN", startIdx, CDLSTALLEDPATTERN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTALLEDPATTERN", "inOpen", inOpen, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inHigh", inHigh, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inLow", inLow, guardInLen);
@@ -61116,9 +61124,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLSTICKSANDWICH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSTICKSANDWICH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSTICKSANDWICH", startIdx, CDLSTICKSANDWICH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTICKSANDWICH", "inOpen", inOpen, guardInLen);
       requireLength("CDLSTICKSANDWICH", "inHigh", inHigh, guardInLen);
       requireLength("CDLSTICKSANDWICH", "inLow", inLow, guardInLen);
@@ -61187,9 +61195,9 @@ public final class Core {
                                      int outInteger[] )
    {
       requireIndexRange("CDLSTICKSANDWICH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSTICKSANDWICH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSTICKSANDWICH", startIdx, CDLSTICKSANDWICH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTICKSANDWICH", "inOpen", inOpen, guardInLen);
       requireLength("CDLSTICKSANDWICH", "inHigh", inHigh, guardInLen);
       requireLength("CDLSTICKSANDWICH", "inLow", inLow, guardInLen);
@@ -61879,9 +61887,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLTAKURI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTAKURI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTAKURI", startIdx, CDLTAKURI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTAKURI", "inOpen", inOpen, guardInLen);
       requireLength("CDLTAKURI", "inHigh", inHigh, guardInLen);
       requireLength("CDLTAKURI", "inLow", inLow, guardInLen);
@@ -61952,9 +61960,9 @@ public final class Core {
                               int outInteger[] )
    {
       requireIndexRange("CDLTAKURI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTAKURI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTAKURI", startIdx, CDLTAKURI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTAKURI", "inOpen", inOpen, guardInLen);
       requireLength("CDLTAKURI", "inHigh", inHigh, guardInLen);
       requireLength("CDLTAKURI", "inLow", inLow, guardInLen);
@@ -62689,9 +62697,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLTASUKIGAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTASUKIGAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTASUKIGAP", startIdx, CDLTASUKIGAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTASUKIGAP", "inOpen", inOpen, guardInLen);
       requireLength("CDLTASUKIGAP", "inHigh", inHigh, guardInLen);
       requireLength("CDLTASUKIGAP", "inLow", inLow, guardInLen);
@@ -62761,9 +62769,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLTASUKIGAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTASUKIGAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTASUKIGAP", startIdx, CDLTASUKIGAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTASUKIGAP", "inOpen", inOpen, guardInLen);
       requireLength("CDLTASUKIGAP", "inHigh", inHigh, guardInLen);
       requireLength("CDLTASUKIGAP", "inLow", inLow, guardInLen);
@@ -63440,9 +63448,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLTHRUSTING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTHRUSTING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTHRUSTING", startIdx, CDLTHRUSTING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTHRUSTING", "inOpen", inOpen, guardInLen);
       requireLength("CDLTHRUSTING", "inHigh", inHigh, guardInLen);
       requireLength("CDLTHRUSTING", "inLow", inLow, guardInLen);
@@ -63514,9 +63522,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("CDLTHRUSTING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTHRUSTING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTHRUSTING", startIdx, CDLTHRUSTING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTHRUSTING", "inOpen", inOpen, guardInLen);
       requireLength("CDLTHRUSTING", "inHigh", inHigh, guardInLen);
       requireLength("CDLTHRUSTING", "inLow", inLow, guardInLen);
@@ -64226,9 +64234,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLTRISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTRISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTRISTAR", startIdx, CDLTRISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLTRISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLTRISTAR", "inLow", inLow, guardInLen);
@@ -64298,9 +64306,9 @@ public final class Core {
                                int outInteger[] )
    {
       requireIndexRange("CDLTRISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTRISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTRISTAR", startIdx, CDLTRISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLTRISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLTRISTAR", "inLow", inLow, guardInLen);
@@ -64981,9 +64989,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLUNIQUE3RIVER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLUNIQUE3RIVER_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLUNIQUE3RIVER", startIdx, CDLUNIQUE3RIVER_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLUNIQUE3RIVER", "inOpen", inOpen, guardInLen);
       requireLength("CDLUNIQUE3RIVER", "inHigh", inHigh, guardInLen);
       requireLength("CDLUNIQUE3RIVER", "inLow", inLow, guardInLen);
@@ -65053,9 +65061,9 @@ public final class Core {
                                     int outInteger[] )
    {
       requireIndexRange("CDLUNIQUE3RIVER", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLUNIQUE3RIVER_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLUNIQUE3RIVER", startIdx, CDLUNIQUE3RIVER_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLUNIQUE3RIVER", "inOpen", inOpen, guardInLen);
       requireLength("CDLUNIQUE3RIVER", "inHigh", inHigh, guardInLen);
       requireLength("CDLUNIQUE3RIVER", "inLow", inLow, guardInLen);
@@ -65808,9 +65816,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLUPSIDEGAP2CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLUPSIDEGAP2CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLUPSIDEGAP2CROWS", startIdx, CDLUPSIDEGAP2CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLUPSIDEGAP2CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inLow", inLow, guardInLen);
@@ -65880,9 +65888,9 @@ public final class Core {
                                        int outInteger[] )
    {
       requireIndexRange("CDLUPSIDEGAP2CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLUPSIDEGAP2CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLUPSIDEGAP2CROWS", startIdx, CDLUPSIDEGAP2CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLUPSIDEGAP2CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inLow", inLow, guardInLen);
@@ -66572,9 +66580,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLXSIDEGAP3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLXSIDEGAP3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLXSIDEGAP3METHODS", startIdx, CDLXSIDEGAP3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLXSIDEGAP3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "inClose", inClose, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "outInteger", outInteger, guardOutLen);
@@ -66643,9 +66651,9 @@ public final class Core {
                                         int outInteger[] )
    {
       requireIndexRange("CDLXSIDEGAP3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLXSIDEGAP3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLXSIDEGAP3METHODS", startIdx, CDLXSIDEGAP3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLXSIDEGAP3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "inClose", inClose, guardInLen);
       requireLength("CDLXSIDEGAP3METHODS", "outInteger", outInteger, guardOutLen);
@@ -67078,9 +67086,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("CEIL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CEIL_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CEIL", startIdx, CEIL_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CEIL", "inReal", inReal, guardInLen);
       requireLength("CEIL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -67135,9 +67143,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("CEIL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CEIL_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CEIL", startIdx, CEIL_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CEIL", "inReal", inReal, guardInLen);
       requireLength("CEIL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -67730,9 +67738,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("CMF", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMF", startIdx, CMF_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMF", "inHigh", inHigh, guardInLen);
       requireLength("CMF", "inLow", inLow, guardInLen);
       requireLength("CMF", "inClose", inClose, guardInLen);
@@ -67828,9 +67836,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("CMF", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMF", startIdx, CMF_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMF", "inHigh", inHigh, guardInLen);
       requireLength("CMF", "inLow", inLow, guardInLen);
       requireLength("CMF", "inClose", inClose, guardInLen);
@@ -68648,9 +68656,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("CMO", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMO_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMO", startIdx, CMO_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMO", "inReal", inReal, guardInLen);
       requireLength("CMO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -68714,9 +68722,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("CMO", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMO_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMO", startIdx, CMO_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMO", "inReal", inReal, guardInLen);
       requireLength("CMO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -69515,9 +69523,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("CMOU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMOU_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMOU", startIdx, CMOU_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMOU", "inReal", inReal, guardInLen);
       requireLength("CMOU", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -69582,9 +69590,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("CMOU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMOU_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMOU", startIdx, CMOU_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMOU", "inReal", inReal, guardInLen);
       requireLength("CMOU", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -70553,9 +70561,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("CORREL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CORREL_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CORREL", startIdx, CORREL_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CORREL", "inReal0", inReal0, guardInLen);
       requireLength("CORREL", "inReal1", inReal1, guardInLen);
       requireLength("CORREL", "outReal", outReal, guardOutLen);
@@ -70624,9 +70632,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("CORREL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CORREL_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CORREL", startIdx, CORREL_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CORREL", "inReal0", inReal0, guardInLen);
       requireLength("CORREL", "inReal1", inReal1, guardInLen);
       requireLength("CORREL", "outReal", outReal, guardOutLen);
@@ -71479,9 +71487,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("COS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, COS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("COS", startIdx, COS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COS", "inReal", inReal, guardInLen);
       requireLength("COS", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -71538,9 +71546,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("COS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, COS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("COS", startIdx, COS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COS", "inReal", inReal, guardInLen);
       requireLength("COS", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -71892,9 +71900,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("COSH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, COSH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("COSH", startIdx, COSH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COSH", "inReal", inReal, guardInLen);
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -71950,9 +71958,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("COSH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, COSH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("COSH", startIdx, COSH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COSH", "inReal", inReal, guardInLen);
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -72520,9 +72528,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("DEMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DEMA", startIdx, DEMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DEMA", "inReal", inReal, guardInLen);
       requireLength("DEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -72586,9 +72594,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("DEMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DEMA", startIdx, DEMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DEMA", "inReal", inReal, guardInLen);
       requireLength("DEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -73104,9 +73112,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("DIV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DIV_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DIV", startIdx, DIV_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DIV", "inReal0", inReal0, guardInLen);
       requireLength("DIV", "inReal1", inReal1, guardInLen);
       requireLength("DIV", "outReal", outReal, guardOutLen);
@@ -73169,9 +73177,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("DIV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DIV_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DIV", startIdx, DIV_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DIV", "inReal0", inReal0, guardInLen);
       requireLength("DIV", "inReal1", inReal1, guardInLen);
       requireLength("DIV", "outReal", outReal, guardOutLen);
@@ -74017,9 +74025,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("DX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DX", startIdx, DX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DX", "inHigh", inHigh, guardInLen);
       requireLength("DX", "inLow", inLow, guardInLen);
       requireLength("DX", "inClose", inClose, guardInLen);
@@ -74096,9 +74104,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("DX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DX", startIdx, DX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DX", "inHigh", inHigh, guardInLen);
       requireLength("DX", "inLow", inLow, guardInLen);
       requireLength("DX", "inClose", inClose, guardInLen);
@@ -75037,9 +75045,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("EFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EFI", startIdx, EFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EFI", "inClose", inClose, guardInLen);
       requireLength("EFI", "inVolume", inVolume, guardInLen);
       requireLength("EFI", "outReal", outReal, guardOutLen);
@@ -75116,9 +75124,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("EFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EFI", startIdx, EFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EFI", "inClose", inClose, guardInLen);
       requireLength("EFI", "inVolume", inVolume, guardInLen);
       requireLength("EFI", "outReal", outReal, guardOutLen);
@@ -75825,9 +75833,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("EMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EMA", startIdx, EMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EMA", "inReal", inReal, guardInLen);
       requireLength("EMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -75897,9 +75905,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("EMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EMA", startIdx, EMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EMA", "inReal", inReal, guardInLen);
       requireLength("EMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -76349,9 +76357,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("EXP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EXP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EXP", startIdx, EXP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EXP", "inReal", inReal, guardInLen);
       requireLength("EXP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -76406,9 +76414,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("EXP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EXP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EXP", startIdx, EXP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EXP", "inReal", inReal, guardInLen);
       requireLength("EXP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -76759,9 +76767,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("FLOOR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("FLOOR", startIdx, FLOOR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("FLOOR", "inReal", inReal, guardInLen);
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -76816,9 +76824,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("FLOOR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("FLOOR", startIdx, FLOOR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("FLOOR", "inReal", inReal, guardInLen);
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -77796,9 +77804,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("HMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HMA", startIdx, HMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HMA", "inReal", inReal, guardInLen);
       requireLength("HMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -77877,9 +77885,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("HMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HMA", startIdx, HMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HMA", "inReal", inReal, guardInLen);
       requireLength("HMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -79706,9 +79714,9 @@ public final class Core {
                                 double outReal[] )
    {
       requireIndexRange("HT_DCPERIOD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_DCPERIOD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_DCPERIOD", startIdx, HT_DCPERIOD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_DCPERIOD", "inReal", inReal, guardInLen);
       requireLength("HT_DCPERIOD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -79765,9 +79773,9 @@ public final class Core {
                                 double outReal[] )
    {
       requireIndexRange("HT_DCPERIOD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_DCPERIOD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_DCPERIOD", startIdx, HT_DCPERIOD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_DCPERIOD", "inReal", inReal, guardInLen);
       requireLength("HT_DCPERIOD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -81547,9 +81555,9 @@ public final class Core {
                                double outReal[] )
    {
       requireIndexRange("HT_DCPHASE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_DCPHASE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_DCPHASE", startIdx, HT_DCPHASE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_DCPHASE", "inReal", inReal, guardInLen);
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -81608,9 +81616,9 @@ public final class Core {
                                double outReal[] )
    {
       requireIndexRange("HT_DCPHASE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_DCPHASE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_DCPHASE", startIdx, HT_DCPHASE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_DCPHASE", "inReal", inReal, guardInLen);
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -83434,9 +83442,9 @@ public final class Core {
                               double outQuadrature[] )
    {
       requireIndexRange("HT_PHASOR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_PHASOR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_PHASOR", startIdx, HT_PHASOR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_PHASOR", "inReal", inReal, guardInLen);
       requireLength("HT_PHASOR", "outInPhase", outInPhase, guardOutLen);
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
@@ -83503,9 +83511,9 @@ public final class Core {
                               double outQuadrature[] )
    {
       requireIndexRange("HT_PHASOR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_PHASOR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_PHASOR", startIdx, HT_PHASOR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_PHASOR", "inReal", inReal, guardInLen);
       requireLength("HT_PHASOR", "outInPhase", outInPhase, guardOutLen);
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
@@ -85332,9 +85340,9 @@ public final class Core {
                             double outLeadSine[] )
    {
       requireIndexRange("HT_SINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_SINE", startIdx, HT_SINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_SINE", "inReal", inReal, guardInLen);
       requireLength("HT_SINE", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
@@ -85395,9 +85403,9 @@ public final class Core {
                             double outLeadSine[] )
    {
       requireIndexRange("HT_SINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_SINE", startIdx, HT_SINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_SINE", "inReal", inReal, guardInLen);
       requireLength("HT_SINE", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
@@ -87318,9 +87326,9 @@ public final class Core {
                                  double outReal[] )
    {
       requireIndexRange("HT_TRENDLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_TRENDLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_TRENDLINE", startIdx, HT_TRENDLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_TRENDLINE", "inReal", inReal, guardInLen);
       requireLength("HT_TRENDLINE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -87375,9 +87383,9 @@ public final class Core {
                                  double outReal[] )
    {
       requireIndexRange("HT_TRENDLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_TRENDLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_TRENDLINE", startIdx, HT_TRENDLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_TRENDLINE", "inReal", inReal, guardInLen);
       requireLength("HT_TRENDLINE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -89413,9 +89421,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("HT_TRENDMODE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_TRENDMODE", startIdx, HT_TRENDMODE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_TRENDMODE", "inReal", inReal, guardInLen);
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -89472,9 +89480,9 @@ public final class Core {
                                  int outInteger[] )
    {
       requireIndexRange("HT_TRENDMODE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_TRENDMODE", startIdx, HT_TRENDMODE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_TRENDMODE", "inReal", inReal, guardInLen);
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -90969,9 +90977,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("IMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, IMI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("IMI", startIdx, IMI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("IMI", "inOpen", inOpen, guardInLen);
       requireLength("IMI", "inClose", inClose, guardInLen);
       requireLength("IMI", "outReal", outReal, guardOutLen);
@@ -91034,9 +91042,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("IMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, IMI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("IMI", startIdx, IMI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("IMI", "inOpen", inOpen, guardInLen);
       requireLength("IMI", "inClose", inClose, guardInLen);
       requireLength("IMI", "outReal", outReal, guardOutLen);
@@ -91876,9 +91884,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("KAMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, KAMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("KAMA", startIdx, KAMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("KAMA", "inReal", inReal, guardInLen);
       requireLength("KAMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -91947,9 +91955,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("KAMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, KAMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("KAMA", startIdx, KAMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("KAMA", "inReal", inReal, guardInLen);
       requireLength("KAMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -92902,9 +92910,9 @@ public final class Core {
                               double outReal[] )
    {
       requireIndexRange("LINEARREG", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG", startIdx, LINEARREG_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG", "inReal", inReal, guardInLen);
       requireLength("LINEARREG", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -92962,9 +92970,9 @@ public final class Core {
                               double outReal[] )
    {
       requireIndexRange("LINEARREG", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG", startIdx, LINEARREG_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG", "inReal", inReal, guardInLen);
       requireLength("LINEARREG", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -93926,9 +93934,9 @@ public final class Core {
                                     double outReal[] )
    {
       requireIndexRange("LINEARREG_ANGLE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG_ANGLE", startIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG_ANGLE", "inReal", inReal, guardInLen);
       requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -93991,9 +93999,9 @@ public final class Core {
                                     double outReal[] )
    {
       requireIndexRange("LINEARREG_ANGLE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG_ANGLE", startIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG_ANGLE", "inReal", inReal, guardInLen);
       requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -94948,9 +94956,9 @@ public final class Core {
                                         double outReal[] )
    {
       requireIndexRange("LINEARREG_INTERCEPT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG_INTERCEPT", startIdx, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG_INTERCEPT", "inReal", inReal, guardInLen);
       requireLength("LINEARREG_INTERCEPT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -95014,9 +95022,9 @@ public final class Core {
                                         double outReal[] )
    {
       requireIndexRange("LINEARREG_INTERCEPT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG_INTERCEPT", startIdx, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG_INTERCEPT", "inReal", inReal, guardInLen);
       requireLength("LINEARREG_INTERCEPT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -95966,9 +95974,9 @@ public final class Core {
                                     double outReal[] )
    {
       requireIndexRange("LINEARREG_SLOPE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_SLOPE_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG_SLOPE", startIdx, LINEARREG_SLOPE_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG_SLOPE", "inReal", inReal, guardInLen);
       requireLength("LINEARREG_SLOPE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -96033,9 +96041,9 @@ public final class Core {
                                     double outReal[] )
    {
       requireIndexRange("LINEARREG_SLOPE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LINEARREG_SLOPE_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LINEARREG_SLOPE", startIdx, LINEARREG_SLOPE_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LINEARREG_SLOPE", "inReal", inReal, guardInLen);
       requireLength("LINEARREG_SLOPE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -96721,9 +96729,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("LN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LN", startIdx, LN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LN", "inReal", inReal, guardInLen);
       requireLength("LN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -96783,9 +96791,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("LN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LN", startIdx, LN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LN", "inReal", inReal, guardInLen);
       requireLength("LN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -97140,9 +97148,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("LOG10", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LOG10_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LOG10", startIdx, LOG10_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LOG10", "inReal", inReal, guardInLen);
       requireLength("LOG10", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -97201,9 +97209,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("LOG10", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, LOG10_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("LOG10", startIdx, LOG10_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LOG10", "inReal", inReal, guardInLen);
       requireLength("LOG10", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -97812,9 +97820,9 @@ public final class Core {
    {
       requireIndexRange("MA", startIdx, endIdx);
       requireArgument("MA", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MA_Lookback(optInTimePeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MA", startIdx, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MA", "inReal", inReal, guardInLen);
       requireLength("MA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -97894,9 +97902,9 @@ public final class Core {
    {
       requireIndexRange("MA", startIdx, endIdx);
       requireArgument("MA", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MA_Lookback(optInTimePeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MA", startIdx, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MA", "inReal", inReal, guardInLen);
       requireLength("MA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -99150,9 +99158,9 @@ public final class Core {
                          double outMACDHist[] )
    {
       requireIndexRange("MACD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACD", startIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACD", "inReal", inReal, guardInLen);
       requireLength("MACD", "outMACD", outMACD, guardOutLen);
       requireLength("MACD", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -99234,9 +99242,9 @@ public final class Core {
                          double outMACDHist[] )
    {
       requireIndexRange("MACD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACD", startIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACD", "inReal", inReal, guardInLen);
       requireLength("MACD", "outMACD", outMACD, guardOutLen);
       requireLength("MACD", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -100222,9 +100230,9 @@ public final class Core {
       requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACDEXT", startIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDEXT", "inReal", inReal, guardInLen);
       requireLength("MACDEXT", "outMACD", outMACD, guardOutLen);
       requireLength("MACDEXT", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -100328,9 +100336,9 @@ public final class Core {
       requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACDEXT", startIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDEXT", "inReal", inReal, guardInLen);
       requireLength("MACDEXT", "outMACD", outMACD, guardOutLen);
       requireLength("MACDEXT", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -101222,9 +101230,9 @@ public final class Core {
                             double outMACDHist[] )
    {
       requireIndexRange("MACDFIX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MACDFIX_Lookback(optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACDFIX", startIdx, MACDFIX_Lookback(optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDFIX", "inReal", inReal, guardInLen);
       requireLength("MACDFIX", "outMACD", outMACD, guardOutLen);
       requireLength("MACDFIX", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -101300,9 +101308,9 @@ public final class Core {
                             double outMACDHist[] )
    {
       requireIndexRange("MACDFIX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MACDFIX_Lookback(optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACDFIX", startIdx, MACDFIX_Lookback(optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDFIX", "inReal", inReal, guardInLen);
       requireLength("MACDFIX", "outMACD", outMACD, guardOutLen);
       requireLength("MACDFIX", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -102627,9 +102635,9 @@ public final class Core {
                          double outFAMA[] )
    {
       requireIndexRange("MAMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAMA", startIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
       requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
@@ -102701,9 +102709,9 @@ public final class Core {
                          double outFAMA[] )
    {
       requireIndexRange("MAMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAMA", startIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
       requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
@@ -103949,9 +103957,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MARKETFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MARKETFI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MARKETFI", startIdx, MARKETFI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MARKETFI", "inHigh", inHigh, guardInLen);
       requireLength("MARKETFI", "inLow", inLow, guardInLen);
       requireLength("MARKETFI", "inVolume", inVolume, guardInLen);
@@ -104026,9 +104034,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MARKETFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MARKETFI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MARKETFI", startIdx, MARKETFI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MARKETFI", "inHigh", inHigh, guardInLen);
       requireLength("MARKETFI", "inLow", inLow, guardInLen);
       requireLength("MARKETFI", "inVolume", inVolume, guardInLen);
@@ -104917,9 +104925,9 @@ public final class Core {
    {
       requireIndexRange("MAVP", startIdx, endIdx);
       requireArgument("MAVP", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAVP", startIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAVP", "inReal", inReal, guardInLen);
       requireLength("MAVP", "inPeriods", inPeriods, guardInLen);
       requireLength("MAVP", "outReal", outReal, guardOutLen);
@@ -104997,9 +105005,9 @@ public final class Core {
    {
       requireIndexRange("MAVP", startIdx, endIdx);
       requireArgument("MAVP", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAVP", startIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAVP", "inReal", inReal, guardInLen);
       requireLength("MAVP", "inPeriods", inPeriods, guardInLen);
       requireLength("MAVP", "outReal", outReal, guardOutLen);
@@ -105719,9 +105727,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MAX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAX", startIdx, MAX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAX", "inReal", inReal, guardInLen);
       requireLength("MAX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -105781,9 +105789,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MAX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAX", startIdx, MAX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAX", "inReal", inReal, guardInLen);
       requireLength("MAX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -106402,9 +106410,9 @@ public final class Core {
                              int outInteger[] )
    {
       requireIndexRange("MAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAXINDEX", startIdx, MAXINDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -106471,9 +106479,9 @@ public final class Core {
                              int outInteger[] )
    {
       requireIndexRange("MAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAXINDEX", startIdx, MAXINDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -106976,9 +106984,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MEDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MEDPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MEDPRICE", startIdx, MEDPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
       requireLength("MEDPRICE", "inLow", inLow, guardInLen);
       requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
@@ -107039,9 +107047,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MEDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MEDPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MEDPRICE", startIdx, MEDPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
       requireLength("MEDPRICE", "inLow", inLow, guardInLen);
       requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
@@ -107707,9 +107715,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MFI", startIdx, MFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MFI", "inHigh", inHigh, guardInLen);
       requireLength("MFI", "inLow", inLow, guardInLen);
       requireLength("MFI", "inClose", inClose, guardInLen);
@@ -107784,9 +107792,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MFI", startIdx, MFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MFI", "inHigh", inHigh, guardInLen);
       requireLength("MFI", "inLow", inLow, guardInLen);
       requireLength("MFI", "inClose", inClose, guardInLen);
@@ -108704,9 +108712,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MIDPOINT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MIDPOINT_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MIDPOINT", startIdx, MIDPOINT_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIDPOINT", "inReal", inReal, guardInLen);
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -108767,9 +108775,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MIDPOINT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MIDPOINT_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MIDPOINT", startIdx, MIDPOINT_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIDPOINT", "inReal", inReal, guardInLen);
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -109640,9 +109648,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MIDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MIDPRICE_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MIDPRICE", startIdx, MIDPRICE_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIDPRICE", "inHigh", inHigh, guardInLen);
       requireLength("MIDPRICE", "inLow", inLow, guardInLen);
       requireLength("MIDPRICE", "outReal", outReal, guardOutLen);
@@ -109706,9 +109714,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MIDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MIDPRICE_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MIDPRICE", startIdx, MIDPRICE_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIDPRICE", "inHigh", inHigh, guardInLen);
       requireLength("MIDPRICE", "inLow", inLow, guardInLen);
       requireLength("MIDPRICE", "outReal", outReal, guardOutLen);
@@ -110512,9 +110520,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MIN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MIN_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MIN", startIdx, MIN_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIN", "inReal", inReal, guardInLen);
       requireLength("MIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -110573,9 +110581,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MIN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MIN_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MIN", startIdx, MIN_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIN", "inReal", inReal, guardInLen);
       requireLength("MIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -111192,9 +111200,9 @@ public final class Core {
                              int outInteger[] )
    {
       requireIndexRange("MININDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MININDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MININDEX", startIdx, MININDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MININDEX", "inReal", inReal, guardInLen);
       requireLength("MININDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -111261,9 +111269,9 @@ public final class Core {
                              int outInteger[] )
    {
       requireIndexRange("MININDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MININDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MININDEX", startIdx, MININDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MININDEX", "inReal", inReal, guardInLen);
       requireLength("MININDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -112059,9 +112067,9 @@ public final class Core {
                            double outMax[] )
    {
       requireIndexRange("MINMAX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINMAX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINMAX", startIdx, MINMAX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINMAX", "inReal", inReal, guardInLen);
       requireLength("MINMAX", "outMin", outMin, guardOutLen);
       requireLength("MINMAX", "outMax", outMax, guardOutLen);
@@ -112129,9 +112137,9 @@ public final class Core {
                            double outMax[] )
    {
       requireIndexRange("MINMAX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINMAX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINMAX", startIdx, MINMAX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINMAX", "inReal", inReal, guardInLen);
       requireLength("MINMAX", "outMin", outMin, guardOutLen);
       requireLength("MINMAX", "outMax", outMax, guardOutLen);
@@ -112894,9 +112902,9 @@ public final class Core {
                                 int outMaxIdx[] )
    {
       requireIndexRange("MINMAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINMAXINDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINMAXINDEX", startIdx, MINMAXINDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINMAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MINMAXINDEX", "outMinIdx", outMinIdx, guardOutLen);
       requireLength("MINMAXINDEX", "outMaxIdx", outMaxIdx, guardOutLen);
@@ -112967,9 +112975,9 @@ public final class Core {
                                 int outMaxIdx[] )
    {
       requireIndexRange("MINMAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINMAXINDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINMAXINDEX", startIdx, MINMAXINDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINMAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MINMAXINDEX", "outMinIdx", outMinIdx, guardOutLen);
       requireLength("MINMAXINDEX", "outMaxIdx", outMaxIdx, guardOutLen);
@@ -114059,9 +114067,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MINUS_DI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINUS_DI", startIdx, MINUS_DI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINUS_DI", "inHigh", inHigh, guardInLen);
       requireLength("MINUS_DI", "inLow", inLow, guardInLen);
       requireLength("MINUS_DI", "inClose", inClose, guardInLen);
@@ -114136,9 +114144,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MINUS_DI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINUS_DI", startIdx, MINUS_DI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINUS_DI", "inHigh", inHigh, guardInLen);
       requireLength("MINUS_DI", "inLow", inLow, guardInLen);
       requireLength("MINUS_DI", "inClose", inClose, guardInLen);
@@ -115346,9 +115354,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MINUS_DM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINUS_DM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINUS_DM", startIdx, MINUS_DM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINUS_DM", "inHigh", inHigh, guardInLen);
       requireLength("MINUS_DM", "inLow", inLow, guardInLen);
       requireLength("MINUS_DM", "outReal", outReal, guardOutLen);
@@ -115419,9 +115427,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("MINUS_DM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINUS_DM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINUS_DM", startIdx, MINUS_DM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINUS_DM", "inHigh", inHigh, guardInLen);
       requireLength("MINUS_DM", "inLow", inLow, guardInLen);
       requireLength("MINUS_DM", "outReal", outReal, guardOutLen);
@@ -116205,9 +116213,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MOM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MOM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MOM", startIdx, MOM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MOM", "inReal", inReal, guardInLen);
       requireLength("MOM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -116269,9 +116277,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("MOM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MOM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MOM", startIdx, MOM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MOM", "inReal", inReal, guardInLen);
       requireLength("MOM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -116727,9 +116735,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("MULT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MULT_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MULT", startIdx, MULT_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MULT", "inReal0", inReal0, guardInLen);
       requireLength("MULT", "inReal1", inReal1, guardInLen);
       requireLength("MULT", "outReal", outReal, guardOutLen);
@@ -116788,9 +116796,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("MULT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MULT_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MULT", startIdx, MULT_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MULT", "inReal0", inReal0, guardInLen);
       requireLength("MULT", "inReal1", inReal1, guardInLen);
       requireLength("MULT", "outReal", outReal, guardOutLen);
@@ -117483,9 +117491,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("NATR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NATR", startIdx, NATR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NATR", "inHigh", inHigh, guardInLen);
       requireLength("NATR", "inLow", inLow, guardInLen);
       requireLength("NATR", "inClose", inClose, guardInLen);
@@ -117555,9 +117563,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("NATR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NATR", startIdx, NATR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NATR", "inHigh", inHigh, guardInLen);
       requireLength("NATR", "inLow", inLow, guardInLen);
       requireLength("NATR", "inClose", inClose, guardInLen);
@@ -118223,9 +118231,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("NVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NVI", startIdx, NVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NVI", "inClose", inClose, guardInLen);
       requireLength("NVI", "inVolume", inVolume, guardInLen);
       requireLength("NVI", "outReal", outReal, guardOutLen);
@@ -118294,9 +118302,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("NVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("NVI", startIdx, NVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NVI", "inClose", inClose, guardInLen);
       requireLength("NVI", "inVolume", inVolume, guardInLen);
       requireLength("NVI", "outReal", outReal, guardOutLen);
@@ -118762,9 +118770,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("OBV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("OBV", startIdx, OBV_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("OBV", "inReal", inReal, guardInLen);
       requireLength("OBV", "inVolume", inVolume, guardInLen);
       requireLength("OBV", "outReal", outReal, guardOutLen);
@@ -118821,9 +118829,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("OBV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("OBV", startIdx, OBV_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("OBV", "inReal", inReal, guardInLen);
       requireLength("OBV", "inVolume", inVolume, guardInLen);
       requireLength("OBV", "outReal", outReal, guardOutLen);
@@ -119733,9 +119741,9 @@ public final class Core {
                             double outReal[] )
    {
       requireIndexRange("PLUS_DI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PLUS_DI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PLUS_DI", startIdx, PLUS_DI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PLUS_DI", "inHigh", inHigh, guardInLen);
       requireLength("PLUS_DI", "inLow", inLow, guardInLen);
       requireLength("PLUS_DI", "inClose", inClose, guardInLen);
@@ -119814,9 +119822,9 @@ public final class Core {
                             double outReal[] )
    {
       requireIndexRange("PLUS_DI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PLUS_DI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PLUS_DI", startIdx, PLUS_DI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PLUS_DI", "inHigh", inHigh, guardInLen);
       requireLength("PLUS_DI", "inLow", inLow, guardInLen);
       requireLength("PLUS_DI", "inClose", inClose, guardInLen);
@@ -121024,9 +121032,9 @@ public final class Core {
                             double outReal[] )
    {
       requireIndexRange("PLUS_DM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PLUS_DM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PLUS_DM", startIdx, PLUS_DM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PLUS_DM", "inHigh", inHigh, guardInLen);
       requireLength("PLUS_DM", "inLow", inLow, guardInLen);
       requireLength("PLUS_DM", "outReal", outReal, guardOutLen);
@@ -121096,9 +121104,9 @@ public final class Core {
                             double outReal[] )
    {
       requireIndexRange("PLUS_DM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PLUS_DM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PLUS_DM", startIdx, PLUS_DM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PLUS_DM", "inHigh", inHigh, guardInLen);
       requireLength("PLUS_DM", "inLow", inLow, guardInLen);
       requireLength("PLUS_DM", "outReal", outReal, guardOutLen);
@@ -121967,9 +121975,9 @@ public final class Core {
    {
       requireIndexRange("PPO", startIdx, endIdx);
       requireArgument("PPO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PPO", startIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PPO", "inReal", inReal, guardInLen);
       requireLength("PPO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -122046,9 +122054,9 @@ public final class Core {
    {
       requireIndexRange("PPO", startIdx, endIdx);
       requireArgument("PPO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PPO", startIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PPO", "inReal", inReal, guardInLen);
       requireLength("PPO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -122608,9 +122616,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("PVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVI", startIdx, PVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVI", "inClose", inClose, guardInLen);
       requireLength("PVI", "inVolume", inVolume, guardInLen);
       requireLength("PVI", "outReal", outReal, guardOutLen);
@@ -122679,9 +122687,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("PVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVI", startIdx, PVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVI", "inClose", inClose, guardInLen);
       requireLength("PVI", "inVolume", inVolume, guardInLen);
       requireLength("PVI", "outReal", outReal, guardOutLen);
@@ -123286,9 +123294,9 @@ public final class Core {
    {
       requireIndexRange("PVO", startIdx, endIdx);
       requireArgument("PVO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVO", startIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVO", "inVolume", inVolume, guardInLen);
       requireLength("PVO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -123367,9 +123375,9 @@ public final class Core {
    {
       requireIndexRange("PVO", startIdx, endIdx);
       requireArgument("PVO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVO", startIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVO", "inVolume", inVolume, guardInLen);
       requireLength("PVO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -123978,9 +123986,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("QSTICK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, QSTICK_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("QSTICK", startIdx, QSTICK_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("QSTICK", "inOpen", inOpen, guardInLen);
       requireLength("QSTICK", "inClose", inClose, guardInLen);
       requireLength("QSTICK", "outReal", outReal, guardOutLen);
@@ -124050,9 +124058,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("QSTICK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, QSTICK_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("QSTICK", startIdx, QSTICK_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("QSTICK", "inOpen", inOpen, guardInLen);
       requireLength("QSTICK", "inClose", inClose, guardInLen);
       requireLength("QSTICK", "outReal", outReal, guardOutLen);
@@ -124619,9 +124627,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ROC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROC", startIdx, ROC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROC", "inReal", inReal, guardInLen);
       requireLength("ROC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -124684,9 +124692,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("ROC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROC", startIdx, ROC_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROC", "inReal", inReal, guardInLen);
       requireLength("ROC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -125242,9 +125250,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ROCP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROCP_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROCP", startIdx, ROCP_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROCP", "inReal", inReal, guardInLen);
       requireLength("ROCP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -125306,9 +125314,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ROCP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROCP_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROCP", startIdx, ROCP_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROCP", "inReal", inReal, guardInLen);
       requireLength("ROCP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -125866,9 +125874,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ROCR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROCR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROCR", startIdx, ROCR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROCR", "inReal", inReal, guardInLen);
       requireLength("ROCR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -125931,9 +125939,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("ROCR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROCR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROCR", startIdx, ROCR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROCR", "inReal", inReal, guardInLen);
       requireLength("ROCR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -126492,9 +126500,9 @@ public final class Core {
                             double outReal[] )
    {
       requireIndexRange("ROCR100", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROCR100_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROCR100", startIdx, ROCR100_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROCR100", "inReal", inReal, guardInLen);
       requireLength("ROCR100", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -126558,9 +126566,9 @@ public final class Core {
                             double outReal[] )
    {
       requireIndexRange("ROCR100", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ROCR100_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ROCR100", startIdx, ROCR100_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ROCR100", "inReal", inReal, guardInLen);
       requireLength("ROCR100", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -127310,9 +127318,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("RSI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("RSI", startIdx, RSI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RSI", "inReal", inReal, guardInLen);
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -127388,9 +127396,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("RSI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("RSI", startIdx, RSI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RSI", "inReal", inReal, guardInLen);
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -128354,9 +128362,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAR", startIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAR", "inHigh", inHigh, guardInLen);
       requireLength("SAR", "inLow", inLow, guardInLen);
       requireLength("SAR", "outReal", outReal, guardOutLen);
@@ -128427,9 +128435,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAR", startIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAR", "inHigh", inHigh, guardInLen);
       requireLength("SAR", "inLow", inLow, guardInLen);
       requireLength("SAR", "outReal", outReal, guardOutLen);
@@ -129796,9 +129804,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("SAREXT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAREXT", startIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAREXT", "inHigh", inHigh, guardInLen);
       requireLength("SAREXT", "inLow", inLow, guardInLen);
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
@@ -129885,9 +129893,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("SAREXT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAREXT", startIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAREXT", "inHigh", inHigh, guardInLen);
       requireLength("SAREXT", "inLow", inLow, guardInLen);
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
@@ -130741,9 +130749,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SIN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SIN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SIN", startIdx, SIN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SIN", "inReal", inReal, guardInLen);
       requireLength("SIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -130799,9 +130807,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SIN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SIN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SIN", startIdx, SIN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SIN", "inReal", inReal, guardInLen);
       requireLength("SIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -131152,9 +131160,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("SINH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SINH", startIdx, SINH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SINH", "inReal", inReal, guardInLen);
       requireLength("SINH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -131209,9 +131217,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("SINH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SINH", startIdx, SINH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SINH", "inReal", inReal, guardInLen);
       requireLength("SINH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -131666,9 +131674,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SMA", startIdx, SMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SMA", "inReal", inReal, guardInLen);
       requireLength("SMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -131734,9 +131742,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SMA", startIdx, SMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SMA", "inReal", inReal, guardInLen);
       requireLength("SMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -132763,9 +132771,9 @@ public final class Core {
                         double outSMISignal[] )
    {
       requireIndexRange("SMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SMI", startIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SMI", "inHigh", inHigh, guardInLen);
       requireLength("SMI", "inLow", inLow, guardInLen);
       requireLength("SMI", "inClose", inClose, guardInLen);
@@ -132864,9 +132872,9 @@ public final class Core {
                         double outSMISignal[] )
    {
       requireIndexRange("SMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SMI", startIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SMI", "inHigh", inHigh, guardInLen);
       requireLength("SMI", "inLow", inLow, guardInLen);
       requireLength("SMI", "inClose", inClose, guardInLen);
@@ -133728,9 +133736,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("SQRT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SQRT_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SQRT", startIdx, SQRT_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SQRT", "inReal", inReal, guardInLen);
       requireLength("SQRT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -133786,9 +133794,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("SQRT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SQRT_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SQRT", startIdx, SQRT_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SQRT", "inReal", inReal, guardInLen);
       requireLength("SQRT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -134252,9 +134260,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("STDDEV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STDDEV", startIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STDDEV", "inReal", inReal, guardInLen);
       requireLength("STDDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -134321,9 +134329,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("STDDEV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STDDEV", startIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STDDEV", "inReal", inReal, guardInLen);
       requireLength("STDDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -135224,9 +135232,9 @@ public final class Core {
       requireIndexRange("STOCH", startIdx, endIdx);
       requireArgument("STOCH", "optInSlowK_MAType", optInSlowK_MAType);
       requireArgument("STOCH", "optInSlowD_MAType", optInSlowD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCH", startIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCH", "inHigh", inHigh, guardInLen);
       requireLength("STOCH", "inLow", inLow, guardInLen);
       requireLength("STOCH", "inClose", inClose, guardInLen);
@@ -135325,9 +135333,9 @@ public final class Core {
       requireIndexRange("STOCH", startIdx, endIdx);
       requireArgument("STOCH", "optInSlowK_MAType", optInSlowK_MAType);
       requireArgument("STOCH", "optInSlowD_MAType", optInSlowD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCH", startIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCH", "inHigh", inHigh, guardInLen);
       requireLength("STOCH", "inLow", inLow, guardInLen);
       requireLength("STOCH", "inClose", inClose, guardInLen);
@@ -136541,9 +136549,9 @@ public final class Core {
    {
       requireIndexRange("STOCHF", startIdx, endIdx);
       requireArgument("STOCHF", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCHF", startIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHF", "inHigh", inHigh, guardInLen);
       requireLength("STOCHF", "inLow", inLow, guardInLen);
       requireLength("STOCHF", "inClose", inClose, guardInLen);
@@ -136630,9 +136638,9 @@ public final class Core {
    {
       requireIndexRange("STOCHF", startIdx, endIdx);
       requireArgument("STOCHF", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCHF", startIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHF", "inHigh", inHigh, guardInLen);
       requireLength("STOCHF", "inLow", inLow, guardInLen);
       requireLength("STOCHF", "inClose", inClose, guardInLen);
@@ -137618,9 +137626,9 @@ public final class Core {
    {
       requireIndexRange("STOCHRSI", startIdx, endIdx);
       requireArgument("STOCHRSI", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCHRSI", startIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHRSI", "inReal", inReal, guardInLen);
       requireLength("STOCHRSI", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI", "outFastD", outFastD, guardOutLen);
@@ -137707,9 +137715,9 @@ public final class Core {
    {
       requireIndexRange("STOCHRSI", startIdx, endIdx);
       requireArgument("STOCHRSI", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCHRSI", startIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHRSI", "inReal", inReal, guardInLen);
       requireLength("STOCHRSI", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI", "outFastD", outFastD, guardOutLen);
@@ -138237,9 +138245,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SUB", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SUB_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SUB", startIdx, SUB_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SUB", "inReal0", inReal0, guardInLen);
       requireLength("SUB", "inReal1", inReal1, guardInLen);
       requireLength("SUB", "outReal", outReal, guardOutLen);
@@ -138298,9 +138306,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SUB", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SUB_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SUB", startIdx, SUB_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SUB", "inReal0", inReal0, guardInLen);
       requireLength("SUB", "inReal1", inReal1, guardInLen);
       requireLength("SUB", "outReal", outReal, guardOutLen);
@@ -138740,9 +138748,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SUM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SUM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SUM", startIdx, SUM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SUM", "inReal", inReal, guardInLen);
       requireLength("SUM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -138800,9 +138808,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("SUM", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SUM_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SUM", startIdx, SUM_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SUM", "inReal", inReal, guardInLen);
       requireLength("SUM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -139553,9 +139561,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("T3", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("T3", startIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("T3", "inReal", inReal, guardInLen);
       requireLength("T3", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -139627,9 +139635,9 @@ public final class Core {
                        double outReal[] )
    {
       requireIndexRange("T3", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("T3", startIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("T3", "inReal", inReal, guardInLen);
       requireLength("T3", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -140214,9 +140222,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("TAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TAN", startIdx, TAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TAN", "inReal", inReal, guardInLen);
       requireLength("TAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -140273,9 +140281,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("TAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TAN", startIdx, TAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TAN", "inReal", inReal, guardInLen);
       requireLength("TAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -140627,9 +140635,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("TANH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TANH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TANH", startIdx, TANH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TANH", "inReal", inReal, guardInLen);
       requireLength("TANH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -140685,9 +140693,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("TANH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TANH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TANH", startIdx, TANH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TANH", "inReal", inReal, guardInLen);
       requireLength("TANH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -141294,9 +141302,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("TEMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TEMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TEMA", startIdx, TEMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TEMA", "inReal", inReal, guardInLen);
       requireLength("TEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -141361,9 +141369,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("TEMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TEMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TEMA", startIdx, TEMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TEMA", "inReal", inReal, guardInLen);
       requireLength("TEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -141995,9 +142003,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("TRANGE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRANGE", startIdx, TRANGE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRANGE", "inHigh", inHigh, guardInLen);
       requireLength("TRANGE", "inLow", inLow, guardInLen);
       requireLength("TRANGE", "inClose", inClose, guardInLen);
@@ -142065,9 +142073,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("TRANGE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRANGE", startIdx, TRANGE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRANGE", "inHigh", inHigh, guardInLen);
       requireLength("TRANGE", "inLow", inLow, guardInLen);
       requireLength("TRANGE", "inClose", inClose, guardInLen);
@@ -142879,9 +142887,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("TRIMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRIMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRIMA", startIdx, TRIMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIMA", "inReal", inReal, guardInLen);
       requireLength("TRIMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -142948,9 +142956,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("TRIMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRIMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRIMA", startIdx, TRIMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIMA", "inReal", inReal, guardInLen);
       requireLength("TRIMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -144049,9 +144057,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("TRIX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRIX", startIdx, TRIX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIX", "inReal", inReal, guardInLen);
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -144119,9 +144127,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("TRIX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRIX", startIdx, TRIX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIX", "inReal", inReal, guardInLen);
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -144879,9 +144887,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("TSF", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TSF", startIdx, TSF_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TSF", "inReal", inReal, guardInLen);
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -144943,9 +144951,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("TSF", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TSF", startIdx, TSF_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TSF", "inReal", inReal, guardInLen);
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -145653,9 +145661,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("TYPPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TYPPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TYPPRICE", startIdx, TYPPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TYPPRICE", "inHigh", inHigh, guardInLen);
       requireLength("TYPPRICE", "inLow", inLow, guardInLen);
       requireLength("TYPPRICE", "inClose", inClose, guardInLen);
@@ -145718,9 +145726,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("TYPPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TYPPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TYPPRICE", startIdx, TYPPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TYPPRICE", "inHigh", inHigh, guardInLen);
       requireLength("TYPPRICE", "inLow", inLow, guardInLen);
       requireLength("TYPPRICE", "inClose", inClose, guardInLen);
@@ -146604,9 +146612,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("ULTOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ULTOSC", startIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ULTOSC", "inHigh", inHigh, guardInLen);
       requireLength("ULTOSC", "inLow", inLow, guardInLen);
       requireLength("ULTOSC", "inClose", inClose, guardInLen);
@@ -146688,9 +146696,9 @@ public final class Core {
                            double outReal[] )
    {
       requireIndexRange("ULTOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ULTOSC", startIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ULTOSC", "inHigh", inHigh, guardInLen);
       requireLength("ULTOSC", "inLow", inLow, guardInLen);
       requireLength("ULTOSC", "inClose", inClose, guardInLen);
@@ -147782,9 +147790,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("VAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VAR", startIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VAR", "inReal", inReal, guardInLen);
       requireLength("VAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -147851,9 +147859,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("VAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VAR", startIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VAR", "inReal", inReal, guardInLen);
       requireLength("VAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -148721,9 +148729,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("VWAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VWAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VWAP", startIdx, VWAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWAP", "inHigh", inHigh, guardInLen);
       requireLength("VWAP", "inLow", inLow, guardInLen);
       requireLength("VWAP", "inClose", inClose, guardInLen);
@@ -148806,9 +148814,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("VWAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VWAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VWAP", startIdx, VWAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWAP", "inHigh", inHigh, guardInLen);
       requireLength("VWAP", "inLow", inLow, guardInLen);
       requireLength("VWAP", "inClose", inClose, guardInLen);
@@ -149543,9 +149551,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("VWMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VWMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VWMA", startIdx, VWMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWMA", "inReal", inReal, guardInLen);
       requireLength("VWMA", "inVolume", inVolume, guardInLen);
       requireLength("VWMA", "outReal", outReal, guardOutLen);
@@ -149622,9 +149630,9 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("VWMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VWMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VWMA", startIdx, VWMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWMA", "inReal", inReal, guardInLen);
       requireLength("VWMA", "inVolume", inVolume, guardInLen);
       requireLength("VWMA", "outReal", outReal, guardOutLen);
@@ -150282,9 +150290,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("WAD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WAD", startIdx, WAD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WAD", "inHigh", inHigh, guardInLen);
       requireLength("WAD", "inLow", inLow, guardInLen);
       requireLength("WAD", "inClose", inClose, guardInLen);
@@ -150369,9 +150377,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("WAD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WAD", startIdx, WAD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WAD", "inHigh", inHigh, guardInLen);
       requireLength("WAD", "inLow", inLow, guardInLen);
       requireLength("WAD", "inClose", inClose, guardInLen);
@@ -150827,9 +150835,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("WCLPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WCLPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WCLPRICE", startIdx, WCLPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WCLPRICE", "inHigh", inHigh, guardInLen);
       requireLength("WCLPRICE", "inLow", inLow, guardInLen);
       requireLength("WCLPRICE", "inClose", inClose, guardInLen);
@@ -150892,9 +150900,9 @@ public final class Core {
                              double outReal[] )
    {
       requireIndexRange("WCLPRICE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WCLPRICE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WCLPRICE", startIdx, WCLPRICE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WCLPRICE", "inHigh", inHigh, guardInLen);
       requireLength("WCLPRICE", "inLow", inLow, guardInLen);
       requireLength("WCLPRICE", "inClose", inClose, guardInLen);
@@ -151585,9 +151593,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("WILLR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WILLR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WILLR", startIdx, WILLR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WILLR", "inHigh", inHigh, guardInLen);
       requireLength("WILLR", "inLow", inLow, guardInLen);
       requireLength("WILLR", "inClose", inClose, guardInLen);
@@ -151655,9 +151663,9 @@ public final class Core {
                           double outReal[] )
    {
       requireIndexRange("WILLR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WILLR_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WILLR", startIdx, WILLR_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WILLR", "inHigh", inHigh, guardInLen);
       requireLength("WILLR", "inLow", inLow, guardInLen);
       requireLength("WILLR", "inClose", inClose, guardInLen);
@@ -152538,9 +152546,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("WMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WMA", startIdx, WMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WMA", "inReal", inReal, guardInLen);
       requireLength("WMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -152607,9 +152615,9 @@ public final class Core {
                         double outReal[] )
    {
       requireIndexRange("WMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, WMA_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("WMA", startIdx, WMA_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WMA", "inReal", inReal, guardInLen);
       requireLength("WMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

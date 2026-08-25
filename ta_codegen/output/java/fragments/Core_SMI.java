@@ -695,9 +695,9 @@
                         double outSMISignal[] )
    {
       requireIndexRange("SMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SMI", startIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SMI", "inHigh", inHigh, guardInLen);
       requireLength("SMI", "inLow", inLow, guardInLen);
       requireLength("SMI", "inClose", inClose, guardInLen);
@@ -796,9 +796,9 @@
                         double outSMISignal[] )
    {
       requireIndexRange("SMI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SMI", startIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SMI", "inHigh", inHigh, guardInLen);
       requireLength("SMI", "inLow", inLow, guardInLen);
       requireLength("SMI", "inClose", inClose, guardInLen);

@@ -198,9 +198,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLENGULFING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLENGULFING", startIdx, CDLENGULFING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
       requireLength("CDLENGULFING", "inClose", inClose, guardInLen);
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
@@ -270,9 +270,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLENGULFING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLENGULFING", startIdx, CDLENGULFING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
       requireLength("CDLENGULFING", "inClose", inClose, guardInLen);
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);

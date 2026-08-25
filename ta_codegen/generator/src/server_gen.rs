@@ -3215,9 +3215,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // public wrapper — it calls the cores — but the spliced text has to compile,
     // and it has to compile against the SAME helpers the library ships, or the
     // identity this splice exists to preserve would be an identity of text only.
-    s.push_str("    static int clampedStart(int startIdx, int endIdx, int lookback) {\n");
-    s.push_str("        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX) {\n");
-    s.push_str("            return -1;\n");
+    s.push_str("    static int clampedStart(String funcName, int startIdx, int lookback) {\n");
+    s.push_str("        if (lookback < 0) {\n");
+    s.push_str("            throw failure(funcName, RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("        return startIdx > lookback ? startIdx : lookback;\n");
     s.push_str("    }\n\n");
@@ -3247,7 +3247,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n\n");
     s.push_str("    static void requireArgument(String funcName, String argName, Object argument) {\n");
     s.push_str("        if (argument == null) {\n");
-    s.push_str("            throw new TaLibNullArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
+    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     for func in funcs {

@@ -225,9 +225,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLBREAKAWAY", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBREAKAWAY_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBREAKAWAY", startIdx, CDLBREAKAWAY_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBREAKAWAY", "inOpen", inOpen, guardInLen);
       requireLength("CDLBREAKAWAY", "inHigh", inHigh, guardInLen);
       requireLength("CDLBREAKAWAY", "inLow", inLow, guardInLen);
@@ -298,9 +298,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLBREAKAWAY", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBREAKAWAY_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBREAKAWAY", startIdx, CDLBREAKAWAY_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBREAKAWAY", "inOpen", inOpen, guardInLen);
       requireLength("CDLBREAKAWAY", "inHigh", inHigh, guardInLen);
       requireLength("CDLBREAKAWAY", "inLow", inLow, guardInLen);

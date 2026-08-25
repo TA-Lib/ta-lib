@@ -604,9 +604,9 @@
                        double outReal[] )
    {
       requireIndexRange("DX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DX", startIdx, DX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DX", "inHigh", inHigh, guardInLen);
       requireLength("DX", "inLow", inLow, guardInLen);
       requireLength("DX", "inClose", inClose, guardInLen);
@@ -683,9 +683,9 @@
                        double outReal[] )
    {
       requireIndexRange("DX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("DX", startIdx, DX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DX", "inHigh", inHigh, guardInLen);
       requireLength("DX", "inLow", inLow, guardInLen);
       requireLength("DX", "inClose", inClose, guardInLen);

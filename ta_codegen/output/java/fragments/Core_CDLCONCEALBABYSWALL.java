@@ -243,9 +243,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, CDLCONCEALBABYSWALL_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inHigh", inHigh, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inLow", inLow, guardInLen);
@@ -313,9 +313,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, CDLCONCEALBABYSWALL_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inHigh", inHigh, guardInLen);
       requireLength("CDLCONCEALBABYSWALL", "inLow", inLow, guardInLen);

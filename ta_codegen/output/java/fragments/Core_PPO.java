@@ -287,9 +287,9 @@
    {
       requireIndexRange("PPO", startIdx, endIdx);
       requireArgument("PPO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PPO", startIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PPO", "inReal", inReal, guardInLen);
       requireLength("PPO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -366,9 +366,9 @@
    {
       requireIndexRange("PPO", startIdx, endIdx);
       requireArgument("PPO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PPO", startIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PPO", "inReal", inReal, guardInLen);
       requireLength("PPO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

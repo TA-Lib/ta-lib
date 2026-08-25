@@ -247,9 +247,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLSHORTLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSHORTLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSHORTLINE", startIdx, CDLSHORTLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSHORTLINE", "inOpen", inOpen, guardInLen);
       requireLength("CDLSHORTLINE", "inHigh", inHigh, guardInLen);
       requireLength("CDLSHORTLINE", "inLow", inLow, guardInLen);
@@ -322,9 +322,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLSHORTLINE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSHORTLINE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSHORTLINE", startIdx, CDLSHORTLINE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSHORTLINE", "inOpen", inOpen, guardInLen);
       requireLength("CDLSHORTLINE", "inHigh", inHigh, guardInLen);
       requireLength("CDLSHORTLINE", "inLow", inLow, guardInLen);

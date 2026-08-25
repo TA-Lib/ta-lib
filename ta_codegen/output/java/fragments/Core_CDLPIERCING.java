@@ -233,9 +233,9 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLPIERCING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLPIERCING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLPIERCING", startIdx, CDLPIERCING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
       requireLength("CDLPIERCING", "inHigh", inHigh, guardInLen);
       requireLength("CDLPIERCING", "inLow", inLow, guardInLen);
@@ -304,9 +304,9 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLPIERCING", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLPIERCING_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLPIERCING", startIdx, CDLPIERCING_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
       requireLength("CDLPIERCING", "inHigh", inHigh, guardInLen);
       requireLength("CDLPIERCING", "inLow", inLow, guardInLen);

@@ -112,9 +112,9 @@
                         double outReal[] )
    {
       requireIndexRange("TAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TAN", startIdx, TAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TAN", "inReal", inReal, guardInLen);
       requireLength("TAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -171,9 +171,9 @@
                         double outReal[] )
    {
       requireIndexRange("TAN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TAN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TAN", startIdx, TAN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TAN", "inReal", inReal, guardInLen);
       requireLength("TAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

@@ -91,8 +91,6 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
    if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
-   if( !inReal )
-      return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
@@ -100,6 +98,10 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
    if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
    else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -173,8 +175,6 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
    if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
-   if( !inReal )
-      return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
@@ -182,6 +182,10 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
    if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
    else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

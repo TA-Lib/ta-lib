@@ -352,9 +352,9 @@
                         double outReal[] )
    {
       requireIndexRange("CMF", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMF", startIdx, CMF_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMF", "inHigh", inHigh, guardInLen);
       requireLength("CMF", "inLow", inLow, guardInLen);
       requireLength("CMF", "inClose", inClose, guardInLen);
@@ -450,9 +450,9 @@
                         double outReal[] )
    {
       requireIndexRange("CMF", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CMF", startIdx, CMF_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMF", "inHigh", inHigh, guardInLen);
       requireLength("CMF", "inLow", inLow, guardInLen);
       requireLength("CMF", "inClose", inClose, guardInLen);

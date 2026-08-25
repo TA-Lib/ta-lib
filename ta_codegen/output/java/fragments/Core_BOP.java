@@ -147,9 +147,9 @@
                         double outReal[] )
    {
       requireIndexRange("BOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, BOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BOP", startIdx, BOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BOP", "inOpen", inOpen, guardInLen);
       requireLength("BOP", "inHigh", inHigh, guardInLen);
       requireLength("BOP", "inLow", inLow, guardInLen);
@@ -213,9 +213,9 @@
                         double outReal[] )
    {
       requireIndexRange("BOP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, BOP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BOP", startIdx, BOP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BOP", "inOpen", inOpen, guardInLen);
       requireLength("BOP", "inHigh", inHigh, guardInLen);
       requireLength("BOP", "inLow", inLow, guardInLen);

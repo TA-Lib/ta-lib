@@ -342,9 +342,9 @@
                              double outRealLowerBand[] )
    {
       requireIndexRange("ACCBANDS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ACCBANDS_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ACCBANDS", startIdx, ACCBANDS_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ACCBANDS", "inHigh", inHigh, guardInLen);
       requireLength("ACCBANDS", "inLow", inLow, guardInLen);
       requireLength("ACCBANDS", "inClose", inClose, guardInLen);
@@ -420,9 +420,9 @@
                              double outRealLowerBand[] )
    {
       requireIndexRange("ACCBANDS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ACCBANDS_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ACCBANDS", startIdx, ACCBANDS_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ACCBANDS", "inHigh", inHigh, guardInLen);
       requireLength("ACCBANDS", "inLow", inLow, guardInLen);
       requireLength("ACCBANDS", "inClose", inClose, guardInLen);

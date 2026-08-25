@@ -422,9 +422,9 @@
                            double outMax[] )
    {
       requireIndexRange("MINMAX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINMAX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINMAX", startIdx, MINMAX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINMAX", "inReal", inReal, guardInLen);
       requireLength("MINMAX", "outMin", outMin, guardOutLen);
       requireLength("MINMAX", "outMax", outMax, guardOutLen);
@@ -492,9 +492,9 @@
                            double outMax[] )
    {
       requireIndexRange("MINMAX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MINMAX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MINMAX", startIdx, MINMAX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINMAX", "inReal", inReal, guardInLen);
       requireLength("MINMAX", "outMin", outMin, guardOutLen);
       requireLength("MINMAX", "outMax", outMax, guardOutLen);

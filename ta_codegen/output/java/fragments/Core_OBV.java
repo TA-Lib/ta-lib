@@ -144,9 +144,9 @@
                         double outReal[] )
    {
       requireIndexRange("OBV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("OBV", startIdx, OBV_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("OBV", "inReal", inReal, guardInLen);
       requireLength("OBV", "inVolume", inVolume, guardInLen);
       requireLength("OBV", "outReal", outReal, guardOutLen);
@@ -203,9 +203,9 @@
                         double outReal[] )
    {
       requireIndexRange("OBV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("OBV", startIdx, OBV_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("OBV", "inReal", inReal, guardInLen);
       requireLength("OBV", "inVolume", inVolume, guardInLen);
       requireLength("OBV", "outReal", outReal, guardOutLen);

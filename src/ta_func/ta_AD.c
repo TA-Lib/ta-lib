@@ -96,6 +96,8 @@ TA_LIB_API TA_RetCode TA_AD( int    startIdx,
       return TA_BAD_PARAM;
    if( !inVolume )
       return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -168,6 +170,8 @@ TA_RetCode TA_S_AD( int    startIdx,
    if( !inClose )
       return TA_BAD_PARAM;
    if( !inVolume )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

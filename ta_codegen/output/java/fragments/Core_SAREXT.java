@@ -746,9 +746,9 @@
                            double outReal[] )
    {
       requireIndexRange("SAREXT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAREXT", startIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAREXT", "inHigh", inHigh, guardInLen);
       requireLength("SAREXT", "inLow", inLow, guardInLen);
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
@@ -835,9 +835,9 @@
                            double outReal[] )
    {
       requireIndexRange("SAREXT", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SAREXT", startIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAREXT", "inHigh", inHigh, guardInLen);
       requireLength("SAREXT", "inLow", inLow, guardInLen);
       requireLength("SAREXT", "outReal", outReal, guardOutLen);

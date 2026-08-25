@@ -233,9 +233,9 @@
                              int outInteger[] )
    {
       requireIndexRange("MAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAXINDEX", startIdx, MAXINDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -302,9 +302,9 @@
                              int outInteger[] )
    {
       requireIndexRange("MAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAXINDEX", startIdx, MAXINDEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();

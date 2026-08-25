@@ -248,9 +248,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLCLOSINGMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCLOSINGMARUBOZU_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, CDLCLOSINGMARUBOZU_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inHigh", inHigh, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inLow", inLow, guardInLen);
@@ -323,9 +323,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLCLOSINGMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLCLOSINGMARUBOZU_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, CDLCLOSINGMARUBOZU_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inHigh", inHigh, guardInLen);
       requireLength("CDLCLOSINGMARUBOZU", "inLow", inLow, guardInLen);

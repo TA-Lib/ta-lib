@@ -316,9 +316,9 @@
                          double outReal[] )
    {
       requireIndexRange("TRIX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRIX", startIdx, TRIX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIX", "inReal", inReal, guardInLen);
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -386,9 +386,9 @@
                          double outReal[] )
    {
       requireIndexRange("TRIX", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRIX", startIdx, TRIX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIX", "inReal", inReal, guardInLen);
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

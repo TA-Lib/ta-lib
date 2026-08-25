@@ -355,9 +355,9 @@
                           double outReal[] )
    {
       requireIndexRange("ADOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADOSC", startIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADOSC", "inHigh", inHigh, guardInLen);
       requireLength("ADOSC", "inLow", inLow, guardInLen);
       requireLength("ADOSC", "inClose", inClose, guardInLen);
@@ -433,9 +433,9 @@
                           double outReal[] )
    {
       requireIndexRange("ADOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ADOSC", startIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADOSC", "inHigh", inHigh, guardInLen);
       requireLength("ADOSC", "inLow", inLow, guardInLen);
       requireLength("ADOSC", "inClose", inClose, guardInLen);

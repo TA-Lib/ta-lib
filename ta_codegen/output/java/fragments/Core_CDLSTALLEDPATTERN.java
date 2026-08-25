@@ -343,9 +343,9 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDLSTALLEDPATTERN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSTALLEDPATTERN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSTALLEDPATTERN", startIdx, CDLSTALLEDPATTERN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTALLEDPATTERN", "inOpen", inOpen, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inHigh", inHigh, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inLow", inLow, guardInLen);
@@ -415,9 +415,9 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDLSTALLEDPATTERN", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSTALLEDPATTERN_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSTALLEDPATTERN", startIdx, CDLSTALLEDPATTERN_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTALLEDPATTERN", "inOpen", inOpen, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inHigh", inHigh, guardInLen);
       requireLength("CDLSTALLEDPATTERN", "inLow", inLow, guardInLen);

@@ -289,9 +289,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLRISEFALL3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLRISEFALL3METHODS", startIdx, CDLRISEFALL3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
@@ -364,9 +364,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLRISEFALL3METHODS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLRISEFALL3METHODS", startIdx, CDLRISEFALL3METHODS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
       requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);

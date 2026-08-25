@@ -237,9 +237,9 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLTRISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTRISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTRISTAR", startIdx, CDLTRISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLTRISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLTRISTAR", "inLow", inLow, guardInLen);
@@ -309,9 +309,9 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLTRISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTRISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTRISTAR", startIdx, CDLTRISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLTRISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLTRISTAR", "inLow", inLow, guardInLen);

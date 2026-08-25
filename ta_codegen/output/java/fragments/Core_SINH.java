@@ -110,9 +110,9 @@
                          double outReal[] )
    {
       requireIndexRange("SINH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SINH", startIdx, SINH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SINH", "inReal", inReal, guardInLen);
       requireLength("SINH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -167,9 +167,9 @@
                          double outReal[] )
    {
       requireIndexRange("SINH", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("SINH", startIdx, SINH_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SINH", "inReal", inReal, guardInLen);
       requireLength("SINH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

@@ -110,6 +110,10 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
    if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
+   if( optInPenetration == TA_REAL_DEFAULT )
+      optInPenetration = 0.3;
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
    if( !inOpen )
       return TA_BAD_PARAM;
    if( !inHigh )
@@ -118,9 +122,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !inClose )
       return TA_BAD_PARAM;
-   if( optInPenetration == TA_REAL_DEFAULT )
-      optInPenetration = 0.3;
-   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -252,6 +254,10 @@ TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
    if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
+   if( optInPenetration == TA_REAL_DEFAULT )
+      optInPenetration = 0.3;
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
    if( !inOpen )
       return TA_BAD_PARAM;
    if( !inHigh )
@@ -260,9 +266,7 @@ TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !inClose )
       return TA_BAD_PARAM;
-   if( optInPenetration == TA_REAL_DEFAULT )
-      optInPenetration = 0.3;
-   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;

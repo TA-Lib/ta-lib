@@ -485,9 +485,9 @@
                          double outMACDHist[] )
    {
       requireIndexRange("MACD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACD", startIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACD", "inReal", inReal, guardInLen);
       requireLength("MACD", "outMACD", outMACD, guardOutLen);
       requireLength("MACD", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -569,9 +569,9 @@
                          double outMACDHist[] )
    {
       requireIndexRange("MACD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACD", startIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACD", "inReal", inReal, guardInLen);
       requireLength("MACD", "outMACD", outMACD, guardOutLen);
       requireLength("MACD", "outMACDSignal", outMACDSignal, guardOutLen);

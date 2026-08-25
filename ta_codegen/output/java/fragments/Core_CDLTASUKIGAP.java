@@ -233,9 +233,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLTASUKIGAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTASUKIGAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTASUKIGAP", startIdx, CDLTASUKIGAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTASUKIGAP", "inOpen", inOpen, guardInLen);
       requireLength("CDLTASUKIGAP", "inHigh", inHigh, guardInLen);
       requireLength("CDLTASUKIGAP", "inLow", inLow, guardInLen);
@@ -305,9 +305,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLTASUKIGAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLTASUKIGAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLTASUKIGAP", startIdx, CDLTASUKIGAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTASUKIGAP", "inOpen", inOpen, guardInLen);
       requireLength("CDLTASUKIGAP", "inHigh", inHigh, guardInLen);
       requireLength("CDLTASUKIGAP", "inLow", inLow, guardInLen);

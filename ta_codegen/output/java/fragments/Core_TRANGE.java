@@ -204,9 +204,9 @@
                            double outReal[] )
    {
       requireIndexRange("TRANGE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRANGE", startIdx, TRANGE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRANGE", "inHigh", inHigh, guardInLen);
       requireLength("TRANGE", "inLow", inLow, guardInLen);
       requireLength("TRANGE", "inClose", inClose, guardInLen);
@@ -274,9 +274,9 @@
                            double outReal[] )
    {
       requireIndexRange("TRANGE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("TRANGE", startIdx, TRANGE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRANGE", "inHigh", inHigh, guardInLen);
       requireLength("TRANGE", "inLow", inLow, guardInLen);
       requireLength("TRANGE", "inClose", inClose, guardInLen);

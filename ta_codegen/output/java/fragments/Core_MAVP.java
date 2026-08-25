@@ -603,9 +603,9 @@
    {
       requireIndexRange("MAVP", startIdx, endIdx);
       requireArgument("MAVP", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAVP", startIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAVP", "inReal", inReal, guardInLen);
       requireLength("MAVP", "inPeriods", inPeriods, guardInLen);
       requireLength("MAVP", "outReal", outReal, guardOutLen);
@@ -683,9 +683,9 @@
    {
       requireIndexRange("MAVP", startIdx, endIdx);
       requireArgument("MAVP", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAVP", startIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAVP", "inReal", inReal, guardInLen);
       requireLength("MAVP", "inPeriods", inPeriods, guardInLen);
       requireLength("MAVP", "outReal", outReal, guardOutLen);

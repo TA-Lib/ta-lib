@@ -238,9 +238,9 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDL3LINESTRIKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3LINESTRIKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, CDL3LINESTRIKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3LINESTRIKE", "inHigh", inHigh, guardInLen);
       requireLength("CDL3LINESTRIKE", "inLow", inLow, guardInLen);
@@ -312,9 +312,9 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDL3LINESTRIKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3LINESTRIKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, CDL3LINESTRIKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
       requireLength("CDL3LINESTRIKE", "inHigh", inHigh, guardInLen);
       requireLength("CDL3LINESTRIKE", "inLow", inLow, guardInLen);

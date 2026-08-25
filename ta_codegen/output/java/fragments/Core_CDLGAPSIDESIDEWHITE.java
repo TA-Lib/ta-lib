@@ -258,9 +258,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLGAPSIDESIDEWHITE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLGAPSIDESIDEWHITE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLGAPSIDESIDEWHITE", startIdx, CDLGAPSIDESIDEWHITE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLGAPSIDESIDEWHITE", "inOpen", inOpen, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inHigh", inHigh, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inLow", inLow, guardInLen);
@@ -331,9 +331,9 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLGAPSIDESIDEWHITE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLGAPSIDESIDEWHITE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLGAPSIDESIDEWHITE", startIdx, CDLGAPSIDESIDEWHITE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLGAPSIDESIDEWHITE", "inOpen", inOpen, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inHigh", inHigh, guardInLen);
       requireLength("CDLGAPSIDESIDEWHITE", "inLow", inLow, guardInLen);

@@ -851,9 +851,9 @@
                          double outFAMA[] )
    {
       requireIndexRange("MAMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAMA", startIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
       requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
@@ -925,9 +925,9 @@
                          double outFAMA[] )
    {
       requireIndexRange("MAMA", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MAMA", startIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
       requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);

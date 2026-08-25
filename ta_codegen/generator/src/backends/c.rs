@@ -881,14 +881,22 @@ fn gen_func_inner(
         out.push_str("      return TA_OUT_OF_RANGE_END_INDEX;\n");
         out.push('\n');
 
+        // Optional parameter validation (default + range). Ahead of every
+        // argument-presence check: a parameter domain is language-neutral, an
+        // absent argument is not (Rust slices and C# spans cannot be absent), so
+        // putting the shared rule first is what lets all four backends agree on
+        // which condition a multi-fault call reports.
+        out.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
+
         // Input array NULL checks
         for input in &func.inputs {
             out.push_str(&format!("   if( !{} )\n", input.name));
             out.push_str("      return TA_BAD_PARAM;\n");
         }
 
-        // Optional parameter validation (default + range)
-        out.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
+        // The range out-parameters are required arguments like any other.
+        out.push_str("   if( !outBegIdx || !outNBElement )\n");
+        out.push_str("      return TA_BAD_PARAM;\n");
 
         // Output array NULL checks. A nullable output may legitimately be NULL
         // ("compute but don't write it" — see `Output::is_nullable`), so it is

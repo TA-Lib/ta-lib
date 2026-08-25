@@ -259,9 +259,9 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDOJISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDOJISTAR", startIdx, CDLDOJISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLDOJISTAR", "inLow", inLow, guardInLen);
@@ -340,9 +340,9 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLDOJISTAR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLDOJISTAR", startIdx, CDLDOJISTAR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLDOJISTAR", "inLow", inLow, guardInLen);

@@ -979,9 +979,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("HT_TRENDMODE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_TRENDMODE", startIdx, HT_TRENDMODE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_TRENDMODE", "inReal", inReal, guardInLen);
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -1038,9 +1038,9 @@
                                  int outInteger[] )
    {
       requireIndexRange("HT_TRENDMODE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("HT_TRENDMODE", startIdx, HT_TRENDMODE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_TRENDMODE", "inReal", inReal, guardInLen);
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();

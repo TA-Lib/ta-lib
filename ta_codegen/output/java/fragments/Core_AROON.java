@@ -300,9 +300,9 @@
                           double outAroonUp[] )
    {
       requireIndexRange("AROON", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROON_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROON", startIdx, AROON_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROON", "inHigh", inHigh, guardInLen);
       requireLength("AROON", "inLow", inLow, guardInLen);
       requireLength("AROON", "outAroonDown", outAroonDown, guardOutLen);
@@ -375,9 +375,9 @@
                           double outAroonUp[] )
    {
       requireIndexRange("AROON", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, AROON_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("AROON", startIdx, AROON_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROON", "inHigh", inHigh, guardInLen);
       requireLength("AROON", "inLow", inLow, guardInLen);
       requireLength("AROON", "outAroonDown", outAroonDown, guardOutLen);

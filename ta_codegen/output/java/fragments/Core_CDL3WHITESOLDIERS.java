@@ -358,9 +358,9 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDL3WHITESOLDIERS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3WHITESOLDIERS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, CDL3WHITESOLDIERS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inHigh", inHigh, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inLow", inLow, guardInLen);
@@ -430,9 +430,9 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDL3WHITESOLDIERS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDL3WHITESOLDIERS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, CDL3WHITESOLDIERS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inHigh", inHigh, guardInLen);
       requireLength("CDL3WHITESOLDIERS", "inLow", inLow, guardInLen);

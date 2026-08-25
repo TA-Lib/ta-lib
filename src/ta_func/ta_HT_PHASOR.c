@@ -137,6 +137,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
    if( !outInPhase )
       return TA_BAD_PARAM;
    if( !outQuadrature )
@@ -505,6 +507,8 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outInPhase )
       return TA_BAD_PARAM;

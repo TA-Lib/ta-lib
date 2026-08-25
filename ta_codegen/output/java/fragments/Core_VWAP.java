@@ -272,9 +272,9 @@
                          double outReal[] )
    {
       requireIndexRange("VWAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VWAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VWAP", startIdx, VWAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWAP", "inHigh", inHigh, guardInLen);
       requireLength("VWAP", "inLow", inLow, guardInLen);
       requireLength("VWAP", "inClose", inClose, guardInLen);
@@ -357,9 +357,9 @@
                          double outReal[] )
    {
       requireIndexRange("VWAP", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, VWAP_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("VWAP", startIdx, VWAP_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWAP", "inHigh", inHigh, guardInLen);
       requireLength("VWAP", "inLow", inLow, guardInLen);
       requireLength("VWAP", "inClose", inClose, guardInLen);

@@ -323,9 +323,9 @@
    {
       requireIndexRange("STOCHRSI", startIdx, endIdx);
       requireArgument("STOCHRSI", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCHRSI", startIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHRSI", "inReal", inReal, guardInLen);
       requireLength("STOCHRSI", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI", "outFastD", outFastD, guardOutLen);
@@ -412,9 +412,9 @@
    {
       requireIndexRange("STOCHRSI", startIdx, endIdx);
       requireArgument("STOCHRSI", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCHRSI", startIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHRSI", "inReal", inReal, guardInLen);
       requireLength("STOCHRSI", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI", "outFastD", outFastD, guardOutLen);

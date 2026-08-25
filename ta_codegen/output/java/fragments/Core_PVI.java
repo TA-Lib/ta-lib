@@ -188,9 +188,9 @@
                         double outReal[] )
    {
       requireIndexRange("PVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVI", startIdx, PVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVI", "inClose", inClose, guardInLen);
       requireLength("PVI", "inVolume", inVolume, guardInLen);
       requireLength("PVI", "outReal", outReal, guardOutLen);
@@ -259,9 +259,9 @@
                         double outReal[] )
    {
       requireIndexRange("PVI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVI", startIdx, PVI_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVI", "inClose", inClose, guardInLen);
       requireLength("PVI", "inVolume", inVolume, guardInLen);
       requireLength("PVI", "outReal", outReal, guardOutLen);

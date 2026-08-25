@@ -250,9 +250,9 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLBELTHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBELTHOLD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBELTHOLD", startIdx, CDLBELTHOLD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLBELTHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLBELTHOLD", "inLow", inLow, guardInLen);
@@ -327,9 +327,9 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLBELTHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLBELTHOLD_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLBELTHOLD", startIdx, CDLBELTHOLD_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLBELTHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLBELTHOLD", "inLow", inLow, guardInLen);

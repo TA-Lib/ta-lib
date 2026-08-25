@@ -223,9 +223,9 @@
                            double outReal[] )
    {
       requireIndexRange("STDDEV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STDDEV", startIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STDDEV", "inReal", inReal, guardInLen);
       requireLength("STDDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -292,9 +292,9 @@
                            double outReal[] )
    {
       requireIndexRange("STDDEV", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STDDEV", startIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STDDEV", "inReal", inReal, guardInLen);
       requireLength("STDDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

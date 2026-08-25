@@ -259,9 +259,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLUPSIDEGAP2CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLUPSIDEGAP2CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLUPSIDEGAP2CROWS", startIdx, CDLUPSIDEGAP2CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLUPSIDEGAP2CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inLow", inLow, guardInLen);
@@ -331,9 +331,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLUPSIDEGAP2CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLUPSIDEGAP2CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLUPSIDEGAP2CROWS", startIdx, CDLUPSIDEGAP2CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLUPSIDEGAP2CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLUPSIDEGAP2CROWS", "inLow", inLow, guardInLen);

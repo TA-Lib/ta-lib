@@ -458,6 +458,11 @@ typedef enum
   TA_QUOTE_UNIT_OUT_OF_RANGE         = 1624,
   TA_QUOTE_UNIT_VACUOUS              = 1625,
 
+  /* Batch tier rule B4: a required argument was not supplied. */
+  TA_BATCH_ARG_WRONG_CODE            = 1630,
+  TA_BATCH_ARG_CONTROL               = 1631,
+  TA_BATCH_ARG_VACUOUS               = 1632,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

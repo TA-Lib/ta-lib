@@ -284,9 +284,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLSEPARATINGLINES", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSEPARATINGLINES_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSEPARATINGLINES", startIdx, CDLSEPARATINGLINES_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSEPARATINGLINES", "inOpen", inOpen, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inHigh", inHigh, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inLow", inLow, guardInLen);
@@ -357,9 +357,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLSEPARATINGLINES", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLSEPARATINGLINES_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLSEPARATINGLINES", startIdx, CDLSEPARATINGLINES_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSEPARATINGLINES", "inOpen", inOpen, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inHigh", inHigh, guardInLen);
       requireLength("CDLSEPARATINGLINES", "inLow", inLow, guardInLen);

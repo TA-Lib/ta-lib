@@ -89,6 +89,7 @@ static ErrorNumber testUnstablePeriodBounds( void );
 static ErrorNumber testCandleSettingsBounds( void );
 static ErrorNumber testEnumValueContract( void );
 static ErrorNumber testStreamShortHistory( void );
+static ErrorNumber testBatchArgumentContract( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -145,6 +146,13 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Streaming short-history contract (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testBatchArgumentContract();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Batch argument contract (%d)\n", retValue );
       return retValue;
    }
 
@@ -379,6 +387,147 @@ static ErrorNumber testStreamShortHistory( void )
       printf( "\nFailed: the short-history gate ran fewer checks than it was "
               "written with\n" );
       return TA_STREAM_SHORT_HISTORY_VACUOUS;
+   }
+
+   return freeLib();
+}
+
+/* Rule B4: a required argument that was not supplied is TA_BAD_PARAM.
+ *
+ * The two range out-parameters are required arguments, and they were the one
+ * pair the batch prologue never checked -- a NULL `outBegIdx` or `outNBElement`
+ * was written to, so the diagnosis was a segfault. C's own OpenAndFill prologue
+ * has always checked exactly those two, which is what made this an omission
+ * rather than a position. Nothing could see it: the JSON-RPC servers, ta_bench
+ * and every wrapper hand the pair real pointers, so no value gate reaches the
+ * call at all.
+ *
+ * The order between B4 and B3 (an out-of-domain parameter) is NOT observable
+ * from here -- both answer TA_BAD_PARAM. It is pinned structurally, over the
+ * whole corpus, by `c_batch_prologue_orders_parameters_before_presence` in
+ * ta_codegen's own suite.
+ *
+ * One case per distinct emission shape, matching the S6 probe above: a plain
+ * transcribed body (SMA, plus its float twin, which is a separate emission), a
+ * composed multi-output (BBANDS), the dispatch tier (MA), the period bank
+ * (MAVP), a candlestick with four price legs and an integer output (CDLDOJI),
+ * and a nullable output (MAMA), which is the control for what "required" means.
+ */
+static int bacReject, bacAccept;
+
+#define BAC_REJECT( name, call )                                               \
+   do {                                                                        \
+      TA_RetCode rc__ = (call);                                                \
+      if( rc__ != TA_BAD_PARAM )                                               \
+      {                                                                        \
+         printf( "\nFailed: %s returned %d, expected TA_BAD_PARAM (%d)\n",     \
+                 name, (int)rc__, (int)TA_BAD_PARAM );                         \
+         return TA_BATCH_ARG_WRONG_CODE;                                       \
+      }                                                                        \
+      bacReject++;                                                             \
+   } while(0)
+
+#define BAC_ACCEPT( name, call )                                               \
+   do {                                                                        \
+      TA_RetCode rc__ = (call);                                                \
+      if( rc__ != TA_SUCCESS )                                                 \
+      {                                                                        \
+         printf( "\nFailed: %s returned %d, expected TA_SUCCESS\n",            \
+                 name, (int)rc__ );                                            \
+         return TA_BATCH_ARG_CONTROL;                                          \
+      }                                                                        \
+      bacAccept++;                                                             \
+   } while(0)
+
+static ErrorNumber testBatchArgumentContract( void )
+{
+   static double bars[512];
+   static float  sbars[512];
+   static double periods[512];
+   static double outA[512], outB[512], outC[512];
+   static int    outI[512];
+   ErrorNumber retValue;
+   int beg = 0, nb = 0;
+   int i;
+
+   retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   bacReject = bacAccept = 0;
+
+   for( i = 0; i < 512; i++ )
+   {
+      bars[i] = 100.0 + (double)i * 0.25;
+      sbars[i] = (float)bars[i];
+      periods[i] = 5.0;
+   }
+
+   /* Plain transcribed body, and its float twin. */
+   BAC_ACCEPT( "TA_SMA", TA_SMA( 0, 251, bars, 30, &beg, &nb, outA ) );
+   BAC_REJECT( "TA_SMA(outBegIdx=NULL)",  TA_SMA( 0, 251, bars, 30, NULL, &nb, outA ) );
+   BAC_REJECT( "TA_SMA(outNBElement=NULL)", TA_SMA( 0, 251, bars, 30, &beg, NULL, outA ) );
+   BAC_REJECT( "TA_SMA(inReal=NULL)",     TA_SMA( 0, 251, NULL, 30, &beg, &nb, outA ) );
+   BAC_REJECT( "TA_SMA(outReal=NULL)",    TA_SMA( 0, 251, bars, 30, &beg, &nb, NULL ) );
+
+   BAC_ACCEPT( "TA_S_SMA", TA_S_SMA( 0, 251, sbars, 30, &beg, &nb, outA ) );
+   BAC_REJECT( "TA_S_SMA(outBegIdx=NULL)",  TA_S_SMA( 0, 251, sbars, 30, NULL, &nb, outA ) );
+   BAC_REJECT( "TA_S_SMA(outNBElement=NULL)", TA_S_SMA( 0, 251, sbars, 30, &beg, NULL, outA ) );
+
+   /* Composed, three outputs. */
+   BAC_ACCEPT( "TA_BBANDS",
+               TA_BBANDS( 0, 251, bars, 20, 2.0, 2.0, TA_MAType_SMA, &beg, &nb, outA, outB, outC ) );
+   BAC_REJECT( "TA_BBANDS(outBegIdx=NULL)",
+               TA_BBANDS( 0, 251, bars, 20, 2.0, 2.0, TA_MAType_SMA, NULL, &nb, outA, outB, outC ) );
+   BAC_REJECT( "TA_BBANDS(outNBElement=NULL)",
+               TA_BBANDS( 0, 251, bars, 20, 2.0, 2.0, TA_MAType_SMA, &beg, NULL, outA, outB, outC ) );
+
+   /* Dispatch tier. */
+   BAC_ACCEPT( "TA_MA", TA_MA( 0, 251, bars, 30, TA_MAType_EMA, &beg, &nb, outA ) );
+   BAC_REJECT( "TA_MA(outBegIdx=NULL)",
+               TA_MA( 0, 251, bars, 30, TA_MAType_EMA, NULL, &nb, outA ) );
+   BAC_REJECT( "TA_MA(outNBElement=NULL)",
+               TA_MA( 0, 251, bars, 30, TA_MAType_EMA, &beg, NULL, outA ) );
+
+   /* Period bank, two input series. */
+   BAC_ACCEPT( "TA_MAVP",
+               TA_MAVP( 0, 251, bars, periods, 2, 30, TA_MAType_SMA, &beg, &nb, outA ) );
+   BAC_REJECT( "TA_MAVP(outBegIdx=NULL)",
+               TA_MAVP( 0, 251, bars, periods, 2, 30, TA_MAType_SMA, NULL, &nb, outA ) );
+   BAC_REJECT( "TA_MAVP(inPeriods=NULL)",
+               TA_MAVP( 0, 251, bars, NULL, 2, 30, TA_MAType_SMA, &beg, &nb, outA ) );
+
+   /* Candlestick: four price legs, an integer output. */
+   BAC_ACCEPT( "TA_CDLDOJI",
+               TA_CDLDOJI( 0, 251, bars, bars, bars, bars, &beg, &nb, outI ) );
+   BAC_REJECT( "TA_CDLDOJI(outBegIdx=NULL)",
+               TA_CDLDOJI( 0, 251, bars, bars, bars, bars, NULL, &nb, outI ) );
+   BAC_REJECT( "TA_CDLDOJI(outInteger=NULL)",
+               TA_CDLDOJI( 0, 251, bars, bars, bars, bars, &beg, &nb, NULL ) );
+
+   /* A NULLABLE output is not a required argument: dropping it is legal, and
+    * that is what keeps the rejections above about absence rather than about
+    * NULL. The required half of the same call still answers TA_BAD_PARAM. */
+   BAC_ACCEPT( "TA_MAMA(outFAMA=NULL)",
+               TA_MAMA( 0, 251, bars, 0.5, 0.05, &beg, &nb, outA, NULL ) );
+   BAC_REJECT( "TA_MAMA(outMAMA=NULL)",
+               TA_MAMA( 0, 251, bars, 0.5, 0.05, &beg, &nb, NULL, outA ) );
+   BAC_REJECT( "TA_MAMA(outNBElement=NULL)",
+               TA_MAMA( 0, 251, bars, 0.5, 0.05, &beg, NULL, outA, outB ) );
+
+   printf( "  Batch argument contract (B4): %d rejection(s), %d control(s)\n",
+           bacReject, bacAccept );
+
+   /* Literal floors: a count derived from the cases above would move with a
+    * deleted case and still pass. */
+   if( bacReject < 16 || bacAccept < 6 )
+   {
+      printf( "\nFailed: the batch argument gate ran fewer checks than it was "
+              "written with\n" );
+      return TA_BATCH_ARG_VACUOUS;
    }
 
    return freeLib();

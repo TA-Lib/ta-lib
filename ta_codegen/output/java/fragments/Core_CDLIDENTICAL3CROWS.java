@@ -284,9 +284,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLIDENTICAL3CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLIDENTICAL3CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, CDLIDENTICAL3CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inLow", inLow, guardInLen);
@@ -355,9 +355,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLIDENTICAL3CROWS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLIDENTICAL3CROWS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, CDLIDENTICAL3CROWS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inHigh", inHigh, guardInLen);
       requireLength("CDLIDENTICAL3CROWS", "inLow", inLow, guardInLen);

@@ -577,9 +577,9 @@
       requireIndexRange("STOCH", startIdx, endIdx);
       requireArgument("STOCH", "optInSlowK_MAType", optInSlowK_MAType);
       requireArgument("STOCH", "optInSlowD_MAType", optInSlowD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCH", startIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCH", "inHigh", inHigh, guardInLen);
       requireLength("STOCH", "inLow", inLow, guardInLen);
       requireLength("STOCH", "inClose", inClose, guardInLen);
@@ -678,9 +678,9 @@
       requireIndexRange("STOCH", startIdx, endIdx);
       requireArgument("STOCH", "optInSlowK_MAType", optInSlowK_MAType);
       requireArgument("STOCH", "optInSlowD_MAType", optInSlowD_MAType);
-      int guardStart = clampedStart(startIdx, endIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("STOCH", startIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCH", "inHigh", inHigh, guardInLen);
       requireLength("STOCH", "inLow", inLow, guardInLen);
       requireLength("STOCH", "inClose", inClose, guardInLen);

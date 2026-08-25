@@ -80,6 +80,8 @@ TA_LIB_API TA_RetCode TA_DIV( int    startIdx,
       return TA_BAD_PARAM;
    if( !inReal1 )
       return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -111,6 +113,8 @@ TA_RetCode TA_S_DIV( int    startIdx,
    if( !inReal0 )
       return TA_BAD_PARAM;
    if( !inReal1 )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

@@ -317,9 +317,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inLow", inLow, guardInLen);
@@ -396,9 +396,9 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inHigh", inHigh, guardInLen);
       requireLength("CDLMORNINGDOJISTAR", "inLow", inLow, guardInLen);

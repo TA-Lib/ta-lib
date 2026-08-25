@@ -481,9 +481,9 @@
       requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACDEXT", startIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDEXT", "inReal", inReal, guardInLen);
       requireLength("MACDEXT", "outMACD", outMACD, guardOutLen);
       requireLength("MACDEXT", "outMACDSignal", outMACDSignal, guardOutLen);
@@ -587,9 +587,9 @@
       requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
-      int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MACDEXT", startIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDEXT", "inReal", inReal, guardInLen);
       requireLength("MACDEXT", "outMACD", outMACD, guardOutLen);
       requireLength("MACDEXT", "outMACDSignal", outMACDSignal, guardOutLen);

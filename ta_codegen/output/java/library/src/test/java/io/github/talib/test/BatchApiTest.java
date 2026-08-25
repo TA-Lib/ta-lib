@@ -384,11 +384,12 @@ public class BatchApiTest {
     }
 
     /**
-     * The checks do not pre-empt the core's own RetCode mapping. Every case here
-     * is BOTH a bad argument and an undersized buffer; the core owns the
-     * diagnosis, so its exception has to be the one that comes out.
+     * The length check does not pre-empt the index and parameter rules. Every
+     * case here is BOTH a bad argument and an undersized buffer, and the buffer
+     * is the last thing the specification looks at, so it must not be the
+     * diagnosis.
      */
-    static void theCoreStillOwnsItsOwnDiagnoses() {
+    static void theLengthCheckDoesNotPreEmpt() {
         final double[] in = closes(200);
         final double[] tiny = new double[3];
 
@@ -401,9 +402,6 @@ public class BatchApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.SMA(0, 199, in, 0, tiny),
             "out-of-range period still -> the parameter message", "bad parameter");
-        // The MAX_INDEX clause of clampedStart is the only one the three cases above
-        // cannot reach: endIdx < startIdx and a negative startIdx both re-derive their
-        // own rejection from the clamp, so dropping this clause is otherwise silent.
         checkThrows(IndexOutOfBoundsException.class,
             () -> Core.DEFAULT.SMA(0, Core.MAX_INDEX + 1, in, 10, tiny),
             "endIdx above MAX_INDEX still -> IndexOutOfBounds", "endIdx");
@@ -747,13 +745,9 @@ public class BatchApiTest {
     }
 
     /**
-     * The index rules are evaluated BEFORE the presence check.
-     *
-     * <p>The specification lists B-1 and B-2 ahead of B-3, and this wrapper used
-     * to run the presence check first, so a negative {@code startIdx} with a null
-     * input reported the null and said nothing about the index
-     * ({@code docs/error-handling-spec.md}, open item 3). Every case here is
-     * BOTH faults at once; only the order decides which is reported.
+     * The index rules are evaluated BEFORE the presence check: the
+     * specification lists B1 and B2 ahead of B4. Every case here is BOTH faults
+     * at once; only the order decides which is reported.
      */
     static void anIndexFaultOutranksAnAbsentArgument() {
         final double[] in = closes(200);
@@ -778,22 +772,59 @@ public class BatchApiTest {
     }
 
     /**
-     * A null enum parameter is rejected as the absent argument it is, naming the
-     * function and the parameter.
+     * A bad optional parameter outranks an absent or undersized buffer: the
+     * specification lists B3 ahead of B4 and B5.
      *
-     * <p>It used to reach the {@code switch} inside the function's own
-     * {@code _Lookback} and surface as a bare {@link NullPointerException} naming
-     * neither ({@code docs/error-handling-spec.md}, open item 4). Java is the
-     * only backend where this is expressible at all.
+     * <p>The parameter rule is the one every backend can express, so putting it
+     * first is what makes a multi-fault call report the same condition in all
+     * four. The buffer rules are not: a Rust slice and a C# span cannot be
+     * absent, and C has no sizes to check.
+     */
+    static void aBadParameterOutranksAnAbsentBuffer() {
+        final double[] in = closes(200);
+        final double[] out = new double[200];
+
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 0, out),
+            "a bad period outranks a null input", "bad parameter");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.SMA(0, 199, in, 0, (double[]) null),
+            "a bad period outranks a null output", "bad parameter");
+
+        // The control: with the period valid, the buffer IS the diagnosis. Without
+        // it the two above would pass against a wrapper that had simply stopped
+        // checking buffers.
+        checkThrows(NullPointerException.class,
+            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
+            "a valid period still reports the null", "SMA", "inReal");
+    }
+
+    /**
+     * A null enum parameter is rejected as a parameter outside its domain,
+     * naming the function and the parameter. It is B3 like any other parameter
+     * rejection, so it is an {@link IllegalArgumentException} carrying
+     * {@link RetCode#BadParam} — NOT the {@link NullPointerException} the array
+     * rules raise. Left to itself it reaches the {@code switch} inside the
+     * function's own {@code _Lookback} and surfaces as a bare
+     * {@code NullPointerException} naming neither. Java is the only backend
+     * where this is expressible at all.
      */
     static void aNullEnumIsNamed() {
         final double[] in = closes(200);
         final double[] out = new double[200];
 
-        checkThrows(NullPointerException.class,
+        checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
             "a null enum names the function and the parameter", "MA", "optInMAType");
-        // ...and it does not outrank the index rules either.
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
+            "a null enum carries BadParam");
+        // The array rules keep their own spelling, so the line above is about
+        // this rejection's type and not about NullPointerException being gone.
+        checkThrows(NullPointerException.class,
+            () -> Core.DEFAULT.MA(0, 199, in, 10, MAType.SMA, (double[]) null),
+            "a null output is still a NullPointerException", "MA", "outReal");
+        // ...and neither outranks the index rules.
         checkThrows(IndexOutOfBoundsException.class,
             () -> Core.DEFAULT.MA(-1, 199, in, 10, null, out),
             "a negative startIdx outranks a null enum", "startIdx");
@@ -811,7 +842,7 @@ public class BatchApiTest {
         nullArraysAreNamed();
         bothSidesOfTheOutputBound();
         aRejectedCallWritesNothing();
-        theCoreStillOwnsItsOwnDiagnoses();
+        theLengthCheckDoesNotPreEmpt();
         aRangeThatProducesNothingChecksNoLength();
         anEndIdxPastTheInputIsRejectedEvenProducingNothing();
         eachOutputIsCheckedSeparately();
@@ -824,6 +855,7 @@ public class BatchApiTest {
         outRangeValueSemantics();
         everyFailureCarriesItsCode();
         anIndexFaultOutranksAnAbsentArgument();
+        aBadParameterOutranksAnAbsentBuffer();
         aNullEnumIsNamed();
 
         if (failures == 0) {

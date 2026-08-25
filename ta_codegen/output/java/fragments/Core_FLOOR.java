@@ -110,9 +110,9 @@
                           double outReal[] )
    {
       requireIndexRange("FLOOR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("FLOOR", startIdx, FLOOR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("FLOOR", "inReal", inReal, guardInLen);
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -167,9 +167,9 @@
                           double outReal[] )
    {
       requireIndexRange("FLOOR", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("FLOOR", startIdx, FLOOR_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("FLOOR", "inReal", inReal, guardInLen);
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

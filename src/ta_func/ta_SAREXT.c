@@ -138,10 +138,6 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
    if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
-   if( !inHigh )
-      return TA_BAD_PARAM;
-   if( !inLow )
-      return TA_BAD_PARAM;
    if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
    else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) )
@@ -173,6 +169,12 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
    if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
    else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -529,10 +531,6 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
    if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
-   if( !inHigh )
-      return TA_BAD_PARAM;
-   if( !inLow )
-      return TA_BAD_PARAM;
    if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
    else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) )
@@ -564,6 +562,12 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
    if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
    else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

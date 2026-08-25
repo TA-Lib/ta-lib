@@ -307,9 +307,9 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLMATHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMATHOLD", startIdx, CDLMATHOLD_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLMATHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLMATHOLD", "inLow", inLow, guardInLen);
@@ -383,9 +383,9 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLMATHOLD", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLMATHOLD", startIdx, CDLMATHOLD_Lookback(optInPenetration));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
       requireLength("CDLMATHOLD", "inHigh", inHigh, guardInLen);
       requireLength("CDLMATHOLD", "inLow", inLow, guardInLen);

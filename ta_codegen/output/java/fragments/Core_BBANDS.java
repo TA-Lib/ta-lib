@@ -683,9 +683,9 @@
    {
       requireIndexRange("BBANDS", startIdx, endIdx);
       requireArgument("BBANDS", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BBANDS", startIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BBANDS", "inReal", inReal, guardInLen);
       requireLength("BBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
       requireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
@@ -781,9 +781,9 @@
    {
       requireIndexRange("BBANDS", startIdx, endIdx);
       requireArgument("BBANDS", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("BBANDS", startIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("BBANDS", "inReal", inReal, guardInLen);
       requireLength("BBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
       requireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);

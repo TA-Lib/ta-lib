@@ -276,9 +276,9 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLHARAMICROSS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHARAMICROSS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHARAMICROSS", startIdx, CDLHARAMICROSS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMICROSS", "inOpen", inOpen, guardInLen);
       requireLength("CDLHARAMICROSS", "inHigh", inHigh, guardInLen);
       requireLength("CDLHARAMICROSS", "inLow", inLow, guardInLen);
@@ -348,9 +348,9 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLHARAMICROSS", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHARAMICROSS_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHARAMICROSS", startIdx, CDLHARAMICROSS_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMICROSS", "inOpen", inOpen, guardInLen);
       requireLength("CDLHARAMICROSS", "inHigh", inHigh, guardInLen);
       requireLength("CDLHARAMICROSS", "inLow", inLow, guardInLen);

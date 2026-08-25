@@ -256,9 +256,9 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLONNECK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLONNECK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLONNECK", startIdx, CDLONNECK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
       requireLength("CDLONNECK", "inHigh", inHigh, guardInLen);
       requireLength("CDLONNECK", "inLow", inLow, guardInLen);
@@ -331,9 +331,9 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLONNECK", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLONNECK_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLONNECK", startIdx, CDLONNECK_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
       requireLength("CDLONNECK", "inHigh", inHigh, guardInLen);
       requireLength("CDLONNECK", "inLow", inLow, guardInLen);

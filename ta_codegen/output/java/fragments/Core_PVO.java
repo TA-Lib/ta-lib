@@ -283,9 +283,9 @@
    {
       requireIndexRange("PVO", startIdx, endIdx);
       requireArgument("PVO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVO", startIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVO", "inVolume", inVolume, guardInLen);
       requireLength("PVO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -364,9 +364,9 @@
    {
       requireIndexRange("PVO", startIdx, endIdx);
       requireArgument("PVO", "optInMAType", optInMAType);
-      int guardStart = clampedStart(startIdx, endIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("PVO", startIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVO", "inVolume", inVolume, guardInLen);
       requireLength("PVO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();

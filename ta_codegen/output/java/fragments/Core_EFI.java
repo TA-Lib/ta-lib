@@ -321,9 +321,9 @@
                         double outReal[] )
    {
       requireIndexRange("EFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EFI", startIdx, EFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EFI", "inClose", inClose, guardInLen);
       requireLength("EFI", "inVolume", inVolume, guardInLen);
       requireLength("EFI", "outReal", outReal, guardOutLen);
@@ -400,9 +400,9 @@
                         double outReal[] )
    {
       requireIndexRange("EFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("EFI", startIdx, EFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EFI", "inClose", inClose, guardInLen);
       requireLength("EFI", "inVolume", inVolume, guardInLen);
       requireLength("EFI", "outReal", outReal, guardOutLen);

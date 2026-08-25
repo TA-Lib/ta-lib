@@ -265,9 +265,9 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIKKAKE", startIdx, CDLHIKKAKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKE", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIKKAKE", "inLow", inLow, guardInLen);
       requireLength("CDLHIKKAKE", "inClose", inClose, guardInLen);
@@ -335,9 +335,9 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKE", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKE_Lookback());
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("CDLHIKKAKE", startIdx, CDLHIKKAKE_Lookback());
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKE", "inHigh", inHigh, guardInLen);
       requireLength("CDLHIKKAKE", "inLow", inLow, guardInLen);
       requireLength("CDLHIKKAKE", "inClose", inClose, guardInLen);

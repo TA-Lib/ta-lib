@@ -417,9 +417,9 @@
                         double outReal[] )
    {
       requireIndexRange("MFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MFI", startIdx, MFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MFI", "inHigh", inHigh, guardInLen);
       requireLength("MFI", "inLow", inLow, guardInLen);
       requireLength("MFI", "inClose", inClose, guardInLen);
@@ -494,9 +494,9 @@
                         double outReal[] )
    {
       requireIndexRange("MFI", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, MFI_Lookback(optInTimePeriod));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("MFI", startIdx, MFI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MFI", "inHigh", inHigh, guardInLen);
       requireLength("MFI", "inLow", inLow, guardInLen);
       requireLength("MFI", "inClose", inClose, guardInLen);

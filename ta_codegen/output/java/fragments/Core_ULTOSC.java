@@ -639,9 +639,9 @@
                            double outReal[] )
    {
       requireIndexRange("ULTOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ULTOSC", startIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ULTOSC", "inHigh", inHigh, guardInLen);
       requireLength("ULTOSC", "inLow", inLow, guardInLen);
       requireLength("ULTOSC", "inClose", inClose, guardInLen);
@@ -723,9 +723,9 @@
                            double outReal[] )
    {
       requireIndexRange("ULTOSC", startIdx, endIdx);
-      int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
-      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
-      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      int guardStart = clampedStart("ULTOSC", startIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ULTOSC", "inHigh", inHigh, guardInLen);
       requireLength("ULTOSC", "inLow", inLow, guardInLen);
       requireLength("ULTOSC", "inClose", inClose, guardInLen);
