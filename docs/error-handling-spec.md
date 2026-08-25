@@ -121,12 +121,12 @@ the whole corpus, on every test run.
 
 ### 2.1 Lookback tier
 
-| Rule | Condition (in order) | RetCode | C    | Rust | Java | C#   |
+| Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| L1 | An optional parameter is outside its documented domain | the lookback rejection signal | ✅   | ✅   | ✅   | ✅   |
-| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B3, or the streaming opener (`Open`/`OpenAndFill`) would reject them under S5 | the lookback rejection signal | ✅   | ✅   | ✅   | ✅   |
-| L3 | …and, for Rust/Java/C#, the same accept-or-reject decision — and, wherever both it and C accept, the Batch/`OpenAndFill` output — matches what C produces for the identical parameters (the "Golden Check") | the lookback rejection signal | —    | ✅   | ✅   | ✅   |
-| L4 | Nothing else in this tier can fail | — | ✅   | ✅   | ✅   | ✅   |
+| L1 | An optional parameter is outside its documented domain | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
+| L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B3, or the streaming opener (`Open`/`OpenAndFill`) would reject them under S5 | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
+| L3 | …and, for Rust/Java/C#, the same accept-or-reject decision — and, wherever both it and C accept, the Batch/`OpenAndFill` output — matches what C produces for the identical parameters (the "Golden Check") | the lookback rejection signal | — | ✅ | ✅ | ✅ |
+| L4 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
 
 **Rejection Signal**
 For C, Java and C# it is returned as `-1`.
@@ -137,15 +137,15 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 
 ### 2.2 Batch tier
 
-| Rule | Condition (in order) | RetCode | C      | Rust   | Java   | C#     |
+| Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| B1 | `startIdx` outside `[0, MAX_INDEX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅     | ✅     | ✅     | ✅     |
-| B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅     | ✅     | ✅     | ✅     |
-| B3 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅     | ✅     | ✅     | ✅     |
-| B4 | A required argument was not supplied — an input or output buffer, or either range out-parameter | `TA_BAD_PARAM` | ✅     | — [1]  | ✅ [2] | — [3]  |
-| B5 | A buffer is too short for what the call reads or writes | *(none)* | ⚠️ [4] | ⚠️ [5] | ✅ [6] | ✅ [6] |
-| B5a | …including on a range shorter than the lookback, where the call produces nothing: an input that does not reach `endIdx` is still rejected | *(none)* | ⚠️ [4] | ⚠️ [5] | ✅ [6] | ✅ [6] |
-| B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅     | ✅ [7] | ✅ [8] | ✅     |
+| B1 | `startIdx` outside `[0, MAX_INDEX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B3 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B4 | A required argument was not supplied — an input or output buffer, or either range out-parameter | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
+| B5 | A buffer is too short for what the call reads or writes | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
+| B5a | …including on a range shorter than the lookback, where the call produces nothing: an input that does not reach `endIdx` is still rejected | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
+| B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
 
 **Domains.** An optional parameter's domain is its documented range. Every
 declared bound is finite, so a NaN or infinite real parameter is outside every
@@ -276,16 +276,16 @@ safety, removing it is the change — not adding the check elsewhere.
 
 ### 2.3 Streaming tier — opening (`Open`, `OpenAndFill`)
 
-| Rule | Condition (in order) | RetCode | C       | Rust | Java | C# |
+| Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| S1 | A required argument (handle, history, output) was not supplied | `TA_BAD_PARAM` | ✅      | — | ❌ [9] | — |
-| S2 | The history is empty | `TA_BAD_PARAM` | ✅      | ✅ | ✅ | ✅ [10] |
-| S3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅      | [11] | [11] | [11] |
-| S4 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [12] | — | —       | — | — | — |
-| S5 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅      | ✅ | ✅ | ✅ |
-| S6 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅ [13] | ✅ [13] | ✅ [13] | ✅ [13] |
-| S7 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅      | — | ✅ | ✅ |
-| S8 | (`OpenAndFill`) an output is too short for the fill | *(none)* | ⚠️ [4]  | ❌ [14] | ❌ [14] | ❌ [14] |
+| S1 | A required argument (handle, history, output) was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ❌<br>[9] | —<br>&nbsp; |
+| S2 | The history is empty | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>[10] |
+| S3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | &nbsp;<br>[11] | &nbsp;<br>[11] | &nbsp;<br>[11] |
+| S4 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [12] | — | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
+| S5 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| S6 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅<br>[13] | ✅<br>[13] | ✅<br>[13] | ✅<br>[13] |
+| S7 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| S8 | (`OpenAndFill`) an output is too short for the fill | *(none)* | ⚠️<br>[4] | ❌<br>[14] | ❌<br>[14] | ❌<br>[14] |
 
 Rule S6 is the library's only *recoverable* condition — "feed me more bars", not
 "your code is wrong" — so it must be distinguishable from `TA_BAD_PARAM`, which
@@ -351,15 +351,15 @@ borrow checker rejects the call at compile time.
 
 ### 2.4 Streaming tier — advancing (`Update`, `Peek`, `UpdateAndFill`)
 
-| Rule | Condition (in order) | RetCode | C       | Rust | Java | C# |
+| Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅      | — | — | — |
-| U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅      | — | — | — |
-| U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅      | ✅ | ✅ | ✅ |
-| U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅      | n/a [15] | n/a [15] | n/a [15] |
-| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ❌ [16] | ✅ | ✅ | ✅ |
-| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ❌ [16] | ✅ | ✅ | ✅ |
-| U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅      | n/a [17] | ✅ | ✅ |
+| U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
+| U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
+| U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[15] | n/a<br>[15] | n/a<br>[15] |
+| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ❌<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ❌<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[17] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
 included — that is the whole point of rejecting rather than computing. `Peek`
@@ -406,9 +406,9 @@ error names the sub-stage.
 
 ### 2.5 Streaming tier — releasing
 
-| Rule | Condition (in order) | RetCode | C       | Rust    | Java    | C#      |
+| Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| X1 | Releasing an absent handle is a success no-op | — | ✅      | —       | —       | —       |
+| X1 | Releasing an absent handle is a success no-op | — | ✅ | — | — | — |
 
 Only the C tier has an explicit release. The other three reclaim a handle when it
 becomes unreachable, so there is no double-release or use-after-release to
@@ -418,16 +418,16 @@ specify.
 
 Global settings in C; a builder producing an immutable core in Rust, Java and C#.
 
-| Rule | Condition (in order) | RetCode | C       | Rust    | Java    | C#      |
+| Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅      | ✅ [18] | ✅ [18] | ✅      |
-| G2 | The unstable period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅      | ✅      | ✅      | ✅      |
-| G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️ [19] | ✅      | ✅      | ✅      |
-| G4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅      | —       | —       | ✅      |
-| G5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅      | ✅      | ✅      | ✅      |
-| G6 | The candlestick factor is not NaN [22] | `TA_BAD_PARAM` | ✅      | ✅      | ✅      | ✅      |
-| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅ [20] | — [20]  | — [20]  | — [20]  |
-| G8 | A rejected setting leaves the configuration unchanged | — | ✅      | ✅ [21] | ✅      | ✅      |
+| G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[18] | ✅<br>[18] | ✅<br>&nbsp; |
+| G2 | The unstable period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️<br>[19] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; |
+| G5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G6 | The candlestick factor is not NaN [22] | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅<br>[20] | —<br>[20] | —<br>[20] | —<br>[20] |
+| G8 | A rejected setting leaves the configuration unchanged | — | ✅<br>&nbsp; | ✅<br>[21] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 The bounds in G2 and G5 are not arbitrary. Both values are added to a lookback
 which is then used as an index: unbounded, the lookback overflows negative and

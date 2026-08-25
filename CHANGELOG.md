@@ -82,6 +82,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#243) STDDEV and BBANDS returned exactly 0 for a standard deviation that was small but non-zero. In rare cases, was making the bands "collapse" on the middle line.
 - (#244) MFI returned 0 instead of the index whenever the window summed to less than 1.0. Also, no longer returns values slightly outside 0-100 (clamps the epsilon errors).
 - (#253) Fix many TA_IS_ZERO vs TA_IS_ZERO_SCALED choices. Numerically better for edge cases, like very small inputs (<10e-8) or mostly flat input prices.
+- Batch API: a NULL `outBegIdx` or `outNBElement` crashed instead of being rejected; every function now returns `TA_BAD_PARAM`.
 
 ## [0.7.1] 2026-07-03
 ### Added
