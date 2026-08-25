@@ -107,14 +107,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.MINMAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMinIdx.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMaxIdx.len());
+        if outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;

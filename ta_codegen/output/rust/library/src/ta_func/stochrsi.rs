@@ -149,14 +149,14 @@ impl Core {
         if optInFastD_MAType == MAType::DEFAULT {
             optInFastD_MAType = MAType::SMA;
         }
-        if outFastK.as_ptr() == outFastD.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastD.len());
+        if outFastK.as_ptr() == outFastD.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut tempRSIBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;

@@ -124,9 +124,6 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.ACCBANDS_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -135,6 +132,9 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
+        if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut periodTotalUpper: f64 = 0.0_f64;
         let mut periodTotalMiddle: f64 = 0.0_f64;

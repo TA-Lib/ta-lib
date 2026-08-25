@@ -149,9 +149,6 @@ impl Core {
         if optInFastD_MAType == MAType::DEFAULT {
             optInFastD_MAType = MAType::SMA;
         }
-        if outFastK.as_ptr() == outFastD.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -159,6 +156,9 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastD.len());
+        if outFastK.as_ptr() == outFastD.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut lowest: f64 = 0.0_f64;

@@ -173,9 +173,6 @@ impl Core {
         if optInSlowD_MAType == MAType::DEFAULT {
             optInSlowD_MAType = MAType::SMA;
         }
-        if outSlowK.as_ptr() == outSlowD.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -183,6 +180,9 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSlowK.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSlowD.len());
+        if outSlowK.as_ptr() == outSlowD.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut lowest: f64 = 0.0_f64;

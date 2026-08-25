@@ -119,14 +119,14 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if outInPhase.as_ptr() == outQuadrature.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.HT_PHASOR_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInPhase.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outQuadrature.len());
+        if outInPhase.as_ptr() == outQuadrature.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;

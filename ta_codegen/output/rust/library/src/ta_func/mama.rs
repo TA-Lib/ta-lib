@@ -176,14 +176,14 @@ impl Core {
         } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
             return RetCode::BadParam;
         }
-        if outMAMA.as_ptr() == outFAMA.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFAMA.len());
+        if outMAMA.as_ptr() == outFAMA.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;

@@ -836,6 +836,17 @@ fn gen_guarded_func(
         out.push_str(&gen_opt_param_validation(opt, "        ", false, enums));
     }
 
+    // The bounds-assert preamble: the LLVM proof that elides per-access bounds
+    // checks in a `#![forbid(unsafe_code)]` crate. `guard_empty_range` keeps a
+    // call that computes nothing from panicking.
+    //
+    // BEFORE the aliasing guard below, because the spec orders B5 (a buffer too
+    // short) ahead of B6 (two outputs are the same buffer) and a call that is
+    // both must report the first (#261). The two answer DIFFERENT things here --
+    // a panic against `BadParam` -- so, unlike two rules that share a code, the
+    // order is observable and owed.
+    out.push_str(&emit_bounds_asserts(func, snake, true));
+
     // Output-distinctness (issue #108): aliasing two different output buffers has
     // no correct result. The borrow checker already forbids a safe caller from
     // passing the same `&mut` slice twice, so this only guards the unsafe/FFI
@@ -855,11 +866,6 @@ fn gen_guarded_func(
         out.push_str("            return RetCode::BadParam;\n");
         out.push_str("        }\n");
     }
-
-    // The bounds-assert preamble: the LLVM proof that elides per-access bounds
-    // checks in a `#![forbid(unsafe_code)]` crate. `guard_empty_range` keeps a
-    // call that computes nothing from panicking.
-    out.push_str(&emit_bounds_asserts(func, snake, true));
 
     if func.has_explicit_private {
         // The guarded body contains the pre-computation plus the delegation call
