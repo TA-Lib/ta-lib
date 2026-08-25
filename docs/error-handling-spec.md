@@ -165,7 +165,8 @@ than a rule is the defect, not which side is right — see #260.
 
 **Implementation**: `testIndexRange`, `checkOutputAliasRejected`,
 `testBatchArgumentContract` (`test_abstract.c`, `test_internals.c`);
-`c_batch_prologue_orders_parameters_before_presence` (ta_codegen's suite);
+`c_batch_prologue_orders_parameters_before_presence`,
+`rust_batch_impl_orders_capacity_before_aliasing` (ta_codegen's suite);
 `BatchApiTest` (Java, C#); `no_phantom_io` (Rust); `--xlang-hash` for
 same-code-everywhere.
 
@@ -190,7 +191,11 @@ bound goes unchecked there in Rust as it does in C.
 [6] **The condition cannot be written**: two `&mut [f64]` cannot alias, so the
 borrow checker rejects it at compile time. The `as_ptr()` guard behind the public
 entry point therefore never fires on a real alias — but it does fire on distinct
-zero-length outputs, which share a dangling pointer (Appendix F).
+zero-length outputs, which share a dangling pointer (Appendix F). It is emitted
+*after* the capacity asserts: B5 panics in Rust where B6 returns, so this is the
+one pair of batch rules whose order a caller can see in one backend and not the
+others. A call that is both undersized and "aliased" answers the panic; it used
+to answer `BadParam` — #261.
 
 [7] **A run-time error.** Two Java arrays are either the same object or
 disjoint, so reference equality catches every case this rule covers.

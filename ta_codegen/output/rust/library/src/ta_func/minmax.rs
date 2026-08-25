@@ -107,14 +107,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if outMin.as_ptr() == outMax.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.MINMAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMin.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMax.len());
+        if outMin.as_ptr() == outMax.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut local_sufHighest: [f64; 30] = [0.0_f64; 30];
         let mut heap_sufHighest: Vec<f64> = Vec::new();

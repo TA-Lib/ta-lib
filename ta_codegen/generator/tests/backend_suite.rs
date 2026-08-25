@@ -691,6 +691,129 @@ fn c_batch_prologue_orders_parameters_before_presence() {
     );
 }
 
+/// The output-distinctness guard of one Rust `_Impl`, reconstructed from the
+/// function's outputs exactly as `rust_lang::gen_guarded_func` writes it.
+///
+/// Reconstructed, not searched for: a transcribed body can hold an `as_ptr()`
+/// comparison of its own — BBANDS elects its scratch with one — so a substring
+/// match would find that instead and read the order backwards.
+fn rust_alias_guard(func: &ir::FuncDef) -> String {
+    let mut pairs: Vec<String> = Vec::new();
+    for i in 0..func.outputs.len() {
+        for j in (i + 1)..func.outputs.len() {
+            pairs.push(format!(
+                "{}.as_ptr() == {}.as_ptr()",
+                func.outputs[i].name, func.outputs[j].name
+            ));
+        }
+    }
+    format!(
+        "        if {} {{\n            return RetCode::BadParam;\n        }}\n",
+        pairs.join(" || ")
+    )
+}
+
+/// `docs/error-handling-spec.md` 2.2: B1, B2, B3, then B5 — a buffer too short —
+/// and only then B6, two outputs that are the same buffer.
+///
+/// Rust is the one backend where the order between those last two is
+/// *observable*, and it had them the wrong way round (#261). Its B5 is an
+/// `assert!` rather than a returned code — footnote [5], the LLVM proof that
+/// elides the per-access bounds checks — so a call that is both undersized and
+/// aliased answered `BadParam` where the specified order makes it a panic. C,
+/// Java and C# answer `TA_BAD_PARAM` for either, so no order is owed there.
+///
+/// Structural, and it has to be: two `&mut [f64]` cannot alias, so safe code
+/// cannot build the multi-fault call this pins.
+#[test]
+fn rust_batch_impl_orders_capacity_before_aliasing() {
+    let mut scanned = 0usize;
+    let mut with_params = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, enums)) = try_load_indicator(&name) else {
+            continue;
+        };
+        // One output cannot alias a second one; the guard is not emitted.
+        if func.outputs.len() < 2 {
+            continue;
+        }
+        let Some(out) = try_generate_all(&func, &enums) else {
+            continue;
+        };
+        // Spans the FMA dispatch trio where there is one: the two wrappers carry
+        // no prologue, so the markers below still land in `_Impl_impl`.
+        let section = extract_section(
+            &out.rust,
+            &format!("pub(crate) fn {}_Impl(", func.name),
+            &format!("pub fn {}(", func.name),
+        );
+        scanned += 1;
+        let where_ = format!("{}: {section}", func.name);
+
+        let start = section
+            .find("RetCode::OutOfRangeStartIndex")
+            .unwrap_or_else(|| panic!("{where_}\nno startIdx guard"));
+        let end = section
+            .find("RetCode::OutOfRangeEndIndex")
+            .unwrap_or_else(|| panic!("{where_}\nno endIdx guard"));
+        assert!(start < end, "{where_}\nB1 must precede B2");
+
+        let preamble = section
+            .find("let _assertLb")
+            .unwrap_or_else(|| panic!("{where_}\nno bounds-assert preamble"));
+        assert!(end < preamble, "{where_}\nB2 must precede B5");
+
+        // The sentinel substitution opens each parameter's block and its range
+        // check is the arm right after, so the last one bounds all of B3.
+        // Reconstructed per parameter, like the guard below: a bare `i32::MIN`
+        // could come from a transcribed body. An enum parameter is skipped —
+        // it has no out-of-domain value, so it emits a substitution and no check.
+        let last_param = func
+            .optional_inputs
+            .iter()
+            .filter_map(|opt| {
+                let head = match opt.param_type {
+                    ir::ParamType::Integer => {
+                        format!("if (({}) as i32) == (i32::MIN) {{", opt.name)
+                    }
+                    ir::ParamType::Real => format!("if {} == Self::REAL_DEFAULT {{", opt.name),
+                    _ => return None,
+                };
+                section.find(&head)
+            })
+            .max();
+        if let Some(at) = last_param {
+            with_params += 1;
+            assert!(end < at, "{where_}\nB2 must precede B3");
+            assert!(at < preamble, "{where_}\nB3 must precede B5");
+        }
+
+        let guard_at = section
+            .find(&rust_alias_guard(&func))
+            .unwrap_or_else(|| panic!("{where_}\nthe outputs are not checked for aliasing"));
+        // Every output's capacity is B5, so the guard has to follow ALL of the
+        // asserts, not merely the first.
+        for output in &func.outputs {
+            let cap = format!(
+                "assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());",
+                output.name
+            );
+            let cap_at = section
+                .find(&cap)
+                .unwrap_or_else(|| panic!("{where_}\n{} has no capacity assert", output.name));
+            assert!(cap_at < guard_at, "{where_}\nB5 must precede B6 ({})", output.name);
+        }
+    }
+
+    // Literal floors: derived ones move with whatever the scan happens to find.
+    assert!(scanned >= 15, "only {scanned} multi-output Rust bodies scanned");
+    assert!(
+        with_params >= 12,
+        "only {with_params} carried parameter validation — B3 is barely covered"
+    );
+}
+
 #[test]
 fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");

@@ -198,9 +198,6 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if outSMI.as_ptr() == outSMISignal.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -208,6 +205,9 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSMI.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSMISignal.len());
+        if outSMI.as_ptr() == outSMISignal.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut kSlow: f64 = 0.0_f64;
         let mut kFast: f64 = 0.0_f64;

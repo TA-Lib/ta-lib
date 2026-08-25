@@ -125,14 +125,14 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if outSine.as_ptr() == outLeadSine.as_ptr() {
-            return RetCode::BadParam;
-        }
         let _assertLb = self.HT_SINE_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSine.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outLeadSine.len());
+        if outSine.as_ptr() == outLeadSine.as_ptr() {
+            return RetCode::BadParam;
+        }
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
