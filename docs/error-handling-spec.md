@@ -141,30 +141,14 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 |---|---|---|:---:|:---:|:---:|:---:|
 | B1 | `startIdx` outside `[0, MAX_INDEX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| B3 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B3 | An optional parameter is outside its documented domain. A non-finite value (NaN, ±Inf) is always outside it | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — an input or output buffer, or either range out-parameter | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
 | B5 | A buffer is too short for what the call reads or writes | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B5a | …including on a range shorter than the lookback, where the call produces nothing: an input that does not reach `endIdx` is still rejected | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
 
-**Domains.** An optional parameter's domain is its documented range. Every
-declared bound is finite, so a NaN or infinite real parameter is outside every
-one of them and is rejected here — provided the test is spelled to see it.
-Verified: 96 of 96 real-parameter range checks are spelled `!(x >= min && x <=
-max)` rather than `x < min || x > max`, which is what makes them reject NaN —
-both plain comparisons are false for NaN — and there is no plain spelling left in
-the tree. An enum parameter's domain is its declared member set.
-
-**A wide domain is still a domain.** All 24 real optional parameters emit a check;
-what differs is the width. **19 across 11 functions** declare a bound tighter than
-the default — `[0, 1]`, `[0.01, 0.99]`, `[0, TA_REAL_MAX]` (`ta_T3.c` is the shape;
-the emitter is `backends/c.rs`, mirrored in `backends/java.rs` and
-`backends/rust_lang.rs`). The other **5** — `BBANDS`'s two deviation multipliers,
-`SAREXT`'s start value, and `STDDEV`/`VAR`'s — declare the full
-`[TA_REAL_MIN, TA_REAL_MAX]`. That is **not** a no-op: those bounds are `±3e37`,
-finite and far inside a `double`'s `1.8e308`, so the emitted check still rejects
-NaN, both infinities, and any magnitude above `3e37`. B3 is wide for those five,
-never vacuous.
+**Domains.** A real or integer parameter's domain is its documented range; an
+enum parameter's is its declared member set.
 
 **Capacity (B5), precisely.** Every input the body indexes must reach `endIdx`.
 Every output must hold **the count actually produced** — `endIdx - max(startIdx,
@@ -479,7 +463,7 @@ not on which function was called.
 |---|---|:---:|
 | Inside an **input array**: a batch input series, or the warm-up history handed to `Open` / `OpenAndFill` | Nothing. **Undefined behaviour** — not detected, not rejected, nothing promised about the output or about a handle opened from it. Do not do it. | — |
 | As a **bar** handed to `Update` / `Peek`, or as one of the `n` bars handed to `UpdateAndFill` | **An error**: the bar is non-finite. In `UpdateAndFill` the bars before it stay committed. | U3 |
-| As a **real optional parameter** | **An error**: the value is outside the parameter's domain, since every declared bound is finite. | B3, S5 |
+| As a **real optional parameter** | **An error**: outside the parameter's domain. | B3, S5 |
 | As a candlestick **`factor`** — a global setting rather than a call parameter | **An error for NaN.** An infinity is accepted, and G6 says why. | G6 |
 
 Only the first row is undefined. The other three are ordinary errors, and
