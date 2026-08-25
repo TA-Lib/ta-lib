@@ -25,7 +25,7 @@ adds a column; it does not change a rule.
 | Mark | Meaning |
 |:---:|---|
 | ✅ | Verified: a probe against the built artifact produced the specified behaviour. |
-| ⚠️ | Deviates, deliberately. Each one is a decision already recorded in the source or in `CLAUDE.md`; the footnote says where. Held as approved on that basis — flip any to ❌ that should not have been. |
+| ⚠️ | Deviates deliberately, **or** is implemented but not verified by a test. The rule or its footnote says which, and where a deviation was decided. Held as approved on that basis — flip any to ❌ that should not have been. |
 | ❌ | Measured, and does **not** conform. Needs a fix. Collected in Appendix D. |
 | — | Not applicable: the condition cannot be expressed in this backend's types. |
 | *(blank)* | Not yet verified. |
@@ -50,6 +50,12 @@ Two consequences worth stating outright:
   and every out-parameter, exactly as it found them. Verified for C at each
   rejection class (index, parameter, absent argument): output buffer untouched,
   index and count out-parameters untouched.
+- **Order matters only where the codes differ.** Rules that answer the same code
+  are mutually unordered in practice: a caller cannot tell which of them fired,
+  so swapping two is invisible. What has to hold is that all four backends answer
+  the **same code for the same call**, which `--xlang-hash` compares over the
+  whole corpus. A per-backend ordering gate is therefore not owed for rules that
+  share a code.
 
 ### Vocabulary
 
@@ -146,8 +152,8 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[6] | ✅<br>[7] | ✅<br>&nbsp; |
 | B6a | An output is **omitted** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
-| B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. No automated test covers it: provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
-| B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors") | `TA_INTERNAL_ERROR` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. **Warning: implemented, but no CI job or probe covers it** — provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
+| B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors"). **Warning: implemented, but the individual sites are not tested** | `TA_INTERNAL_ERROR` | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 
 **Range.** A real or integer parameter's range is the `range:` its .yaml
 declares; an enum parameter's is the declared member set of its type.
@@ -160,7 +166,8 @@ than a rule is the defect, not which side is right — see #260.
 **Implementation**: `testIndexRange`, `checkOutputAliasRejected`,
 `testBatchArgumentContract` (`test_abstract.c`, `test_internals.c`);
 `c_batch_prologue_orders_parameters_before_presence` (ta_codegen's suite);
-`BatchApiTest` (Java, C#); `no_phantom_io` (Rust).
+`BatchApiTest` (Java, C#); `no_phantom_io` (Rust); `--xlang-hash` for
+same-code-everywhere.
 
 [1] Slices cannot be null, and the index/count pair (`OutRange`) is returned
 rather than written through pointers.
