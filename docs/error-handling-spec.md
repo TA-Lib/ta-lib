@@ -25,7 +25,7 @@ adds a column; it does not change a rule.
 | Mark | Meaning |
 |:---:|---|
 | ✅ | Verified: a probe against the built artifact produced the specified behaviour. |
-| ⚠️ | Deviates deliberately, **or** is implemented but not verified by a test. The rule or its footnote says which, and where a deviation was decided. Held as approved on that basis — flip any to ❌ that should not have been. |
+| ⚠️ | Deviates deliberately, **or** is implemented but not verified by the CI test suite. The rule or its footnote says which, and where a deviation was decided. Held as approved on that basis — flip any to ❌ that should not have been. |
 | ❌ | Measured, and does **not** conform. Needs a fix. Collected in Appendix D. |
 | — | Not applicable: the condition cannot be expressed in this backend's types. |
 | *(blank)* | Not yet verified. |
