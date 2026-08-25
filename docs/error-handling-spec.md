@@ -123,7 +123,7 @@ the whole corpus, on every test run.
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| L1 | An optional parameter is outside its documented domain | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
+| L1 | An optional parameter is outside its documented range | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
 | L2 | …and the signal is returned **exactly when** the batch tier would reject the same parameters under B3, or the streaming opener (`Open`/`OpenAndFill`) would reject them under S5 | the lookback rejection signal | ✅ | ✅ | ✅ | ✅ |
 | L3 | …and, for Rust/Java/C#, the same accept-or-reject decision — and, wherever both it and C accept, the Batch/`OpenAndFill` output — matches what C produces for the identical parameters (the "Golden Check") | the lookback rejection signal | — | ✅ | ✅ | ✅ |
 | L4 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
@@ -141,14 +141,14 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 |---|---|---|:---:|:---:|:---:|:---:|
 | B1 | `startIdx` outside `[0, MAX_INDEX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| B3 | An optional parameter is outside its documented domain (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that a non-finite is **not** detected as an element of an input array — Part 3, "Non-finite input" | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that a non-finite is **not** detected as an element of an input array — Part 3, "Non-finite input" | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — an input or output buffer, or either range out-parameter | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
 | B5 | A buffer is too short for what the call reads or writes | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B5a | …including on a range shorter than the lookback, where the call produces nothing: an input that does not reach `endIdx` is still rejected | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
 
-**Domains.** A real or integer parameter's domain is its documented range; an
-enum parameter's is its declared member set.
+**Range.** A real or integer parameter's range is the `range:` its .yaml
+declares; an enum parameter's is the declared member set of its type.
 
 **Capacity (B5), precisely.** Every input the body indexes must reach `endIdx`.
 Every output must hold **the count actually produced** — `endIdx - max(startIdx,
@@ -266,7 +266,7 @@ safety, removing it is the change — not adding the check elsewhere.
 | S2 | The history is empty | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>[10] |
 | S3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | &nbsp;<br>[11] | &nbsp;<br>[11] | &nbsp;<br>[11] |
 | S4 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [12] | — | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
-| S5 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| S5 | An optional parameter is outside its documented range | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | S6 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅<br>[13] | ✅<br>[13] | ✅<br>[13] | ✅<br>[13] |
 | S7 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | S8 | (`OpenAndFill`) an output is too short for the fill | *(none)* | ⚠️<br>[4] | ❌<br>[14] | ❌<br>[14] | ❌<br>[14] |
@@ -463,7 +463,7 @@ not on which function was called.
 |---|---|:---:|
 | Inside an **input array**: a batch input series, or the warm-up history handed to `Open` / `OpenAndFill` | Nothing. **Undefined behaviour** — not detected, not rejected, nothing promised about the output or about a handle opened from it. Do not do it. | — |
 | As a **bar** handed to `Update` / `Peek`, or as one of the `n` bars handed to `UpdateAndFill` | **An error**: the bar is non-finite. In `UpdateAndFill` the bars before it stay committed. | U3 |
-| As a **real optional parameter** | **An error**: outside the parameter's domain. | B3, S5 |
+| As a **real optional parameter** | **An error**: outside the parameter's range. | B3, S5 |
 | As a candlestick **`factor`** — a global setting rather than a call parameter | **An error for NaN.** An infinity is accepted, and G6 says why. | G6 |
 
 Only the first row is undefined. The other three are ordinary errors, and
