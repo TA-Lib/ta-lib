@@ -779,6 +779,10 @@ pub fn generate(
     // twice is idempotent while forgetting once is silent.
     let resolved = func.resolved_for(crate::ir::Lang::C);
     let func: &FuncDef = &resolved;
+    // Same reason, for the same two callers: the internal-error site ids the
+    // guards below ask for are keyed by function name. `c::generate` has
+    // already named it; this nests inside that one and restores it.
+    let _site_scope = crate::internal_error_ids::FuncScope::new(&func.name);
     assert!(
         func.streaming,
         "c_stream::generate called without a streaming declaration"
@@ -2391,7 +2395,11 @@ fn emit_dispatch(
         }
         let _ = writeln!(o, "   default:");
         let _ = writeln!(o, "      /* Unreachable: Open rejects arms without a sub-stream. */");
-        let _ = writeln!(o, "      return TA_INTERNAL_ERROR;");
+        let _ = writeln!(
+            o,
+            "      return TA_INTERNAL_ERROR({});",
+            crate::internal_error_ids::site(&format!("dispatch.{verb}"))
+        );
         let _ = writeln!(o, "   }}");
         if verb == "Update" {
             let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) return retCode;");
@@ -2460,7 +2468,11 @@ fn emit_dispatch(
     }
     let _ = writeln!(o, "      default:");
     let _ = writeln!(o, "         /* Unreachable: Open rejects arms without a sub-stream. */");
-    let _ = writeln!(o, "         return TA_INTERNAL_ERROR;");
+    let _ = writeln!(
+        o,
+        "         return TA_INTERNAL_ERROR({});",
+        crate::internal_error_ids::site("dispatch.UpdateAndFill")
+    );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) return retCode;");
     emit_range_head_advance(o, "      ", "stream");
@@ -2852,7 +2864,11 @@ fn emit_dual_mode(
     emit_open_arm(o, func, mb, &body_b, enums, registry, helpers, counter);
     let _ = writeln!(o, "   }}");
     // Both arms return; keep the compiler happy about the fall-through.
-    let _ = writeln!(o, "\n   return TA_INTERNAL_ERROR;\n}}\n");
+    let _ = writeln!(
+        o,
+        "\n   return TA_INTERNAL_ERROR({});\n}}\n",
+        crate::internal_error_ids::site("dualmode")
+    );
     emit_open_internal_wrapper(o, func);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
@@ -3995,7 +4011,8 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
         let _ = writeln!(o, "      sp->cbSize_{id} = maxIdx_{id} + 1;");
         let _ = writeln!(
             o,
-            "      if( sp->cbSize_{id} < 1 || sp->cbSize_{id} > historyLen + 1 ) {{ {free_batch}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }}"
+            "      if( sp->cbSize_{id} < 1 || sp->cbSize_{id} > historyLen + 1 ) {{ {free_batch}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+            eid = crate::internal_error_ids::site(&format!("cbsize.{id}"))
         );
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
@@ -4221,14 +4238,16 @@ fn alloc_and_capture(
                 );
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }}",
-                    fwd = ring.fwd
+                    "{pad}if( sp->ringLag_{v} < {fwd} || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+                    fwd = ring.fwd,
+                    eid = crate::internal_error_ids::site(&format!("ringlag.{v}"))
                 );
             } else {
                 let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
                 let _ = writeln!(
                     s,
-                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }}"
+                    "{pad}if( sp->ringCap_{v} < 0 || sp->ringCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+                    eid = crate::internal_error_ids::site(&format!("ringcap.{v}"))
                 );
             }
         } else if back > 0 {
@@ -4263,7 +4282,8 @@ fn alloc_and_capture(
         }
         let _ = writeln!(
             s,
-            "{pad}if( sp->winCap_{v} < 1 || sp->winCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }}"
+            "{pad}if( sp->winCap_{v} < 1 || sp->winCap_{v} > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+            eid = crate::internal_error_ids::site(&format!("wincap.{v}"))
         );
         for arr in &win.arrays {
             let _ = writeln!(
@@ -4302,7 +4322,8 @@ fn alloc_and_capture(
         }
         let _ = writeln!(
             s,
-            "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }}"
+            "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+            eid = crate::internal_error_ids::site("extrema")
         );
         // The slot map is a mask, so the ring is allocated at the next power of
         // two at or above the logical capacity: `idx & xMask` then equals

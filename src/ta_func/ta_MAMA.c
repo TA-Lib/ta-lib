@@ -1629,7 +1629,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
       sp->prevPhase = prevPhase;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_MAMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_MAMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(346); }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingWMAIdx_inReal ) { TA_MAMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

@@ -395,7 +395,7 @@ static TA_RetCode TA_QSTICK_OpenImpl( struct TA_QSTICK_Stream **stream, const do
       sp->optInTimePeriod = optInTimePeriod;
       sp->periodTotal = periodTotal;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_QSTICK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_QSTICK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(378); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_derived ) { TA_QSTICK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

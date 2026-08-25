@@ -991,7 +991,7 @@ static TA_RetCode TA_STOCHF_OpenImpl( struct TA_STOCHF_Stream **stream, const do
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); TA_STOCHF_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); TA_STOCHF_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(386); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

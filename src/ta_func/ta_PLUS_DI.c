@@ -1331,7 +1331,7 @@ static TA_RetCode TA_PLUS_DI_OpenImpl( struct TA_PLUS_DI_Stream **stream, const 
    }
    }
 
-   return TA_INTERNAL_ERROR;
+   return TA_INTERNAL_ERROR(376);
 }
 
 /* Private function, not in public API. */

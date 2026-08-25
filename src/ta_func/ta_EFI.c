@@ -598,7 +598,7 @@ static TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **stream, const double i
    }
    }
 
-   return TA_INTERNAL_ERROR;
+   return TA_INTERNAL_ERROR(318);
 }
 
 /* Private function, not in public API. */

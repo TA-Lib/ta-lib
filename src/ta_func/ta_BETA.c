@@ -1390,7 +1390,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
       sp->j = j;
       sp->i = i;
       sp->xCap = (int)(i - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_BETA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_BETA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(191); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

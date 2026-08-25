@@ -2,6 +2,7 @@ use ta_codegen_lib::backends;
 use ta_codegen_lib::emit::{copy_if_changed, write_if_changed};
 use ta_codegen_lib::formatter;
 use ta_codegen_lib::helper_registry::HelperRegistry;
+use ta_codegen_lib::internal_error_ids;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::naming;
 use ta_codegen_lib::parser;
@@ -568,11 +569,24 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     };
 
     // Phase 2: Generate output for each backend
+    //
+    // The C backend hands every internal-error guard it emits a site id from
+    // this ledger, so it has to be in memory before the first C file and back
+    // on disk after the last. See `internal_error_ids`.
+    let site_ids_path = root.join("ta_codegen/input/internal_error_ids.yaml");
+    internal_error_ids::load(&site_ids_path);
     for func_def in &generated_funcs {
         for backend in &backends_to_run {
             generate_backend(func_def, backend, &enums, &registry, &helper_registry, &out_base);
         }
     }
+    // Prune only when this run actually re-emitted every C file: any other run
+    // leaves most keys unasked-for, and dropping those would free ids that are
+    // still live in the tree.
+    internal_error_ids::save(
+        &site_ids_path,
+        func_filter.is_none() && backends_to_run.contains(&"c"),
+    );
 
     // Drop per-function files for indicators that no longer exist. Only when
     // generating all functions (no filter), so a --func run cannot remove files

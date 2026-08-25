@@ -590,7 +590,7 @@ static TA_RetCode TA_CDLHIKKAKEMOD_OpenImpl( struct TA_CDLHIKKAKEMOD_Stream **st
       sp->patternLow = patternLow;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(252); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

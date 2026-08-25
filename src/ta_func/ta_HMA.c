@@ -289,7 +289,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
        * slot with the current one, advance.
        */
       ringSize = sqrtPeriod - 1;
-      if( ringSize < 1 ) return TA_INTERNAL_ERROR(137);
+      if( ringSize < 1 ) return TA_INTERNAL_ERROR(319);
       if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
       {
          dRing = TA_Malloc( sizeof(double)*ringSize );
@@ -628,7 +628,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
       barsSinceReseedHalf = 8 * halfPeriod;
       trailingHalf = 0.0;
       ringSize = sqrtPeriod - 1;
-      if( ringSize < 1 ) return TA_INTERNAL_ERROR(137);
+      if( ringSize < 1 ) return TA_INTERNAL_ERROR(319);
       if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
       {
          dRing = TA_Malloc( sizeof(double)*ringSize );
@@ -1103,7 +1103,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdxFull = 0;
       sp->winCap_jFull = 1;
-      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
       if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
@@ -1271,7 +1271,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->lookbackFull = lookbackFull;
       sp->barsSinceReseedFull = barsSinceReseedFull;
       sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
-      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(321); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
         sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1281,7 +1281,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdxFull = 0;
       sp->winCap_jFull = (int)(lookbackFull + 1);
-      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
       if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
@@ -1431,7 +1431,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
        * slot with the current one, advance.
        */
       ringSize = sqrtPeriod - 1;
-      if( ringSize < 1 ) return TA_INTERNAL_ERROR(137);
+      if( ringSize < 1 ) return TA_INTERNAL_ERROR(319);
       if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
       {
          dRing = TA_Malloc( sizeof(double)*ringSize );
@@ -1631,7 +1631,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->dRing_Idx = dRing_Idx;
       sp->maxIdx_dRing = maxIdx_dRing;
       sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
-      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(321); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
         sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1641,7 +1641,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdxFull = 0;
       sp->ringCap_trailingIdxHalf = (int)(today - trailingIdxHalf);
-      if( sp->ringCap_trailingIdxHalf < 0 || sp->ringCap_trailingIdxHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdxHalf < 0 || sp->ringCap_trailingIdxHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(322); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
         sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1651,7 +1651,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdxHalf = 0;
       sp->winCap_jFull = (int)(lookbackFull + 1);
-      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
       if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
@@ -1659,7 +1659,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       memcpy( sp->win_jFull_inReal, inReal + (historyLen - sp->winCap_jFull), sizeof(double) * (size_t)sp->winCap_jFull );
       sp->winPos_jFull = 0;
       sp->winCap_jHalf = (int)(lookbackHalf + 1);
-      if( sp->winCap_jHalf < 1 || sp->winCap_jHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_jHalf < 1 || sp->winCap_jHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(323); }
       sp->win_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jHalf );
       if( !sp->win_jHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jHalf );
@@ -1667,7 +1667,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       memcpy( sp->win_jHalf_inReal, inReal + (historyLen - sp->winCap_jHalf), sizeof(double) * (size_t)sp->winCap_jHalf );
       sp->winPos_jHalf = 0;
       sp->cbSize_dRing = maxIdx_dRing + 1;
-      if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(324); }
       sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
       if( !sp->cb_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
@@ -1681,7 +1681,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
    }
    }
 
-   return TA_INTERNAL_ERROR;
+   return TA_INTERNAL_ERROR(325);
 }
 
 /* Private function, not in public API. */

@@ -356,7 +356,7 @@ static TA_RetCode TA_IMI_OpenImpl( struct TA_IMI_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->winCap_i = (int)(optInTimePeriod - 1 + 1);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(337); }
       sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inOpen ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );

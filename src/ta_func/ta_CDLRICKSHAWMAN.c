@@ -519,7 +519,7 @@ static TA_RetCode TA_CDLRICKSHAWMAN_OpenImpl( struct TA_CDLRICKSHAWMAN_Stream **
       sp->ShadowLongPeriodTotal = ShadowLongPeriodTotal;
       sp->NearPeriodTotal = NearPeriodTotal;
       sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
-      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(284); }
       { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
         sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -532,7 +532,7 @@ static TA_RetCode TA_CDLRICKSHAWMAN_OpenImpl( struct TA_CDLRICKSHAWMAN_Stream **
       }
       sp->ringPos_BodyDojiTrailingIdx = 0;
       sp->ringCap_NearTrailingIdx = (int)(i - NearTrailingIdx);
-      if( sp->ringCap_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(285); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -545,7 +545,7 @@ static TA_RetCode TA_CDLRICKSHAWMAN_OpenImpl( struct TA_CDLRICKSHAWMAN_Stream **
       }
       sp->ringPos_NearTrailingIdx = 0;
       sp->ringCap_ShadowLongTrailingIdx = (int)(i - ShadowLongTrailingIdx);
-      if( sp->ringCap_ShadowLongTrailingIdx < 0 || sp->ringCap_ShadowLongTrailingIdx > historyLen ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_ShadowLongTrailingIdx < 0 || sp->ringCap_ShadowLongTrailingIdx > historyLen ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(286); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowLongTrailingIdx > 0 ? sp->ringCap_ShadowLongTrailingIdx : 1);
         sp->ring_ShadowLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_ShadowLongTrailingIdx_derived ) { TA_CDLRICKSHAWMAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

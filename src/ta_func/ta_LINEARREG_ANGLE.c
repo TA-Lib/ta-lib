@@ -753,7 +753,7 @@ static TA_RetCode TA_LINEARREG_ANGLE_OpenImpl( struct TA_LINEARREG_ANGLE_Stream 
       sp->j = j;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_LINEARREG_ANGLE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_LINEARREG_ANGLE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(340); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

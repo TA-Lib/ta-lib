@@ -546,7 +546,7 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_OpenImpl( struct TA_CDLIDENTICAL3CROWS_S
       memcpy( sp->EqualPeriodTotal, EqualPeriodTotal, sizeof( sp->EqualPeriodTotal ) );
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 3;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(255); }
       { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
         sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLIDENTICAL3CROWS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -560,7 +560,7 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_OpenImpl( struct TA_CDLIDENTICAL3CROWS_S
       sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
       sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 3;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLIDENTICAL3CROWS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(256); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLIDENTICAL3CROWS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

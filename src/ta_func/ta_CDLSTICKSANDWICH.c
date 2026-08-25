@@ -414,7 +414,7 @@ static TA_RetCode TA_CDLSTICKSANDWICH_OpenImpl( struct TA_CDLSTICKSANDWICH_Strea
       sp->EqualPeriodTotal = EqualPeriodTotal;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 3;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLSTICKSANDWICH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLSTICKSANDWICH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(302); }
       { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
         sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLSTICKSANDWICH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

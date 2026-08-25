@@ -378,7 +378,7 @@ static TA_RetCode TA_CDLDOJI_OpenImpl( struct TA_CDLDOJI_Stream **stream, const 
       memset( sp, 0, sizeof(*sp) );
       sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
-      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(224); }
       { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
         sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

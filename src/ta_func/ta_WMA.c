@@ -582,7 +582,7 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdx = 0;
       sp->winCap_j = 1;
-      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(401); }
       sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
       if( !sp->win_j_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
@@ -787,7 +787,7 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       sp->trailingValue = trailingValue;
       sp->divider = divider;
       sp->ringCap_trailingIdx = (int)(inIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(402); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -797,7 +797,7 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdx = 0;
       sp->winCap_j = (int)(lookbackWin + 1);
-      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(401); }
       sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
       if( !sp->win_j_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );

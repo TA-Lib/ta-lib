@@ -887,7 +887,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
    }
    }
 
-   return TA_INTERNAL_ERROR;
+   return TA_INTERNAL_ERROR(377);
 }
 
 /* Private function, not in public API. */

@@ -446,7 +446,7 @@ static TA_RetCode TA_CDLTRISTAR_OpenImpl( struct TA_CDLTRISTAR_Stream **stream, 
       memset( sp, 0, sizeof(*sp) );
       sp->BodyPeriodTotal = BodyPeriodTotal;
       sp->ringCap_BodyTrailingIdx = (int)(i - BodyTrailingIdx);
-      if( sp->ringCap_BodyTrailingIdx < 0 || sp->ringCap_BodyTrailingIdx > historyLen ) { TA_CDLTRISTAR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyTrailingIdx < 0 || sp->ringCap_BodyTrailingIdx > historyLen ) { TA_CDLTRISTAR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(309); }
       { size_t allocN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
         sp->ring_BodyTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyTrailingIdx_derived ) { TA_CDLTRISTAR_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

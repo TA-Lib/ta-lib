@@ -342,7 +342,7 @@ static TA_RetCode TA_SUM_OpenImpl( struct TA_SUM_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->periodTotal = periodTotal;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_SUM_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_SUM_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(387); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_SUM_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

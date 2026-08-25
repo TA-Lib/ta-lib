@@ -33,15 +33,22 @@
 #ifndef TA_COMMON_H
 #define TA_COMMON_H
 
-/* The following macros are used to return internal errors.
+/* The following macro is used to return internal errors.
  * The Id can be from 1 to 999 and translate to the user
  * as the return code 5000 to 5999.
  *
- * Everytime you wish to add a new fatal error code,
- * use the "NEXT AVAILABLE NUMBER" and increment the
- * number in this file.
+ * The generated function tier (src/ta_func) gives every
+ * guard its own Id, so the number names the guard that
+ * fired rather than the class it belongs to. A caller must
+ * therefore test ">= TA_INTERNAL_ERROR", never "==":
+ * TA_UNKNOWN_ERR is the only member above it.
  *
- * NEXT AVAILABLE NUMBER: 181
+ * Ids 1 to 180 were allocated by hand and are still held by
+ * ta_regtest, ta_abstract and ta_memory.h's CIRCBUF_INIT.
+ * Everything above comes from
+ * ta_codegen/input/internal_error_ids.yaml, whose "next" is
+ * the NEXT AVAILABLE NUMBER for hand-written sites too:
+ * take it and raise it there. An Id is never reused.
  */
 #define TA_INTERNAL_ERROR(Id) ((TA_RetCode)(TA_INTERNAL_ERROR+Id))
 

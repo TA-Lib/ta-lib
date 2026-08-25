@@ -447,7 +447,7 @@ static TA_RetCode TA_CDLDRAGONFLYDOJI_OpenImpl( struct TA_CDLDRAGONFLYDOJI_Strea
       sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp->ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
-      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLDRAGONFLYDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLDRAGONFLYDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(227); }
       { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
         sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLDRAGONFLYDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -460,7 +460,7 @@ static TA_RetCode TA_CDLDRAGONFLYDOJI_OpenImpl( struct TA_CDLDRAGONFLYDOJI_Strea
       }
       sp->ringPos_BodyDojiTrailingIdx = 0;
       sp->ringCap_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLDRAGONFLYDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLDRAGONFLYDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(228); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLDRAGONFLYDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }

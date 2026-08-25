@@ -1228,7 +1228,7 @@ static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double i
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_SMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_SMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(384); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
