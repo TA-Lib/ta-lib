@@ -143,8 +143,8 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — an input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
-| B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
-| B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
+| B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[6] | ✅<br>[7] | ✅<br>&nbsp; |
 | B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` ⚠️ | ✅<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors") | `TA_INTERNAL_ERROR` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
@@ -177,27 +177,26 @@ has what happens instead.
 per-access bounds checks. It is skipped on a sub-lookback range, so the input
 bound goes unchecked there in Rust as it does in C.
 
-[6] The one bound where Java and C# check more than C and Rust do; the spec takes
-the stricter reading as the norm. Rationale on `Core.clampedStart`.
+[6] **No run-time error, because the call cannot be written.** Two `&mut [f64]`
+cannot alias, so the borrow checker rejects it at compile time. The
+crate-private tier still guards on pointer equality and answers `BadParam`, for
+a caller arriving through FFI.
 
-[7] The borrow checker forbids a safe caller from aliasing two output slices at
-all; the pointer-equality guard in the internal tier covers the FFI boundary.
-
-[8] Two Java arrays are identical or disjoint — there is no partial overlap to
-express — so reference equality is complete for this rule.
+[7] **A run-time error.** Two Java arrays are either the same object or
+disjoint, so reference equality catches every case this rule covers.
 
 ### 2.3 Streaming tier — opening (`Open`, `OpenAndFill`)
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| S1 | A required argument (handle, history, output) was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ❌<br>[9] | —<br>&nbsp; |
-| S2 | The history is empty | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>[10] |
-| S3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | &nbsp;<br>[11] | &nbsp;<br>[11] | &nbsp;<br>[11] |
-| S4 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [12] | — | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
+| S1 | A required argument (handle, history, output) was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ❌<br>[8] | —<br>&nbsp; |
+| S2 | The history is empty | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>[9] |
+| S3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | &nbsp;<br>[10] | &nbsp;<br>[10] | &nbsp;<br>[10] |
+| S4 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [11] | — | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
 | S5 | An optional parameter is outside its documented range | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| S6 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅<br>[13] | ✅<br>[13] | ✅<br>[13] | ✅<br>[13] |
+| S6 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅<br>[12] | ✅<br>[12] | ✅<br>[12] | ✅<br>[12] |
 | S7 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| S8 | (`OpenAndFill`) an output is too short for the fill | *(none)* | ⚠️<br>[4] | ❌<br>[14] | ❌<br>[14] | ❌<br>[14] |
+| S8 | (`OpenAndFill`) an output is too short for the fill | *(none)* | ⚠️<br>[4] | ❌<br>[13] | ❌<br>[13] | ❌<br>[13] |
 
 Rule S6 is the library's only *recoverable* condition — "feed me more bars", not
 "your code is wrong" — so it must be distinguishable from `TA_BAD_PARAM`, which
@@ -207,17 +206,17 @@ is always a programming error. It has carried its own code since
 Unlike the batch tier, `OpenAndFill` outputs may **not** alias the inputs at all:
 that path writes the outputs and then reads the input tail to seed its rings.
 
-[9] The history's length is read with no guard, so a null history is a raw runtime
+[8] The history's length is read with no guard, so a null history is a raw runtime
 `NullPointerException` naming nothing; a null `OpenAndFill` output faults inside
 the fill loop.
 
-[10] Reported without the `<NAME> open: ` message prefix that
+[9] Reported without the `<NAME> open: ` message prefix that
 `docs/streaming-api-design.md` names as a cross-language contract; the class is
 right, the message is not.
 
-[11] Not probed — the condition needs a >100 000 001-element allocation.
+[10] Not probed — the condition needs a >100 000 001-element allocation.
 
-[12] **Withdrawn.** The warm-up history is an input *array*, and the library
+[11] **Withdrawn.** The warm-up history is an input *array*, and the library
 does not scan those. Until this was removed it was the only array in the library
 that was checked — 174 of 174 `Open` and 174 of 174 `OpenAndFill` entry points,
 in all four backends — which made "arrays are never scanned" a rule with one
@@ -228,7 +227,7 @@ through a fill, with the output already half written. The measurement is in
 `docs/streaming-api-design.md`. U3 is untouched: a bar handed to `Update` or
 `Peek` is a single value.
 
-[13] All four converge on `TA_INSUFFICIENT_HISTORY`. Before it existed C and
+[12] All four converge on `TA_INSUFFICIENT_HISTORY`. Before it existed C and
 Rust returned the **same** code for "history too short" and "parameter out of
 range", so a caller could not separate the recoverable condition from the
 programming error, and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX` in band
@@ -244,21 +243,21 @@ cross-language contract — but it no longer exists to hide a borrowed code.
 Verified as uniform, not incidental: across all 172 streaming functions per
 backend, every short-history arm in every backend reports this code and no other.
 
-[14] No backend validates the fill output's capacity, in contrast with the batch
+[13] No backend validates the fill output's capacity, in contrast with the batch
 tier which does (B5). An undersized or absent output faults inside the fill loop
 with the buffer already partly written — a raw index exception in Java and C#, a
 panic in Rust.
 
-[15] Only C has a bar count: the other three take slices or arrays, which carry
+[14] Only C has a bar count: the other three take slices or arrays, which carry
 their own lengths, so "negative" is unrepresentable.
 
-[16] C is handed bare pointers and has no sizes — the same blind spot as B5 and
+[15] C is handed bare pointers and has no sizes — the same blind spot as B5 and
 S8. The other three answer both before committing anything, which makes
 `UpdateAndFill` the one filling entry point whose output capacity IS validated
 outside C; `OpenAndFill`'s (S8) still is not, and closing that is Appendix D
 item 9.
 
-[17] Rust cannot express it: `&[f64]` and `&mut [f64]` cannot alias, so the
+[16] Rust cannot express it: `&[f64]` and `&mut [f64]` cannot alias, so the
 borrow checker rejects the call at compile time.
 
 ### 2.4 Streaming tier — advancing (`Update`, `Peek`, `UpdateAndFill`)
@@ -268,10 +267,10 @@ borrow checker rejects the call at compile time.
 | U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
 | U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
 | U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[15] | n/a<br>[15] | n/a<br>[15] |
-| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ❌<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ❌<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[17] | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[14] | n/a<br>[14] | n/a<br>[14] |
+| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ❌<br>[15] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ❌<br>[15] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
 included — that is the whole point of rejecting rather than computing. `Peek`
@@ -332,14 +331,14 @@ Global settings in C; a builder producing an immutable core in Rust, Java and C#
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[18] | ✅<br>[18] | ✅<br>&nbsp; |
+| G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[17] | ✅<br>[17] | ✅<br>&nbsp; |
 | G2 | The unstable period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️<br>[19] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️<br>[18] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | G4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; |
 | G5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| G6 | The candlestick factor is not NaN [22] | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅<br>[20] | —<br>[20] | —<br>[20] | —<br>[20] |
-| G8 | A rejected setting leaves the configuration unchanged | — | ✅<br>&nbsp; | ✅<br>[21] | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G6 | The candlestick factor is not NaN [21] | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅<br>[19] | —<br>[19] | —<br>[19] | —<br>[19] |
+| G8 | A rejected setting leaves the configuration unchanged | — | ✅<br>&nbsp; | ✅<br>[20] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 The bounds in G2 and G5 are not arbitrary. Both values are added to a lookback
 which is then used as an index: unbounded, the lookback overflows negative and
@@ -348,26 +347,26 @@ success. `MAX_INDEX` is the ceiling the index domain already enforces, and a
 warm-up longer than the largest addressable series could never produce output, so
 nothing legitimate is refused.
 
-[18] The wildcard is a declared member, so it is rejected by value; a target outside
+[17] The wildcard is a declared member, so it is rejected by value; a target outside
 the declared set is unrepresentable.
 
-[19] C's getter returns the period itself, so it carries no error channel: a target
+[18] C's getter returns the period itself, so it carries no error channel: a target
 that names no single function reads as `0`. Accepted, and pinned by
 `test_internals.c`; the other three backends reject it because a getter that can
 throw costs them nothing.
 
-[20] C rejects an out-of-domain value with `TA_BAD_PARAM` and leaves the mode
+[19] C rejects an out-of-domain value with `TA_BAD_PARAM` and leaves the mode
 unchanged. It previously accepted anything and echoed it back from the getter, so a
 caller could not tell a typo from a setting; the two-line domain check was taken even
 though `TA_SetCompatibility` is deprecated, because it was that cheap. Rust, Java and
 C# expose no public setter at all, so the mode is pinned and the domain cannot be
 violated there.
 
-[21] Rust's setters chain and cannot fail individually; each latches the **first**
+[20] Rust's setters chain and cannot fail individually; each latches the **first**
 rejection, which surfaces when the core is built. Verified that a later valid
 setter does not clear an earlier rejection.
 
-[22] NaN only: an infinite factor is accepted, in all four backends. A factor
+[21] NaN only: an infinite factor is accepted, in all four backends. A factor
 scales a threshold and never indexes anything, so an infinity cannot take a
 function off the end of its input; NaN is refused because it silences every
 comparison it feeds, which is indistinguishable from "this shape never occurs".
@@ -613,11 +612,11 @@ inferred.
 | ~~5~~ | — | — | *Withdrawn, not fixed.* Partial output↔input overlap in C. Decided in #225: detection stops at buffer identity, and partial overlap is unspecified — rule N8 and Appendix E. Numbering left as-is so existing references to items 8 and 9 keep pointing at the same rows. |
 | 6 | Java | S1 | A null history, or a null `OpenAndFill` output, yields a raw JVM exception from inside the algorithm. |
 | 7 | C# | S2 | Rule passes; the empty-history *message* omits the cross-language `<NAME> open: ` prefix. |
-| ~~8~~ | all | S6 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S3) down with it — see footnote [13]. |
+| ~~8~~ | all | S6 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S3) down with it — see footnote [12]. |
 | 9 | Rust, Java, C# | S8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
 | ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
 | 11 | C#, Rust | B6 | Two **empty** output buffers are rejected as aliased. C# says so explicitly (`a.IsEmpty && b.IsEmpty` is a clause of the guard); Rust does it incidentally, because the guard compares `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejects *some* empty pairs and accepts others — which is worse than either). C and Java accept them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this is a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Unreachable until #236 step 2 sized the harness's output buffers to the produced count, which is why the servers floor that length at one. |
-| 12 | Java, C# | B5 | **MA** is **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answers `TA_BAD_PARAM` before any array is reached, so the probe cannot tell "read nothing" from "never ran". The public API is unaffected — reached through the caller's own wrapper the callee's check is provably redundant, same `endIdx`, same array. **Was ten functions**; nine are resolved. Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` cannot: it is a dispatch function, and the generator admits only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on — so a guard there is a generator change, not an edit to `ma.c`. The one remaining route is giving the input bound the sub-lookback escape the output bound has, converging with C and Rust and giving up the stricter reading footnote [6] adopted. The list is explicit and its size asserted in both suites, so the debt cannot grow silently. |
+| 12 | Java, C# | B5 | **MA** is **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answers `TA_BAD_PARAM` before any array is reached, so the probe cannot tell "read nothing" from "never ran". The public API is unaffected — reached through the caller's own wrapper the callee's check is provably redundant, same `endIdx`, same array. **Was ten functions**; nine are resolved. Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` cannot: it is a dispatch function, and the generator admits only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on — so a guard there is a generator change, not an edit to `ma.c`. The one remaining route is giving the input bound the sub-lookback escape the output bound has, converging with C and Rust and giving up the stricter reading B5 adopted. The list is explicit and its size asserted in both suites, so the debt cannot grow silently. |
 
 Item 9 is the one that still changes what a *correct* caller can do: it turns a
 sizing mistake into a partly-written buffer. (Item 8 was the other; a caller can
