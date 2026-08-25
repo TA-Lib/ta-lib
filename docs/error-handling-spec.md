@@ -108,7 +108,7 @@ undefined are collected in Part 3.
 | N5 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
 | N6 | The set-all / restore-all **wildcards**, where a setter documents one | Legal on those setters, and rejected on the ones that name a single target (rule G1). |
 | N7 | **Peeking** a forming bar, any number of times | Never advances the stream and never writes the handle. It can still be *rejected* (U3), and a rejected peek changes nothing either. |
-| N8 | Buffers that **partially** overlap — same memory, different start | **Unspecified.** Only *identical* buffers are detected (rule B6). See "Buffer overlap" below before assuming a diagnosis. |
+| N8 | Buffers that **partially** overlap — same memory, different start | **Unspecified.** Only *identical* buffers are detected (rule B6). See Appendix E before assuming a diagnosis. |
 
 These behaviours are pinned by the value gates and the cross-language hash, over
 the whole corpus, on every test run.
@@ -144,7 +144,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — an input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
 | B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
-| B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
+| B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
 | B7 | A scratch allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` ⚠️ | ✅<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors") | `TA_INTERNAL_ERROR` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
@@ -185,46 +185,6 @@ all; the pointer-equality guard in the internal tier covers the FFI boundary.
 
 [8] Two Java arrays are identical or disjoint — there is no partial overlap to
 express — so reference equality is complete for this rule.
-
-### Buffer overlap
-
-**What is guaranteed.** Two *outputs* that are the same buffer are rejected
-(rule B6). That is a caller error with no correct answer — the second write
-destroys the first — and it is cheap to see, because it is an identity test.
-
-**What is allowed.** An output that **is** an input, whole buffer, is legal in the
-batch tier (rule N4). Several bodies are written for it and elect their scratch by
-testing for exactly that case. This is not tolerated-but-discouraged; it is
-supported.
-
-**What is unspecified.** Anything in between — the same memory reached through
-buffers that start at different offsets (rule N8). Not detected, not promised, and
-not a diagnosis you will get. Decided in **#225**: the library detects buffer
-identity and nothing finer.
-
-**Why the line is drawn at identity, and not further.** The four backends do not
-even *agree on whether a partial overlap can exist*, so a stronger rule could not be
-one rule:
-
-| backend | can a caller express a partial overlap? | detected? |
-|---|---|---|
-| C | Yes — two pointers into one allocation | **No.** Detecting it means ordering pointers into different declared objects, which C leaves undefined; a conforming check would have to launder them through `uintptr_t` and reason about representation |
-| Java | **No** — two arrays are the same object or disjoint; there is no offset to differ | n/a, so reference equality is complete |
-| Rust | **No** in safe code — `&[T]` and `&mut [T]` over the same data cannot coexist, and two `&mut` cannot either | the identity guard covers the FFI boundary |
-| C# | **Yes** — two `Span<T>` slices of one array | **Yes**, incidentally: `Span.Overlaps` exists, so the check is one call |
-
-So the guarantee is set by the weakest member that can express the problem, which is
-C — and C is the one language where the check is not merely expensive but not
-straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
-making the state unreachable, which is not the same as enforcing it.
-
-**C# currently detects more than this specifies.** Its generated guard is
-`if (outReal.Overlaps(inReal) && outReal != inReal)`, which rejects a partial
-input↔output overlap while still allowing whole-buffer in place. That is a superset
-of the guarantee, kept because it costs one call on a type that already answers the
-question. **Callers must not rely on it**: the same call is unspecified in C, and
-inexpressible in Java and Rust. If uniformity is ever preferred over the extra
-safety, removing it is the change — not adding the check elsewhere.
 
 ### 2.3 Streaming tier — opening (`Open`, `OpenAndFill`)
 
@@ -458,8 +418,7 @@ Two buffers over the same memory starting at different offsets (rule N8).
 *Unspecified* rather than undefined: what happens is a property of the backend,
 and only C can reach the undefined end of it. Detection stops at buffer
 identity, which is rule B6; whole-buffer in place is legal and supported, which
-is rule N4. "Buffer overlap", in Part 2, has the reasoning and the per-backend
-table.
+is rule N4. Appendix E has the reasoning and the per-backend table.
 
 ---
 
@@ -651,7 +610,7 @@ inferred.
 | ~~2~~ | C | B4 | *Fixed.* Input-buffer presence was checked *before* parameter validation and output presence after, so the prologue straddled B3. Parameter validation now precedes every presence check. |
 | ~~3~~ | Java | B4 | *Fixed.* Buffer presence was checked *before* the index and parameter rules, inverting the specified precedence — a negative `startIdx` with a null input reported the null. The wrapper now evaluates B1, B2 and B3 first. |
 | ~~4~~ | Java | B3 | *Fixed.* A null enum parameter yielded a raw JVM `NullPointerException` naming neither function nor parameter; it is now a parameter outside its domain, named, and carrying `TA_BAD_PARAM`. |
-| ~~5~~ | — | — | *Withdrawn, not fixed.* Partial output↔input overlap in C. Decided in #225: detection stops at buffer identity, and partial overlap is unspecified — rule N8 and the "Buffer overlap" section. Numbering left as-is so existing references to items 8 and 9 keep pointing at the same rows. |
+| ~~5~~ | — | — | *Withdrawn, not fixed.* Partial output↔input overlap in C. Decided in #225: detection stops at buffer identity, and partial overlap is unspecified — rule N8 and Appendix E. Numbering left as-is so existing references to items 8 and 9 keep pointing at the same rows. |
 | 6 | Java | S1 | A null history, or a null `OpenAndFill` output, yields a raw JVM exception from inside the algorithm. |
 | 7 | C# | S2 | Rule passes; the empty-history *message* omits the cross-language `<NAME> open: ` prefix. |
 | ~~8~~ | all | S6 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S3) down with it — see footnote [13]. |
@@ -668,3 +627,45 @@ now tell "send more bars" from "your code is wrong" and retry.)
 in: item 8 went first (it appended the `TA_RetCode` member #236 normalises to),
 items 3 and 4 are folded into its first step, and the streaming items 6 and 9
 follow it. Item 7 is independent of it.
+
+---
+
+## Appendix E — Buffer overlap
+
+**What is guaranteed.** Two *outputs* that are the same buffer are rejected
+(rule B6). That is a caller error with no correct answer — the second write
+destroys the first — and it is cheap to see, because it is an identity test.
+
+**What is allowed.** An output that **is** an input, whole buffer, is legal in the
+batch tier (rule N4). Several bodies are written for it and elect their scratch by
+testing for exactly that case. This is not tolerated-but-discouraged; it is
+supported.
+
+**What is unspecified.** Anything in between — the same memory reached through
+buffers that start at different offsets (rule N8). Not detected, not promised, and
+not a diagnosis you will get. Decided in **#225**: the library detects buffer
+identity and nothing finer.
+
+**Why the line is drawn at identity, and not further.** The four backends do not
+even *agree on whether a partial overlap can exist*, so a stronger rule could not be
+one rule:
+
+| backend | can a caller express a partial overlap? | detected? |
+|---|---|---|
+| C | Yes — two pointers into one allocation | **No.** Detecting it means ordering pointers into different declared objects, which C leaves undefined; a conforming check would have to launder them through `uintptr_t` and reason about representation |
+| Java | **No** — two arrays are the same object or disjoint; there is no offset to differ | n/a, so reference equality is complete |
+| Rust | **No** in safe code — `&[T]` and `&mut [T]` over the same data cannot coexist, and two `&mut` cannot either | the identity guard covers the FFI boundary |
+| C# | **Yes** — two `Span<T>` slices of one array | **Yes**, incidentally: `Span.Overlaps` exists, so the check is one call |
+
+So the guarantee is set by the weakest member that can express the problem, which is
+C — and C is the one language where the check is not merely expensive but not
+straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
+making the state unreachable, which is not the same as enforcing it.
+
+**C# currently detects more than this specifies.** Its generated guard is
+`if (outReal.Overlaps(inReal) && outReal != inReal)`, which rejects a partial
+input↔output overlap while still allowing whole-buffer in place. That is a superset
+of the guarantee, kept because it costs one call on a type that already answers the
+question. **Callers must not rely on it**: the same call is unspecified in C, and
+inexpressible in Java and Rust. If uniformity is ever preferred over the extra
+safety, removing it is the change — not adding the check elsewhere.
