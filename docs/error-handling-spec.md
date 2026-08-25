@@ -74,10 +74,10 @@ initialisation (`TA_LIB_NOT_INITIALIZE`), and four of them —
 `TA_UNKNOWN_ERR` — are returned from nowhere in the tree at all. Appendix C
 defers the abstract tier, so no rule below produces any of the thirteen.
 
-No member covers *a buffer is too short* (rules B5, B5a, S8), and their RetCode
-column reads *(none)*: C is handed bare pointers and has no sizes, so it cannot
-detect the condition at all, and the three backends that can detect it raise
-rather than return a code (Appendix A).
+*A buffer is too short* has no member of its own. Where it is detected it is
+reported as `TA_BAD_PARAM` (rules B5, B5a) — raised rather than returned, in the
+backends that raise (Appendix A) — and the ⚠️ on the code says C cannot detect it
+at all. Rule S8 reads *(none)* because no backend detects it.
 
 **`OutRange`.** What a successful call reports about its own output: the index
 of the first value written, in the input series' coordinates, and how many values
@@ -143,8 +143,8 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — an input or output buffer, or either range out-parameter | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
-| B5 | A buffer is too short for what the call reads or writes | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
-| B5a | A range shorter than the lookback produces nothing, so it needs no output space — but the input must still reach `endIdx` | *(none)* | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
+| B5 | A buffer is too short for what the call reads or writes | ⚠️ `TA_BAD_PARAM` | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
+| B5a | A range shorter than the lookback produces nothing, so it needs no output space — but the input must still reach `endIdx` | ⚠️ `TA_BAD_PARAM` | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>[6] | ✅<br>[6] |
 | B6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[7] | ✅<br>[8] | ✅<br>&nbsp; |
 
 **Range.** A real or integer parameter's range is the `range:` its .yaml
@@ -515,7 +515,7 @@ value rather than a range. The range's two members are named for each language:
 `beg_idx` / `count` in Rust, `begIdx` / `count` in Java, `BegIdx` / `Count` in
 C#.
 
-**One condition has no RetCode**, and raises where a code cannot be returned:
+**One condition has no `TA_RetCode` member of its own.** It reports `TA_BAD_PARAM`, and raises it where a code cannot be returned:
 
 | Condition | C | Rust | Java | C# |
 |---|---|---|---|---|
