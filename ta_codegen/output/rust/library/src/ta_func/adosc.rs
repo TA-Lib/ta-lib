@@ -723,7 +723,7 @@ impl Core {
     /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
     /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S8).
+    /// buffer already partly written (rule S5).
     #[doc(alias = "TA_ADOSC_OpenAndFill")]
     pub fn ADOSC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],

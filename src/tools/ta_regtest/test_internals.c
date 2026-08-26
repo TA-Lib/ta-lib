@@ -159,7 +159,7 @@ ErrorNumber test_internals( void )
    return TA_TEST_PASS; /* Success. */
 }
 
-/* Rule S6: a stream opened on fewer than `lookback + 1` bars reports
+/* Rule S7: a stream opened on fewer than `lookback + 1` bars reports
  * TA_INSUFFICIENT_HISTORY -- the library's one RECOVERABLE condition.
  *
  * It is worth its own code, and its own probe, because it is the only failure a
@@ -189,6 +189,7 @@ ErrorNumber test_internals( void )
  * code did not simply replace the catch-all).
  */
 static int shShort, shControl;
+static int shUpper;
 
 #define SH_CHECK( name, lookbackExpr, shortOpen, enoughOpen, badParamOpen, closeCall ) \
    do {                                                                        \
@@ -255,6 +256,7 @@ static ErrorNumber testStreamShortHistory( void )
    }
 
    shShort = shControl = 0;
+   shUpper = 0;
 
    for( i = 0; i < 512; i++ )
    {
@@ -317,9 +319,11 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_CDLDOJI_Open", lb,
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb, &v ),
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, &v ),
-                /* No optional parameter to spoil: an empty history is the other
-                 * rejection this tier owns (rule S2), and it is still the
-                 * catch-all. */
+                /* No optional parameter to spoil: an empty history is the
+                 * other rejection this tier owns (rule S1). It still answers
+                 * the catch-all, which is the deviation Appendix D item 13
+                 * records -- this leg moves to TA_OUT_OF_RANGE_START_INDEX
+                 * when that is fixed. */
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, 0, &v ),
                 TA_CDLDOJI_Close( st ) );
    }
@@ -377,11 +381,53 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_SMA_Close( st ) );
    }
 
-   printf( "  Streaming short history (S6): %d rejection(s) reporting "
+   /* Rule S2, the other half of the history bound: `historyLen - 1` is the
+    * implied `endIdx`, so a history longer than MAX_INDEX + 1 leaves the index
+    * domain. Only C can be probed cheaply -- it takes `historyLen` as a bare
+    * `int`, so the rejection answers before a bar is read; the other three
+    * derive it from the array and would need a 100 000 001-element one. The
+    * legal upper edge is out of reach here for the same reason. */
+   {
+      TA_SMA_Stream *st = NULL;
+      static double out[512];
+      double v = 0.0;
+      int beg = 0, nb = 0;
+      TA_RetCode rc;
+      struct { const char *name; TA_RetCode rc; } cases[3];
+
+      cases[0].name = "TA_SMA_Open(historyLen=MAX_INDEX+2)";
+      cases[0].rc   = TA_SMA_Open( &st, bars, TA_MAX_INDEX + 2, 30, &v );
+      cases[1].name = "TA_SMA_OpenAndFill(historyLen=MAX_INDEX+2)";
+      cases[1].rc   = TA_SMA_OpenAndFill( &st, bars, TA_MAX_INDEX + 2, 30, &beg, &nb, out );
+      cases[2].name = "TA_SMA_Open(historyLen=INT_MAX)";
+      cases[2].rc   = TA_SMA_Open( &st, bars, 2147483647, 30, &v );
+
+      for( i = 0; i < 3; i++ )
+      {
+         rc = cases[i].rc;
+         if( rc != TA_OUT_OF_RANGE_END_INDEX )
+         {
+            printf( "\nFailed: %s returned %d, expected "
+                    "TA_OUT_OF_RANGE_END_INDEX (%d)\n",
+                    cases[i].name, (int)rc, (int)TA_OUT_OF_RANGE_END_INDEX );
+            return TA_STREAM_SHORT_HISTORY_WRONG_CODE;
+         }
+         shUpper++;
+      }
+   }
+
+   printf( "  Streaming short history (S7): %d rejection(s) reporting "
            "TA_INSUFFICIENT_HISTORY, %d control(s)\n", shShort, shControl );
+   printf( "  Streaming history upper bound (S2): %d rejection(s)\n", shUpper );
 
    /* Literal floors, not derived from the cases above: a count computed from the
     * loop would move with a deleted case and still "pass". */
+   if( shUpper < 3 )
+   {
+      printf( "\nFailed: the history upper-bound gate ran fewer checks than it "
+              "was written with\n" );
+      return TA_STREAM_SHORT_HISTORY_VACUOUS;
+   }
    if( shShort < 8 || shControl < 16 )
    {
       printf( "\nFailed: the short-history gate ran fewer checks than it was "
@@ -407,14 +453,19 @@ static ErrorNumber testStreamShortHistory( void )
  * whole corpus, by `c_batch_prologue_orders_parameters_before_presence` in
  * ta_codegen's own suite.
  *
- * One case per distinct emission shape, matching the S6 probe above: a plain
+ * One case per distinct emission shape, matching the S7 probe above: a plain
  * transcribed body (SMA, plus its float twin, which is a separate emission), a
  * composed multi-output (BBANDS), the dispatch tier (MA), the period bank
  * (MAVP), a candlestick with four price legs and an integer output (CDLDOJI),
  * a candlestick leg the body never indexes (CDL3OUTSIDE, CDLHIKKAKE -- #260),
  * and a nullable output (MAMA), which is the control for what "required" means.
+ *
+ * Rule S4 rides along at the end: it is this rule plus the handle, over the
+ * same argument shapes, so the streaming openers are driven from here rather
+ * than from a gate of their own.
  */
 static int bacReject, bacAccept;
+static int s4Reject, s4Accept;
 
 #define BAC_REJECT( name, call )                                               \
    do {                                                                        \
@@ -440,6 +491,30 @@ static int bacReject, bacAccept;
       bacAccept++;                                                             \
    } while(0)
 
+#define S4_REJECT( name, call )                                                \
+   do {                                                                        \
+      TA_RetCode rc__ = (call);                                                \
+      if( rc__ != TA_BAD_PARAM )                                               \
+      {                                                                        \
+         printf( "\nFailed: %s returned %d, expected TA_BAD_PARAM (%d)\n",     \
+                 name, (int)rc__, (int)TA_BAD_PARAM );                         \
+         return TA_BATCH_ARG_WRONG_CODE;                                       \
+      }                                                                        \
+      s4Reject++;                                                              \
+   } while(0)
+
+#define S4_ACCEPT( name, call )                                                \
+   do {                                                                        \
+      TA_RetCode rc__ = (call);                                                \
+      if( rc__ != TA_SUCCESS )                                                 \
+      {                                                                        \
+         printf( "\nFailed: %s returned %d, expected TA_SUCCESS\n",            \
+                 name, (int)rc__ );                                            \
+         return TA_BATCH_ARG_CONTROL;                                          \
+      }                                                                        \
+      s4Accept++;                                                              \
+   } while(0)
+
 static ErrorNumber testBatchArgumentContract( void )
 {
    static double bars[512];
@@ -459,6 +534,7 @@ static ErrorNumber testBatchArgumentContract( void )
    }
 
    bacReject = bacAccept = 0;
+   s4Reject = s4Accept = 0;
 
    for( i = 0; i < 512; i++ )
    {
@@ -591,8 +667,80 @@ static ErrorNumber testBatchArgumentContract( void )
       bacAccept += 2;
    }
 
+   /* Rule S4 is B4 plus one argument: the handle. The streaming openers take
+    * the same declared inputs and outputs as the batch call, so rather than a
+    * suite of its own, B4's shapes are re-driven through `Open` and
+    * `OpenAndFill` here. What is new is the handle, `OpenAndFill`'s own range
+    * out-parameters, and the fact that a rejected open must leave no handle.
+    *
+    * Counted separately: sharing B4's counters would let a deleted S4 case
+    * hide behind a batch one. */
+   {
+      TA_SMA_Stream         *sst = NULL;
+      TA_MAMA_Stream        *mst = NULL;
+      TA_CDL3OUTSIDE_Stream *cst = NULL;
+      double v = 0.0, v2 = 0.0;
+
+      /* The argument the batch tier does not have. */
+      S4_REJECT( "TA_SMA_Open(stream=NULL)",
+                 TA_SMA_Open( NULL, bars, 252, 30, &v ) );
+      S4_REJECT( "TA_SMA_OpenAndFill(stream=NULL)",
+                 TA_SMA_OpenAndFill( NULL, bars, 252, 30, &beg, &nb, outA ) );
+
+      /* B4's shapes, through the openers. */
+      S4_REJECT( "TA_SMA_Open(inReal=NULL)",
+                 TA_SMA_Open( &sst, NULL, 252, 30, &v ) );
+      S4_REJECT( "TA_SMA_Open(outReal=NULL)",
+                 TA_SMA_Open( &sst, bars, 252, 30, NULL ) );
+      S4_REJECT( "TA_SMA_OpenAndFill(inReal=NULL)",
+                 TA_SMA_OpenAndFill( &sst, NULL, 252, 30, &beg, &nb, outA ) );
+      S4_REJECT( "TA_SMA_OpenAndFill(outReal=NULL)",
+                 TA_SMA_OpenAndFill( &sst, bars, 252, 30, &beg, &nb, NULL ) );
+      S4_REJECT( "TA_SMA_OpenAndFill(outBegIdx=NULL)",
+                 TA_SMA_OpenAndFill( &sst, bars, 252, 30, NULL, &nb, outA ) );
+      S4_REJECT( "TA_SMA_OpenAndFill(outNBElement=NULL)",
+                 TA_SMA_OpenAndFill( &sst, bars, 252, 30, &beg, NULL, outA ) );
+      S4_REJECT( "TA_CDL3OUTSIDE_Open(inHigh=NULL)",
+                 TA_CDL3OUTSIDE_Open( &cst, bars, NULL, bars, bars, 252, outI ) );
+      S4_REJECT( "TA_MAMA_Open(outMAMA=NULL)",
+                 TA_MAMA_Open( &mst, bars, 252, 0.5, 0.05, NULL, &v2 ) );
+      S4_REJECT( "TA_MAMA_OpenAndFill(outMAMA=NULL)",
+                 TA_MAMA_OpenAndFill( &mst, bars, 252, 0.5, 0.05, &beg, &nb, NULL, outB ) );
+
+      /* A rejected open leaves no handle behind: the prologue clears *stream
+       * before any other check, so a caller cannot be handed a pointer the
+       * call never made -- nor keep one a previous call did. */
+      sst = (TA_SMA_Stream *)(void *)bars;
+      if( TA_SMA_Open( &sst, NULL, 252, 30, &v ) != TA_BAD_PARAM || sst != NULL )
+      {
+         printf( "\nFailed: a rejected TA_SMA_Open did not clear *stream\n" );
+         return TA_BATCH_ARG_WRONG_CODE;
+      }
+      s4Reject++;
+
+      /* Controls. The nullable output is B6a's analogue: what the rejections
+       * above reject is absence, not NULL. */
+      S4_ACCEPT( "TA_SMA_Open", TA_SMA_Open( &sst, bars, 252, 30, &v ) );
+      if( sst ) { TA_SMA_Close( sst ); sst = NULL; }
+      S4_ACCEPT( "TA_SMA_OpenAndFill",
+                 TA_SMA_OpenAndFill( &sst, bars, 252, 30, &beg, &nb, outA ) );
+      if( sst ) { TA_SMA_Close( sst ); sst = NULL; }
+      S4_ACCEPT( "TA_MAMA_Open(outFAMA=NULL)",
+                 TA_MAMA_Open( &mst, bars, 252, 0.5, 0.05, &v, NULL ) );
+      if( mst ) { TA_MAMA_Close( mst ); mst = NULL; }
+      S4_ACCEPT( "TA_MAMA_OpenAndFill(outFAMA=NULL)",
+                 TA_MAMA_OpenAndFill( &mst, bars, 252, 0.5, 0.05, &beg, &nb, outA, NULL ) );
+      if( mst ) { TA_MAMA_Close( mst ); mst = NULL; }
+      S4_ACCEPT( "TA_CDL3OUTSIDE_Open",
+                 TA_CDL3OUTSIDE_Open( &cst, bars, bars, bars, bars, 252, outI ) );
+      if( cst ) { TA_CDL3OUTSIDE_Close( cst ); cst = NULL; }
+   }
+
    printf( "  Batch argument contract (B4): %d rejection(s), %d control(s)\n",
            bacReject, bacAccept );
+
+   printf( "  Streaming argument contract (S4): %d rejection(s), %d control(s)\n",
+           s4Reject, s4Accept );
 
    /* Literal floors: a count derived from the cases above would move with a
     * deleted case and still pass. */
@@ -600,6 +748,12 @@ static ErrorNumber testBatchArgumentContract( void )
    {
       printf( "\nFailed: the batch argument gate ran fewer checks than it was "
               "written with\n" );
+      return TA_BATCH_ARG_VACUOUS;
+   }
+   if( s4Reject < 12 || s4Accept < 5 )
+   {
+      printf( "\nFailed: the streaming argument gate ran fewer checks than it "
+              "was written with\n" );
       return TA_BATCH_ARG_VACUOUS;
    }
 

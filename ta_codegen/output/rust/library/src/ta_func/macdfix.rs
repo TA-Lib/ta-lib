@@ -784,7 +784,7 @@ impl Core {
     /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
     /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S8).
+    /// buffer already partly written (rule S5).
     #[doc(alias = "TA_MACDFIX_OpenAndFill")]
     pub fn MACDFIX_OpenAndFill(
         &self, inReal: &[f64], mut optInSignalPeriod: i32, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],

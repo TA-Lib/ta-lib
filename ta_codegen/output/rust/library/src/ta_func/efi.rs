@@ -725,7 +725,7 @@ impl Core {
     /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
     /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S8).
+    /// buffer already partly written (rule S5).
     #[doc(alias = "TA_EFI_OpenAndFill")]
     pub fn EFI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],

@@ -430,7 +430,7 @@ typedef enum
   TA_STREAM_FINITE_SETUP_FAILED      = 1594,
   TA_STREAM_FINITE_VACUOUS           = 1595,
 
-  /* Streaming short-history rejection (rule S6 / TA_INSUFFICIENT_HISTORY). */
+  /* Streaming short-history rejection (rule S7 / TA_INSUFFICIENT_HISTORY). */
   TA_STREAM_SHORT_HISTORY_WRONG_CODE = 1596,
   TA_STREAM_SHORT_HISTORY_ACCEPTED   = 1597,
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,

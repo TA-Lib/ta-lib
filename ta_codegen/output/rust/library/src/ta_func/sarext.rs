@@ -1281,7 +1281,7 @@ impl Core {
     /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
     /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S8).
+    /// buffer already partly written (rule S5).
     #[doc(alias = "TA_SAREXT_OpenAndFill")]
     pub fn SAREXT_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outReal: &mut [f64],

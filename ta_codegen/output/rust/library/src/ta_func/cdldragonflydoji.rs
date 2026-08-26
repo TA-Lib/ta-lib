@@ -891,7 +891,7 @@ impl Core {
     /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
     /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S8).
+    /// buffer already partly written (rule S5).
     #[doc(alias = "TA_CDLDRAGONFLYDOJI_OpenAndFill")]
     pub fn CDLDRAGONFLYDOJI_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],

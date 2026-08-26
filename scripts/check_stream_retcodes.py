@@ -17,8 +17,9 @@ and no value gate can see a return code that no test provokes. This reads the
 generated output instead, so it covers every function and every shape at once,
 and a new indicator or a new emission site is covered the day it lands.
 
-NOT included: `historyLen < 1`. An EMPTY history is rule S2, a different
-condition, and `TA_BAD_PARAM` is its specified answer.
+NOT included: `historyLen < 1`. An EMPTY history is rule S1, a different
+condition, whose specified answer is `TA_OUT_OF_RANGE_START_INDEX` -- all four
+still answer `TA_BAD_PARAM` there, which is Appendix D item 13.
 
 The count of arms inspected is printed and floored per backend, so a pattern that
 stops matching fails loudly rather than passing over nothing.
@@ -42,8 +43,9 @@ import sys
 #             what makes this a non-circular invariant rather than a restatement
 #             of whatever the emitter happens to produce.
 #
-# NOT included: `historyLen < 1`. An EMPTY history is rule S2, a different
-# condition, and TA_BAD_PARAM is its specified answer.
+# NOT included: `historyLen < 1`. An EMPTY history is rule S1, a different
+# condition, whose specified answer is TA_OUT_OF_RANGE_START_INDEX -- all four
+# still answer TA_BAD_PARAM there, which is Appendix D item 13.
 #
 # The floors are LITERAL, and per backend and per shape. A floor derived from
 # what the scan finds moves with it, and would let every arm vanish while still
@@ -119,7 +121,7 @@ def check_stream_retcodes(root_dir: str) -> bool:
                 continue
             if wrong:
                 print(f"Error: {label} {shape}: {len(wrong)} short-history arm(s) answer "
-                      f"{catch_all} instead of {expected} (rule S6):")
+                      f"{catch_all} instead of {expected} (rule S7):")
                 for w in wrong[:12]:
                     print(f"         {w}")
                 if len(wrong) > 12:
@@ -132,7 +134,7 @@ def check_stream_retcodes(root_dir: str) -> bool:
 
 def main() -> int:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    print("Short-history return code (rule S6) across all four backends:")
+    print("Short-history return code (rule S7) across all four backends:")
     return 0 if check_stream_retcodes(root) else 1
 
 

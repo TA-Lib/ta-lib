@@ -125,7 +125,7 @@ def show_help():
                         usable on a dirty working tree.
     check-stream-retcodes
                         Verify every short-history arm, in all four backends,
-                        answers TA_INSUFFICIENT_HISTORY (rule S6). Pure text;
+                        answers TA_INSUFFICIENT_HISTORY (rule S7). Pure text;
                         also run as part of regen-check.
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
@@ -479,7 +479,7 @@ def regen_check(root_dir: str) -> int:
     if not check_regtest_source_lists(root_dir):
         return 1
 
-    print("\n=== Short-history return code (rule S6) ===")
+    print("\n=== Short-history return code (rule S7) ===")
     if not check_stream_retcodes(root_dir):
         return 1
 

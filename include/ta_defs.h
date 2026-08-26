@@ -150,7 +150,7 @@ typedef enum {
      * RECOVERABLE condition -- send more bars, rather than fix your code.
      * Produced by the streaming Open/OpenAndFill entry points only; the
      * batch tier answers a range shorter than its lookback with TA_SUCCESS
-     * and a zero count. See docs/error-handling-spec.md, rule S6.
+     * and a zero count. See docs/error-handling-spec.md, rule S7.
      */
     TA_INSUFFICIENT_HISTORY      = 17,
     TA_INTERNAL_ERROR            = 5000,

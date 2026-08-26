@@ -1387,7 +1387,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             }
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_Open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle. Output slices must hold\n    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier\n    /// this one does not check it: an undersized slice panics inside the fill, with the\n    /// buffer already partly written (rule S8)."
+                "    /// [`Core::{sn}_Open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle. Output slices must hold\n    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier\n    /// this one does not check it: an undersized slice panics inside the fill, with the\n    /// buffer already partly written (rule S5)."
             );
             let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_OpenAndFill\")]");
             let opts_head = sig_opts.trim_start_matches(", ");
