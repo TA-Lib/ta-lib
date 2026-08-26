@@ -946,6 +946,93 @@ fn rust_public_entry_orders_the_argument_contract() {
     assert!(outputs_checked >= 190, "only {outputs_checked} output bounds found");
 }
 
+/// Rust's metadata tier calls the PUBLIC entry point, so every rule the batch
+/// contract states holds through the binder too (#265).
+///
+/// It called `<N>_Impl` and re-implemented one bound of its own —
+/// `end_idx - start_idx + 1`, the width of the requested range where B5 says the
+/// count actually produced — and checked no input length at all, so a leg
+/// shorter than the range reached the numerics and tripped their `assert!`: a
+/// panic out of a `Result`-typed method. C's frames and Java's `Dispatch` have
+/// always called the public tier; this is what made Rust's binder agree.
+///
+/// Structural, and it has to be: the runtime pin is `binder_tests` inside the
+/// generated crate, which only `cargo test --tests -p ta-lib` executes — a
+/// nightly step. This runs on the PR gate.
+#[test]
+fn rust_binder_calls_the_public_tier() {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let funcs: Vec<ir::FuncDef> = discover_indicators()
+        .iter()
+        .map(|n| parser::yaml::parse_yaml(&base.join(format!("{n}/{n}.yaml"))))
+        .collect();
+    let out = backends::rust_abstract::render(&funcs, &enums);
+
+    let mut called = 0usize;
+    let mut guarded = 0usize;
+    for f in &funcs {
+        let n = &f.name;
+        assert!(
+            out.contains(&format!("let res = self.core.{n}(")),
+            "{n}: the binder arm does not call the public entry point"
+        );
+        assert!(
+            !out.contains(&format!("self.core.{n}_Impl(")),
+            "{n}: the binder arm still calls the numerics tier — the argument \
+             contract stops applying to it"
+        );
+        called += 1;
+    }
+    // Multi-output arms take their buffers one at a time, so presence has to be
+    // settled before the first take or a rejection leaves the holder with the
+    // earlier ones missing and every later call answers BadParam. Reconstructed
+    // from the row model, so the needle names the arm's own slots.
+    for r in all_abstract_rows() {
+        if r.outputs.len() < 2 {
+            continue;
+        }
+        let slots: Vec<String> = r
+            .outputs
+            .iter()
+            .enumerate()
+            .map(|(k, o)| {
+                let arr = match o.kind {
+                    ta_codegen_lib::backends::abstract_rows::OutputKind::Integer => "int_out",
+                    ta_codegen_lib::backends::abstract_rows::OutputKind::Real => "real_out",
+                };
+                format!("self.{arr}[{k}].is_none()")
+            })
+            .collect();
+        // The guard, then the first take, with nothing between them: emitted as
+        // one block, so this pins the ORDER and not merely the presence of both.
+        let arr0 = match r.outputs[0].kind {
+            ta_codegen_lib::backends::abstract_rows::OutputKind::Integer => "int_out",
+            ta_codegen_lib::backends::abstract_rows::OutputKind::Real => "real_out",
+        };
+        let needle = format!(
+            "if {} {{ return Err(RetCode::BadParam); }}\n                let mut o0 = self.{arr0}[0].take()",
+            slots.join(" || ")
+        );
+        assert!(
+            out.contains(&needle),
+            "{}: no presence guard immediately ahead of the first take — expected `{needle}`",
+            r.name
+        );
+        guarded += 1;
+    }
+    // The bound this tier stopped stating for itself must be gone, not merely
+    // unreachable: `need` was the requested width and rejected a caller who had
+    // sized by the published formula.
+    assert!(
+        !out.contains("let need = end_idx - start_idx + 1;") && !out.contains(".len() < need"),
+        "the binder's own output bound is back; there must be exactly one, and it \
+         is the public tier's"
+    );
+    assert!(called >= 170, "only {called} binder arms scanned");
+    assert!(guarded >= 12, "only {guarded} multi-output arms carried a presence guard");
+}
+
 #[test]
 fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
