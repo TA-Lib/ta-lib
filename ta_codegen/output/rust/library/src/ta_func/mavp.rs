@@ -109,7 +109,8 @@ impl Core {
         return Ok(self.MA_Lookback(optInMaxPeriod, optInMAType)?);
     }
     /// C-shaped body behind [`Core::MAVP`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn MAVP_Impl(
         &self,
         startIdx: usize,
@@ -308,7 +309,10 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            retCode = self.MA_Impl(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            let _xr0 = match self.MA(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localFinalArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+            localBegIdx = _xr0.beg_idx;
+            localNbElement = _xr0.count;
+            retCode = RetCode::Success;
             if retCode != RetCode::Success {
                 if finalIsAllocated != 0 {
                 }
@@ -365,7 +369,10 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    retCode = self.MA_Impl(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    let _xr1 = match self.MA(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+                    localBegIdx = _xr1.beg_idx;
+                    localNbElement = _xr1.count;
+                    retCode = RetCode::Success;
                     if retCode != RetCode::Success {
                         if finalIsAllocated != 0 {
                         }

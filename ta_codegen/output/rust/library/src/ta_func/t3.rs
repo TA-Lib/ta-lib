@@ -104,7 +104,8 @@ impl Core {
         return Ok((6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize);
     }
     /// C-shaped body behind [`Core::T3`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn T3_Impl(
         &self,
         startIdx: usize,

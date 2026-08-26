@@ -290,19 +290,24 @@ is concrete-`f64` only.
 |---------|---------|
 | `pub fn <N>_Lookback(...) -> usize` | Lookback (first valid output index) |
 | `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API, and the tier that owns the argument contract (#265): B1/B2, then B3 via `<N>_Lookback(..)?`, then every input and output length-checked, before it calls `<N>_Impl` and turns `Success` into `Ok(OutRange { beg_idx, count })`. Same two-tier shape Java (`<N>_Impl` + `OutRange`) and C# (`internal RetCode <N>_Impl` + `public OutRange <N>`) already ship |
-| `pub(crate) fn <N>_Impl(...) -> RetCode` | The body: validates params and the index range, pre-computes optimization values, delegates. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits |
+| `pub(crate) fn <N>_Impl(...) -> RetCode` | The body: validates params and the index range, pre-computes optimization values, delegates. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits. Not a cross-call target since #267 |
 | `fn <N>_Private(...)` | Only where the definition declares one. Extra pre-computed params, no validation prologue — its only caller is the `_Impl` body above it. No shipped indicator declares one; the construct is carried by the `SYNTH4` gate fixture (`input_synth/README.md`) |
 
-Cross-indicator calls target **`<N>_Impl`**, never the public wrapper: 19 of the
-33 call sites hand the callee their own `&mut outBegIdx` / `&mut outNBElement`
-and read them back, and four fold "success with zero output" into the same
-conditional as the error, which `?` cannot express. **Rust alone** — since #236
-step 3 Java and C# route a cross-call to the callee's *public* tier, which is
-what C has always done. `<N>_Impl` carries the bounds-assert preamble; that
-preamble takes an empty-range escape so a call computing nothing cannot panic.
-The **public** wrapper states the same bounds as a returned `BadParam` and
-without that escape on the input side (#265), so it is the cross-call path alone
-that meets the assert.
+Cross-indicator calls target the **public** wrapper, as in C, Java and C# (#267).
+`?` is unavailable — the caller is `<N>_Impl`, which returns a bare `RetCode`, or
+a `Result`-returning `<N>_OpenImpl` at three of the sites —
+so `render_cross_indicator_call` drops the two out-meta arguments, binds the
+returned range to a `_xrN` local with a `match`, assigns both out-params from it,
+and then sets `retCode = RetCode::Success`. That last line is what keeps the
+transcription literal: 22 of the 36 sites hand the callee the caller's own
+`&mut outBegIdx` / `&mut outNBElement` and read them back, and 6 fold "success
+with zero output" into the same conditional as the error — a half that is still
+live once the error half is dead.
+
+`<N>_Impl` still carries the bounds-assert preamble, and it still takes an
+empty-range escape so a call computing nothing cannot panic. What changed is who
+meets it: only `pub fn <N>` and the phantom-I/O sweep now, so the preamble is the
+LLVM proof and the sweep's target rather than the cross-call path's guard.
 
 `rust_doc::guarded_docs` is the rustdoc for the **public** wrapper, so its
 `# Arguments` list must match that signature — not the `_Impl` one.

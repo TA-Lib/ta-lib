@@ -97,7 +97,8 @@ impl Core {
         }
     }
     /// C-shaped body behind [`Core::ADXR`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn ADXR_Impl(
         &self,
         startIdx: usize,
@@ -160,7 +161,10 @@ impl Core {
         adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-        retCode = self.ADX_Impl((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        let _xr0 = match self.ADX((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, &mut adx[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr0.beg_idx;
+        (*outNBElement) = _xr0.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return retCode;
         }

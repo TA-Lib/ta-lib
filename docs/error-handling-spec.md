@@ -194,17 +194,19 @@ has what happens instead.
 [5] **Two tiers state this bound, and only one of them is the contract.**
 `pub fn <N>` returns `RetCode::BadParam`, exactly as Java and C# throw
 (#265). `<N>_Impl` also asserts it, which is what lets LLVM elide the per-access
-bounds checks and what the in-crate cross-indicator calls meet; that assert takes
-an escape on a sub-lookback range, where a re-based EMA chaining through
-MA/MACDEXT/TEMA/DEMA/T3 legitimately passes exactly sized buffers. The public
-bound takes no escape on the input side, so it is strictly the stronger of the
-two and a `pub fn` call cannot reach an assert that would reject it. Until #265
-the assert was all there was, and its escape was the contract — the input bound
-went unchecked on a sub-lookback range in Rust as it does in C, presence half
+bounds checks; that assert takes an escape on a sub-lookback range, so a call the
+lookback clamp leaves nothing to compute cannot panic. The public bound takes no
+escape on the input side, so it is strictly the stronger of the two and a
+`pub fn` call cannot reach an assert that would reject it. Until #265 the assert
+was all there was, and its escape was the contract — the input bound went
+unchecked on a sub-lookback range in Rust as it does in C, presence half
 included. What kept it that way was a test's reach: `no_phantom_io` was an
 integration test, so it could only hand zero-length slices to `pub fn`. It is an
 in-crate module naming `<N>_Impl` now, and the escape it needs is the assert's,
-which it still has.
+which it still has. Since #267 that sweep is the only thing besides `pub fn <N>`
+that reaches the assert at all: a cross-indicator call enters the callee's public
+tier, which states the same bound as a code — the re-based chaining through
+MA/MACDEXT/TEMA/DEMA/T3 clears it, as the identical Java call sites already did.
 
 [6] **The condition cannot be written**: two `&mut [f64]` cannot alias, so the
 borrow checker rejects it at compile time. The `as_ptr()` guard behind the public
@@ -569,8 +571,10 @@ Batch tier: `TA_<NAME>: ` in C#, `<NAME>: ` in Java. Streaming tier:
 cross-language contract.
 
 **`<NAME>` may be an inner function.** A composed function calls its callee's
-public entry point, so a rejection the callee detects carries the *callee's*
-name: a caller of `MACDEXT` can see `MA: bad parameter`. Accepted rather than
+public entry point — in every backend since #267 — so a rejection the callee
+detects carries the *callee's* name: a caller of `MACDEXT` can see
+`MA: bad parameter`. (Rust's rejection is a bare `Err(RetCode)` and carries no
+name at all, so the attribution question is Java's and C#'s alone.) Accepted rather than
 worked around — a sub-function failure naming the sub-function is
 understandable, and restoring the outer name would mean catching and rethrowing
 at every cross-call, which is the machinery calling the public tier exists to
@@ -661,9 +665,9 @@ Named so their absence is deliberate rather than an oversight.
 ## Appendix D — Open items
 
 Every ❌ above, collected, plus the message-level deviations that sit
-alongside a passing rule (item 7), plus two that no rule row can carry: a
-divergence on a call every rule says is legal (item 11, now fixed), and coverage
-a gate lost rather than a behaviour a backend got wrong (item 12). Each is
+alongside a passing rule (item 7), plus two that no rule row can carry, both now
+fixed: a divergence on a call every rule says is legal (item 11), and coverage a
+gate lost rather than a behaviour a backend got wrong (item 12). Each is
 measured, not inferred.
 
 | # | Backend | Rule | Defect |
@@ -679,7 +683,7 @@ measured, not inferred.
 | 9 | Rust, Java, C# | S8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. The guard now excludes empty operands in both tiers (#262), so Rust faults here like the rest. One fewer answer to a call this item already says nobody validates; the item itself is unchanged. |
 | ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
 | ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
-| 12 | Java, C# | B5 | **MA** is **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answers `TA_BAD_PARAM` before any array is reached, so the probe cannot tell "read nothing" from "never ran". The public API is unaffected — reached through the caller's own wrapper the callee's check is provably redundant, same `endIdx`, same array. **Was ten functions**; nine are resolved. Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` cannot: it is a dispatch function, and the generator admits only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on — so a guard there is a generator change, not an edit to `ma.c`. The one remaining route is giving the input bound the sub-lookback escape the output bound has, converging with C and Rust and giving up the stricter reading B5 adopted. The list is explicit and its size asserted in both suites, so the debt cannot grow silently. |
+| ~~12~~ | Java, C#, Rust | B5 | *Fixed.* **MA** was **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answered `TA_BAD_PARAM` before any array was reached, so the probe could not tell "read nothing" from "never ran". **Was ten functions.** Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` could not: it is a dispatch function, and the generator admitted only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on. **#267 made that generator change**: `analyze_dispatch` admits a leading `<f>_lookback(..) > endIdx` guard and skips it, `DispatchPlan` is untouched, and the four stream tiers are byte-identical across it — on a stream the condition the guard states is the `InsufficientHistory` rejection Open already makes. `ma.c` carries the guard, all three suites now probe 145 / 31 / 176, and `CROSS_CALL_GUARDED` / `CrossCallGuarded` are **deleted, not emptied**, along with their size assertions; what replaces them is exact equality of the live set against the discovered corpus. Rust joined the same routing in #267 part 2 without joining the debt. The input bound keeps its stricter reading. |
 
 Item 9 is the one that still changes what a *correct* caller can do: it turns a
 sizing mistake into a partly-written buffer. (Item 8 was the other; a caller can

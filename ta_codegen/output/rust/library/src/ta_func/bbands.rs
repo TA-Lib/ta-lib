@@ -141,7 +141,8 @@ impl Core {
         return Ok(((if maLookback > stddevLookback { maLookback } else { stddevLookback })) as usize);
     }
     /// C-shaped body behind [`Core::BBANDS`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn BBANDS_Impl(
         &self,
         startIdx: usize,
@@ -422,7 +423,10 @@ impl Core {
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Calculate the middle band moving average.
-        retCode = self.MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        let _xr0 = match self.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, &mut tempBuffer1[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr0.beg_idx;
+        (*outNBElement) = _xr0.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return retCode;
@@ -430,7 +434,10 @@ impl Core {
         // Remember where the moving average begins, to realign it below.
         maBegIdx = ((*outBegIdx) as usize) as usize;
         // Calculate the Standard Deviation into tempBuffer2.
-        retCode = self.STDDEV_Impl(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        let _xr1 = match self.STDDEV(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, &mut tempBuffer2[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr1.beg_idx;
+        (*outNBElement) = _xr1.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return retCode;

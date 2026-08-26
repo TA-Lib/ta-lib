@@ -82,7 +82,8 @@ impl Core {
         return Ok(((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 2) as usize);
     }
     /// C-shaped body behind [`Core::CDLUPSIDEGAP2CROWS`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn CDLUPSIDEGAP2CROWS_Impl(
         &self,
         startIdx: usize,

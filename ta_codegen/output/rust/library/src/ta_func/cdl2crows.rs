@@ -76,7 +76,8 @@ impl Core {
         return Ok((BodyLong_avgPeriod + 2) as usize);
     }
     /// C-shaped body behind [`Core::CDL2CROWS`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn CDL2CROWS_Impl(
         &self,
         startIdx: usize,

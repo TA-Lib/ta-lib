@@ -1261,6 +1261,94 @@ fn identity_memmove_pair(
     }
 }
 
+/// Recognize a top-level "nothing to produce" guard: `<f>_lookback(<f's own
+/// params>) > endIdx` whose whole body is `*outBegIdx = 0; *outNBElement = 0;
+/// return SUCCESS;`. Returns the index of that `If` in `body`.
+///
+/// A dispatch body may carry one ahead of its switch (#267) — `ma` does, so that
+/// a range shorter than its lookback is answered in its own frame rather than
+/// forwarded to a callee's public entry point, which owns the argument contract
+/// and answers on the input bound before the clamp that would have declined.
+///
+/// It is admitted, not carried: [`DispatchPlan`] holds no prologue, and the four
+/// streaming emitters synthesize Open from the plan rather than transcribing the
+/// batch body. On a stream the condition this states is exactly the
+/// `InsufficientHistory` rejection Open already makes — the identity path tests
+/// `historyLen < lookback + 1` itself, and every other arm inherits the same test
+/// from its sub-open. So the guard is skipped here exactly as the identity path
+/// is, and the stream tier is byte-identical across this change.
+///
+/// **That equivalence is the reason the shape is checked this narrowly.** It
+/// holds because the guard states the function's OWN lookback — a foreign one
+/// (`t3_lookback(..)` in `ma`) would be transcribed into every batch tier while
+/// the four Open tiers, built from the plan, never saw it, and no gate compares
+/// the two. So the callee must be `<name>_lookback` and its arguments must be
+/// this function's optional inputs, in signature order; anything else is left for
+/// the structural scan to reject as an unrecognized top-level statement.
+///
+/// Deliberately NOT `check_return_paths`'s `is_no_data_guard`, which requires an
+/// `Expr::Var` left operand (`startIdx > endIdx`): widening that to a `FuncCall`
+/// would change the loop tier's Open mapping for the six shipped functions that
+/// carry exactly this shape (`apo`, `bbands`, `ma`, `ppo`, `pvo`, `stddev` — all
+/// of which reach `check_return_paths`, since `derive_stream_plan` tries the loop
+/// tier first for everything), and nothing would catch it.
+fn detect_empty_range_guard(func: &FuncDef, body: &[Statement]) -> Option<usize> {
+    fn is_zero(e: &Expr) -> bool {
+        matches!(e, Expr::IntLiteral(0)) || matches!(e, Expr::Literal(v) if *v == 0.0)
+    }
+    fn writes_zero(s: &Statement, name: &str) -> bool {
+        matches!(
+            s,
+            Statement::Assign { target: Expr::PointerDeref(p), value, compound: false }
+                if p == name && is_zero(value)
+        )
+    }
+    // Two authored spellings name the same lookback — the prefix-free
+    // `ma_lookback`, and the legacy `TA_MA_Lookback` whose `TA_` the parser
+    // strips. `FuncDef::name` is the declared name (`MA`), so build both:
+    // matching only one would reject the other with the scan's generic
+    // "unrecognized top-level statement", which names the wrong cause.
+    let own = [
+        format!("{}_lookback", func.name.to_lowercase()),
+        format!("{}_Lookback", func.name),
+    ];
+    let params: Vec<&str> = func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
+    let is_own_lookback = |cond: &Expr| -> bool {
+        let (call, end) = match cond {
+            Expr::BinOp(l, BinOp::Greater, r) => (l.as_ref(), r.as_ref()),
+            Expr::BinOp(l, BinOp::Less, r) => (r.as_ref(), l.as_ref()),
+            _ => return false,
+        };
+        if !matches!(end, Expr::Var(v) if v == "endIdx") {
+            return false;
+        }
+        matches!(call, Expr::FuncCall(n, a)
+            if own.contains(n)
+                && a.len() == params.len()
+                && a.iter().zip(&params).all(|(x, p)| matches!(x, Expr::Var(v) if v == p)))
+    };
+    body.iter().position(|s| {
+        let Statement::If { condition, then_body, else_body, .. } = s else {
+            return false;
+        };
+        if !else_body.is_empty() || !is_own_lookback(condition) {
+            return false;
+        }
+        let code: Vec<&Statement> = then_body
+            .iter()
+            .filter(|x| !matches!(x, Statement::Comment(_)))
+            .collect();
+        code.len() == 3
+            && writes_zero(code[0], "outBegIdx")
+            && writes_zero(code[1], "outNBElement")
+            && matches!(
+                code[2],
+                Statement::Return { value: Some(Expr::Var(v)) }
+                    if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS")
+            )
+    })
+}
+
 fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<bool, StreamError> {
     fn is_no_data_guard(cond: &Expr) -> bool {
         // `startIdx > endIdx`, or the post-clamp cursor form `<var> > endIdx`
@@ -1918,9 +2006,10 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     })
 }
 
-/// Recognize a dispatch body: optional identity path, then a single switch
-/// over an enum optional param whose arms delegate the whole range to other
-/// indicator functions, then `return <retcode-var>`.
+/// Recognize a dispatch body: an optional leading "nothing to produce" guard,
+/// an optional identity path, then a single switch over an enum optional param
+/// whose arms delegate the whole range to other indicator functions, then
+/// `return <retcode-var>`.
 ///
 /// Strictness contract: an arm whose callee is stream-flagged MUST match the
 /// strict whole-range delegation shape — a mismatch is a hard error, never a
@@ -1936,6 +2025,7 @@ pub fn analyze_dispatch<'a>(
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let (identity, identity_idx) = detect_identity_path(body, &bar_inputs, &outputs, &params);
+    let guard_idx = detect_empty_range_guard(func, body);
 
     // A body without a top-level switch is not dispatch-shaped AT ALL:
     // report NoSteadyLoop so validate_streamable surfaces the loop-tier
@@ -1948,12 +2038,12 @@ pub fn analyze_dispatch<'a>(
         return Err(StreamError::NoSteadyLoop);
     }
 
-    // Structural scan of the top level: decls/comments, the identity path,
-    // exactly one switch, and a final `return <var>`.
+    // Structural scan of the top level: decls/comments, the empty-range guard,
+    // the identity path, exactly one switch, and a final `return <var>`.
     let mut switch_idx: Option<usize> = None;
     let mut ret_var: Option<&str> = None;
     for (i, s) in body.iter().enumerate() {
-        if Some(i) == identity_idx {
+        if Some(i) == identity_idx || Some(i) == guard_idx {
             continue;
         }
         let is_last = i == body.len() - 1;
@@ -1986,6 +2076,19 @@ pub fn analyze_dispatch<'a>(
     else {
         return Err(StreamError::NoSteadyLoop);
     };
+    // LEADING, not merely present: the whole point of the guard is that the
+    // switch never forwards on a range shorter than the lookback. Behind the
+    // switch it would answer 0,0 with the same values and only the nightly
+    // phantom-I/O sweep could tell, so it is rejected here instead.
+    if let (Some(g), Some(sw)) = (guard_idx, switch_idx) {
+        if g > sw {
+            return Err(StreamError::Unsupported(
+                "dispatch body's \"nothing to produce\" guard sits after the switch; \
+                 it must lead, or the switch forwards on a range that produces nothing"
+                    .into(),
+            ));
+        }
+    }
     let ret_var = ret_var.ok_or_else(|| {
         StreamError::Unsupported("dispatch body does not end in `return <retcode>`".into())
     })?;

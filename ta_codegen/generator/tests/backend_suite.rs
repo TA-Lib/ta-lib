@@ -471,21 +471,23 @@ fn test_ma_rust_cross_calls() {
         r.contains("self.EMA_Lookback("),
         "Rust: MA should call self.EMA_Lookback"
     );
-    // Bare cross-indicator calls go to the guarded, C-shaped entry point --
-    // never the public `Result`-returning wrapper, whose OutRange the
-    // transcribed body has nowhere to put. `self.` makes these calls rather
-    // than definitions, so the negatives below are real.
+    // Bare cross-indicator calls resolve to the callee's PUBLIC entry point
+    // (#267), as they do in C, Java and C#: the returned OutRange is bound to a
+    // `_xrN` local and both out-params are assigned from it. `match self.SMA(`
+    // anchors the call site so the dispatch arms cannot substring-shadow one
+    // another, and `self.` makes these calls rather than definitions, so the
+    // negatives below are real.
     assert!(
-        r.contains("self.SMA_Impl("),
-        "Rust: MA should call self.SMA_Impl"
+        r.contains("match self.SMA("),
+        "Rust: MA should call the public self.SMA"
     );
     assert!(
-        r.contains("self.EMA_Impl("),
-        "Rust: MA should call self.EMA_Impl"
+        r.contains("match self.EMA("),
+        "Rust: MA should call the public self.EMA"
     );
     assert!(
-        !r.contains("self.SMA(") && !r.contains("self.EMA("),
-        "Rust: MA must not call the public Result-returning wrappers"
+        !r.contains("self.SMA_Impl(") && !r.contains("self.EMA_Impl("),
+        "Rust: MA must not call a callee's C-shaped tier"
     );
     assert!(
         !r.contains("self.sma_unguarded(") && !r.contains("self.ema_unguarded("),
@@ -747,8 +749,9 @@ fn rust_alias_guard(func: &ir::FuncDef) -> String {
 /// B5 as a returned code ahead of both of these
 /// ([`rust_public_entry_orders_the_argument_contract`]), so a caller of the
 /// crate meets one code for either fault and cannot see the order at all. What
-/// this pins is the in-crate cross-call path, which reaches `_Impl` directly and
-/// where the distinction is still a panic against a return.
+/// this pins is `_Impl` as the phantom-I/O sweep reaches it — since #267 the
+/// only in-crate caller that does — where the distinction is still a panic
+/// against a return.
 ///
 /// Structural, and it has to be: two `&mut [f64]` cannot alias, so safe code
 /// cannot build the multi-fault call this pins.
@@ -1128,6 +1131,116 @@ fn metadata_price_setter_validates_before_writing() {
     let j_check = j_sec.find("throw new IllegalArgumentException(").expect("java: no validation");
     let j_write = j_sec.find("priceInputs[idx] = c;").expect("java: no commit");
     assert!(j_check < j_write, "java: the bundle is committed before validation");
+}
+
+/// Rust's transcribed bodies call their callee's PUBLIC entry point, as C, Java
+/// and C# do (#267).
+///
+/// They called `<N>_Impl`, which made Rust the one backend where a composed path
+/// did not meet the argument contract the public tier has owned since #265: the
+/// same undersized buffer was a `RetCode` through `pub fn` and a panic through a
+/// sibling. C cannot go the other way — a cross-call is cross-TU there, so a C
+/// `_Impl` could not be `static` and would be new ABI in the shipped `.so`.
+///
+/// Structural, and it has to be: the runtime pin is `no_phantom_io` inside the
+/// generated crate, which only `cargo test --tests -p ta-lib` executes — a
+/// nightly step. This runs on the PR gate.
+///
+/// Derived from the IR, not from a hand list: the callee names come from walking
+/// each body for a call whose arity matches the callee's full TA signature, so a
+/// new composed indicator is pinned the day it lands. Both directions per callee,
+/// so a half-applied change — one site the emitter moved and one it did not —
+/// fails rather than passing on the half that moved.
+///
+/// BOTH tiers, because `rust_lang::generate` emits only the batch one: SAR,
+/// SAREXT and STOCH cross-call from their streaming `<N>_OpenImpl` as well, and
+/// those three sites have no other structural cover — their only runtime cover is
+/// a `stream_verify` leg, which a PR run reaches none of.
+#[test]
+fn rust_cross_calls_target_the_public_tier() {
+    use ta_codegen_lib::streaming::CalleeLookup;
+
+    /// Every cross-indicator INVOCATION in `stmts`, in first-seen order. Arity is
+    /// what separates a scalar builtin from the same-named indicator: `sqrt(x)`
+    /// is libm's, `sqrt(startIdx, endIdx, in, &beg, &nb, out)` is TA_SQRT.
+    fn callees(stmts: &[ir::Statement], reg: &Registry, into: &mut Vec<String>) {
+        for st in stmts {
+            ta_codegen_lib::streaming::walk_stmt_exprs(st, &mut |top| {
+                ta_codegen_lib::streaming::walk_expr(top, &mut |e| {
+                    if let ir::Expr::FuncCall(name, args) = e {
+                        if let Some(sig) = reg.callee(name) {
+                            let arity = 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs;
+                            if args.len() == arity && !into.contains(name) {
+                                into.push(name.clone());
+                            }
+                        }
+                    }
+                });
+            });
+        }
+    }
+
+    let registry = make_registry();
+    let mut callers = 0usize;
+    let mut sites = 0usize;
+    let mut scanned = 0usize;
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let mut found: Vec<String> = Vec::new();
+        callees(&func.body, &registry, &mut found);
+        callees(func.stream_source(), &registry, &mut found);
+        found.retain(|c| *c != name);
+        scanned += 1;
+        if found.is_empty() {
+            continue;
+        }
+        let mut rust = generate_all(&func, &enums).rust;
+        if func.streaming && backends::rust_stream::emits_stream(&func, &registry) {
+            rust.push_str(&backends::rust_stream::generate(
+                &func, &enums, &registry, &HelperRegistry::empty(),
+            ));
+        }
+        callers += 1;
+        for c in &found {
+            let public = registry.resolve_call(c, Lang::Rust);
+            assert!(
+                rust.contains(&format!("self.{public}(")),
+                "{name}: the cross-call to {public} does not name the public tier"
+            );
+            assert!(
+                !rust.contains(&format!("self.{public}_Impl(")),
+                "{name}: still calls {public}_Impl — the argument contract stops \
+                 applying to that path"
+            );
+        }
+        // The binding shape, counted once per site rather than per callee: an
+        // aliased call (STOCH's in-place `ma`) hides the callee name inside the
+        // `mem::swap` block, so a per-callee needle for `match self.NAME(` would
+        // be satisfied by a sibling site and go quiet on that one.
+        assert!(
+            rust.contains("let _xr"),
+            "{name}: cross-calls, but no OutRange binding — the out-params are \
+             still being passed"
+        );
+        sites += rust.matches("let _xr").count();
+    }
+
+    // The `&mut _dup_out` dummy existed only to give SAR/SAREXT a second mutable
+    // borrow of the scalar they passed as BOTH out-params. The public tier takes
+    // neither, so it must be gone, not merely unreachable.
+    let (sar, sar_enums) = load_indicator("sar");
+    assert!(
+        !generate_all(&sar, &sar_enums).rust.contains("_dup_out"),
+        "the duplicate-out-param dummy is back; the public tier takes no out-params"
+    );
+
+    // Literal floors: derived ones move with whatever the scan happens to find,
+    // and they are what makes this non-vacuous — `scanned` is incremented once
+    // per corpus entry and could only disagree with the corpus by panicking
+    // first, so it is these two that prove the sweep found anything at all.
+    assert!(scanned >= 176, "only {scanned} indicators in the corpus");
+    assert!(callers >= 14, "only {callers} composed indicators scanned");
+    assert!(sites >= 39, "only {sites} cross-call sites scanned");
 }
 
 #[test]
@@ -4308,14 +4421,18 @@ fn rust_cross_indicator_call_via_generate() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    // Cross-indicator calls resolve to the guarded, C-shaped entry point
+    // Cross-indicator calls resolve to the callee's PUBLIC entry point (#267)
     assert!(
-        rust_out.contains("self.SMA_Impl("),
-        "MA Rust should call self.SMA_Impl(): {rust_out}"
+        rust_out.contains("match self.SMA("),
+        "MA Rust should call the public self.SMA(): {rust_out}"
     );
     assert!(
-        rust_out.contains("self.EMA_Impl("),
-        "MA Rust should call self.EMA_Impl(): {rust_out}"
+        rust_out.contains("match self.EMA("),
+        "MA Rust should call the public self.EMA(): {rust_out}"
+    );
+    assert!(
+        !rust_out.contains("self.SMA_Impl(") && !rust_out.contains("self.EMA_Impl("),
+        "MA Rust must not call a callee's numerics tier: {rust_out}"
     );
     // `self.` makes this a call, not a definition, so the negative is real.
     // step 1 still emits — so the negative is real, not vacuous.
@@ -4366,8 +4483,8 @@ fn rust_private_cross_indicator_call() {
     let (func, enums) = load_indicator("ma");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("self.EMA_Impl("),
-        "MA Rust dispatch should call self.EMA_Impl(): {rust_out}"
+        rust_out.contains("match self.EMA("),
+        "MA Rust dispatch should call the public self.EMA(): {rust_out}"
     );
 
     let synth_registry = make_synth_registry();
@@ -4457,7 +4574,7 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     assert!(
-        rust_out.contains("self.MA_Impl(") && rust_out.contains("&tempBuffer"),
+        rust_out.contains("self.MA(") && rust_out.contains("&tempBuffer"),
         "STOCH Rust should pass &tempBuffer into self.MA(): {rust_out}"
     );
 }
@@ -8134,7 +8251,7 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
     let (ma, ma_enums) = load_indicator("ma");
     for (lang, out, want) in [
         ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
-         "outBegIdx, outNBElement, outReal, None)"),
+         "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None)"),
         ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
          "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null)"),
         ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
@@ -11626,7 +11743,8 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 /// per backend — a NULL test in C, `requireLength` / `RequireLength` in Java and
 /// C#, and **two** in Rust: the public tier's returned `BadParam`, which is what
 /// a caller meets, and the `assert!` bound in `<N>_Impl`, which is what the
-/// in-crate cross-call path meets and what LLVM reads (#265).
+/// phantom-I/O sweep meets and what LLVM reads (#265; a cross-call meets the
+/// public one too since #267).
 ///
 /// Part two is what keeps part one honest. A sweep over every declared input
 /// passes trivially once no input is ever dropped, so it cannot tell you the
@@ -11676,7 +11794,7 @@ fn every_declared_input_is_checked_in_every_backend() {
                 // The public tier's own bound, which is what a caller of the
                 // crate actually meets (#265). Two needles for Rust, not one:
                 // the assert above states the same thing to LLVM and stays in
-                // `<N>_Impl` for the in-crate cross-call path, so it would go on
+                // `<N>_Impl` for the phantom-I/O sweep, so it would go on
                 // satisfying this test after the caller-facing check was gone.
                 ("rust-pub", &out.rust, format!("if {n}.len() < endIdx + 1 {{"), 1),
                 (

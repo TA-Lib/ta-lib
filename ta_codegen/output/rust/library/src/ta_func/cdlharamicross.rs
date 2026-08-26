@@ -84,7 +84,8 @@ impl Core {
         return Ok(((BodyDoji_avgPeriod).max(BodyLong_avgPeriod) + 1) as usize);
     }
     /// C-shaped body behind [`Core::CDLHARAMICROSS`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn CDLHARAMICROSS_Impl(
         &self,
         startIdx: usize,

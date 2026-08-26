@@ -96,7 +96,8 @@ impl Core {
         return Ok((1) as usize);
     }
     /// C-shaped body behind [`Core::SAR`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn SAR_Impl(
         &self,
         startIdx: usize,
@@ -242,8 +243,10 @@ impl Core {
         // Identify if the initial direction is long or short.
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
-        let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM_Impl(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        let _xr0 = match self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut ep_temp) { Ok(_r) => _r, Err(_e) => return _e };
+        tempInt = _xr0.beg_idx;
+        tempInt = _xr0.count;
+        retCode = RetCode::Success;
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -794,8 +797,10 @@ impl Core {
         // Identify if the initial direction is long or short.
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
-        let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM_Impl(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        let _xr0 = match self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut ep_temp) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        tempInt = _xr0.beg_idx;
+        tempInt = _xr0.count;
+        retCode = RetCode::Success;
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {

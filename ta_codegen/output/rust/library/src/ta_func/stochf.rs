@@ -114,7 +114,8 @@ impl Core {
         return Ok(retValue);
     }
     /// C-shaped body behind [`Core::STOCHF`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn STOCHF_Impl(
         &self,
         startIdx: usize,
@@ -317,7 +318,10 @@ impl Core {
         }
         // Fast-K calculation completed. This K calculation is returned
         // to the caller. It is smoothed to become Fast-D.
-        retCode = self.MA_Impl(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
+        let _xr0 = match self.MA(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr0.beg_idx;
+        (*outNBElement) = _xr0.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }

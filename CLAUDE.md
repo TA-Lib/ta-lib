@@ -97,14 +97,12 @@ hand-roll a body per entry point — theirs differ by which callee tier they cal
 and by an anchor clamp, not by a stride — so their `_OpenImpl` takes no
 `outStride`, which is the discriminator the gates key on rather than a name list.
 
-A cross-call inside a body calls the callee's *public* tier — in C, Java and C#;
-Rust is the exception, see the Rust Backend section — and lets its
-rejection throw, so the callers that need a code back convert it themselves:
-the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. `TryInvoke`'s
-conversion is now the *direct* path's too — since #265 its thunk calls the
-function's own public overload, like C's frames and Java's `Dispatch` — so it no
-longer goes dead if the #236 step 3 debt is ever paid down; what still moves with
-that debt is `MA`'s withholding from `NoPhantomIoTest`'s sweep.
+A cross-call inside a body calls the callee's *public* tier — in all four
+backends since #267 — and lets its rejection surface: a throw in Java and C#, an
+`Err(RetCode)` in Rust, a returned code in C. The callers that need a code back
+convert it themselves: the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`.
+`TryInvoke`'s conversion is now the *direct* path's too — since #265 its thunk
+calls the function's own public overload, like C's frames and Java's `Dispatch`.
 
 **Every metadata tier calls the public tier.** C (`ta_frame.c`), Java
 (`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk) and Rust
@@ -233,15 +231,16 @@ Indicators are methods on a `Core` struct, one file per indicator.
   it owns the argument contract** — index range, parameters, then every buffer
   length, answering `BadParam` (#265). Its input bound takes no sub-lookback
   escape, so it is strictly stronger than the assert below and a `pub fn` call
-  cannot reach one that would reject it.
+  cannot reach one that would reject it. Since #267 it is also the tier every
+  cross-indicator call enters, so the same bound holds on the composed path.
 - Indexing is safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds
   precondition panics — never undefined behavior. Each body carries a
   bounds-assert preamble (the LLVM proof that elides per-access bounds checks);
   it is skipped when the lookback clamp means the call computes nothing, so a
-  call that returns `Success` with zero elements cannot panic. That preamble is
-  the in-crate cross-call path's guard, not the caller's — a panic there is a
-  generator bug, which is what an `assert!` is for.
-- **Cross-indicator calls target `<N>_Impl`**, the crate-private entry point that keeps C's `RetCode` + out-param shape (it validates parameters and the index range; array bounds are the `assert!` preamble above). **Rust alone.** Java and C# route a cross-call to the callee's PUBLIC entry point (#236 step 3), which is what C has always done. #265 asked whether Rust should now follow, since the reason it did not — "the public tier adds no checks the body's asserts do not already make" — stopped being true. **Answer: no, and for three reasons, not the old one.** A cross-call's arguments are generated from the caller's own already-validated ones, same `endIdx`, same series, generator-sized scratch, so the checks are provably redundant on that path. `MAVP` calls its callee once per distinct period — up to `points` times — so "redundant" there is also per-bar. And the reach would go the wrong way: `no_phantom_io` probes `<N>_Impl`, so a callee's public input bound answering before any array is touched would blind it exactly as it blinds Java's, importing `CROSS_CALL_GUARDED` and Appendix D item 12 into the one backend that does not have them. The `mem::swap` shim is still owed either way.
+  call that returns `Success` with zero elements cannot panic. Nothing but
+  `pub fn <N>` and the phantom-I/O sweep reaches it now (#267), so a panic there
+  is a generator bug, which is what an `assert!` is for.
+- **Cross-indicator calls target the callee's PUBLIC entry point**, as in C, Java and C# (#267). `<N>_Impl` stays the crate-private numerics tier — C's `RetCode` + out-param shape, which is what the transcription is written against — but nothing calls it any more except `pub fn <N>` and the phantom-I/O sweep. `?` is unavailable in the 33 sites inside `<N>_Impl`, which returns a bare `RetCode`, so each of the 36 sites binds the returned range with a `match` and assigns both out-params from it, then sets `retCode = RetCode::Success` — 6 of them fold "success with zero output" into the same conditional as the error and that half is still live. (The three sites in a `Result`-returning `<N>_OpenImpl` spell the error arm `return Err(_e)`.) The `mem::swap` shim for an in-place callee is unchanged and still owed. **This reverses the answer #236 step 3 and #265 both gave.** Two of #265's three reasons were costs, not correctness — the checks are redundant on a generator-built argument list, and `MAVP` pays them once per distinct period — and are measured, not asserted. The third was reach: `no_phantom_io` probes `<N>_Impl`, so a callee's public input bound answering before any array is touched would blind it exactly as it blinded Java's. #267 part 1 removed that: `analyze_dispatch` now admits a leading "nothing to produce" guard, `ma.c` carries one, and with it `CROSS_CALL_GUARDED` was **deleted** from the Java and C# suites rather than imported into Rust's. C cannot converge the other way — a cross-call is cross-TU there, so a C `_Impl` could not be `static` and would be new ABI in the shipped `.so`.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.

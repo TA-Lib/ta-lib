@@ -97,7 +97,8 @@ impl Core {
         return Ok(self.VAR_Lookback(optInTimePeriod, optInNbDev)?);
     }
     /// C-shaped body behind [`Core::STDDEV`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn STDDEV_Impl(
         &self,
         startIdx: usize,
@@ -146,7 +147,10 @@ impl Core {
             return RetCode::Success;
         }
         // Calculate the variance.
-        retCode = self.VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+        let _xr0 = match self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr0.beg_idx;
+        (*outNBElement) = _xr0.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return retCode;
         }

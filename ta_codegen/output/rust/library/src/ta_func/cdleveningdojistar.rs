@@ -104,7 +104,8 @@ impl Core {
         return Ok((((BodyDoji_avgPeriod).max(BodyLong_avgPeriod)).max(BodyShort_avgPeriod) + 2) as usize);
     }
     /// C-shaped body behind [`Core::CDLEVENINGDOJISTAR`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn CDLEVENINGDOJISTAR_Impl(
         &self,
         startIdx: usize,

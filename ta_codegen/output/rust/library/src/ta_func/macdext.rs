@@ -127,7 +127,8 @@ impl Core {
         return Ok((lookbackLargest + self.MA_Lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
     }
     /// C-shaped body behind [`Core::MACDEXT`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn MACDEXT_Impl(
         &self,
         startIdx: usize,
@@ -210,7 +211,10 @@ impl Core {
             // stream_verify's multi-enum diagonal selects all-EMA and holds this
             // block to the composed path (issue #181). Keep the comment INSIDE the
             // block: above it, the stream inherits it and reads as if it delegated.
-            return self.MACD_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+            let _xr0 = match self.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist) { Ok(_r) => _r, Err(_e) => return _e };
+            (*outBegIdx) = _xr0.beg_idx;
+            (*outNBElement) = _xr0.count;
+            return RetCode::Success;
         }
         // Make sure slow is really slower than
         // the fast period! if not, swap...
@@ -255,14 +259,20 @@ impl Core {
         // signal calculation is done, all the output
         // will start at the requested 'startIdx'.
         tempInteger = startIdx - lookbackSignal;
-        retCode = self.MA_Impl(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..]);
+        let _xr1 = match self.MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, &mut slowMABuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        outBegIdx1 = _xr1.beg_idx;
+        outNbElement1 = _xr1.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return retCode;
         }
         // Calculate the fast MA.
-        retCode = self.MA_Impl(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..]);
+        let _xr2 = match self.MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut fastMABuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        outBegIdx2 = _xr2.beg_idx;
+        outNbElement2 = _xr2.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -291,7 +301,10 @@ impl Core {
             outMACD[_di.._di + _n].copy_from_slice(&fastMABuffer[_si.._si + _n]);
         };
         // Calculate the signal/trigger line.
-        retCode = self.MA_Impl(0, outNbElement1 - 1, &fastMABuffer, optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, outMACDSignal);
+        let _xr3 = match self.MA(0, outNbElement1 - 1, &fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal) { Ok(_r) => _r, Err(_e) => return _e };
+        outBegIdx2 = _xr3.beg_idx;
+        outNbElement2 = _xr3.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;

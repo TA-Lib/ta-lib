@@ -64,13 +64,14 @@
 //!
 //! Run together on the same corpus, the two agree where they can:
 //!
-//! * **sub-lookback: Rust reaches every core Java reaches, and one more.** Rust
-//!   probes 145 cores at the defaults vector, skips 31 for having no
-//!   sub-lookback range (lookback 0) and fires 176 detector controls; Java
-//!   reports 144 / 31 / 175 on the same corpus because `CROSS_CALL_GUARDED`
-//!   withholds MA, whose rejection arrives from a callee's public input bound as
-//!   a RETURN rather than the throw Java's probe reads. Rust has no such tier to
-//!   lose: the delta is exactly that one core, in Rust's favour.
+//! * **sub-lookback: the three suites agree exactly.** Rust probes 145 cores at
+//!   the defaults vector, skips 31 for having no sub-lookback range (lookback 0)
+//!   and fires 176 detector controls; Java and C# report the same 145 / 31 / 176
+//!   on the same corpus. They read 144 / 31 / 175 until #267: `ma` forwarded on a
+//!   range shorter than its own lookback, so the rejection arrived from a
+//!   callee's public input bound as a RETURN rather than the throw those probes
+//!   read, and it was withheld by name. It answers `0,0` in its own frame now,
+//!   and the withholding lists are deleted rather than empty.
 //! * **declared legs: the two suites probe the same tier and still measure
 //!   different things.** Java's `unreadLegSweep` probes `<N>_Impl` and reports
 //!   the 40 legs a zero-length array sails through at the default candle

@@ -94,7 +94,8 @@ impl Core {
         return Ok((((BodyLong_avgPeriod).max(BodyShort_avgPeriod)).max((ShadowVeryShort_avgPeriod).max(Near_avgPeriod)) + 2) as usize);
     }
     /// C-shaped body behind [`Core::CDLSTALLEDPATTERN`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn CDLSTALLEDPATTERN_Impl(
         &self,
         startIdx: usize,

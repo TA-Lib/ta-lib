@@ -110,7 +110,8 @@ impl Core {
         return Ok(retValue);
     }
     /// C-shaped body behind [`Core::STOCHRSI`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn STOCHRSI_Impl(
         &self,
         startIdx: usize,
@@ -206,13 +207,19 @@ impl Core {
         (*outBegIdx) = startIdx;
         tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
         tempRSIBuffer = vec![0.0_f64; (tempArraySize * 1) as usize];
-        retCode = self.RSI_Impl(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..]);
+        let _xr0 = match self.RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, &mut tempRSIBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        outBegIdx1 = _xr0.beg_idx;
+        outNbElement1 = _xr0.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || outNbElement1 == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return retCode;
         }
-        retCode = self.STOCHF_Impl(0, tempArraySize - 1, &tempRSIBuffer, &tempRSIBuffer, &tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, outFastK, outFastD);
+        let _xr1 = match self.STOCHF(0, tempArraySize - 1, &tempRSIBuffer, &tempRSIBuffer, &tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD) { Ok(_r) => _r, Err(_e) => return _e };
+        outBegIdx2 = _xr1.beg_idx;
+        (*outNBElement) = _xr1.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;

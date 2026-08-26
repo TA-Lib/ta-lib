@@ -137,7 +137,8 @@ impl Core {
         return Ok(retValue);
     }
     /// C-shaped body behind [`Core::MA`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn MA_Impl(
         &self,
         startIdx: usize,
@@ -172,6 +173,35 @@ impl Core {
         let mut nbElement: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut todayIdx: usize = 0_usize;
+        // Nothing to produce: the range is shorter than the lookback. Answer here
+        // rather than forwarding.
+        //
+        // The VALUE is the same either way: ma_lookback returns exactly the lookback
+        // the arm's callee computes for itself, from the same arguments the arm
+        // passes it, and every callee clamps startIdx to that lookback and yields
+        // 0,0 without reading. What changes is whose frame answers, and that is
+        // visible to one caller only - the zero-length no-I/O probe. It hands the
+        // body empty arrays on this range to check that nothing is read; forwarding
+        // makes the callee's PUBLIC input bound (endIdx + 1 elements, no
+        // sub-lookback escape) answer TA_BAD_PARAM before any array is reached, so
+        // the probe cannot tell "read nothing" from "never ran". ma was the last
+        // core withheld from that sweep for exactly this reason; apo, bbands, ppo,
+        // pvo and stddev already carried this guard. No legitimate caller is
+        // affected: ma's own public tier already requires endIdx + 1 input elements,
+        // and on this range the callee's OUTPUT bound is 0, so a caller sizing by
+        // the published formula was never rejected by it.
+        //
+        // It cannot mask a TA_BAD_PARAM. An optInMAType outside the enum is refused
+        // by the generated entry point above this guard. An in-range member with no
+        // arm here would reach ma_lookback's own default and get 0, and 0 > endIdx
+        // is false for every endIdx the entry point admits, so control still reaches
+        // the switch and still answers TA_BAD_PARAM. The identity path below is out
+        // of the guard's reach for the same reason - its lookback is 0.
+        if self.MA_Lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return RetCode::Success;
+        }
         // No-smoothing identity: period 1 (every MA type) or the explicit
         // TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
@@ -191,36 +221,66 @@ impl Core {
         // Simply forward the job to the corresponding TA function.
         match optInMAType {
             MAType::SMA => {
-                retCode = self.SMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr0 = match self.SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr0.beg_idx;
+                (*outNBElement) = _xr0.count;
+                retCode = RetCode::Success;
             }
             MAType::EMA => {
-                retCode = self.EMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr1 = match self.EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr1.beg_idx;
+                (*outNBElement) = _xr1.count;
+                retCode = RetCode::Success;
             }
             MAType::WMA => {
-                retCode = self.WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr2 = match self.WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr2.beg_idx;
+                (*outNBElement) = _xr2.count;
+                retCode = RetCode::Success;
             }
             MAType::DEMA => {
-                retCode = self.DEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr3 = match self.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr3.beg_idx;
+                (*outNBElement) = _xr3.count;
+                retCode = RetCode::Success;
             }
             MAType::TEMA => {
-                retCode = self.TEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr4 = match self.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr4.beg_idx;
+                (*outNBElement) = _xr4.count;
+                retCode = RetCode::Success;
             }
             MAType::TRIMA => {
-                retCode = self.TRIMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr5 = match self.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr5.beg_idx;
+                (*outNBElement) = _xr5.count;
+                retCode = RetCode::Success;
             }
             MAType::KAMA => {
-                retCode = self.KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr6 = match self.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr6.beg_idx;
+                (*outNBElement) = _xr6.count;
+                retCode = RetCode::Success;
             }
             MAType::MAMA => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                retCode = self.MAMA_Impl(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, None);
+                let _xr7 = match self.MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr7.beg_idx;
+                (*outNBElement) = _xr7.count;
+                retCode = RetCode::Success;
             }
             MAType::T3 => {
-                retCode = self.T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+                let _xr8 = match self.T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr8.beg_idx;
+                (*outNBElement) = _xr8.count;
+                retCode = RetCode::Success;
             }
             MAType::HMA => {
-                retCode = self.HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                let _xr9 = match self.HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+                (*outBegIdx) = _xr9.beg_idx;
+                (*outNBElement) = _xr9.count;
+                retCode = RetCode::Success;
             }
             _ => {
                 retCode = RetCode::BadParam;

@@ -87,6 +87,38 @@ TA_RetCode ma(int startIdx, int endIdx,
    int nbElement;
    int outIdx, todayIdx;
 
+   /* Nothing to produce: the range is shorter than the lookback. Answer here
+    * rather than forwarding.
+    *
+    * The VALUE is the same either way: ma_lookback returns exactly the lookback
+    * the arm's callee computes for itself, from the same arguments the arm
+    * passes it, and every callee clamps startIdx to that lookback and yields
+    * 0,0 without reading. What changes is whose frame answers, and that is
+    * visible to one caller only - the zero-length no-I/O probe. It hands the
+    * body empty arrays on this range to check that nothing is read; forwarding
+    * makes the callee's PUBLIC input bound (endIdx + 1 elements, no
+    * sub-lookback escape) answer TA_BAD_PARAM before any array is reached, so
+    * the probe cannot tell "read nothing" from "never ran". ma was the last
+    * core withheld from that sweep for exactly this reason; apo, bbands, ppo,
+    * pvo and stddev already carried this guard. No legitimate caller is
+    * affected: ma's own public tier already requires endIdx + 1 input elements,
+    * and on this range the callee's OUTPUT bound is 0, so a caller sizing by
+    * the published formula was never rejected by it.
+    *
+    * It cannot mask a TA_BAD_PARAM. An optInMAType outside the enum is refused
+    * by the generated entry point above this guard. An in-range member with no
+    * arm here would reach ma_lookback's own default and get 0, and 0 > endIdx
+    * is false for every endIdx the entry point admits, so control still reaches
+    * the switch and still answers TA_BAD_PARAM. The identity path below is out
+    * of the guard's reach for the same reason - its lookback is 0.
+    */
+   if( ma_lookback( optInTimePeriod, optInMAType ) > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+
    /* No-smoothing identity: period 1 (every MA type) or the explicit
     * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0. */
    if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )

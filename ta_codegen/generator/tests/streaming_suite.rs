@@ -874,6 +874,178 @@ fn dispatch_hard_errors_when_flagged_delegation_hides_behind_unflagged_call() {
     );
 }
 
+/// `ma` carries the "nothing to produce" guard every other composed core has
+/// (#267), and the dispatch analyzer admits it.
+///
+/// Non-vacuous in both directions: the first assertion fails if `ma.c` loses the
+/// guard, the second if `analyze_dispatch` stops admitting it. Before #267 the
+/// second was the live one — a leading `If` was an unrecognized top-level
+/// statement, which is why `ma` was the last core withheld from the phantom-I/O
+/// sweep (Appendix D item 12).
+#[test]
+fn ma_dispatch_admits_the_empty_range_guard() {
+    let f = load("ma");
+    assert!(
+        empty_range_guard_idx(&f).is_some(),
+        "ma.c must carry a top-level `ma_lookback(..) > endIdx` guard"
+    );
+    assert!(
+        streaming::validate_streamable(&f, &lookup()).is_ok(),
+        "the guard must not cost ma its dispatch plan"
+    );
+}
+
+/// The guard is admitted by SHAPE, and a near-miss is a hard error rather than a
+/// silent pass.
+///
+/// This is the only coverage the recognizer has: `ma` is the sole dispatch
+/// function in the corpus and no `SYNTH*` fixture is dispatch-shaped, so a
+/// recognizer one notch too loose — accepting any `If`, or any `If` that returns
+/// SUCCESS — would retire the strictness contract the `other =>` arm exists to
+/// enforce and nothing else in the tree would fail.
+#[test]
+fn dispatch_rejects_a_near_miss_empty_range_guard() {
+    use ta_codegen_lib::ir::{Expr, Statement};
+
+    // Each mutation keeps the guard where it is and breaks ONE clause of the
+    // shape. All must land in the catch-all arm, which names the statement kind.
+    // Plain `fn` items, not closures: a boxed-closure table is a `type_complexity`
+    // warning and the nightly clippy job runs with `-D warnings`.
+    type Mutation = (&'static str, fn(&mut Statement));
+    fn wrong_right_operand(st: &mut Statement) {
+        if let Statement::If { condition: Expr::BinOp(_, _, r), .. } = st {
+            **r = Expr::Var("startIdx".into());
+        }
+    }
+    fn not_a_lookback_call(st: &mut Statement) {
+        if let Statement::If { condition: Expr::BinOp(l, _, _), .. } = st {
+            **l = Expr::Var("optInTimePeriod".into());
+        }
+    }
+    /// A FOREIGN lookback. This is the mutation the byte-identity argument
+    /// depends on catching: `DispatchPlan` carries no prologue, so the four Open
+    /// tiers would never see it while every batch tier transcribed it verbatim,
+    /// and no gate compares the two.
+    fn someone_elses_lookback(st: &mut Statement) {
+        if let Statement::If { condition: Expr::BinOp(l, _, _), .. } = st {
+            if let Expr::FuncCall(n, _) = l.as_mut() {
+                *n = "t3_lookback".into();
+            }
+        }
+    }
+    /// The right lookback, the wrong arguments — a guard stating a lookback this
+    /// call will not compute.
+    fn wrong_lookback_arguments(st: &mut Statement) {
+        if let Statement::If { condition: Expr::BinOp(l, _, _), .. } = st {
+            if let Expr::FuncCall(_, a) = l.as_mut() {
+                a[0] = Expr::IntLiteral(30);
+            }
+        }
+    }
+    fn body_does_more(st: &mut Statement) {
+        if let Statement::If { then_body, .. } = st {
+            then_body.insert(
+                0,
+                Statement::Assign {
+                    target: Expr::ArrayAccess("outReal".into(), Box::new(Expr::IntLiteral(0))),
+                    value: Expr::Literal(0.0),
+                    compound: false,
+                },
+            );
+        }
+    }
+    fn reports_a_non_empty_range(st: &mut Statement) {
+        if let Statement::If { then_body, .. } = st {
+            if let Some(Statement::Assign { value, .. }) = then_body.get_mut(1) {
+                *value = Expr::IntLiteral(1);
+            }
+        }
+    }
+    fn returns_something_else(st: &mut Statement) {
+        if let Statement::If { then_body, .. } = st {
+            if let Some(last) = then_body.last_mut() {
+                *last = Statement::Return { value: Some(Expr::Var("BAD_PARAM".into())) };
+            }
+        }
+    }
+    fn carries_an_else_arm(st: &mut Statement) {
+        if let Statement::If { else_body, .. } = st {
+            else_body.push(Statement::Return { value: Some(Expr::Var("BAD_PARAM".into())) });
+        }
+    }
+
+    let mutations: [Mutation; 8] = [
+        ("condition compares against something other than endIdx", wrong_right_operand),
+        ("condition's left operand is not a lookback call", not_a_lookback_call),
+        ("the guard states some other function's lookback", someone_elses_lookback),
+        ("the guard's lookback takes arguments this call does not", wrong_lookback_arguments),
+        ("the body does more than answer 0,0", body_does_more),
+        ("the guard reports a non-empty range", reports_a_non_empty_range),
+        ("the guard returns something other than SUCCESS", returns_something_else),
+        ("the guard carries an else arm", carries_an_else_arm),
+    ];
+
+    for (what, mutate) in mutations {
+        let mut f = load("ma");
+        let idx = empty_range_guard_idx(&f).expect("ma carries the guard");
+        mutate(&mut f.body[idx]);
+        let err = streaming::analyze_dispatch(&f, &lookup()).unwrap_err();
+        assert!(
+            matches!(err, StreamError::Unsupported(ref m)
+                if m.contains("unrecognized top-level statement")),
+            "{what}: expected the catch-all hard error, got: {err}"
+        );
+    }
+
+    // Control: unmutated, the same body analyzes.
+    let f = load("ma");
+    assert!(
+        streaming::analyze_dispatch(&f, &lookup()).is_ok(),
+        "the unmutated dispatch body must still analyze"
+    );
+
+    // A SECOND guard is not admitted either — the recognizer skips one index,
+    // and anything else at the top level is still the hard error.
+    let mut f = load("ma");
+    let idx = empty_range_guard_idx(&f).expect("ma carries the guard");
+    let dup = f.body[idx].clone();
+    f.body.insert(idx, dup);
+    let err = streaming::analyze_dispatch(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m)
+            if m.contains("unrecognized top-level statement")),
+        "a second leading guard must not be admitted, got: {err}"
+    );
+
+    // LEADING, not merely present. Behind the switch the guard answers the same
+    // 0,0 with the same values, so nothing but the nightly phantom-I/O sweep
+    // could see that the forward happened first — which is the whole defect.
+    let mut f = load("ma");
+    let idx = empty_range_guard_idx(&f).expect("ma carries the guard");
+    let guard = f.body.remove(idx);
+    let sw = f
+        .body
+        .iter()
+        .position(|s| matches!(s, Statement::Switch { .. }))
+        .expect("ma's dispatch switch");
+    f.body.insert(sw + 1, guard);
+    let err = streaming::analyze_dispatch(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("after the switch")),
+        "a guard behind the switch must be a hard error, got: {err}"
+    );
+}
+
+/// Index of the top-level `<f>_lookback(..) > endIdx` guard in a body, if any.
+fn empty_range_guard_idx(f: &FuncDef) -> Option<usize> {
+    use ta_codegen_lib::ir::{BinOp, Expr, Statement};
+    f.body.iter().position(|s| {
+        matches!(s, Statement::If { condition: Expr::BinOp(l, BinOp::Greater, r), .. }
+            if matches!(l.as_ref(), Expr::FuncCall(n, _) if n.ends_with("_lookback"))
+                && matches!(r.as_ref(), Expr::Var(v) if v == "endIdx"))
+    })
+}
+
 fn sabotage_first_sma_arm(f: &mut FuncDef) {
     use ta_codegen_lib::ir::{Expr, Statement};
     fn visit(stmts: &mut [Statement]) {

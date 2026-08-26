@@ -924,8 +924,9 @@ claim in *Motivation* gets measured, not asserted).
    (2026-07-10)**; the rest of the family is in progress. Composition goes
    through the PUBLIC stream handles, not cross-TU internals:
    - **`TA_MA_Stream` (DONE, 132 streamable).** The analyzer recognizes the
-     dispatch body shape (identity path + switch over an enum optional param
-     whose arms delegate the whole range) and the emitter renders a tagged
+     dispatch body shape (an optional leading "nothing to produce" guard, the
+     identity path, and a switch over an enum optional param whose arms
+     delegate the whole range) and the emitter renders a tagged
      handle over the callees' public streams. The supported-arm set is
      DERIVED from the callees' YAML stream flags at generation time —
      TRIMA's arm joins automatically the moment its stream lands; MAMA's

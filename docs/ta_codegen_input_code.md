@@ -176,10 +176,10 @@ generator resolves it to the correct symbol per language. From
 retCode = sma( startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal );
 ```
 
-maps to `TA_SMA(...)` in C, `self.SMA_Impl(...)` in Rust, and the public
-`SMA(...)` in Java and C#. Rust alone targets the crate-private `_Impl` body;
-since #236 step 3 Java and C# call the callee's *public* tier and let its
-rejection throw, which is what C has always done.
+maps to `TA_SMA(...)` in C and the public `SMA(...)` in Rust, Java and C# — the
+callee's public entry point in every backend, which is what C has always done
+(#236 step 3, #267). Its rejection surfaces as a throw in Java and C# and as an
+`Err(RetCode)` in Rust.
 `sma_lookback(...)` similarly maps to `TA_SMA_Lookback(...)` in C and
 `SMA_Lookback(...)` (`self.SMA_Lookback(...)` in Rust) elsewhere.
 

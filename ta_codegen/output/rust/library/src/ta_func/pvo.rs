@@ -98,7 +98,8 @@ impl Core {
         return Ok(self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
     }
     /// C-shaped body behind [`Core::PVO`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn PVO_Impl(
         &self,
         startIdx: usize,
@@ -170,12 +171,18 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.MA_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        let _xr0 = match self.MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        fastBeg = _xr0.beg_idx;
+        fastNb = _xr0.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.MA_Impl(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        let _xr1 = match self.MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr1.beg_idx;
+        (*outNBElement) = _xr1.count;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return retCode;
         }

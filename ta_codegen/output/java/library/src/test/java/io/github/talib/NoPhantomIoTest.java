@@ -133,13 +133,10 @@ import java.util.TreeSet;
  *
  * <p><b>Rust now carries sweeps 1 and 3 too</b>, in the generated
  * {@code ta_codegen/output/rust/library/src/ta_func/no_phantom_io.rs}
- * (issue #235). Two things it has that the sweeps below do not. It reaches
- * every core: since #236 step 3 routed cross-calls through the public callee, a
- * composed core is out of reach here and is named in
- * {@code CROSS_CALL_GUARDED}, while Rust's cross-calls still target
- * {@code NAME_Impl} and so probe all 176. And it covers the <i>Rust</i>
- * emitter — an emitter bug of the kind described above is invisible to every
- * other backend's probe, by the same argument.
+ * (issue #235). All three probe {@code NAME_Impl} and all three reach every
+ * core; what Rust has that the sweeps below do not is that it covers the
+ * <i>Rust</i> emitter — an emitter bug of the kind described above is invisible
+ * to every other backend's probe, by the same argument.
  *
  * <p>It names {@code NAME_Impl} directly, exactly as this suite does, and is an
  * in-crate {@code #[cfg(test)]} module for the same reason this class sits in
@@ -530,41 +527,6 @@ public class NoPhantomIoTest {
         return out;
     }
 
-    /**
-     * The one core whose sub-lookback probe is out of reach, and why it is one.
-     *
-     * <p>The sweep works by handing a core ZERO-LENGTH arrays and reading what
-     * happens: silence means no I/O, a fault means the detector is live. Since
-     * #236 step 3 a transcribed body calls its callee's PUBLIC entry point, and
-     * the callee's input bound (rule B5a) requires {@code endIdx + 1} elements —
-     * deliberately without the sub-lookback escape the OUTPUT bound takes. A core
-     * that forwards on a range shorter than its own lookback therefore answers
-     * before touching an array, and the probe cannot tell "read nothing" from
-     * "never ran".
-     *
-     * <p>Nothing about the PUBLIC API moved: reached through the caller's own
-     * wrapper the callee's check is provably redundant, same {@code endIdx}, same
-     * array.
-     *
-     * <p><b>The fix for this is an early return, and eight of the original ten
-     * already have it.</b> {@code apo}, {@code bbands}, {@code ppo}, {@code pvo}
-     * and now {@code stddev} return {@code 0,0} before forwarding when the range
-     * is shorter than their lookback; the rest never forwarded on such a range to
-     * begin with. {@code ma} is the holdout, and not for want of trying: it is a
-     * DISPATCH function, and the generator admits only decls, comments, the
-     * identity path, one switch and a final return at the top level of a dispatch
-     * body — the shape the stream planner is built on. A guard there is a
-     * generator change, not a one-line edit to {@code ma.c}.
-     *
-     * <p>The other way out is #236 deciding the input bound does not keep its
-     * stricter reading. Either route empties this list.
-     *
-     * <p>An explicit list, not a symptom test: a core that starts answering
-     * {@code BadParam} here for any other reason is still a hard failure. The
-     * size is asserted, so the debt can be paid down but not quietly grown.
-     */
-    private static final java.util.Set<String> CROSS_CALL_GUARDED = java.util.Set.of("MA");
-
     /* -------------------------------------------------- sweep 1: sub-lookback */
 
     /**
@@ -586,7 +548,6 @@ public class NoPhantomIoTest {
         int noSubLookbackRange = 0;
         int violations = 0;
         List<String> live = new ArrayList<>();
-        List<String> withheld = new ArrayList<>();
 
         for (Sig sig : cores.values()) {
             // The per-function control arm. One bar longer than the quiet range is
@@ -594,13 +555,9 @@ public class NoPhantomIoTest {
             // and with zero-length arrays that is a throw. A core that stops
             // throwing here has stopped computing, and its silence in the sweep
             // below would otherwise read as compliance. This is also what covers
-            // the 30 cores whose lookback is 0: they have no quiet range, but they
+            // the 31 cores whose lookback is 0: they have no quiet range, but they
             // do have this one.
             Vector defaults = sig.vectors.get(0);
-            if (CROSS_CALL_GUARDED.contains(sig.name)) {
-                withheld.add(sig.name);
-                continue;
-            }
             Object[] one = args(sig, defaults, 0, defaults.lookback);
             for (int p : sig.inputPos) {
                 one[p] = zeroArray(sig.core.getParameterTypes()[p]);
@@ -694,29 +651,23 @@ public class NoPhantomIoTest {
         // Every discovered core is accounted for at the defaults vector: probed, or
         // explicitly counted as having no sub-lookback range. Nothing may fall out
         // silently in between.
-        check(probed + noSubLookbackRange + withheld.size() == cores.size(),
-              tier + " sub-lookback: every core is probed, counted or withheld ("
-              + probed + " + " + noSubLookbackRange + " + " + withheld.size()
-              + " vs " + cores.size() + ")");
+        check(probed + noSubLookbackRange == cores.size(),
+              tier + " sub-lookback: every core is probed or counted ("
+              + probed + " + " + noSubLookbackRange + " vs " + cores.size() + ")");
         check(probed > 0 && noSubLookbackRange > 0,
               tier + " sub-lookback: both outcomes occur, so neither branch is dead ("
               + probed + " probed, " + noSubLookbackRange + " skipped)");
-        check(live.size() + withheld.size() == cores.size(),
-              tier + " sub-lookback: the detector is proved live for every core that "
-              + "is not withheld (" + live.size() + " + " + withheld.size() + " of "
-              + cores.size() + "; not proved "
-              + missing(missing(new ArrayList<>(cores.keySet()), live), withheld) + ")");
-        // The debt cannot grow silently: the list is what it is, and a core that
-        // leaves it has to leave this number too.
-        check(withheld.size() == CROSS_CALL_GUARDED.size(),
-              tier + " sub-lookback: every withheld core is one of the "
-              + CROSS_CALL_GUARDED.size() + " named in CROSS_CALL_GUARDED (got "
-              + withheld.size() + ": " + withheld + ")");
+        // No withholding list to subtract: exact equality against the discovered
+        // corpus, which is strictly stronger than the size assertion it replaces
+        // (#267). A core that stops proving its detector live fails here by name.
+        check(live.size() == cores.size(),
+              tier + " sub-lookback: the detector is proved live for every core ("
+              + live.size() + " of " + cores.size() + "; not proved "
+              + missing(new ArrayList<>(cores.keySet()), live) + ")");
         System.out.println("  " + tier + " sub-lookback: " + probed + " cores probed, "
             + violations + " violation(s), " + noSubLookbackRange
             + " skipped (lookback 0, no sub-lookback range exists); "
-            + live.size() + " detector control(s) fired; " + withheld.size()
-            + " WITHHELD, out of this sweep's reach since #236 step 3 -> " + withheld);
+            + live.size() + " detector control(s) fired");
     }
 
     /* ------------------------------------------------- sweep 2: exact extent */
@@ -890,16 +841,7 @@ public class NoPhantomIoTest {
         Map<String, TreeSet<String>> readLegs = new TreeMap<>();
         List<String> unread = new ArrayList<>();
 
-        int withheld = 0;
         for (Sig sig : cores.values()) {
-            // Same reach problem as the sub-lookback sweep, third shape: this one
-            // infers "read" from a THROW on a zero-length leg, and since #236 step
-            // 3 these ten answer BadParam from a callee's public input bound
-            // instead — a return, not a throw. See CROSS_CALL_GUARDED.
-            if (CROSS_CALL_GUARDED.contains(sig.name)) {
-                withheld++;
-                continue;
-            }
             Vector v = sig.vectors.get(0);   // defaults; always present
             int startIdx = v.lookback;
             int endIdx = v.lookback + 4;
@@ -928,14 +870,9 @@ public class NoPhantomIoTest {
             readLegs.put(sig.name, read);
         }
 
-        check(withheld == CROSS_CALL_GUARDED.size(),
-              tier + " unread legs: every withheld core is one of the "
-              + CROSS_CALL_GUARDED.size() + " named in CROSS_CALL_GUARDED (got "
-              + withheld + ")");
         System.out.println("  " + tier + " unread legs: " + unread.size()
             + " leg(s) declared but never indexed, at the default candle settings"
-            + (unread.isEmpty() ? "" : " -> " + unread)
-            + "; " + withheld + " core(s) WITHHELD (#236 step 3)");
+            + (unread.isEmpty() ? "" : " -> " + unread));
         return readLegs;
     }
 

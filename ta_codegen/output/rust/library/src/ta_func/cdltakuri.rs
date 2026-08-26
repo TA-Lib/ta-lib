@@ -88,7 +88,8 @@ impl Core {
         return Ok((((BodyDoji_avgPeriod).max(ShadowVeryShort_avgPeriod)).max(ShadowVeryLong_avgPeriod)) as usize);
     }
     /// C-shaped body behind [`Core::CDLTAKURI`]: a `RetCode` plus two out-params,
-    /// which is what the transcribed body and its cross-indicator callers expect.
+    /// which is what the transcribed body is written against. Since #267 its only
+    /// callers are that wrapper and the phantom-I/O sweep.
     pub(crate) fn CDLTAKURI_Impl(
         &self,
         startIdx: usize,

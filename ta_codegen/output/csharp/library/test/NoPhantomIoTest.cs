@@ -78,7 +78,7 @@ namespace TALib.Test;
 /// <item><description><b>Exact extent</b> — a range that <i>does</i> produce
 /// values, with each input sized to exactly <c>endIdx + 1</c> and each output to
 /// exactly the count the call reported. A read past <c>endIdx</c> or a write past
-/// the reported count is then out of range. This is what reaches the 30 functions
+/// the reported count is then out of range. This is what reaches the 31 functions
 /// whose lookback is 0, for which no sub-lookback range exists.</description></item>
 /// </list>
 ///
@@ -401,40 +401,6 @@ public static class NoPhantomIoTest
         return kept;
     }
 
-    /// <summary>The one function whose sub-lookback probe is out of reach, and
-    /// why it is one.</summary>
-    /// <remarks>
-    /// <para>This sweep works by handing a function ZERO-LENGTH buffers and
-    /// reading what happens: silence means no I/O, a fault means the detector is
-    /// live. Since #236 step 3 the transcribed body calls its callee's PUBLIC
-    /// overload, and the callee's input bound (rule B5a) requires
-    /// <c>endIdx + 1</c> elements — deliberately without the sub-lookback escape
-    /// the OUTPUT bound takes. A function that forwards on a range shorter than
-    /// its own lookback therefore answers <c>BadParam</c> before touching a
-    /// buffer, and the probe cannot tell "read nothing" from "never ran".</para>
-    /// <para>Nothing about the PUBLIC API moved: reached through the caller's own
-    /// wrapper the callee's check is provably redundant, same <c>endIdx</c>, same
-    /// buffer.</para>
-    /// <para><b>The fix is an early return, and every other function that needed
-    /// one has it.</b> <c>apo</c>, <c>bbands</c>, <c>ppo</c>, <c>pvo</c> and now
-    /// <c>stddev</c> return <c>0,0</c> before forwarding when the range is shorter
-    /// than their lookback; the rest never forwarded on such a range. <c>ma</c> is
-    /// the holdout because it is a DISPATCH function: the generator admits only
-    /// decls, comments, the identity path, one switch and a final return at the
-    /// top level of a dispatch body — the shape the stream planner is built on —
-    /// so a guard there is a generator change, not an edit to <c>ma.c</c>. The
-    /// other way out is #236 deciding the input bound does not keep its stricter
-    /// reading.</para>
-    /// <para>An explicit list, not a symptom test: a function that starts
-    /// answering <c>BadParam</c> here for any other reason is still a hard
-    /// failure. The size is asserted, so the debt can be paid down but not quietly
-    /// grown.</para>
-    /// </remarks>
-    private static readonly HashSet<string> CrossCallGuarded = new()
-    {
-        "MA",
-    };
-
     /* -------------------------------------------------- sweep 1: sub-lookback */
 
     private static void SubLookbackSweep(Core core, IReadOnlyList<FunctionInfo> catalog)
@@ -443,19 +409,11 @@ public static class NoPhantomIoTest
         int noSubLookbackRange = 0;
         int violations = 0;
         var live = new List<string>();
-        var withheld = new List<string>();
 
         foreach (FunctionInfo f in catalog)
         {
             List<Vector> vectors = Vectors(f, core);
             Check(vectors.Count > 0, $"{f.Name} has at least one parameter vector its own lookback accepts");
-            if (CrossCallGuarded.Contains(f.Name))
-            {
-                // Only the zero-length I/O probe below is out of reach; the
-                // vector check above still applies and still runs.
-                withheld.Add(f.Name);
-                continue;
-            }
             if (vectors.Count == 0)
             {
                 continue;
@@ -568,22 +526,18 @@ public static class NoPhantomIoTest
             }
         }
 
-        Check(probed + noSubLookbackRange + withheld.Count == catalog.Count,
-              $"sub-lookback: every function is probed, counted or withheld ({probed} + "
-              + $"{noSubLookbackRange} + {withheld.Count} vs {catalog.Count})");
-        Check(live.Count + withheld.Count == catalog.Count,
-              $"sub-lookback: the detector is proved live for every function that is not "
-              + $"withheld ({live.Count} + {withheld.Count} of {catalog.Count}; not proved "
-              + $"{string.Join(", ", catalog.Select(f => f.Name).Except(live).Except(withheld))})");
-        // The debt cannot grow silently: the list is what it is, and a function
-        // that leaves it has to leave this number too.
-        Check(withheld.Count == CrossCallGuarded.Count,
-              $"sub-lookback: every withheld function is one of the {CrossCallGuarded.Count} named "
-              + $"in CrossCallGuarded (got {withheld.Count}: {string.Join(", ", withheld)})");
+        Check(probed + noSubLookbackRange == catalog.Count,
+              $"sub-lookback: every function is probed or counted ({probed} + "
+              + $"{noSubLookbackRange} vs {catalog.Count})");
+        // No withholding list to subtract: exact equality against the catalogue,
+        // which is strictly stronger than the size assertion it replaces (#267).
+        Check(live.Count == catalog.Count,
+              $"sub-lookback: the detector is proved live for every function "
+              + $"({live.Count} of {catalog.Count}; not proved "
+              + $"{string.Join(", ", catalog.Select(f => f.Name).Except(live))})");
         Console.WriteLine($"  sub-lookback: {probed} functions probed, {violations} violation(s), "
             + $"{noSubLookbackRange} skipped (lookback 0, no sub-lookback range exists); "
-            + $"{live.Count} detector control(s) fired; {withheld.Count} WITHHELD, out of this "
-            + $"sweep's reach since #236 step 3 -> {string.Join(", ", withheld)}");
+            + $"{live.Count} detector control(s) fired");
     }
 
     /* ------------------------------------------------- sweep 2: exact extent */

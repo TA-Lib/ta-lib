@@ -714,11 +714,15 @@ fn gen_lookback(
     out
 }
 
-/// The name a transcribed body calls a sibling indicator by.
+/// The name the LEGACY expression-position rendering calls a sibling indicator
+/// by — the C-shaped `<N>_Impl`.
 ///
-/// C's `TA_MA(...)` is the guarded entry point, which in Rust is now
-/// `MA_Impl` — the C-shaped one. A `_Private` callee already names a
-/// distinct function and is left alone.
+/// A transcribed body no longer reaches this: since #267 a cross-call is
+/// rewritten at statement level by [`render_cross_indicator_call`], which names
+/// the public tier. What is left here is the fallback for a cross-call in
+/// expression position, a shape no definition in the corpus has (the same status
+/// Java's registry branch in `render_func_call` has had since #236 step 3), and
+/// the `_Private` carve-out, which already names a distinct function.
 fn internal_callee(name: &str) -> String {
     if name.ends_with("_Private") {
         name.to_string()
@@ -744,10 +748,12 @@ fn internal_callee(name: &str) -> String {
 /// below is the same inequality the assert makes, and the input bound is
 /// strictly stronger — it drops the `_assertStart > endIdx ||` escape, so a
 /// short input is rejected on a sub-lookback range too, as in Java and C#.
-/// Nothing in the crate reaches this tier: cross-indicator calls target
-/// `<N>_Impl`, so the escape stays load-bearing where it is used (a re-based
-/// EMA chaining through MA/MACDEXT/TEMA/DEMA/T3 legitimately passes exactly
-/// sized buffers with `startIdx` below the lookback).
+/// **Every cross-indicator call reaches this tier too** (#267), so the bound a
+/// re-based chain meets is this one, not the assert's — the same bound Java has
+/// applied at the identical call sites since #236 step 3. What the assert's
+/// escape is still for is a call the lookback clamp leaves nothing to compute,
+/// and the phantom-I/O sweep, which hands `<N>_Impl` zero-length slices on
+/// purpose.
 ///
 /// **Order is the contract, not an implementation detail.** The index rules
 /// (B1, B2) first, then the parameters (B3, carried by the `<N>_Lookback` call's
@@ -883,11 +889,10 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
 /// when the function declares one).
 ///
 /// This keeps C's shape — a `RetCode` plus `&mut outBegIdx` / `&mut outNBElement`
-/// — because that is what the transcribed bodies are written against: 19 of the 33
-/// cross-indicator call sites hand their own out-params straight to the callee and
-/// read them back, and four guards fold "success with zero output" into the same
-/// condition as the error, which `?` cannot express. Java (`SMA_Impl`) and C#
-/// (the `RetCode` overload) route cross-calls the same way. `gen_public_entry`
+/// — because that is what the transcribed bodies are written against, and it is
+/// where the FMA dispatch sits. It is no longer a cross-call target: since #267
+/// a transcribed body reaches its sibling through the public tier
+/// ([`render_cross_indicator_call`]), as C, Java and C# do. `gen_public_entry`
 /// wraps this into the `Result<OutRange, RetCode>` the crate actually exposes.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_guarded_func(
@@ -901,7 +906,7 @@ fn gen_guarded_func(
 
     // The public wrapper carries the documentation; this one gets a pointer to it.
     out.push_str(&format!(
-        "    /// C-shaped body behind [`Core::{snake}`]: a `RetCode` plus two out-params,\n    /// which is what the transcribed body and its cross-indicator callers expect.\n"
+        "    /// C-shaped body behind [`Core::{snake}`]: a `RetCode` plus two out-params,\n    /// which is what the transcribed body is written against. Since #267 its only\n    /// callers are that wrapper and the phantom-I/O sweep.\n"
     ));
     out.push_str(&format!("    pub(crate) fn {snake}_Impl(\n"));
     out.push_str("        &self,\n");
@@ -1282,11 +1287,12 @@ fn gen_private_func(
 /// body — no `unsafe` needed. O(1) per call.
 ///
 /// Output arrays are sized by the caller for the elements actually written:
-/// `endIdx - max(startIdx, lookback) + 1`. Internal callers pass exactly-sized
-/// buffers with `startIdx` below the lookback (e.g. the re-based EMA chaining in
-/// TEMA/DEMA/T3 reached through MA/MACDEXT), so the bound uses the adjusted start.
-/// When the adjusted start exceeds `endIdx` the function writes nothing and any
-/// length is fine.
+/// `endIdx - max(startIdx, lookback) + 1`. A composed caller passes exactly-sized
+/// buffers with `startIdx` below the lookback (the re-based EMA chaining in
+/// TEMA/DEMA/T3 reached through MA/MACDEXT), so the bound uses the adjusted start
+/// — and since #267 that caller meets the same expression one tier up, in
+/// [`gen_argument_checks`], before it ever reaches here. When the adjusted start
+/// exceeds `endIdx` the function writes nothing and any length is fine.
 ///
 /// `guard_empty_range` makes the INPUT assertion take that same escape, and is set
 /// on `<N>_Impl` only. A call whose lookback clamp pushes the
@@ -1299,9 +1305,10 @@ fn gen_private_func(
 /// point states the same bounds ahead of the call, as `RetCode::BadParam`
 /// ([`gen_argument_checks`]) — strictly stronger on the input side, since it
 /// takes no escape — so a `pub fn` call cannot reach these asserts with a slice
-/// they would reject. They remain the LLVM proof, and the guard on the in-crate
-/// cross-call path, where the escape is load-bearing and a panic is the right
-/// answer to what would be a generator bug.
+/// they would reject. Since #267 a cross-indicator call enters that same public
+/// tier, so what still meets these asserts is `pub fn <N>` and the phantom-I/O
+/// sweep — they remain the LLVM proof, and a panic is the right answer to what
+/// would be a generator bug.
 fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> String {
     let mut out = String::new();
     let needs_start = guard_empty_range || !func.outputs.is_empty();
@@ -2867,6 +2874,27 @@ impl StatementEmitter for RustStmt<'_, '_> {
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn assign(&self, target: &Expr, value: &Expr, compound: bool, indent: usize) -> String {
         let pad = " ".repeat(indent);
+        // `retCode = ma(..)` -- a cross-indicator call, which goes to the
+        // callee's PUBLIC entry point and answers a range or an `Err` (#267).
+        // The assigned code is `Success` by construction; the enclosing
+        // `if( retCode != Success )` is left standing and becomes dead, because
+        // the body stays a literal transcription of its C source and several of
+        // those tests also carry a live `|| count == 0` half.
+        if !compound {
+            if let Expr::FuncCall(fname, cargs) = value {
+                if self.registry.contains(fname) {
+                    if let Some(block) = render_cross_indicator_call(
+                        fname, cargs, indent, self.ctx.result_error_returns, self.ctx,
+                        self.opt_real_params, self.registry, self.helpers, self.inline_counter,
+                    ) {
+                        let t = render_assign_target(
+                            target, self.ctx, self.opt_real_params, self.registry, self.helpers,
+                        );
+                        return format!("{block}{pad}{t} = RetCode::Success;\n");
+                    }
+                }
+            }
+        }
         // Split arr[idx++] = value into arr[idx] = value; idx += 1;
         // This enables LLVM auto-vectorization by exposing idx as a clean
         // linear induction variable (the block expression { let _v = idx; idx += 1; _v }
@@ -3365,6 +3393,24 @@ impl StatementEmitter for RustStmt<'_, '_> {
 
     fn return_stmt(&self, value: &Option<Expr>, indent: usize) -> String {
         let pad = " ".repeat(indent);
+        // `return macd(..)` -- the tail-call form of a cross-indicator call
+        // (MACDEXT is the only one). Batch tier only: a stream Open maps its
+        // returns through `rust_stream::map_return_code` before this sees them,
+        // and a tail-call there would have no `Ok` value to answer with. None
+        // exists; if one ever does, it falls through to the `<N>_Impl` rendering
+        // and `rust_cross_calls_target_the_public_tier` fails on it.
+        if !self.ctx.result_error_returns {
+            if let Some(Expr::FuncCall(fname, cargs)) = value {
+                if self.registry.contains(fname) {
+                    if let Some(block) = render_cross_indicator_call(
+                        fname, cargs, indent, false, self.ctx, self.opt_real_params,
+                        self.registry, self.helpers, self.inline_counter,
+                    ) {
+                        return format!("{block}{pad}return RetCode::Success;\n");
+                    }
+                }
+            }
+        }
         match value {
             Some(expr) if self.ctx.is_lookback && is_negative_one(expr) => {
                 // The lookback bad-param contract: -1 in C, Java and C#; Rust's
@@ -5042,12 +5088,12 @@ fn render_func_call(
         // Bare names (ema) → ema. Private names (ema_private) → ema_private.
         let resolved = registry.resolve_call(fname, crate::registry::Lang::Rust);
         let nullable = registry.callee_out_nullable(fname.trim_end_matches("_private"));
-        let (rendered_args, aliased) = render_cross_indicator_args(args, nullable, ctx, opt_real_params, registry, helpers);
+        let (rendered_args, aliased) = render_cross_indicator_args(args, None, nullable, ctx, opt_real_params, registry, helpers);
         wrap_cross_indicator_call(format!("self.{}({})", internal_callee(&resolved), rendered_args.join(", ")), &aliased)
     } else if is_ta_function(fname) {
         let rust_name = fname.to_uppercase();
         let nullable = registry.callee_out_nullable(&fname.to_lowercase());
-        let (rendered_args, aliased) = render_cross_indicator_args(args, nullable, ctx, opt_real_params, registry, helpers);
+        let (rendered_args, aliased) = render_cross_indicator_args(args, None, nullable, ctx, opt_real_params, registry, helpers);
         wrap_cross_indicator_call(format!("self.{}({})", internal_callee(&rust_name), rendered_args.join(", ")), &aliased)
     } else {
         let rendered_args: Vec<String> = args
@@ -5055,6 +5101,108 @@ fn render_func_call(
             .map(|a| render_expr(a, ctx, opt_real_params, registry, helpers))
             .collect();
         format!("{}({})", fname, rendered_args.join(", "))
+    }
+}
+
+/// Emit a cross-indicator call to the callee's PUBLIC entry point (#267).
+///
+/// The Rust twin of [`super::java::render_cross_indicator_call`], and it exists
+/// for the same reason: the C source is written in C's idiom -- `retCode = ma(
+/// .., &beg, &nb, buf ); if( retCode != TA_SUCCESS ) return retCode;` -- so a
+/// literal transcription needs a callee that answers a code through
+/// out-parameters. C never did: `ta_APO.c` calls `TA_MA`, which IS C's public
+/// API. All four backends now do the same, which is what puts the callee's
+/// argument checks on the composed path.
+///
+/// One difference from Java, and it is the whole difference: Java's public tier
+/// throws, so the caller's `retCode` is `Success` by construction and nothing
+/// needs writing out. Rust's answers `Err(RetCode)`, and `?` is unavailable in
+/// the 33 sites inside `<N>_Impl`, which returns a bare `RetCode` -- so the error
+/// arm is spelled at every site, as `return _e` there and as `return Err(_e)` at
+/// the three inside a `Result`-returning `<N>_OpenImpl` (`err_returns_result`).
+/// `retCode` is still assigned `Success` afterwards, because 6 of the 36 sites
+/// fold "success with zero output" into the same conditional as the error
+/// (`if retCode != Success || *outNBElement == 0`) and that half is still live.
+///
+/// The two out-parameter arguments are dropped from the call and bound from the
+/// returned [`OutRange`] instead. They are found by ARITHMETIC, as in Java --
+/// the callee's signature is `(startIdx, endIdx, inputs.., opts.., outBegIdx,
+/// outNBElement, outputs..)` and the registry knows how many outputs it declares
+/// -- not by `find_output_boundary`'s scan, which cannot see the difference
+/// between an out-meta pair and a pair of `&scalar` outputs. Returns `None` when
+/// that arithmetic does not hold, so a shape this does not understand falls
+/// through to the old rendering rather than being silently mis-sliced.
+fn render_cross_indicator_call(
+    fname: &str,
+    args: &[Expr],
+    indent: usize,
+    err_returns_result: bool,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Option<String> {
+    let n_out = registry.callee_outputs(fname).len();
+    if n_out == 0 || args.len() < n_out + 4 {
+        return None;
+    }
+    let split = args.len() - n_out - 2;
+    // Both out-meta arguments are either `&local` or a pointer parameter passed
+    // straight through. Anything else means the arity arithmetic landed
+    // somewhere it should not have.
+    if !args[split..split + 2]
+        .iter()
+        .all(|a| matches!(a, Expr::AddressOf(_) | Expr::Var(_)))
+    {
+        return None;
+    }
+
+    let pad = " ".repeat(indent);
+    let public = registry.resolve_call(fname, crate::registry::Lang::Rust);
+    let nullable = registry.callee_out_nullable(fname);
+    let (rendered_args, aliased) = render_cross_indicator_args(
+        args, Some(split), nullable, ctx, opt_real_params, registry, helpers,
+    );
+    let call = wrap_cross_indicator_call(
+        format!("self.{public}({})", rendered_args.join(", ")),
+        &aliased,
+    );
+    // The aliasing shim is a block expression; parenthesize it so it cannot be
+    // read as the `match` arm list.
+    let scrutinee = if aliased.is_empty() { call } else { format!("({call})") };
+
+    let n = counter.get();
+    counter.set(n + 1);
+    let tmp = format!("_xr{n}");
+    let err = if err_returns_result { "return Err(_e)" } else { "return _e" };
+    let beg = out_meta_target(&args[split], ctx, opt_real_params, registry, helpers);
+    let nb = out_meta_target(&args[split + 1], ctx, opt_real_params, registry, helpers);
+    Some(format!(
+        "{pad}let {tmp} = match {scrutinee} {{ Ok(_r) => _r, Err(_e) => {err} }};\n\
+         {pad}{beg} = {tmp}.beg_idx;\n\
+         {pad}{nb} = {tmp}.count;\n"
+    ))
+}
+
+/// The assignment target an out-parameter argument names. `&fastBeg` is a local
+/// `usize`; `outNBElement` passed straight through is the caller's own `&mut
+/// usize` parameter and needs the deref. Only an rvalue READ of one goes through
+/// [`render_expr`], which is why this cannot.
+fn out_meta_target(
+    arg: &Expr,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    match arg {
+        Expr::AddressOf(inner) => match inner.as_ref() {
+            Expr::Var(n) => n.clone(),
+            other => render_expr(other, ctx, opt_real_params, registry, helpers),
+        },
+        Expr::Var(n) => format!("(*{n})"),
+        other => render_expr(other, ctx, opt_real_params, registry, helpers),
     }
 }
 
@@ -5073,16 +5221,26 @@ fn render_func_call(
 /// avoids both `unsafe` and a full input clone.
 fn render_cross_indicator_args(
     args: &[Expr],
+    out_meta: Option<usize>,
     callee_out_nullable: &[bool],
     ctx: &RustRenderCtx,
     opt_real_params: &[String],
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> (Vec<String>, Vec<String>) {
-    // Find the outBegIdx/outNBElement boundary: two consecutive AddressOf args.
-    // Everything after the second one is output slice/array position.
-    // Don't use last AddressOf because outputs can also be AddressOf (e.g., &prevATR for scalar T).
-    let output_start = find_output_boundary(args);
+    // `out_meta` is the index of the callee's `outBegIdx` argument when the call
+    // goes to the PUBLIC entry point (#267): the two out-meta arguments are
+    // DROPPED -- the public tier returns the range -- and the outputs start two
+    // slots later, which keeps every `callee_out_nullable` ordinal correct.
+    //
+    // `None` is the legacy expression-position rendering, which still targets
+    // `<N>_Impl` and still passes them. Nothing in the corpus reaches it (the
+    // 36 cross-calls are all statements, and `rust_cross_calls_target_the_public_tier`
+    // pins that); it is kept, like Java's, for a shape neither emitter has met.
+    // There the boundary has to be found by scanning for two consecutive
+    // AddressOf args -- not the LAST AddressOf, because outputs can be AddressOf
+    // too (`&prevATR` for a scalar T).
+    let output_start = out_meta.map_or_else(|| find_output_boundary(args), |i| i + 2);
 
     // Collect output variable names for aliasing detection
     let output_vars: Vec<&str> = args[output_start..].iter()
@@ -5103,15 +5261,19 @@ fn render_cross_indicator_args(
         }
     }
 
-    // Detect duplicate AddressOf vars (e.g., &tempInt used for both outBegIdx and outNBElement)
+    // Detect duplicate AddressOf vars (e.g., &tempInt used for both outBegIdx and
+    // outNBElement). Only the legacy rendering needs this: on the public path
+    // both of those arguments are dropped, and SAR/SAREXT -- the only calls that
+    // pass the same scalar twice -- become two sequential writes to it instead.
     let mut seen_address_of: std::collections::HashSet<String> = std::collections::HashSet::new();
-    // Track which args need a pre-declared dummy (second mutable borrow of same var)
     let mut dup_vars: Vec<(usize, String)> = Vec::new();
-    for (i, arg) in args.iter().enumerate() {
-        if let Expr::AddressOf(inner) = arg {
-            if let Expr::Var(name) = inner.as_ref() {
-                if !seen_address_of.insert(name.clone()) {
-                    dup_vars.push((i, name.clone()));
+    if out_meta.is_none() {
+        for (i, arg) in args.iter().enumerate() {
+            if let Expr::AddressOf(inner) = arg {
+                if let Expr::Var(name) = inner.as_ref() {
+                    if !seen_address_of.insert(name.clone()) {
+                        dup_vars.push((i, name.clone()));
+                    }
                 }
             }
         }
@@ -5119,6 +5281,7 @@ fn render_cross_indicator_args(
 
     let rendered = args.iter()
         .enumerate()
+        .filter(|(i, _)| out_meta.is_none_or(|m| *i != m && *i != m + 1))
         .map(|(i, arg)| {
             let is_output = i >= output_start;
             let rendered = {
