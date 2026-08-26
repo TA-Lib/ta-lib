@@ -1033,6 +1033,103 @@ fn rust_binder_calls_the_public_tier() {
     assert!(guarded >= 12, "only {guarded} multi-output arms carried a presence guard");
 }
 
+/// The metadata tier's price setter validates every consumed component before
+/// writing any of them, in all four backends (#266).
+///
+/// A rejected setter has to leave the holder as it found it. Interleaved, it
+/// committed the components ahead of the offending one, and since the bitmaps
+/// only ever clear, a caller re-binding a bundle that already worked then
+/// computed over a mixture of the two -- in C# with no code and no exception.
+///
+/// Structural, and on the PR gate, because the four runtime probes are not:
+/// the C one needs a built `ta_regtest`, the Rust one runs under
+/// `cargo test --tests -p ta-lib`, and the Java and C# suites are compiled by no
+/// CI job at all. All four are nightly-only, so this is the one thing a PR sees.
+#[test]
+fn metadata_price_setter_validates_before_writing() {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let funcs: Vec<ir::FuncDef> = discover_indicators()
+        .iter()
+        .map(|n| parser::yaml::parse_yaml(&base.join(format!("{n}/{n}.yaml"))))
+        .collect();
+
+    // Each backend's setter, and the write that must not sit inside the
+    // validating loop. Whole-file needles: these are fixed scaffolding, emitted
+    // once, not per function.
+    let rust = backends::rust_abstract::render(&funcs, &enums);
+    let section = extract_section(&rust, "pub fn set_price_input(", "\n    /// Bind an optional parameter");
+    let check = section
+        .find("if flags.0 & (1u32 << i) != 0 && series.is_none() {")
+        .expect("rust: no per-component validation");
+    let write = section
+        .find("self.price[slot] = given;")
+        .expect("rust: the write is not the whole-bundle commit — an indexed write is \
+                 the interleaved shape #266 removed");
+    assert!(check < write, "rust: the bundle is committed before the last component is checked");
+
+    // C, from the same emitter that writes src/ta_abstract/ta_abstract.c. The
+    // two macro passes are the fix; one combined macro is the defect.
+    let c = backends::ta_abstract_c::render_ta_abstract_c();
+    let c_check = c.find("#define CHECK_PARAM_INFO").expect("c: no checking pass");
+    let c_write = c.find("#define SET_PARAM_INFO").expect("c: no writing pass");
+    assert!(c_check < c_write, "c: the writing macro is defined before the checking one");
+    assert!(
+        c.matches("CHECK_PARAM_INFO(").count() >= 7 && c.matches("SET_PARAM_INFO(").count() >= 7,
+        "c: each macro must be expanded for all six components (plus its #define)"
+    );
+    let last_check = c.rfind("CHECK_PARAM_INFO(openInterest").expect("c: no openInterest check");
+    let first_write = c
+        .find("SET_PARAM_INFO(open, OPEN )")
+        .expect("c: no open write");
+    assert!(
+        last_check < first_write,
+        "c: a component is written before the last one is checked"
+    );
+    // The writing macro must NOT carry the NULL test any more -- if it does, the
+    // two passes were merged back and the check pass is decoration.
+    let set_body = extract_section(&c, "#define SET_PARAM_INFO", "SET_PARAM_INFO(open, OPEN )");
+    assert!(
+        !set_body.contains("return TA_BAD_PARAM;"),
+        "c: the writing macro still rejects, so it is still the interleaved shape"
+    );
+    // ...and it must still skip an unconsumed component rather than clobbering it.
+    assert!(
+        set_body.contains("paramInfo->flags & TA_IN_PRICE_##upperParam"),
+        "c: the writing macro lost its flag guard, so it now overwrites components \
+         the function does not consume"
+    );
+
+    // C#: two loops, the writing one second.
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let _ = (&registry, &helpers);
+    let cs = backends::csharp_metadata::render_function_call();
+    let cs_sec = extract_section(&cs, "public FunctionCall SetPriceInput(int slot, double[]? open", "private OptInputInfo CheckOpt(");
+    let cs_check = cs_sec
+        .find("if (info.Requires(all[i]) && given[i] is null)")
+        .expect("csharp: no per-component validation");
+    let cs_write = cs_sec
+        .find("_price[slot][i] = given[i];")
+        .expect("csharp: no write");
+    assert!(
+        cs_check < cs_write,
+        "csharp: the write is inside the validating loop -- the interleaved shape"
+    );
+    assert_eq!(
+        cs_sec.matches("for (int i = 0; i < all.Length; i++)").count(),
+        2,
+        "csharp: the validating and writing passes must be two separate loops"
+    );
+
+    // Java was already correct; pin it so it stays the shape the other three copy.
+    let java = backends::java_metadata::render_param_holder();
+    let j_sec = extract_section(&java, "public ParamHolder setPriceInput(", "\n   /**");
+    let j_check = j_sec.find("throw new IllegalArgumentException(").expect("java: no validation");
+    let j_write = j_sec.find("priceInputs[idx] = c;").expect("java: no commit");
+    assert!(j_check < j_write, "java: the bundle is committed before validation");
+}
+
 #[test]
 fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");

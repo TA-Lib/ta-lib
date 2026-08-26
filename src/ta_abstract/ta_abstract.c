@@ -823,7 +823,21 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
       return TA_INVALID_PARAM_HOLDER_TYPE;
    }
 
-   #define SET_PARAM_INFO(lowerParam,upperParam) \
+   /* Two passes: check every consumed component, then write them.
+    * Interleaved, a rejection had already committed the components
+    * ahead of the offending one -- and because the bitmaps only ever
+    * clear (there is no unbind), a caller re-binding a bundle that
+    * already worked then had TA_CallFunc succeed over a mixture of
+    * the two. Issue #266.
+    *
+    * Not a whole-struct assignment of TA_PricePtrs, which is what the
+    * ports do: that would also overwrite the components this function
+    * does not consume, where CHECK/SET skip them entirely.
+    * Unobservable either way -- nothing reads a component it did not
+    * declare -- but this shape is a no-op on every call that succeeds
+    * today: same writes, same order, same bitmap.
+    */
+   #define CHECK_PARAM_INFO(lowerParam,upperParam) \
    { \
       if( paramInfo->flags & TA_IN_PRICE_##upperParam ) \
       { \
@@ -831,6 +845,22 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
          { \
             return TA_BAD_PARAM; \
          } \
+      } \
+   }
+
+   CHECK_PARAM_INFO(open, OPEN );
+   CHECK_PARAM_INFO(high, HIGH );
+   CHECK_PARAM_INFO(low, LOW );
+   CHECK_PARAM_INFO(close, CLOSE );
+   CHECK_PARAM_INFO(volume, VOLUME );
+   CHECK_PARAM_INFO(openInterest, OPENINTEREST );
+
+   #undef CHECK_PARAM_INFO
+
+   #define SET_PARAM_INFO(lowerParam,upperParam) \
+   { \
+      if( paramInfo->flags & TA_IN_PRICE_##upperParam ) \
+      { \
          paramHolderPriv->in[paramIndex].data.inPrice.lowerParam = lowerParam; \
       } \
    }

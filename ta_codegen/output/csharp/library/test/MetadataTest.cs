@@ -961,6 +961,75 @@ public static class MetadataTest
         Check(found == c.Count, $"XML describes every function ({found}/{c.Count})");
     }
 
+    /// <summary>A rejected setter leaves the call as it found it.</summary>
+    /// <remarks>The other half of the rule, the call tier's half having landed
+    /// with #265. The sharp case is a RE-bind: on a fresh call a partial write is
+    /// masked by <c>BoundState</c>, but over a bundle that already works, a setter
+    /// that checks and writes one component at a time commits the ones ahead of
+    /// the offending one and leaves the rest holding the previous bundle — and
+    /// <c>AllPriceComponentsBound</c> only looks at the <i>required</i>
+    /// components, so <c>TryInvoke</c> then returned <c>Success</c> over a
+    /// mixture of the two. No code, no exception, wrong numbers (issue #266).</remarks>
+    private static void ARejectedSetterLeavesTheCallAsItFoundIt()
+    {
+        // WILLR consumes High|Low|Close, so Close is the last required component
+        // and the natural place to trip the setter.
+        FunctionInfo willr = FunctionCatalog.Default["WILLR"];
+        // A different PHASE, not a shift: WILLR is (hh - c) / (hh - ll), which a
+        // uniform offset leaves unchanged -- the control below would then pass on
+        // a setter that did nothing at all.
+        double[] high2 = Series(100.0, 8.0, 1.3);
+        var low2 = new double[N];
+        var close2 = new double[N];
+        for (int i = 0; i < N; i++)
+        {
+            low2[i] = high2[i] - 4.0;
+            close2[i] = high2[i] - 2.0;
+        }
+
+        var reference = new double[N];
+        OutRange want = willr.CreateCall()
+            .SetPriceInput(0, high: High, low: Low, close: Close)
+            .SetOption(0, 14).SetOutput(0, reference).Invoke(0, N - 1);
+        Check(want.Count > 0, "the reference call produced values");
+
+        var afterReject = new double[N];
+        FunctionCall call = willr.CreateCall()
+            .SetPriceInput(0, high: High, low: Low, close: Close)
+            .SetOption(0, 14).SetOutput(0, afterReject);
+        call.Invoke(0, N - 1);
+        CheckThrows<ArgumentException>(
+            () => call.SetPriceInput(0, high: high2, low: low2),
+            "close is consumed and was not supplied");
+        RetCode rc = call.TryInvoke(0, N - 1, out OutRange got);
+        Check(rc == RetCode.Success && got.BegIdx == want.BegIdx && got.Count == want.Count,
+            $"the call still reports the same range after a rejected setter ({rc})");
+        bool same = true;
+        for (int i = 0; i < want.Count; i++)
+        {
+            same &= BitConverter.DoubleToInt64Bits(afterReject[i])
+                 == BitConverter.DoubleToInt64Bits(reference[i]);
+        }
+        Check(same, "a rejected setter did not change what the call computes");
+
+        // Control: a CORRECT rebind must reach the output, or the check above
+        // passes for a setter that stopped working altogether.
+        var afterRebind = new double[N];
+        FunctionCall again = willr.CreateCall()
+            .SetPriceInput(0, high: High, low: Low, close: Close)
+            .SetOption(0, 14).SetOutput(0, afterRebind);
+        again.Invoke(0, N - 1);
+        again.SetPriceInput(0, high: high2, low: low2, close: close2);
+        again.Invoke(0, N - 1);
+        bool moved = false;
+        for (int i = 0; i < want.Count; i++)
+        {
+            moved |= BitConverter.DoubleToInt64Bits(afterRebind[i])
+                  != BitConverter.DoubleToInt64Bits(reference[i]);
+        }
+        Check(moved, "a correct rebind reaches the output");
+    }
+
     public static int Run()
     {
         CatalogueIsComplete();
@@ -969,6 +1038,7 @@ public static class MetadataTest
         UnstableIdAgreesWithTheFlag();
         PriceBundlesAreOneInput();
         BinderRejectsMisuse();
+        ARejectedSetterLeavesTheCallAsItFoundIt();
         BothCallPathsAgree();
         UnboundParametersTakeTheDocumentedDefault();
         MetadataTypesCannotBeConstructedOutside();

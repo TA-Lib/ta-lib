@@ -230,6 +230,7 @@ typedef enum
   TA_ABS_TST_FAIL_HOLDER_CONTRACT       = 623,
   TA_ABS_TST_FAIL_HOLDER_CONTRACT_VACUOUS = 624,
   TA_ABS_TST_FAIL_INDEX_RANGE           = 625,
+  TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE   = 626,
 
   /* Error code related to internal tests. */
   TA_INTERNAL_CIRC_BUFF_FAIL_0      = 700,

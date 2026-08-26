@@ -178,7 +178,6 @@ public final class ParamHolder {
    /** Binds an {@link OptInputType#INTEGER_RANGE} or {@link OptInputType#INTEGER_LIST} parameter. */
    public ParamHolder setOptInput(int idx, int value) {
       checkOpt(idx, OptInputType.INTEGER_RANGE, OptInputType.INTEGER_LIST);
-      intOpts[idx] = value;
       if (info.optInputs().get(idx).type() == OptInputType.INTEGER_LIST) {
          MAType[] all = MAType.values();
          /* Setting a parameter to its documented default THROUGH the abstract
@@ -193,11 +192,20 @@ public final class ParamHolder {
             maTypeOpts[idx] = all[declared];
             intOpts[idx] = declared;
          } else if (value < 0 || value >= all.length) {
+            /* Ahead of the write below, not after it. Reversed, a rejected ordinal
+               left `value` in intOpts -- unobservable, since resolveUnsetOptInputs
+               rewrites an unset slot and Dispatch reads a choice list through
+               maTypeOpt(), never intOpt() -- but it broke the same rule
+               setPriceInput breaks visibly: a rejected setter must leave the
+               holder as it found it (issue #266). */
             throw new IllegalArgumentException(
                info.name() + " optInput " + idx + ": " + value + " is not a valid MAType ordinal");
          } else {
             maTypeOpts[idx] = all[value];
+            intOpts[idx] = value;
          }
+      } else {
+         intOpts[idx] = value;
       }
       optSet[idx] = true;
       return this;

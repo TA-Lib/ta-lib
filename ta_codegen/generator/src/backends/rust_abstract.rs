@@ -405,6 +405,12 @@ impl<'a> ParamHolder<'a> {
     /// Bind a price bundle. Components the function does not consume are accepted
     /// and ignored, matching C's `SET_PARAM_INFO` and the Java and C# binders.
     ///
+    /// Validates every consumed component before writing any of them, so a
+    /// rejection leaves the holder exactly as it found it (#266). Interleaved,
+    /// this committed the components ahead of the offending one, and a caller
+    /// re-binding an already-good bundle then computed over a mixture of the two
+    /// -- the holder-reusability rule the `call` tier states for itself.
+    ///
     /// # Errors
     /// [`RetCode::BadParam`] if the slot is out of range, is not a price input, or
     /// a component the function *does* consume was left `None`.
@@ -421,12 +427,12 @@ impl<'a> ParamHolder<'a> {
         self.check_input(slot, InputType::Price)?;
         let flags = self.func.info().inputs[slot].flags;
         let given = [open, high, low, close, volume, open_interest];
-        for (i, series) in given.into_iter().enumerate() {
+        for (i, series) in given.iter().enumerate() {
             if flags.0 & (1u32 << i) != 0 && series.is_none() {
                 return Err(RetCode::BadParam);
             }
-            self.price[slot][i] = series;
         }
+        self.price[slot] = given;
         Ok(self)
     }
 
@@ -688,6 +694,93 @@ mod binder_tests {
         assert_eq!(h.call(0, N - 1), Err(RetCode::BadParam), "output 1 is unbound");
         h.set_output(1, &mut b).unwrap();
         assert!(h.call(0, N - 1).is_ok(), "the corrected holder still works");
+    }
+
+    /// A rejected SETTER leaves the holder as it found it, which is the other
+    /// half of the rule the test above pins for a rejected call (#266).
+    ///
+    /// The sharp case is a RE-bind, not a first bind: on a fresh holder the
+    /// partial write is masked, because the arm's `.ok_or(BadParam)?` reports the
+    /// component that was never set. Over a bundle that already works, an
+    /// interleaved check-and-write committed the components ahead of the
+    /// offending one and left the rest holding the previous bundle, so the next
+    /// `call` succeeded over a mixture of the two.
+    ///
+    /// Each holder is scoped because it borrows its output buffer for its whole
+    /// life; the buffers are compared after the scopes close.
+    #[test]
+    fn a_rejected_setter_leaves_the_holder_as_it_found_it() {
+        let core = Core::new();
+        // WILLR consumes High|Low|Close (InputFlags 0x0e), so `close` is the last
+        // required component and the natural place to trip the setter.
+        let high = series(0.0);
+        let low: Vec<f64> = high.iter().map(|v| v - 4.0).collect();
+        let close: Vec<f64> = high.iter().map(|v| v - 2.0).collect();
+        // A different PHASE, not a shift: WILLR is (hh - c) / (hh - ll), which a
+        // uniform offset leaves unchanged -- the control below would then pass on
+        // a setter that did nothing at all.
+        let high2 = series(1.3);
+        let low2: Vec<f64> = high2.iter().map(|v| v - 4.0).collect();
+        let close2: Vec<f64> = high2.iter().map(|v| v - 2.0).collect();
+
+        let bind = |h: &mut ParamHolder<'_>| {
+            h.set_opt(0, 14_i32).unwrap();
+        };
+
+        let mut reference = vec![0.0; N];
+        let mut after_reject = vec![0.0; N];
+        let mut after_rebind = vec![0.0; N];
+
+        // What a correctly bound holder produces.
+        let want = {
+            let mut h = FuncId::WILLR.new_call(&core);
+            h.set_price_input(0, None, Some(&high), Some(&low), Some(&close), None, None).unwrap();
+            bind(&mut h);
+            h.set_output(0, &mut reference).unwrap();
+            h.call(0, N - 1).expect("the reference bind computes")
+        };
+        assert!(want.count > 0, "the reference call produced values");
+
+        // The same bind, then a REJECTED rebind that supplies high and low and
+        // forgets close, then the same call again.
+        let got = {
+            let mut h = FuncId::WILLR.new_call(&core);
+            h.set_price_input(0, None, Some(&high), Some(&low), Some(&close), None, None).unwrap();
+            bind(&mut h);
+            h.set_output(0, &mut after_reject).unwrap();
+            h.call(0, N - 1).unwrap();
+            assert_eq!(
+                h.set_price_input(0, None, Some(&high2), Some(&low2), None, None, None).err(),
+                Some(RetCode::BadParam),
+                "close is consumed and was not supplied"
+            );
+            h.call(0, N - 1).expect("the holder still computes")
+        };
+        assert_eq!((got.beg_idx, got.count), (want.beg_idx, want.count));
+        for i in 0..want.count {
+            assert_eq!(
+                after_reject[i].to_bits(),
+                reference[i].to_bits(),
+                "a rejected setter changed what the holder computes, at output[{i}]"
+            );
+        }
+
+        // Control: a CORRECT rebind must reach the output, or the assertion above
+        // passes for a setter that stopped working altogether.
+        {
+            let mut h = FuncId::WILLR.new_call(&core);
+            h.set_price_input(0, None, Some(&high), Some(&low), Some(&close), None, None).unwrap();
+            bind(&mut h);
+            h.set_output(0, &mut after_rebind).unwrap();
+            h.call(0, N - 1).unwrap();
+            h.set_price_input(0, None, Some(&high2), Some(&low2), Some(&close2), None, None)
+                .unwrap();
+            h.call(0, N - 1).unwrap();
+        }
+        assert!(
+            (0..want.count).any(|i| after_rebind[i].to_bits() != reference[i].to_bits()),
+            "a correct rebind must reach the output"
+        );
     }
 
     /// Type mismatches and out-of-range indices are refused rather than silently bound.

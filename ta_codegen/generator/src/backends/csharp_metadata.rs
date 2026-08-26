@@ -527,6 +527,12 @@ fn model() -> String {
     s
 }
 
+/// `FunctionCall.g.cs`'s text, without writing it — so a test can assert on the
+/// emitted binder.
+pub fn render_function_call() -> String {
+    function_call()
+}
+
 fn function_call() -> String {
     let mut s = header();
     s.push_str(FUNCTION_CALL);
@@ -1616,6 +1622,11 @@ public sealed class FunctionCall
     /// <exception cref="ArgumentException">A consumed component was not supplied.
     /// A component the function ignores is accepted — see the single-component
     /// overload's remarks.</exception>
+    /// <remarks>Validates every consumed component before writing any of them, so
+    /// a rejection leaves this call exactly as it found it (issue #266).
+    /// Interleaved, it committed the components ahead of the offending one, and a
+    /// caller re-binding an already-good bundle then got <c>Success</c> over a
+    /// mixture of the two — no code, no exception, wrong numbers.</remarks>
     public FunctionCall SetPriceInput(int slot, double[]? open = null, double[]? high = null,
                                       double[]? low = null, double[]? close = null,
                                       double[]? volume = null, double[]? openInterest = null)
@@ -1630,15 +1641,17 @@ public sealed class FunctionCall
 
         for (int i = 0; i < all.Length; i++)
         {
-            bool required = info.Requires(all[i]);
-            if (required && given[i] is null)
+            if (info.Requires(all[i]) && given[i] is null)
             {
                 throw new ArgumentException(
                     $"{_info.Name} input {slot} ({info.ParamName}) requires {all[i]}", nameof(slot));
             }
+        }
 
-            /* An unconsumed component is stored and ignored -- see the remark on
-               the single-component overload. */
+        /* An unconsumed component is stored and ignored -- see the remark on the
+           single-component overload. */
+        for (int i = 0; i < all.Length; i++)
+        {
             _price[slot][i] = given[i];
         }
 

@@ -3033,6 +3033,7 @@ static void testInPlaceAlias( const TA_FuncInfo *funcInfo, void *opaqueData )
 static long long g_holderTypeErr = 0;   /* TA_INVALID_PARAM_HOLDER_TYPE  */
 static long long g_holderIndexErr = 0;  /* paramIndex out of range       */
 static long long g_holderNullErr = 0;   /* NULL value pointer            */
+static long long g_holderPriceNullErr = 0; /* NULL consumed price component */
 static long long g_holderInputErr = 0;  /* TA_INPUT_NOT_ALL_INITIALIZE   */
 static long long g_holderOutputErr = 0; /* TA_OUTPUT_NOT_ALL_INITIALIZE  */
 
@@ -3045,6 +3046,145 @@ static int holder_expect( const char *funcName, const char *what,
    printf( "  HOLDER CONTRACT [%s]: %s returned %d, expected %d\n",
            funcName, what, (int)got, (int)want );
    return 0;
+}
+
+/* A rejected setter must leave the holder computing exactly what it computed
+ * before -- the other half of the rule, the call tier's half having landed with
+ * #265.
+ *
+ * The sharp case is a RE-bind. On a fresh holder a partial write is masked: the
+ * slot is still marked unbound and TA_CallFunc answers TA_INPUT_NOT_ALL_INITIALIZE
+ * before dispatching. But the bitmaps only ever clear -- there is no unbind -- so
+ * over a bundle that already works, a setter that checked and wrote one component
+ * at a time committed the ones ahead of the offending one and left the rest
+ * holding the previous bundle, and TA_CallFunc then succeeded over a mixture of
+ * the two.
+ *
+ * WILLR, because it consumes High|Low|Close: close is the last required
+ * component and so the natural place to trip the setter. The rebind uses a
+ * different PHASE rather than an offset -- WILLR is (hh - c) / (hh - ll), which a
+ * uniform shift leaves unchanged, so the control below would pass on a setter
+ * that did nothing at all.
+ */
+static ErrorNumber testHolderStaysReusable( void )
+{
+   const TA_FuncHandle *handle;
+   TA_ParamHolder *holder;
+   TA_RetCode retCode;
+   static double h1[252], l1[252], c1[252];
+   static double h2[252], l2[252], c2[252];
+   static double want[252], got[252], moved[252];
+   int wantBeg, wantNb, gotBeg, gotNb, movedBeg, movedNb;
+   int i, differs;
+
+   for( i = 0; i < 252; i++ )
+   {
+      h1[i] = 100.0 + 8.0 * sin( i / 9.0 );
+      l1[i] = h1[i] - 4.0;
+      c1[i] = h1[i] - 2.0;
+      h2[i] = 100.0 + 8.0 * sin( (i / 9.0) + 1.3 );
+      l2[i] = h2[i] - 4.0;
+      c2[i] = h2[i] - 2.0;
+   }
+
+   retCode = TA_GetFuncHandle( "WILLR", &handle );
+   if( retCode != TA_SUCCESS ) return TA_ABS_TST_FAIL_GETFUNCHANDLE;
+
+   #define REUSE_BIND(dest) \
+   { \
+      if( TA_SetInputParamPricePtr( holder, 0, NULL, h1, l1, c1, NULL, NULL ) != TA_SUCCESS || \
+          TA_SetOptInputParamInteger( holder, 0, 14 ) != TA_SUCCESS || \
+          TA_SetOutputParamRealPtr( holder, 0, dest ) != TA_SUCCESS ) \
+      { \
+         TA_ParamHolderFree( holder ); \
+         return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE; \
+      } \
+   }
+
+   /* What a correctly bound holder produces. */
+   if( TA_ParamHolderAlloc( handle, &holder ) != TA_SUCCESS )
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+   REUSE_BIND( want )
+   retCode = TA_CallFunc( holder, 0, 251, &wantBeg, &wantNb );
+   TA_ParamHolderFree( holder );
+   if( retCode != TA_SUCCESS || wantNb <= 0 )
+   {
+      printf( "  HOLDER REUSE: the reference call produced nothing (%d, %d)\n",
+              (int)retCode, wantNb );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+
+   /* The same bind, a REJECTED rebind that forgets close, then the same call. */
+   if( TA_ParamHolderAlloc( handle, &holder ) != TA_SUCCESS )
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+   REUSE_BIND( got )
+   if( TA_CallFunc( holder, 0, 251, &gotBeg, &gotNb ) != TA_SUCCESS )
+   {
+      TA_ParamHolderFree( holder );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+   retCode = TA_SetInputParamPricePtr( holder, 0, NULL, h2, l2, NULL, NULL, NULL );
+   if( retCode != TA_BAD_PARAM )
+   {
+      printf( "  HOLDER REUSE: a bundle missing a consumed component returned %d, "
+              "expected TA_BAD_PARAM\n", (int)retCode );
+      TA_ParamHolderFree( holder );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+   retCode = TA_CallFunc( holder, 0, 251, &gotBeg, &gotNb );
+   TA_ParamHolderFree( holder );
+   if( retCode != TA_SUCCESS || gotBeg != wantBeg || gotNb != wantNb )
+   {
+      printf( "  HOLDER REUSE: after a rejected setter the call answered %d, "
+              "(%d,%d) vs (%d,%d)\n", (int)retCode, gotBeg, gotNb, wantBeg, wantNb );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+   for( i = 0; i < wantNb; i++ )
+   {
+      if( memcmp( &got[i], &want[i], sizeof(double) ) != 0 )
+      {
+         printf( "  HOLDER REUSE: a rejected setter changed what the holder "
+                 "computes, at output[%d]\n", i );
+         return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+      }
+   }
+
+   /* Control: a CORRECT rebind must reach the output, or the loop above passes
+    * for a setter that stopped working altogether. */
+   if( TA_ParamHolderAlloc( handle, &holder ) != TA_SUCCESS )
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+   REUSE_BIND( moved )
+   if( TA_CallFunc( holder, 0, 251, &movedBeg, &movedNb ) != TA_SUCCESS ||
+       TA_SetInputParamPricePtr( holder, 0, NULL, h2, l2, c2, NULL, NULL ) != TA_SUCCESS ||
+       TA_CallFunc( holder, 0, 251, &movedBeg, &movedNb ) != TA_SUCCESS )
+   {
+      TA_ParamHolderFree( holder );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+   TA_ParamHolderFree( holder );
+   #undef REUSE_BIND
+
+   if( movedBeg != wantBeg || movedNb != wantNb )
+   {
+      printf( "  HOLDER REUSE: a correct rebind moved the reported range "
+              "(%d,%d) vs (%d,%d)\n", movedBeg, movedNb, wantBeg, wantNb );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+
+   differs = 0;
+   for( i = 0; i < wantNb; i++ )
+      if( memcmp( &moved[i], &want[i], sizeof(double) ) != 0 )
+         differs = 1;
+   if( !differs )
+   {
+      printf( "  HOLDER REUSE: a correct rebind did not reach the output -- the "
+              "comparison above proves nothing\n" );
+      return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
+   }
+
+   printf( "ParamHolder reuse: a rejected setter leaves the holder computing "
+           "%d unchanged value(s); a correct rebind moves them\n", wantNb );
+   return TA_TEST_PASS;
 }
 
 static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
@@ -3106,6 +3246,37 @@ static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
    ok &= holder_expect( funcInfo->name, "SetOutputParamIntegerPtr(NULL)",
             TA_SetOutputParamIntegerPtr( paramHolder, 0, NULL ), TA_BAD_PARAM );
    g_holderNullErr += 4;
+
+   /* 2b. The PRICE setter's own NULL class, which nothing reached before #266:
+    *     every call site here either passed all six or passed NULL only where
+    *     the flags say the component is unconsumed. Offer NULL for a component
+    *     the function DOES consume, one at a time, and require TA_BAD_PARAM. */
+   for( i = 0; i < funcInfo->nbInput; i++ )
+   {
+      unsigned int c;
+      TA_GetInputParameterInfo( handle, i, &inputInfo );
+      if( !inputInfo || inputInfo->type != TA_Input_Price )
+         continue;
+      for( c = 0; c < 6; c++ )
+      {
+         static const TA_InputFlags priceBit[6] =
+            { TA_IN_PRICE_OPEN, TA_IN_PRICE_HIGH, TA_IN_PRICE_LOW,
+              TA_IN_PRICE_CLOSE, TA_IN_PRICE_VOLUME, TA_IN_PRICE_OPENINTEREST };
+         const TA_Real *arg[6];
+         unsigned int k;
+         if( !(inputInfo->flags & priceBit[c]) )
+            continue;
+         for( k = 0; k < 6; k++ )
+            arg[k] = (k == c) ? NULL : &dummyReal[0][0];
+         ok &= holder_expect( funcInfo->name, "SetInputParamPricePtr(NULL component)",
+                  TA_SetInputParamPricePtr( paramHolder, i, arg[0], arg[1], arg[2],
+                                            arg[3], arg[4], arg[5] ), TA_BAD_PARAM );
+         /* Its OWN counter, not g_holderNullErr: classes 2 and 6 drive that one to
+          * 6 per function unconditionally, so folding 2b into it would let this
+          * whole loop go dead behind a floor that is already satisfied. */
+         g_holderPriceNullErr++;
+      }
+   }
 
    /* 3. Type mismatch: offer each slot the setter its declared type forbids. */
    for( i = 0; i < funcInfo->nbInput; i++ )
@@ -3367,7 +3538,7 @@ static ErrorNumber test_default_calls(void)
    if( errNumber == TA_TEST_PASS )
    {
       g_holderTypeErr = g_holderIndexErr = g_holderNullErr = 0;
-      g_holderInputErr = g_holderOutputErr = 0;
+      g_holderInputErr = g_holderOutputErr = g_holderPriceNullErr = 0;
       TA_ForEachFunc( testHolderErrorContract, &errNumber );
 
       /* Each class must have been reached. Every function contributes to every
@@ -3375,23 +3546,28 @@ static ErrorNumber test_default_calls(void)
        * that the corpus lacks them. */
       if( errNumber == TA_TEST_PASS &&
           ( g_holderTypeErr == 0 || g_holderIndexErr == 0 || g_holderNullErr == 0 ||
-            g_holderInputErr == 0 || g_holderOutputErr == 0 ) )
+            g_holderInputErr == 0 || g_holderOutputErr == 0 ||
+            g_holderPriceNullErr == 0 ) )
       {
          printf( "Failed: ParamHolder error-contract gate vacuous "
-                 "(type=%lld index=%lld null=%lld input=%lld output=%lld)\n",
+                 "(type=%lld index=%lld null=%lld priceNull=%lld input=%lld output=%lld)\n",
                  g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
-                 g_holderInputErr, g_holderOutputErr );
+                 g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr );
          errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT_VACUOUS;
       }
       if( errNumber == TA_TEST_PASS )
          printf( "ParamHolder error contract: %lld refusals asserted "
-                 "(%lld wrong-type, %lld bad-index, %lld NULL, %lld unbound-input, "
-                 "%lld unbound-output)\n",
+                 "(%lld wrong-type, %lld bad-index, %lld NULL, %lld NULL price "
+                 "component, %lld unbound-input, %lld unbound-output)\n",
                  g_holderTypeErr + g_holderIndexErr + g_holderNullErr +
-                 g_holderInputErr + g_holderOutputErr,
+                 g_holderPriceNullErr + g_holderInputErr + g_holderOutputErr,
                  g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
-                 g_holderInputErr, g_holderOutputErr );
+                 g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr );
    }
+
+   /* A rejected SETTER leaves the holder as it found it (#266). */
+   if( errNumber == TA_TEST_PASS )
+      errNumber = testHolderStaysReusable();
 
    return errNumber;
 }
