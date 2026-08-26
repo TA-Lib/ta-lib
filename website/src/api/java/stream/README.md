@@ -15,13 +15,13 @@ Each streamable function adds two factory methods on `Core` and a handful of met
 | Call | When | Does |
 |------|------|------|
 | `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
-| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
-| `stream.updateAndFill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values — see [below](#catch-up-n-bars-at-once-updateandfill) |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `stream.value()` | any time | the most recently committed value |
 | `stream.copy()` | any time | an independent copy of the stream |
 | `stream.outRange()` | any time | the bars this stream has a value for — the batch range over the same bars |
+
+Two more calls, `OpenAndFill` and `updateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
 There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
@@ -53,9 +53,33 @@ double provisional = s.peek(formingClose);      // state left unchanged
 - **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
-## Full-history output (`OpenAndFill`)
+## Multi-input / multi-output
 
-`Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/java/) would produce — while still returning the live stream, in one pass:
+Inputs and outputs mirror the batch method. Multi-output functions return a small immutable `Value` record with one component per output, in batch output order; candlestick patterns return `int`:
+
+```java
+// MACD: one input, three outputs
+Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
+Core.MACD_Stream.Value out = m.update(newClose);
+// out.macd(), out.macdSignal(), out.macdHist()
+// On JDK 21+ it also destructures:
+//   if (out instanceof Core.MACD_Stream.Value(double macd, double signal, double hist)) { ... }
+
+// A candlestick pattern returns int
+Core.CDLDOJI_Stream c = core.CDLDOJI_Open(open, high, low, close);
+int pattern = c.update(o, h, l, cl);
+```
+
+## Array-Fill Calls
+
+`Open` and `update` each write a single value. Two more calls write a full array instead — the same shape the [batch method](/api/java/) would produce — while still driving the stream:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar |
+| `stream.updateAndFill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values |
+
+**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/java/) would produce — while still returning the live stream, in one pass:
 
 ```java
 import io.github.talib.OutRange;
@@ -71,9 +95,7 @@ double v = s.update(newClose);
 
 The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned handle as `outRange()` rather than through out-parameters. That accessor is on every stream, not just a filled one: it holds the bars the handle has a value for, which is what the batch call over the same bars reports — `(lookback, historyLen - lookback)` at open, one more per `update`, unchanged by `peek`. The output arrays must not alias the input or each other.
 
-## Catch up n bars at once (`updateAndFill`)
-
-Feeding a gap one `update` at a time works; `updateAndFill` does the same thing
+**`updateAndFill`** — feeding a gap one `update` at a time works; `updateAndFill` does the same thing
 in one call, writing one value per bar into your array:
 
 ```java
@@ -92,23 +114,6 @@ That includes a call that fails partway. A non-finite bar throws
 tells you how many. It throws before committing anything if the input arrays
 differ in length, an output is shorter than the bar count, or an output is the
 same array as an input or as another output. A zero-length call does nothing.
-
-## Multi-input / multi-output
-
-Inputs and outputs mirror the batch method. Multi-output functions return a small immutable `Value` record with one component per output, in batch output order; candlestick patterns return `int`:
-
-```java
-// MACD: one input, three outputs
-Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
-Core.MACD_Stream.Value out = m.update(newClose);
-// out.macd(), out.macdSignal(), out.macdHist()
-// On JDK 21+ it also destructures:
-//   if (out instanceof Core.MACD_Stream.Value(double macd, double signal, double hist)) { ... }
-
-// A candlestick pattern returns int
-Core.CDLDOJI_Stream c = core.CDLDOJI_Open(open, high, low, close);
-int pattern = c.update(o, h, l, cl);
-```
 
 ## Error model
 

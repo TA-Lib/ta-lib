@@ -15,11 +15,11 @@ Each streamable function adds two constructors on `Core` and a handful of method
 | Call | When | Does |
 |------|------|------|
 | `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
-| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` — see [below](#full-history-output-openandfill) |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
-| `stream.update_and_fill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values — see [below](#catch-up-n-bars-at-once-update_and_fill) |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `stream.out_range()` | any time | the bars this stream has a value for — the batch range over the same bars |
+
+Two more calls, `OpenAndFill` and `update_and_fill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
 There is no `Close` — dropping the stream closes it (RAII).
 
@@ -55,9 +55,30 @@ One narrow exception to "the handle is unchanged": a *composed* indicator drives
 - **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
 - **Don't persist** a stream across library versions.
 
-## Full-history output (`OpenAndFill`)
+## Multi-input / multi-output
 
-`Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/rust/) would produce — while still returning the live stream, in one pass:
+Inputs and outputs mirror the batch method. Multi-output functions return a tuple in batch output order; candlestick patterns return `i32`:
+
+```rust
+// MACD: one input, three outputs
+let (mut s, (macd, signal, hist)) = core.MACD_Open(&history, 12, 26, 9)?;
+let (macd, signal, hist) = s.update(new_close)?;
+
+// A candlestick pattern returns i32
+let (mut s, _) = core.CDLDOJI_Open(&open, &high, &low, &close)?;
+let pattern: i32 = s.update(o, h, l, c)?;
+```
+
+## Array-Fill Calls
+
+`Open` and `update` each write a single value. Two more calls write a full slice instead — the same shape the [batch method](/api/rust/) would produce — while still driving the stream:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` |
+| `stream.update_and_fill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values |
+
+**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/rust/) would produce — while still returning the live stream, in one pass:
 
 ```rust
 let mut warmup = vec![0.0; history.len()];
@@ -70,9 +91,7 @@ let v = s.update(new_close)?;
 
 `OpenAndFill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. The output slices must not alias the input or each other.
 
-## Catch up n bars at once (`update_and_fill`)
-
-Feeding a gap one `update` at a time works; `update_and_fill` does the same
+**`update_and_fill`** — feeding a gap one `update` at a time works; `update_and_fill` does the same
 thing in one call, writing one value per bar into your slice:
 
 ```rust
@@ -92,20 +111,6 @@ That includes a call that fails partway. A non-finite bar returns
 tells you how many. `Err(RetCode::BadParam)` before anything is committed if the
 input slices differ in length or an output is shorter than the bar count; a zero
 bar count is a successful no-op.
-
-## Multi-input / multi-output
-
-Inputs and outputs mirror the batch method. Multi-output functions return a tuple in batch output order; candlestick patterns return `i32`:
-
-```rust
-// MACD: one input, three outputs
-let (mut s, (macd, signal, hist)) = core.MACD_Open(&history, 12, 26, 9)?;
-let (macd, signal, hist) = s.update(new_close)?;
-
-// A candlestick pattern returns i32
-let (mut s, _) = core.CDLDOJI_Open(&open, &high, &low, &close)?;
-let pattern: i32 = s.update(o, h, l, c)?;
-```
 
 ## Discovering streamable functions
 

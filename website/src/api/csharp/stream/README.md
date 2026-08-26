@@ -15,13 +15,13 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 | Call | When | Does |
 |------|------|------|
 | `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return a **handle** |
-| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
 | `handle.Update(bar)` | once per **closed** bar | commit one bar, return the new value |
-| `handle.UpdateAndFill(bars, outs)` | instead of a loop of `Update` | commit `n` closed bars and write the `n` values — see [below](#catch-up-n-bars-at-once-updateandfill) |
 | `handle.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `handle.Value` | any time | the most recently committed value |
 | `handle.Clone()` | any time | an independent deep copy of the handle |
 | `handle.OutRange` | any time | the bars this handle has a value for — the batch range over the same bars |
+
+Two more calls, `OpenAndFill` and `UpdateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
 There is **no `Dispose`**: a handle owns only managed state — its arrays, its sub-handles and a `Core` reference — so an unreferenced handle is simply collected. The handle types deliberately do not implement `IDisposable`.
 
@@ -55,9 +55,34 @@ double provisional = s.Peek(formingClose);       // state left unchanged
 - **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SMA_Open(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.
 - **Not serializable.** The constructors are `internal`, so no partially built handle can be minted or deserialized. To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
-## Full-history output (`OpenAndFill`)
+## Multi-input / multi-output
 
-`Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/csharp/) would produce — while still returning the live handle, in one pass:
+`Update` and `Peek` take one argument per input series, in the batch call's order, and return one value per output. Multi-output indicators return a generated `readonly record struct` named after the function, whose members are the output names with the leading `out` stripped:
+
+```csharp
+Core.BBANDS_Stream b = core.BBANDS_Open(history, 20, 2.0, 2.0, MAType.SMA);
+
+BBANDS_Value v = b.Update(newClose);
+Console.WriteLine($"{v.RealUpperBand} {v.RealMiddleBand} {v.RealLowerBand}");
+
+// It deconstructs, too:
+var (upper, middle, lower) = b.Value;
+```
+
+::: tip Equality on a value type
+These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN` **and** `+0.0` equals `-0.0`. (Java's record differs on the second.) Compare `BitConverter.DoubleToInt64Bits` per component when bit-level identity is what you mean.
+:::
+
+## Array-Fill Calls
+
+`Open` and `Update` each write a single value. Two more calls write a full array instead — the same shape the [batch method](/api/csharp/) would produce — while still driving the handle:
+
+| Call | When | Does |
+|------|------|------|
+| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar |
+| `handle.UpdateAndFill(bars, outs)` | instead of a loop of `Update` | commit `n` closed bars and write the `n` values |
+
+**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/csharp/) would produce — while still returning the live handle, in one pass:
 
 ```csharp
 double[] history = /* ...your closing prices... */;
@@ -72,9 +97,7 @@ OutRange r = s.OutRange;    // the bars it has a value for
 
 The output arguments are the batch call's, in the same order. An output may not overlap an input, or another output — that throws `ArgumentException` and mints no handle. With spans that means genuine memory overlap, not just the same buffer: two slices of one array that share even one element are rejected.
 
-## Catch up n bars at once (`UpdateAndFill`)
-
-Feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
+**`UpdateAndFill`** — feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
 in one call, writing one value per bar into your span:
 
 ```csharp
@@ -93,24 +116,6 @@ are already committed and their values already written; the range tells you how
 many. It throws before committing anything if the input spans differ in length,
 an output is shorter than the bar count, or an output overlaps an input or
 another output. An empty call does nothing.
-
-## Multi-input / multi-output
-
-`Update` and `Peek` take one argument per input series, in the batch call's order, and return one value per output. Multi-output indicators return a generated `readonly record struct` named after the function, whose members are the output names with the leading `out` stripped:
-
-```csharp
-Core.BBANDS_Stream b = core.BBANDS_Open(history, 20, 2.0, 2.0, MAType.SMA);
-
-BBANDS_Value v = b.Update(newClose);
-Console.WriteLine($"{v.RealUpperBand} {v.RealMiddleBand} {v.RealLowerBand}");
-
-// It deconstructs, too:
-var (upper, middle, lower) = b.Value;
-```
-
-::: tip Equality on a value type
-These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN` **and** `+0.0` equals `-0.0`. (Java's record differs on the second.) Compare `BitConverter.DoubleToInt64Bits` per component when bit-level identity is what you mean.
-:::
 
 ## Error model
 
