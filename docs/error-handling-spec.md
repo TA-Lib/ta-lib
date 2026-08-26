@@ -633,7 +633,14 @@ Named so their absence is deliberate rather than an oversight.
 
 - **Abstract / metadata tier** — function-handle lookup, parameter holders, the
   generated catalogues. Has its own error surface in all four backends; not yet
-  specified here.
+  specified here. One thing about it is settled and worth writing down: **its
+  dispatch calls the public entry point in all four**, so every rule above holds
+  through it unchanged (#265). Rust and C# used to call `<N>_Impl` instead, and a
+  leg bound to a buffer shorter than the range was a panic and an
+  `IndexOutOfRangeException` there against `TA_BAD_PARAM` in C and Java. What is
+  still unspecified is the tier's *own* surface: unbound and mis-typed
+  arguments, handle lookup, and the fact that C cannot express a short leg at all
+  — `TA_SetInputParamRealPtr` takes a bare pointer and carries no length.
 - **JSON-RPC servers** — a test harness, not a shipped API. Their error
   behaviour is a property of the harness.
 - **`Copy` / `Clone` of a stream handle, and concurrent use** — the concurrency

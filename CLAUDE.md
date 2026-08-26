@@ -109,9 +109,18 @@ and by an anchor clamp, not by a stride — so their `_OpenImpl` takes no
 
 A cross-call inside a body calls the callee's *public* tier and lets its
 rejection throw, so the callers that need a code back convert it themselves:
-the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. That conversion is
-live only while cross-calls go through the public tier — the same fact that
-withholds `MA` from `NoPhantomIoTest`'s sweep — so the two move together.
+the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. `TryInvoke`'s
+conversion is now the *direct* path's too — since #265 its thunk calls the
+function's own public overload, like C's frames and Java's `Dispatch` — so it no
+longer goes dead if the #236 step 3 debt is ever paid down; what still moves with
+that debt is `MA`'s withholding from `NoPhantomIoTest`'s sweep.
+
+**Every metadata tier calls the public tier.** C (`ta_frame.c`), Java
+(`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk) and Rust
+(`ParamHolder::call`) all do, so binding a leg shorter than the requested range
+is `TA_BAD_PARAM` in three of them and inexpressible in the fourth — C's setters
+take a bare pointer and carry no length. Rust and C# reached `<N>_Impl` until
+#265 and answered a panic and an `IndexOutOfRangeException` respectively.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source

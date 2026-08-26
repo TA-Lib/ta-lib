@@ -46,17 +46,15 @@ using System.Linq;
 
 namespace TALib.Metadata;
 
-/// <summary>What one dynamic call produced.</summary>
-/// <param name="Code">The function's return code.</param>
-/// <param name="BegIdx">Input index of the first output value.</param>
-/// <param name="Count">How many values were written.</param>
-internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
-
 /// <summary>Computes a function's lookback from a bound call.</summary>
 internal delegate int LookbackThunk(Core core, FunctionCall call);
 
 /// <summary>Runs a function from a bound call.</summary>
-internal delegate CallOutcome InvokeThunk(Core core, FunctionCall call, int startIdx, int endIdx);
+/// <remarks>The thunk calls the function's public overload, so a rejection
+/// arrives as an exception and the range is all that comes back;
+/// <see cref="FunctionCall.TryInvoke"/> turns the exception into the code it
+/// promises (#265).</remarks>
+internal delegate OutRange InvokeThunk(Core core, FunctionCall call, int startIdx, int endIdx);
 
 /// <summary>One entry of a named choice list.</summary>
 public sealed record NamedValue

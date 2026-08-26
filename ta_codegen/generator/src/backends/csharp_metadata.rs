@@ -825,30 +825,31 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     let mut call_args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
     call_args.extend(input_arg_exprs(r));
     call_args.extend(opt_args);
-    call_args.push("out int b".into());
-    call_args.push("out int n".into());
     for (k, out) in r.outputs.iter().enumerate() {
         call_args.push(match out.kind {
             OutputKind::Real => format!("c.RealOut({k})"),
             OutputKind::Integer => format!("c.IntOut({k})"),
         });
     }
-    // The BODY. This bound the C-shaped overload until #236 step 5 deleted that
-    // tier, and the body is what that overload called -- so the binder reaches
-    // the same code, UNGUARDED, exactly as before. Deliberately not the public
-    // overload: `NoPhantomIoTest` drives functions through this binder, and the
-    // public tier's length checks would reject its undersized arrays before the
-    // body could touch them, which is the one thing that probe must not measure.
+    // The PUBLIC overload (#265), which is what C's frames and Java's Dispatch
+    // have always called. It bound the body until then, so this tier did no
+    // argument checking at all and a leg shorter than the range reached the
+    // numerics: an `IndexOutOfRangeException` escaping `TryInvoke`, whose
+    // documented contract is a code and not an exception.
     //
-    // What the deleted shim did still has to happen: since step 3 a cross-call
-    // inside the body calls the PUBLIC callee and a rejection arrives as a
-    // throw. `FunctionCall.TryInvoke` -- whose contract is a code, not an
-    // exception -- converts it in that one place rather than in 174 thunks.
-    s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n        {\n");
-    let _ = writeln!(s, "            RetCode rc = core.{method}_Impl(");
-    let _ = writeln!(s, "                {});", call_args.join(", "));
-    s.push_str("            return new CallOutcome(rc, b, n);\n");
-    s.push_str("        });\n\n");
+    // It bound the body for a reason, and the reason was a test: `NoPhantomIoTest`
+    // drove functions through this binder, so the public tier's length checks
+    // would have rejected its undersized arrays before the body could touch
+    // them. That probe brings its own `NAME_Impl` binder now, which is what
+    // freed this one.
+    //
+    // The public overload returns `OutRange` and throws, so the code comes back
+    // through `FunctionCall.TryInvoke`'s `ITaLibFailure` catch -- the same one
+    // that already converted a composed body's cross-call rejection since #236
+    // step 3, now on the direct path too.
+    s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n");
+    let _ = writeln!(s, "            core.{method}(");
+    let _ = writeln!(s, "                {}));\n", call_args.join(", "));
 }
 
 /// The argument expressions for a function's required inputs. A price bundle is
@@ -1064,17 +1065,15 @@ using System.Linq;
 
 namespace TALib.Metadata;
 
-/// <summary>What one dynamic call produced.</summary>
-/// <param name="Code">The function's return code.</param>
-/// <param name="BegIdx">Input index of the first output value.</param>
-/// <param name="Count">How many values were written.</param>
-internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
-
 /// <summary>Computes a function's lookback from a bound call.</summary>
 internal delegate int LookbackThunk(Core core, FunctionCall call);
 
 /// <summary>Runs a function from a bound call.</summary>
-internal delegate CallOutcome InvokeThunk(Core core, FunctionCall call, int startIdx, int endIdx);
+/// <remarks>The thunk calls the function's public overload, so a rejection
+/// arrives as an exception and the range is all that comes back;
+/// <see cref="FunctionCall.TryInvoke"/> turns the exception into the code it
+/// promises (#265).</remarks>
+internal delegate OutRange InvokeThunk(Core core, FunctionCall call, int startIdx, int endIdx);
 
 /// <summary>One entry of a named choice list.</summary>
 public sealed record NamedValue
@@ -1889,13 +1888,13 @@ public sealed class FunctionCall
             throw new ArgumentException($"{_info.Name}: {which} was not set");
         }
 
-        RetCode rc = TryInvoke(startIdx, endIdx, out OutRange range);
-        if (rc != RetCode.Success)
-        {
-            throw new ArgumentException($"{_info.Name} failed: {rc}");
-        }
-
-        return range;
+        // The function's OWN exception, not a relabelled code. Since #265 the
+        // thunk calls the public overload, whose message names the buffer and
+        // both sizes and whose type carries the RetCode; going through
+        // TryInvoke flattened that to "SMA failed: BadParam". TryInvoke exists
+        // to hand back a code; this method's contract is the exception, so it
+        // should be the real one -- which is what Java's ParamHolder.call does.
+        return _info.Invoke(_core, this, startIdx, endIdx);
     }
 
     /// <summary>Runs the function, reporting failure as a code rather than an
@@ -1916,33 +1915,24 @@ public sealed class FunctionCall
             return bound;
         }
 
-        CallOutcome outcome;
         try
         {
-            outcome = _info.Invoke(_core, this, startIdx, endIdx);
+            range = _info.Invoke(_core, this, startIdx, endIdx);
+            return RetCode.Success;
         }
         catch (Exception _e) when (_e is ITaLibFailure)
         {
-            // Reachable only through a COMPOSED function. The thunk calls the
-            // body, which answers a code and does not throw; but a composed
-            // body cross-calls its callee's PUBLIC tier -- `OutRange _xr0 =
-            // MA(startIdx, endIdx, ...)` in APO -- and that throws. This
-            // method's contract is a code, so it converts here, once, rather
-            // than in every thunk. Only the library's own failure is
-            // converted; anything else is not ours to relabel.
-            //
-            // So this catch is coupled to the #236 step 3 debt: it is live
-            // only while composed bodies call the public callee, which is the
-            // same mechanism that put ten cores in NoPhantomIoTest's
-            // CROSS_CALL_GUARDED list. If that debt is ever paid down by
-            // routing cross-calls to `_Impl`, this goes dead and TryInvoke
-            // silently stops converting anything -- delete it in that change,
-            // do not leave it standing as reassurance.
+            // The one conversion point. Since #265 the thunk calls the function's
+            // PUBLIC overload, like C's frames and Java's Dispatch, so every
+            // rejection this method reports -- a bad parameter, a range out of
+            // bounds, a buffer too short -- arrives here as a throw. It also
+            // still catches what it was written for: a composed body cross-calls
+            // its callee's public tier, `OutRange _xr0 = MA(startIdx, endIdx,
+            // ...)` in APO, and that throws too. Only the library's own failure
+            // is converted; anything else is not ours to relabel.
             range = new OutRange(0, 0);
             return ((ITaLibFailure)_e).RetCode;
         }
-        range = new OutRange(outcome.BegIdx, outcome.Count);
-        return outcome.Code;
     }
 
     /* Accessors used by the generated thunks. Every one is reached only after

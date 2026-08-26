@@ -50,6 +50,8 @@ package io.github.talib.test;
 import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
+import io.github.talib.RetCode;
+import io.github.talib.TaLibFailure;
 import io.github.talib.metadata.FuncFlags;
 import io.github.talib.metadata.FunctionDescription;
 import io.github.talib.metadata.FunctionInfo;
@@ -442,6 +444,45 @@ public class MetadataTest {
         FunctionInfo doji = Functions.byName("CDLDOJI");
         checkThrows(IllegalArgumentException.class,
             () -> doji.newCall().setOutput(0, out), "double[] on an INTEGER output -> IAE");
+
+        /* A leg bound to a buffer SHORTER than the requested range -- absent is
+           covered above, too short was covered nowhere until #265. Java answers
+           because Dispatch calls the PUBLIC tier, so the wrapper's own length
+           checks apply; Rust and C# reached the numerics instead and faulted
+           inside them. All three answer BadParam now. C is excluded by its own
+           API, not by oversight: its setters take a bare pointer and carry no
+           length. */
+        double[] shortLeg = new double[N / 2];
+        checkRetCode(RetCode.BadParam,
+            () -> sma.newCall().setInput(0, shortLeg).setOptInput(0, 30)
+                     .setOutput(0, new double[N]).call(0, N - 1),
+            "an input shorter than the range -> BadParam");
+        checkRetCode(RetCode.BadParam,
+            () -> sma.newCall().setInput(0, CLOSE).setOptInput(0, 30)
+                     .setOutput(0, new double[4]).call(0, N - 1),
+            "an output shorter than the produced count -> BadParam");
+        // Control: sized to the count actually produced, which is B5's bound --
+        // not the width of the requested range.
+        int lookback = sma.newCall().setOptInput(0, 30).lookback();
+        OutRange exact = sma.newCall().setInput(0, CLOSE).setOptInput(0, 30)
+                            .setOutput(0, new double[N - lookback]).call(0, N - 1);
+        check(exact.count() == N - lookback,
+            "an output sized to the produced count is accepted (" + exact.count() + ")");
+    }
+
+    /** Runs {@code body} and checks it failed carrying {@code expected}. */
+    private static void checkRetCode(RetCode expected, Runnable body, String what) {
+        checks++;
+        try {
+            body.run();
+            failures++;
+            System.out.println("  FAIL: " + what + " (no exception thrown)");
+        } catch (RuntimeException e) {
+            if (!(e instanceof TaLibFailure f) || f.retCode() != expected) {
+                failures++;
+                System.out.println("  FAIL: " + what + " (threw " + e.getClass().getName() + ")");
+            }
+        }
     }
 
     /** Explicitly-set parameters must actually reach the function. */

@@ -441,6 +441,32 @@ public static class MetadataTest
         Check(noOutput == RetCode.OutputNotAllInitialize && rNoOut.Count == 0,
             $"TryInvoke reports an unbound output as a code ({noOutput})");
 
+        /* A leg bound to a buffer SHORTER than the requested range -- absent is
+           covered above, too short was covered nowhere until #265. The thunk
+           called the body, which checks no length at all, so this reached the
+           numerics and came back out as an IndexOutOfRangeException escaping a
+           method whose documented contract is a code. The thunk calls the public
+           overload now, as C's frames and Java's Dispatch always have, so it is
+           BadParam in all three; C cannot express the case, its setters taking a
+           bare pointer with no length. */
+        RetCode shortIn = sma.CreateCall().SetInput(0, Close[..(N / 2)]).SetOption(0, 30)
+            .SetOutput(0, new double[N]).TryInvoke(0, N - 1, out OutRange rShortIn);
+        Check(shortIn == RetCode.BadParam && rShortIn.Count == 0,
+            $"TryInvoke reports an input shorter than the range as BadParam ({shortIn})");
+        RetCode shortOut = sma.CreateCall().SetInput(0, Close).SetOption(0, 30)
+            .SetOutput(0, new double[4]).TryInvoke(0, N - 1, out OutRange rShortOut);
+        Check(shortOut == RetCode.BadParam && rShortOut.Count == 0,
+            $"TryInvoke reports an output shorter than the produced count as BadParam ({shortOut})");
+        /* Control: an output sized to the count actually produced is enough. The
+           bound is B5's -- endIdx - max(startIdx, lookback) + 1 -- not the width
+           of the requested range, so a caller who allocated by the published
+           formula must not be rejected. */
+        int lookback = sma.CreateCall().SetOption(0, 30).Lookback();
+        RetCode exact = sma.CreateCall().SetInput(0, Close).SetOption(0, 30)
+            .SetOutput(0, new double[N - lookback]).TryInvoke(0, N - 1, out OutRange rExact);
+        Check(exact == RetCode.Success && rExact.Count == N - lookback,
+            $"an output sized to the produced count is accepted ({exact}, {rExact.Count})");
+
         /* `(int)value` on an out-of-range double is unspecified in ECMA-334, and
            .NET saturates: a large NEGATIVE value lands on int.MinValue -- which
            is the "use the default" sentinel -- so it silently meant "use the
