@@ -148,8 +148,8 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B1 | `startIdx` outside `[0, MAX_INDEX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| B4 | A required argument was not supplied — an input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
-| B5 | A buffer is too short: an input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B4 | A required argument was not supplied — any declared input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
+| B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[6] | ✅<br>[7] | ✅<br>&nbsp; |
 | B6a | An output is **omitted** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 | B7 | A memory allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. **Warning: implemented, but no CI job or probe covers it** — provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
@@ -158,15 +158,22 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 **Range.** A real or integer parameter's range is the `range:` its .yaml
 declares; an enum parameter's is the declared member set of its type.
 
-Some candlestick patterns declare an OHLC series their algorithm never reads.
-Rust, Java and C# exempt those legs from B4 and B5, so a short or absent one is
-accepted; C checks them like any other input. Being a three-way exemption rather
-than a rule is the defect, not which side is right — see #260.
+**Every declared input.** B4 and B5 cover every input a function declares — the
+seven candlestick legs whose algorithm never reads them included: `inHigh` and
+`inLow` on CDL3OUTSIDE, CDLENGULFING and CDLXSIDEGAP3METHODS, `inOpen` on
+CDLHIKKAKE. Rust, Java and C# used to exempt exactly those, computing the set
+from the body, while C checked them like any other input, so
+`TA_CDL3OUTSIDE(0, 251, open, NULL, NULL, close, …)` was `TA_BAD_PARAM` in C and
+a success in the other three. Closed by #260: a declared input must be supplied,
+and that rule needs no exception list. What survives is not an exception but a
+range: Rust's assert preamble is switched off on a sub-lookback range, uniformly
+for every input of every function — footnote [5].
 
 **Implementation**: `testIndexRange`, `checkOutputAliasRejected`,
 `testBatchArgumentContract` (`test_abstract.c`, `test_internals.c`);
 `c_batch_prologue_orders_parameters_before_presence`,
-`rust_batch_impl_orders_capacity_before_aliasing` (ta_codegen's suite);
+`rust_batch_impl_orders_capacity_before_aliasing`,
+`every_declared_input_is_checked_in_every_backend` (ta_codegen's suite);
 `BatchApiTest` (Java, C#); `no_phantom_io` (Rust); `--xlang-hash` for
 same-code-everywhere.
 
@@ -175,8 +182,7 @@ rather than written through pointers.
 
 [2] Reported like any other `TA_BAD_PARAM`, naming the function and the
 argument. Java used to spell an absent argument as a `NullPointerException`,
-which made B3 and B4 distinguishable in Java and nowhere else. It does not cover
-the never-indexed legs above.
+which made B3 and B4 distinguishable in Java and nowhere else.
 
 [3] A `Span<T>` cannot be absent. A null array converts to an empty span and is
 reported by B5 instead, which names the buffer and both sizes.
@@ -185,8 +191,13 @@ reported by B5 instead, which names the buffer and both sizes.
 has what happens instead.
 
 [5] Rust panics rather than reporting: the assert is what lets LLVM elide the
-per-access bounds checks. It is skipped on a sub-lookback range, so the input
-bound goes unchecked there in Rust as it does in C.
+per-access bounds checks — and, since #260, also what states B4 and B5 for the
+seven legs no body indexes, where it proves LLVM nothing and rejects the caller
+anyway. It is skipped on a sub-lookback range, so there the input bound goes
+unchecked in Rust as it does in C — and unlike C, so does the presence half:
+Rust is the one backend that accepts an omitted input on a range that produces
+nothing. Removing that escape is not free — it is what lets `no_phantom_io`'s
+sub-lookback sweep hand the body zero-length slices and observe what it touches.
 
 [6] **The condition cannot be written**: two `&mut [f64]` cannot alias, so the
 borrow checker rejects it at compile time. The `as_ptr()` guard behind the public

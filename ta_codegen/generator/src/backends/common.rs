@@ -343,29 +343,6 @@ pub fn find_sizeof_type(expr: &Expr) -> Option<String> {
     }
 }
 
-/// The declared inputs a function's body actually indexes.
-///
-/// Four candlestick patterns take an OHLC leg they never read (cdl3outside's
-/// `inHigh`/`inLow`, for instance). A bounds check on such a leg would reject a
-/// caller who passed a short — or, in Java, a null — array for a series the
-/// algorithm ignores, while proving nothing about the accesses the body makes.
-/// Detected on the comment-stripped IR, so a name mentioned only in prose
-/// cannot count.
-///
-/// One source of truth for the two backends that bound their array accesses:
-/// the Rust `assert!` preamble and the Java argument checks must agree on which
-/// legs are load-bearing, or the same call is a panic in one language and a
-/// success in the other.
-#[must_use]
-pub(crate) fn indexed_input_names(func: &FuncDef) -> BTreeSet<String> {
-    let body_repr = format!("{:?}", super::stmt_walk::strip_comments(&func.body));
-    func.inputs
-        .iter()
-        .filter(|i| body_repr.contains(&format!("\"{}\"", i.name)))
-        .map(|i| i.name.clone())
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -618,9 +618,9 @@ fn gen_public_wrapper(
     // C#'s null check IS the emptiness check, and the type system supplies the
     // half Java has to write by hand. What it does not supply is the length
     // bound, which is the rest of this block: the same bound the Rust backend
-    // asserts and Java's wrappers check — every input the body indexes must
-    // reach `endIdx`, every output must hold `endIdx - max(startIdx, lookback)
-    // + 1` values, the count actually produced.
+    // asserts and Java's wrappers check — every declared input must reach
+    // `endIdx`, every output must hold `endIdx - max(startIdx, lookback) + 1`
+    // values, the count actually produced.
     //
     // There is no separate emptiness check. There used to be one, on every
     // declared input, and the length bound subsumes it: on any call the core
@@ -634,16 +634,11 @@ fn gen_public_wrapper(
     // RetCode the core exists to produce. The length bound cannot, because
     // `ClampedStart` returns -1 for exactly those arguments and switches it off.
     //
-    // It also ran over inputs the body never indexes — four candlestick patterns
-    // declare an OHLC leg they never read — so an empty leg was an error in C#
-    // and a success in Rust and Java, which both skip those.
-    let indexed = super::common::indexed_input_names(func);
-    let checked_inputs: Vec<&str> = func
-        .inputs
-        .iter()
-        .filter(|i| indexed.contains(&i.name))
-        .map(|i| i.name.as_str())
-        .collect();
+    // It covers EVERY declared input, the seven candlestick legs no body indexes
+    // included (#260). Skipping those made "a declared input must be supplied" a
+    // rule with an exception list, and C never had one, so the identical call was
+    // `TA_BAD_PARAM` there and a success here.
+    let checked_inputs: Vec<&str> = func.inputs.iter().map(|i| i.name.as_str()).collect();
     if !checked_inputs.is_empty() || !func.outputs.is_empty() {
         let lb_args: Vec<String> =
             func.optional_inputs.iter().map(|o| o.name.clone()).collect();

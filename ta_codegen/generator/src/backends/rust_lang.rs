@@ -1204,16 +1204,14 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
         );
     }
     let escape = if guard_empty_range { "_assertStart > endIdx || " } else { "" };
-    // Only assert on inputs the body actually reads: asserting on a leg the
-    // algorithm ignores would reject a caller who legitimately passed a short or
-    // empty slice, while proving nothing to LLVM — which is the only reason the
-    // assert is here. Shared with the Java argument checks, which bound the same
-    // accesses (`backends::common::indexed_input_names`).
-    let indexed = super::common::indexed_input_names(func);
+    // EVERY declared input, including the seven candlestick legs whose body never
+    // indexes them (#260). For the legs the body DOES read the assert is the LLVM
+    // proof; for the seven it proves nothing and states B4/B5 instead — a `len()`
+    // compare in the entry block, outside every loop, on a call that is about to
+    // walk the series. Filtering them out bought that and cost the contract: a
+    // declared input a caller may omit is an exception list, and C never had one,
+    // so the same call was `TA_BAD_PARAM` there and a success here.
     for input in &func.inputs {
-        if !indexed.contains(&input.name) {
-            continue;
-        }
         out.push_str(&format!(
             "        assert!({escape}endIdx < {}.len());\n", input.name
         ));

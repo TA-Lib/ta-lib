@@ -165,13 +165,12 @@
     *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
     * @throws IllegalArgumentException if an optional parameter is outside its
     *        documented range, two outputs share one array, or an array is absent or
-    *        too short for the range requested — an input this function <i>reads</i>
-    *        that does not reach {@code endIdx}, or an output that cannot hold the
-    *        values produced. A few candlestick patterns declare an OHLC series they
-    *        never index; those are neither length-checked nor null-checked, because
-    *        rejecting them would refuse a call the algorithm can answer. Checked
-    *        before anything is written, so a rejected call leaves every buffer
-    *        untouched.
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. Checked before anything is written, so a rejected call leaves every
+    *        buffer untouched.
     *
     * @see Core#CDL3INSIDE
     * @see Core#CDLENGULFING
@@ -190,6 +189,8 @@
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3OUTSIDE", "inOpen", inOpen, guardInLen);
+      requireLength("CDL3OUTSIDE", "inHigh", inHigh, guardInLen);
+      requireLength("CDL3OUTSIDE", "inLow", inLow, guardInLen);
       requireLength("CDL3OUTSIDE", "inClose", inClose, guardInLen);
       requireLength("CDL3OUTSIDE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
@@ -235,13 +236,12 @@
     *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
     * @throws IllegalArgumentException if an optional parameter is outside its
     *        documented range, two outputs share one array, or an array is absent or
-    *        too short for the range requested — an input this function <i>reads</i>
-    *        that does not reach {@code endIdx}, or an output that cannot hold the
-    *        values produced. A few candlestick patterns declare an OHLC series they
-    *        never index; those are neither length-checked nor null-checked, because
-    *        rejecting them would refuse a call the algorithm can answer. Checked
-    *        before anything is written, so a rejected call leaves every buffer
-    *        untouched.
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. Checked before anything is written, so a rejected call leaves every
+    *        buffer untouched.
     *
     * @see Core#CDL3INSIDE
     * @see Core#CDLENGULFING
@@ -260,6 +260,8 @@
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3OUTSIDE", "inOpen", inOpen, guardInLen);
+      requireLength("CDL3OUTSIDE", "inHigh", inHigh, guardInLen);
+      requireLength("CDL3OUTSIDE", "inLow", inLow, guardInLen);
       requireLength("CDL3OUTSIDE", "inClose", inClose, guardInLen);
       requireLength("CDL3OUTSIDE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();

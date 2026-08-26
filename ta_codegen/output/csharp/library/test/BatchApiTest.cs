@@ -523,25 +523,42 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// A leg the algorithm never indexes is not checked — not for length and not
-    /// for emptiness. Four candlestick patterns declare an OHLC input they never
-    /// read; the generated Rust asserts and the Java checks skip exactly those, so
-    /// rejecting them here would make the same call an error in C# alone. The
-    /// control is the leg beside it, which IS read.
+    /// A leg the algorithm never indexes is checked like any other (#260). Four
+    /// candlestick patterns declare an OHLC input they never read; Rust, Java and
+    /// C# used to exempt exactly those while C's NULL checks covered them, so the
+    /// identical call was <c>TA_BAD_PARAM</c> in C and a success here. A declared
+    /// input must be supplied; that rule now needs no exception list.
+    ///
+    /// <para>A span is never null, so both spellings of "not supplied" — an empty
+    /// span and <c>(double[])null</c>, which converts to one — arrive at the same
+    /// length rejection. The control is the leg beside it, which IS read and was
+    /// never exempt.</para>
     /// </summary>
-    private static void AnUnreadLegIsNotChecked()
+    private static void AnUnreadLegIsCheckedLikeAnyOther()
     {
         var core = new Core();
         double[] real = Closes(200);
         var outv = new int[200];
 
-        OutRange r = core.CDL3OUTSIDE(0, 199, real, ReadOnlySpan<double>.Empty,
-                                      ReadOnlySpan<double>.Empty, real, outv);
-        Check(r.Count > 0, "CDL3OUTSIDE runs with empty high/low legs it never reads");
+        CheckThrows<ArgumentException>(
+            () => core.CDL3OUTSIDE(0, 199, real, ReadOnlySpan<double>.Empty,
+                                   ReadOnlySpan<double>.Empty, real, outv),
+            "an empty high leg the body never reads", "inHigh", "0", "200");
+        double[] nullLeg = null!;
+        CheckThrows<ArgumentException>(
+            () => core.CDL3OUTSIDE(0, 199, real, real, nullLeg, real, outv),
+            "a null low leg the body never reads", "inLow", "0", "200");
+        CheckThrows<ArgumentException>(
+            () => core.CDLHIKKAKE(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
+            "CDLHIKKAKE's open leg, the other shape of the same exemption",
+            "inOpen", "0", "200");
 
         CheckThrows<ArgumentException>(
             () => core.CDL3OUTSIDE(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
             "the open leg, which IS read, is still checked", "inOpen", "0", "200");
+        // Non-vacuity: every leg supplied and sized is the success these reject.
+        Check(core.CDL3OUTSIDE(0, 199, real, real, real, real, outv).Count > 0,
+              "CDL3OUTSIDE runs when every declared leg is supplied");
     }
 
     /// <summary>
@@ -865,7 +882,7 @@ public static class BatchApiTest
         EachOutputIsCheckedSeparately();
         IntegerOutputsAreChecked();
         FloatOverloadIsCheckedToo();
-        AnUnreadLegIsNotChecked();
+        AnUnreadLegIsCheckedLikeAnyOther();
         AnEndIdxPastTheInputIsRejectedEvenProducingNothing();
         OverlappingBuffersAreRejected();
         NoUnguardedTierOnThePublicSurface();

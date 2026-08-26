@@ -95,7 +95,7 @@ import java.util.TreeSet;
  *     with each input sized to exactly {@code endIdx + 1} and each output to
  *     exactly the count the call reported. A read past {@code endIdx} or a write
  *     past the reported count is then out of bounds. This is the sweep that
- *     reaches the 30 cores with a lookback of 0, for which no sub-lookback range
+ *     reaches the 31 cores with a lookback of 0, for which no sub-lookback range
  *     exists, and it runs at several parameter vectors rather than only the
  *     all-defaults one.</li>
  * <li><b>{@link #unreadLegSweep}</b> — one input leg at a time given a
@@ -134,9 +134,9 @@ import java.util.TreeSet;
  * <p><b>Rust now carries sweeps 1 and 3 too</b>, in the generated
  * {@code ta_codegen/output/rust/library/tests/no_phantom_io.rs} (issue #235).
  * Two things it has that the sweeps below do not. It reaches every core: since
- * #236 step 3 routed cross-calls through the public callee, ten composed cores
- * are out of reach here and are named in {@code CROSS_CALL_GUARDED}, while
- * Rust's cross-calls still target {@code NAME_Impl} and so probe all 174.
+ * #236 step 3 routed cross-calls through the public callee, a composed core is
+ * out of reach here and is named in {@code CROSS_CALL_GUARDED}, while
+ * Rust's cross-calls still target {@code NAME_Impl} and so probe all 176.
  * And it covers the <i>Rust</i> emitter — an emitter bug of the kind described
  * above is invisible to every other backend's probe, by the same argument.
  *

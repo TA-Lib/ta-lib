@@ -541,23 +541,39 @@ public class BatchApiTest {
     }
 
     /**
-     * A leg the algorithm never indexes is not checked. Four candlestick patterns
-     * declare an OHLC input they do not read — CDL3OUTSIDE's high and low among
-     * them — and the generated Rust asserts skip exactly those, so rejecting them
-     * here would make the same call a success in one language and a throw in the
-     * other. The control is the leg next to it, which IS read.
+     * A leg the algorithm never indexes is checked like any other (#260). Four
+     * candlestick patterns declare an OHLC input they do not read — CDL3OUTSIDE's
+     * high and low among them — and Rust, Java and C# used to exempt exactly
+     * those while C's NULL checks covered them, so the identical call was
+     * {@code TA_BAD_PARAM} in C and a success here. A declared input must be
+     * supplied; that rule now needs no exception list.
+     *
+     * <p>Both spellings of "not supplied", since the exemption dropped both: an
+     * empty array (B5, naming the two lengths) and a null one (B4). The control
+     * is the leg next to it, which IS read and was never exempt.
      */
-    static void anUnreadLegIsNotChecked() {
+    static void anUnreadLegIsCheckedLikeAnyOther() {
         final double[] real = closes(200);
         final double[] empty = new double[0];
         final int[] out = new int[200];
 
-        OutRange r = Core.DEFAULT.CDL3OUTSIDE(0, 199, real, empty, empty, real, out);
-        check(r.count() > 0, "CDL3OUTSIDE runs with empty high/low legs it never reads");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.CDL3OUTSIDE(0, 199, real, empty, empty, real, out),
+            "an empty high leg the body never reads", "inHigh", "0", "200");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.CDL3OUTSIDE(0, 199, real, real, (double[]) null, real, out),
+            "a null low leg the body never reads", "inLow", "null");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.CDLHIKKAKE(0, 199, empty, real, real, real, out),
+            "CDLHIKKAKE's open leg, the other shape of the same exemption",
+            "inOpen", "0", "200");
 
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.CDL3OUTSIDE(0, 199, empty, real, real, real, out),
             "the open leg, which IS read, is still checked", "inOpen", "0", "200");
+        // Non-vacuity: every leg supplied and sized is the success these reject.
+        check(Core.DEFAULT.CDL3OUTSIDE(0, 199, real, real, real, real, out).count() > 0,
+              "CDL3OUTSIDE runs when every declared leg is supplied");
     }
 
     /**
@@ -840,7 +856,7 @@ public class BatchApiTest {
         eachOutputIsCheckedSeparately();
         integerOutputsAreChecked();
         floatOverloadIsCheckedToo();
-        anUnreadLegIsNotChecked();
+        anUnreadLegIsCheckedLikeAnyOther();
         theMetadataPathIsGuardedToo();
         noUnguardedTierOnThePublicSurface();
         floatOverloadHasTheSameShape();

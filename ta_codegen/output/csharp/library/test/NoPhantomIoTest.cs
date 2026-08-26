@@ -94,8 +94,7 @@ namespace TALib.Test;
 /// parameter domains and output kinds, and <see cref="FunctionCall"/>'s thunks
 /// reach the <c>RetCode</c> tier directly — the typed <see cref="Core"/> wrapper
 /// rejects a too-short input span, empty included, before the body could touch it,
-/// which is a different (and separately tested) property. It does not reject the
-/// OHLC legs a few candlestick patterns declare but never index.</para>
+/// which is a different (and separately tested) property.</para>
 /// </remarks>
 public static class NoPhantomIoTest
 {

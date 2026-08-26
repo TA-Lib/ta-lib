@@ -10947,3 +10947,150 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     }
     assert!(checked > 600, "only {checked} bodies checked across four backends");
 }
+
+/// Every DECLARED input is checked in every backend (#260).
+///
+/// Seven candlestick legs are declared by their function and never indexed by
+/// its body: `inHigh` and `inLow` on CDL3OUTSIDE, CDLENGULFING and
+/// CDLXSIDEGAP3METHODS, and `inOpen` on CDLHIKKAKE. Rust, Java and C# used to
+/// exempt exactly those from their argument checks, computing the set from the
+/// body; C's NULL checks covered them like any other input. So
+/// `TA_CDL3OUTSIDE(0, 251, open, NULL, NULL, close, ...)` was `TA_BAD_PARAM` in
+/// C and a success in the other three — a three-way exemption, which is the
+/// defect rather than which side was right.
+///
+/// A corpus sweep, because the exemption was DERIVED: it was never a list a
+/// reviewer could read, so any future indicator could have joined it silently.
+/// Each backend's own spelling of the check, since B4 and B5 are one condition
+/// per backend — a NULL test in C, the `assert!` bound in Rust, `requireLength`
+/// / `RequireLength` in Java and C#.
+///
+/// Part two is what keeps part one honest. A sweep over every declared input
+/// passes trivially once no input is ever dropped, so it cannot tell you the
+/// interesting legs were ever at risk. So the seven are named, asserted to still
+/// be unread by their body, and asserted to be checked anyway. If a body starts
+/// reading one, the "still unread" half fails and the list gets revisited; if the
+/// exemption comes back, the first half fails on all seven.
+#[test]
+fn every_declared_input_is_checked_in_every_backend() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    let mut scanned = 0usize;
+    let mut no_inputs = 0usize;
+    let mut legs_checked = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, enums)) = try_load_indicator(&name) else {
+            continue;
+        };
+        if func.inputs.is_empty() {
+            no_inputs += 1;
+            continue;
+        }
+        let out = generate_all(&func, &enums);
+        let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        scanned += 1;
+        let f = &func.name;
+
+        for input in &func.inputs {
+            let n = &input.name;
+            legs_checked += 1;
+            // Each backend's own spelling, and how many entry points must carry
+            // it: C emits the double prologue and its `TA_S_` float twin, Java
+            // and C# emit a double and a float overload, Rust is generic and
+            // emits one. A COUNT, not a `contains`: a filter re-applied to one
+            // precision only would leave the other's copy to satisfy a
+            // whole-file search.
+            for (lang, src, needle, want) in [
+                ("c", &out.c, format!("if( !{n} )"), 2usize),
+                (
+                    "rust",
+                    &out.rust,
+                    format!("assert!(_assertStart > endIdx || endIdx < {n}.len());"),
+                    1,
+                ),
+                (
+                    "java",
+                    &out.java,
+                    format!("requireLength(\"{f}\", \"{n}\", {n}, guardInLen);"),
+                    2,
+                ),
+                (
+                    "csharp",
+                    &csharp,
+                    format!("RequireLength(\"{f}\", \"{n}\", {n}.Length, guardInLen);"),
+                    2,
+                ),
+            ] {
+                assert!(
+                    src.matches(&needle).count() >= want,
+                    "{lang}: {f} declares {n} and checks it on fewer than {want} entry \
+                     point(s) — expected `{needle}`"
+                );
+            }
+        }
+    }
+
+    // Every discovered indicator is accounted for: swept, or explicitly counted
+    // as having no input to sweep. A floor would let a `continue` path drop a
+    // fifth of the corpus and still pass.
+    assert_eq!(
+        scanned + no_inputs,
+        discover_indicators().len(),
+        "every discovered indicator is swept or counted ({scanned} + {no_inputs})"
+    );
+    // Literal floors: a derived one moves with whatever the scan happens to find.
+    assert!(scanned >= 170, "only {scanned} indicators scanned");
+    assert!(legs_checked >= 380, "only {legs_checked} declared input legs checked");
+
+    // ---- part two: the seven legs the exemption used to drop ----
+    let unread: [(&str, &[&str]); 4] = [
+        ("cdl3outside", &["inHigh", "inLow"]),
+        ("cdlengulfing", &["inHigh", "inLow"]),
+        ("cdlxsidegap3methods", &["inHigh", "inLow"]),
+        ("cdlhikkake", &["inOpen"]),
+    ];
+    let mut pairs = 0usize;
+    for (indicator, legs) in unread {
+        let (func, enums) = load_indicator(indicator);
+        let out = generate_all(&func, &enums);
+        let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let f = &func.name;
+        // The body proper: everything after the bounds-assert preamble, so the
+        // asserts this test just demanded cannot themselves satisfy "is read".
+        let body = extract_section(&out.rust, "let mut startIdx = startIdx;", &format!("pub fn {f}("));
+        assert!(
+            body.contains("inClose["),
+            "{f}: the control leg inClose is not indexed — the body extraction is wrong"
+        );
+        for leg in legs {
+            pairs += 1;
+            assert!(
+                !body.contains(&format!("{leg}[")),
+                "{f}: {leg} is indexed by the body now; it is no longer an unread leg, so \
+                 revisit this list"
+            );
+            // ...and checked regardless. Restated on the four backends here so a
+            // sweep that silently stopped covering these still fails.
+            assert!(out.c.contains(&format!("if( !{leg} )")), "c: {f}.{leg}");
+            assert!(
+                out.rust
+                    .contains(&format!("assert!(_assertStart > endIdx || endIdx < {leg}.len());")),
+                "rust: {f}.{leg}"
+            );
+            assert!(
+                out.java
+                    .contains(&format!("requireLength(\"{f}\", \"{leg}\", {leg}, guardInLen);")),
+                "java: {f}.{leg}"
+            );
+            assert!(
+                csharp.contains(&format!(
+                    "RequireLength(\"{f}\", \"{leg}\", {leg}.Length, guardInLen);"
+                )),
+                "csharp: {f}.{leg}"
+            );
+        }
+    }
+    assert_eq!(pairs, 7, "the seven never-indexed legs of #260");
+}

@@ -411,6 +411,7 @@ static ErrorNumber testStreamShortHistory( void )
  * transcribed body (SMA, plus its float twin, which is a separate emission), a
  * composed multi-output (BBANDS), the dispatch tier (MA), the period bank
  * (MAVP), a candlestick with four price legs and an integer output (CDLDOJI),
+ * a candlestick leg the body never indexes (CDL3OUTSIDE, CDLHIKKAKE -- #260),
  * and a nullable output (MAMA), which is the control for what "required" means.
  */
 static int bacReject, bacAccept;
@@ -508,6 +509,23 @@ static ErrorNumber testBatchArgumentContract( void )
    BAC_REJECT( "TA_CDLDOJI(outInteger=NULL)",
                TA_CDLDOJI( 0, 251, bars, bars, bars, bars, &beg, &nb, NULL ) );
 
+   /* A price leg the algorithm never INDEXES is a required argument all the
+    * same (#260). CDL3OUTSIDE reads open and close only, CDLHIKKAKE everything
+    * but open; C has always rejected a NULL there, and Rust, Java and C# used
+    * to accept it. Without these the worked example in
+    * docs/error-handling-spec.md 2.2 is asserted from the source and executed
+    * nowhere. */
+   BAC_ACCEPT( "TA_CDL3OUTSIDE",
+               TA_CDL3OUTSIDE( 0, 251, bars, bars, bars, bars, &beg, &nb, outI ) );
+   BAC_REJECT( "TA_CDL3OUTSIDE(inHigh=NULL)",
+               TA_CDL3OUTSIDE( 0, 251, bars, NULL, bars, bars, &beg, &nb, outI ) );
+   BAC_REJECT( "TA_CDL3OUTSIDE(inLow=NULL)",
+               TA_CDL3OUTSIDE( 0, 251, bars, bars, NULL, bars, &beg, &nb, outI ) );
+   BAC_ACCEPT( "TA_CDLHIKKAKE",
+               TA_CDLHIKKAKE( 0, 251, bars, bars, bars, bars, &beg, &nb, outI ) );
+   BAC_REJECT( "TA_CDLHIKKAKE(inOpen=NULL)",
+               TA_CDLHIKKAKE( 0, 251, NULL, bars, bars, bars, &beg, &nb, outI ) );
+
    /* A NULLABLE output is not a required argument: dropping it is legal, and
     * that is what keeps the rejections above about absence rather than about
     * NULL. The required half of the same call still answers TA_BAD_PARAM. */
@@ -523,7 +541,7 @@ static ErrorNumber testBatchArgumentContract( void )
 
    /* Literal floors: a count derived from the cases above would move with a
     * deleted case and still pass. */
-   if( bacReject < 16 || bacAccept < 6 )
+   if( bacReject < 19 || bacAccept < 8 )
    {
       printf( "\nFailed: the batch argument gate ran fewer checks than it was "
               "written with\n" );

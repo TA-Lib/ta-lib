@@ -692,10 +692,12 @@ fn body_name(base: &str) -> String {
 /// half written and with no `OutRange` to say how far the call got.
 ///
 /// The bound is the one the Rust backend already asserts and the cross-language
-/// harness already verifies (`rust_lang::emit_bounds_asserts`): every input the
-/// body indexes must reach `endIdx`, and every output must hold the values
-/// actually produced — `endIdx - max(startIdx, lookback) + 1`, the produced
-/// count, not the width of the requested range.
+/// harness already verifies (`rust_lang::emit_bounds_asserts`): every DECLARED
+/// input must reach `endIdx`, and every output must hold the values actually
+/// produced — `endIdx - max(startIdx, lookback) + 1`, the produced count, not the
+/// width of the requested range. Declared, not indexed: seven candlestick legs are
+/// never read by their body, and exempting those made the same call `TA_BAD_PARAM`
+/// in C and a success here (#260).
 ///
 /// `clampedStart` is `max(startIdx, lookback)`; it throws the parameter rejection
 /// when the lookback signals one, which rule L2 makes exactly the batch tier's own
@@ -721,13 +723,7 @@ fn body_name(base: &str) -> String {
 /// check has to sit ahead of the `_Lookback` call below, because that is where a
 /// null one is first dereferenced.
 fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
-    let indexed = super::common::indexed_input_names(func);
-    let inputs: Vec<&str> = func
-        .inputs
-        .iter()
-        .filter(|i| indexed.contains(&i.name))
-        .map(|i| i.name.as_str())
-        .collect();
+    let inputs: Vec<&str> = func.inputs.iter().map(|i| i.name.as_str()).collect();
     let mut out = String::new();
     let _ = writeln!(
         out,

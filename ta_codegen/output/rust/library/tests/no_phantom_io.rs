@@ -26,47 +26,62 @@
 //! slices it must panic. That turns "this core was silent" into "this core was
 //! silent *and* the detector was working on it".
 //!
-//! **`legs_*` (unread legs).** One declared input at a time given a zero-length
+//! **`legs_*` (declared legs).** One declared input at a time given a zero-length
 //! slice while the rest stay correctly sized, over a range that does produce
-//! values. Here the panic can come from two places, and the difference is the
-//! whole point:
+//! values. Every one of them must be rejected: since #260 the `assert!` preamble
+//! bounds every DECLARED input, not only the ones the body indexes, so
+//! "a declared input must be supplied" holds over the whole declaration in Rust
+//! as it does over C's NULL checks. Over the whole declaration, not the whole
+//! input domain: Rust's `_assertStart > endIdx ||` escape switches every input
+//! assert off on a sub-lookback range, uniformly for all 442 legs, which is
+//! spec footnote [5] and is why the sweep probes a range that produces values.
+//! What the sweep classifies:
 //!
-//! * an **assertion failure** is the body's `assert!` preamble, whose leg set is
-//!   `backends::common::indexed_input_names` -- the same computation that feeds
-//!   Java's and C#'s argument checks. Asserting *that* against itself would be
-//!   circular, so it is reported, not asserted on.
-//! * an **index-out-of-bounds** is the body indexing a leg the preamble does not
-//!   bound. Under `#![forbid(unsafe_code)]` that access is checked whatever the
+//! * an **assertion failure** is the preamble doing its job -- the expected
+//!   verdict for every leg of every function.
+//! * a **success** is the leg sailing through: the preamble does not cover it, so
+//!   the identical call is `TA_BAD_PARAM` in C and a success here. That is the
+//!   divergence #260 closed, and it fails the sweep.
+//! * an **index-out-of-bounds** is the body reading past the bound the preamble
+//!   states. Under `#![forbid(unsafe_code)]` that access is checked whatever the
 //!   preamble says, which is what makes this reading the body rather than the
 //!   declaration. It is a violation: in Rust it is a panic in shipped code, and
 //!   in the C the same input generates, an unbounded read.
 //!
-//! So this sweep pins one direction of `indexed_input_names` -- that it covers
-//! every leg the body actually indexes. The other direction (a leg listed but
-//! never read) is not reachable from outside the crate: the preamble runs first
-//! and pre-empts the observation. That is a false rejection, not a memory
-//! error, and Java's suite does not distinguish it either.
+//! Each function also gets a control arm first: the same call with every leg
+//! correctly sized must succeed and produce values. Without it "every leg was
+//! rejected" is satisfiable by a fixture that probes nothing -- a mis-sized
+//! `series`, a vector the lookback rejects -- and the sweep would read green.
 //!
 //! # Measured against the Java suite
 //!
 //! Run together on the same corpus, the two agree where they can:
 //!
-//! * **sub-lookback: zero delta.** 144 cores probed at the defaults vector, 30
-//!   skipped for having no sub-lookback range (lookback 0), 174 detector
-//!   controls fired -- the same three numbers in both, so Rust reaches every
-//!   core Java reaches.
-//! * **unread legs: Rust sees 7, Java sees 40, and the 7 are a subset.** The 33
-//!   extra are legs Rust's preamble bounds but the body does not read at the
-//!   default candle settings; the preamble pre-empts the observation, which is
-//!   the direction described above as unreachable from outside the crate. Zero
-//!   legs are unread here and read there, which is the direction that would be
-//!   a real disagreement.
+//! * **sub-lookback: Rust reaches every core Java reaches, and one more.** Rust
+//!   probes 145 cores at the defaults vector, skips 31 for having no
+//!   sub-lookback range (lookback 0) and fires 176 detector controls; Java
+//!   reports 144 / 31 / 175 on the same corpus because `CROSS_CALL_GUARDED`
+//!   withholds MA, whose rejection arrives from a callee's public input bound as
+//!   a RETURN rather than the throw Java's probe reads. Rust has no such tier to
+//!   lose: the delta is exactly that one core, in Rust's favour.
+//! * **declared legs: the two suites no longer measure the same thing, and
+//!   cannot.** Java's `unreadLegSweep` probes `<N>_Impl`, the numerics tier,
+//!   which carries the index and parameter checks but no ARRAY check at all --
+//!   so it still reads the BODY and reports the 40 legs a zero-length array
+//!   sails through at the default candle settings. Rust has no such tier to
+//!   reach: `pub fn SMA` is a thin `Result`
+//!   mapper over `SMA_Impl`, and the preamble lives inside it, so from outside
+//!   the crate every declared leg is bounded and none sails through. Before #260
+//!   Rust saw 7 of Java's 40; it now sees 0, by construction rather than by
+//!   accident, and this sweep pins that construction.
 //!
 //! # What is deliberately not here
 //!
-//! `exactExtentSweep` and `openAndFillSweep` from the Java suite are not ported.
-//! The first passes the public guard by construction; the second is streaming,
-//! which #236 does not touch.
+//! `openAndFillSweep` from the Java suite is not ported: it is streaming, which
+//! #236 does not touch. `exactExtentSweep` is not ported as a sweep either --
+//! it passes the public guard by construction -- though the leg sweep's control
+//! arm is one call of that shape per function, there to prove the fixture works
+//! rather than to bound the extent.
 //!
 //! And this covers the shared C under `ta_codegen/input/` as the Rust emitter
 //! renders it. It is not a substitute for the Java and C# suites: an emitter bug
@@ -118,7 +133,7 @@ fn run(f: impl FnOnce() -> Result<ta_lib::OutRange, ta_lib::RetCode>) -> Touch {
 }
 
 /// `len` bars of `leg`, mirroring `NoPhantomIoTest.bar` so the two suites agree
-/// on the fixture and a leg cannot read as unread here but read there.
+/// on the fixture and a leg cannot read as untouched here but read there.
 fn series<T: FromF64>(leg: &str, len: usize) -> Vec<T> {
     (0..len).map(|i| T::from_f64(bar(leg, i))).collect()
 }
@@ -160,7 +175,10 @@ struct Report {
     quiet_calls: usize,
     /// Per function: the legs whose empty slice stopped the call, and how.
     bounded: std::collections::BTreeMap<&'static str, Vec<String>>,
-    unread: Vec<String>,
+    unbounded: Vec<String>,
+    legs_control: std::collections::BTreeSet<&'static str>,
+    legs_swept: std::collections::BTreeSet<&'static str>,
+    legs_none: usize,
     legs_seen: usize,
     funcs_with_legs: usize,
 }
@@ -176,7 +194,10 @@ impl Report {
             quiet_cores: std::collections::BTreeSet::new(),
             quiet_calls: 0,
             bounded: std::collections::BTreeMap::new(),
-            unread: Vec::new(),
+            unbounded: Vec::new(),
+            legs_control: std::collections::BTreeSet::new(),
+            legs_swept: std::collections::BTreeSet::new(),
+            legs_none: 0,
             legs_seen: 0,
             funcs_with_legs: 0,
         }
@@ -247,31 +268,73 @@ impl Report {
         }
     }
 
+    /// A function the sweep cannot judge: no declared input, or a `_Lookback`
+    /// that rejects its own defaults. Counted, not discarded -- `finish_legs`
+    /// accounts for every probe, so a sweep that quietly stopped judging the
+    /// corpus is a failure rather than a smaller run.
     fn no_legs(&mut self, name: &'static str) {
         let _ = name;
+        self.legs_none += 1;
     }
 
-    /// One leg given a zero-length slice while the rest stay sized.
+    /// The per-function control arm: every leg correctly sized must succeed and
+    /// produce values, so a `Bounded` verdict below is attributable to the one
+    /// zero-length leg and not to the fixture.
+    fn legs_control(&mut self, name: &'static str, t: Touch) {
+        match t {
+            Touch::Quiet(true, n) if n > 0 => {
+                self.legs_control.insert(name);
+            }
+            Touch::Quiet(ok, n) => self.fail(format!(
+                "{name} with every leg correctly sized returned {} ({n} value(s)); the leg sweep \
+                 is probing a call that does nothing, so every rejection below proves nothing",
+                if ok { "Ok" } else { "Err" }
+            )),
+            Touch::Bounded => self.fail(format!(
+                "{name} tripped its own bounds assert with every leg correctly sized: the \
+                 preamble states a bound the fixture does not meet"
+            )),
+            Touch::Indexed => self.fail(format!(
+                "{name} indexed out of bounds with every leg correctly sized"
+            )),
+            Touch::Other(msg) => {
+                self.fail(format!("{name} control panicked with {msg}"));
+            }
+        }
+    }
+
+    /// One leg given a zero-length slice while the rest stay sized. Since #260
+    /// the preamble bounds EVERY declared leg, so every one of these must be
+    /// `Bounded`: a leg that sails through is the exemption coming back.
     fn leg(&mut self, name: &'static str, leg: &str, _index: usize, t: Touch) {
         self.legs_seen += 1;
         match t {
             Touch::Bounded => self.bounded.entry(name).or_default().push(leg.to_string()),
             Touch::Indexed => self.fail(format!(
                 "{name}.{leg} was indexed with a zero-length slice, but the body's bounds-assert \
-                 preamble does not cover it: the body reads a leg the declaration says it does \
-                 not, so nothing bounds that read"
+                 preamble does not cover it: the body reads past the bound the preamble states, \
+                 so nothing bounds that read"
             )),
-            Touch::Quiet(_, _) => self.unread.push(format!("{name}.{leg}")),
+            Touch::Quiet(_, _) => {
+                self.unbounded.push(format!("{name}.{leg}"));
+                self.fail(format!(
+                    "{name}.{leg} is a DECLARED input that a zero-length slice sails through: \
+                     the bounds-assert preamble does not cover it, so the same call is \
+                     TA_BAD_PARAM in C and a success here (#260)"
+                ));
+            }
             Touch::Other(msg) => self.fail(format!("{name}.{leg} panicked with {msg}")),
         }
     }
 
     fn legs_done(&mut self, name: &'static str, declared: usize) {
         self.funcs_with_legs += 1;
-        if !self.bounded.contains_key(name) {
+        self.legs_swept.insert(name);
+        let bounded = self.bounded.get(name).map_or(0, Vec::len);
+        if bounded != declared {
             self.fail(format!(
-                "{name} reads none of its {declared} declared leg(s): a function that reads no \
-                 input has stopped being an indicator"
+                "{name}: {bounded} of {declared} declared leg(s) are bounded by the preamble; \
+                 every declared input must be, or a caller may omit one in Rust and not in C"
             ));
         }
     }
@@ -312,7 +375,35 @@ impl Report {
 
     fn finish_legs(&mut self) {
         if self.funcs_with_legs == 0 || self.legs_seen == 0 {
-            self.fail("unread legs: the sweep ran no leg at all".to_string());
+            self.fail("declared legs: the sweep ran no leg at all".to_string());
+        }
+        // Every core is accounted for: judged, or explicitly counted as having
+        // nothing to judge.
+        if self.legs_swept.len() + self.legs_none != PROBES.len() {
+            self.fail(format!(
+                "declared legs: every core is swept or counted ({} + {} vs {})",
+                self.legs_swept.len(),
+                self.legs_none,
+                PROBES.len()
+            ));
+        }
+        // Every function the sweep judged must have had its control arm fire, or
+        // its verdicts are unattributable. Missing from the SWEPT set, not from
+        // `bounded`: a function whose every leg sailed through has no `bounded`
+        // entry, and filtering that would drop it from the list naming it.
+        if self.legs_control.len() != self.funcs_with_legs {
+            let missing: Vec<&str> = self
+                .legs_swept
+                .iter()
+                .copied()
+                .filter(|n| !self.legs_control.contains(n))
+                .collect();
+            self.fail(format!(
+                "declared legs: the control arm fired for {} of {} function(s) swept; not \
+                 proved {missing:?}",
+                self.legs_control.len(),
+                self.funcs_with_legs
+            ));
         }
     }
 
@@ -328,13 +419,14 @@ impl Report {
         );
         let bounded_legs: usize = self.bounded.values().map(Vec::len).sum();
         println!(
-            "  unread legs: {} leg(s) across {} function(s); {} bounded by the assert preamble, \
-             {} declared but never indexed{}",
+            "  declared legs: {} leg(s) across {} function(s); {} bounded by the assert preamble, \
+             {} unbounded{}; {} control(s) fired",
             self.legs_seen,
             self.funcs_with_legs,
             bounded_legs,
-            self.unread.len(),
-            if self.unread.is_empty() { String::new() } else { format!(" -> {:?}", self.unread) }
+            self.unbounded.len(),
+            if self.unbounded.is_empty() { String::new() } else { format!(" -> {:?}", self.unbounded) },
+            self.legs_control.len()
         );
         for f in &self.failures {
             println!("  VIOLATION: {f}");
@@ -374,6 +466,12 @@ fn legs_AC(r: &mut Report) {
     let optInSignalPeriod = i32::MIN;
     let Ok(lb) = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("AC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AC", run(|| core.AC(startIdx, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -425,6 +523,15 @@ fn legs_ACCBANDS(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.ACCBANDS_Lookback(optInTimePeriod) else { r.no_legs("ACCBANDS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ACCBANDS", run(|| core.ACCBANDS(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -482,6 +589,11 @@ fn legs_ACOS(r: &mut Report) {
     let Ok(lb) = core.ACOS_Lookback() else { r.no_legs("ACOS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ACOS", run(|| core.ACOS(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("ACOS", "inReal", 0, run(|| core.ACOS(startIdx, endIdx, &inReal, &mut outReal)));
@@ -521,6 +633,14 @@ fn legs_AD(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.AD_Lookback() else { r.no_legs("AD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AD", run(|| core.AD(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -585,6 +705,12 @@ fn legs_ADD(r: &mut Report) {
     let Ok(lb) = core.ADD_Lookback() else { r.no_legs("ADD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal0: Vec<f64> = series("real", endIdx + 1);
+        let inReal1: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ADD", run(|| core.ADD(startIdx, endIdx, &inReal0, &inReal1, &mut outReal)));
+    }
+    {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
         let inReal1: Vec<f64> = series("real", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -634,6 +760,14 @@ fn legs_ADOSC(r: &mut Report) {
     let optInSlowPeriod = i32::MIN;
     let Ok(lb) = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod) else { r.no_legs("ADOSC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ADOSC", run(|| core.ADOSC(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -702,6 +836,13 @@ fn legs_ADX(r: &mut Report) {
     let Ok(lb) = core.ADX_Lookback(optInTimePeriod) else { r.no_legs("ADX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ADX", run(|| core.ADX(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -758,6 +899,13 @@ fn legs_ADXR(r: &mut Report) {
     let Ok(lb) = core.ADXR_Lookback(optInTimePeriod) else { r.no_legs("ADXR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ADXR", run(|| core.ADXR(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -812,6 +960,12 @@ fn legs_AO(r: &mut Report) {
     let optInSlowPeriod = i32::MIN;
     let Ok(lb) = core.AO_Lookback(optInFastPeriod, optInSlowPeriod) else { r.no_legs("AO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AO", run(|| core.AO(startIdx, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -882,6 +1036,11 @@ fn legs_APO(r: &mut Report) {
     let Ok(lb) = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { r.no_legs("APO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("APO", run(|| core.APO(startIdx, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("APO", "inReal", 0, run(|| core.APO(startIdx, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outReal)));
@@ -921,6 +1080,13 @@ fn legs_AROON(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.AROON_Lookback(optInTimePeriod) else { r.no_legs("AROON"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outAroonDown: Vec<f64> = vec![Default::default(); 5];
+        let mut outAroonUp: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AROON", run(|| core.AROON(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut outAroonDown, &mut outAroonUp)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -969,6 +1135,12 @@ fn legs_AROONOSC(r: &mut Report) {
     let Ok(lb) = core.AROONOSC_Lookback(optInTimePeriod) else { r.no_legs("AROONOSC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AROONOSC", run(|| core.AROONOSC(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -1010,6 +1182,11 @@ fn legs_ASIN(r: &mut Report) {
     let Ok(lb) = core.ASIN_Lookback() else { r.no_legs("ASIN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ASIN", run(|| core.ASIN(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("ASIN", "inReal", 0, run(|| core.ASIN(startIdx, endIdx, &inReal, &mut outReal)));
@@ -1043,6 +1220,11 @@ fn legs_ATAN(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.ATAN_Lookback() else { r.no_legs("ATAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ATAN", run(|| core.ATAN(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -1083,6 +1265,13 @@ fn legs_ATR(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.ATR_Lookback(optInTimePeriod) else { r.no_legs("ATR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ATR", run(|| core.ATR(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -1136,6 +1325,11 @@ fn legs_AVGDEV(r: &mut Report) {
     let Ok(lb) = core.AVGDEV_Lookback(optInTimePeriod) else { r.no_legs("AVGDEV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AVGDEV", run(|| core.AVGDEV(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("AVGDEV", "inReal", 0, run(|| core.AVGDEV(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -1175,6 +1369,14 @@ fn legs_AVGPRICE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.AVGPRICE_Lookback() else { r.no_legs("AVGPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("AVGPRICE", run(|| core.AVGPRICE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outReal)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -1270,6 +1472,13 @@ fn legs_BBANDS(r: &mut Report) {
     let Ok(lb) = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { r.no_legs("BBANDS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("BBANDS", run(|| core.BBANDS(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
         let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
@@ -1309,6 +1518,12 @@ fn legs_BETA(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.BETA_Lookback(optInTimePeriod) else { r.no_legs("BETA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal0: Vec<f64> = series("real", endIdx + 1);
+        let inReal1: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("BETA", run(|| core.BETA(startIdx, endIdx, &inReal0, &inReal1, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
         let inReal1: Vec<f64> = series("real", endIdx + 1);
@@ -1356,6 +1571,14 @@ fn legs_BOP(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.BOP_Lookback() else { r.no_legs("BOP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("BOP", run(|| core.BOP(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outReal)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -1424,6 +1647,13 @@ fn legs_CCI(r: &mut Report) {
     let Ok(lb) = core.CCI_Lookback(optInTimePeriod) else { r.no_legs("CCI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CCI", run(|| core.CCI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -1479,6 +1709,14 @@ fn legs_CDL2CROWS(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDL2CROWS_Lookback() else { r.no_legs("CDL2CROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL2CROWS", run(|| core.CDL2CROWS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -1547,6 +1785,14 @@ fn legs_CDL3BLACKCROWS(r: &mut Report) {
     let Ok(lb) = core.CDL3BLACKCROWS_Lookback() else { r.no_legs("CDL3BLACKCROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL3BLACKCROWS", run(|| core.CDL3BLACKCROWS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -1613,6 +1859,14 @@ fn legs_CDL3INSIDE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDL3INSIDE_Lookback() else { r.no_legs("CDL3INSIDE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL3INSIDE", run(|| core.CDL3INSIDE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -1681,6 +1935,14 @@ fn legs_CDL3LINESTRIKE(r: &mut Report) {
     let Ok(lb) = core.CDL3LINESTRIKE_Lookback() else { r.no_legs("CDL3LINESTRIKE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL3LINESTRIKE", run(|| core.CDL3LINESTRIKE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -1747,6 +2009,14 @@ fn legs_CDL3OUTSIDE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDL3OUTSIDE_Lookback() else { r.no_legs("CDL3OUTSIDE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL3OUTSIDE", run(|| core.CDL3OUTSIDE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -1815,6 +2085,14 @@ fn legs_CDL3STARSINSOUTH(r: &mut Report) {
     let Ok(lb) = core.CDL3STARSINSOUTH_Lookback() else { r.no_legs("CDL3STARSINSOUTH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL3STARSINSOUTH", run(|| core.CDL3STARSINSOUTH(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -1881,6 +2159,14 @@ fn legs_CDL3WHITESOLDIERS(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDL3WHITESOLDIERS_Lookback() else { r.no_legs("CDL3WHITESOLDIERS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDL3WHITESOLDIERS", run(|| core.CDL3WHITESOLDIERS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -1951,6 +2237,14 @@ fn legs_CDLABANDONEDBABY(r: &mut Report) {
     let Ok(lb) = core.CDLABANDONEDBABY_Lookback(optInPenetration) else { r.no_legs("CDLABANDONEDBABY"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLABANDONEDBABY", run(|| core.CDLABANDONEDBABY(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2017,6 +2311,14 @@ fn legs_CDLADVANCEBLOCK(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLADVANCEBLOCK_Lookback() else { r.no_legs("CDLADVANCEBLOCK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLADVANCEBLOCK", run(|| core.CDLADVANCEBLOCK(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -2085,6 +2387,14 @@ fn legs_CDLBELTHOLD(r: &mut Report) {
     let Ok(lb) = core.CDLBELTHOLD_Lookback() else { r.no_legs("CDLBELTHOLD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLBELTHOLD", run(|| core.CDLBELTHOLD(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2151,6 +2461,14 @@ fn legs_CDLBREAKAWAY(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLBREAKAWAY_Lookback() else { r.no_legs("CDLBREAKAWAY"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLBREAKAWAY", run(|| core.CDLBREAKAWAY(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -2219,6 +2537,14 @@ fn legs_CDLCLOSINGMARUBOZU(r: &mut Report) {
     let Ok(lb) = core.CDLCLOSINGMARUBOZU_Lookback() else { r.no_legs("CDLCLOSINGMARUBOZU"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLCLOSINGMARUBOZU", run(|| core.CDLCLOSINGMARUBOZU(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2286,6 +2612,14 @@ fn legs_CDLCONCEALBABYSWALL(r: &mut Report) {
     let Ok(lb) = core.CDLCONCEALBABYSWALL_Lookback() else { r.no_legs("CDLCONCEALBABYSWALL"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLCONCEALBABYSWALL", run(|| core.CDLCONCEALBABYSWALL(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2352,6 +2686,14 @@ fn legs_CDLCOUNTERATTACK(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLCOUNTERATTACK_Lookback() else { r.no_legs("CDLCOUNTERATTACK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLCOUNTERATTACK", run(|| core.CDLCOUNTERATTACK(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -2422,6 +2764,14 @@ fn legs_CDLDARKCLOUDCOVER(r: &mut Report) {
     let Ok(lb) = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration) else { r.no_legs("CDLDARKCLOUDCOVER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLDARKCLOUDCOVER", run(|| core.CDLDARKCLOUDCOVER(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2488,6 +2838,14 @@ fn legs_CDLDOJI(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLDOJI_Lookback() else { r.no_legs("CDLDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLDOJI", run(|| core.CDLDOJI(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -2556,6 +2914,14 @@ fn legs_CDLDOJISTAR(r: &mut Report) {
     let Ok(lb) = core.CDLDOJISTAR_Lookback() else { r.no_legs("CDLDOJISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLDOJISTAR", run(|| core.CDLDOJISTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2623,6 +2989,14 @@ fn legs_CDLDRAGONFLYDOJI(r: &mut Report) {
     let Ok(lb) = core.CDLDRAGONFLYDOJI_Lookback() else { r.no_legs("CDLDRAGONFLYDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLDRAGONFLYDOJI", run(|| core.CDLDRAGONFLYDOJI(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2689,6 +3063,14 @@ fn legs_CDLENGULFING(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLENGULFING_Lookback() else { r.no_legs("CDLENGULFING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLENGULFING", run(|| core.CDLENGULFING(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -2759,6 +3141,14 @@ fn legs_CDLEVENINGDOJISTAR(r: &mut Report) {
     let Ok(lb) = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration) else { r.no_legs("CDLEVENINGDOJISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLEVENINGDOJISTAR", run(|| core.CDLEVENINGDOJISTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2828,6 +3218,14 @@ fn legs_CDLEVENINGSTAR(r: &mut Report) {
     let Ok(lb) = core.CDLEVENINGSTAR_Lookback(optInPenetration) else { r.no_legs("CDLEVENINGSTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLEVENINGSTAR", run(|| core.CDLEVENINGSTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -2894,6 +3292,14 @@ fn legs_CDLGAPSIDESIDEWHITE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLGAPSIDESIDEWHITE_Lookback() else { r.no_legs("CDLGAPSIDESIDEWHITE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLGAPSIDESIDEWHITE", run(|| core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -2962,6 +3368,14 @@ fn legs_CDLGRAVESTONEDOJI(r: &mut Report) {
     let Ok(lb) = core.CDLGRAVESTONEDOJI_Lookback() else { r.no_legs("CDLGRAVESTONEDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLGRAVESTONEDOJI", run(|| core.CDLGRAVESTONEDOJI(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3028,6 +3442,14 @@ fn legs_CDLHAMMER(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLHAMMER_Lookback() else { r.no_legs("CDLHAMMER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHAMMER", run(|| core.CDLHAMMER(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3096,6 +3518,14 @@ fn legs_CDLHANGINGMAN(r: &mut Report) {
     let Ok(lb) = core.CDLHANGINGMAN_Lookback() else { r.no_legs("CDLHANGINGMAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHANGINGMAN", run(|| core.CDLHANGINGMAN(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3162,6 +3592,14 @@ fn legs_CDLHARAMI(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLHARAMI_Lookback() else { r.no_legs("CDLHARAMI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHARAMI", run(|| core.CDLHARAMI(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3230,6 +3668,14 @@ fn legs_CDLHARAMICROSS(r: &mut Report) {
     let Ok(lb) = core.CDLHARAMICROSS_Lookback() else { r.no_legs("CDLHARAMICROSS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHARAMICROSS", run(|| core.CDLHARAMICROSS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3296,6 +3742,14 @@ fn legs_CDLHIGHWAVE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLHIGHWAVE_Lookback() else { r.no_legs("CDLHIGHWAVE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHIGHWAVE", run(|| core.CDLHIGHWAVE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3364,6 +3818,14 @@ fn legs_CDLHIKKAKE(r: &mut Report) {
     let Ok(lb) = core.CDLHIKKAKE_Lookback() else { r.no_legs("CDLHIKKAKE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHIKKAKE", run(|| core.CDLHIKKAKE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3430,6 +3892,14 @@ fn legs_CDLHIKKAKEMOD(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLHIKKAKEMOD_Lookback() else { r.no_legs("CDLHIKKAKEMOD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHIKKAKEMOD", run(|| core.CDLHIKKAKEMOD(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3498,6 +3968,14 @@ fn legs_CDLHOMINGPIGEON(r: &mut Report) {
     let Ok(lb) = core.CDLHOMINGPIGEON_Lookback() else { r.no_legs("CDLHOMINGPIGEON"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLHOMINGPIGEON", run(|| core.CDLHOMINGPIGEON(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3564,6 +4042,14 @@ fn legs_CDLIDENTICAL3CROWS(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLIDENTICAL3CROWS_Lookback() else { r.no_legs("CDLIDENTICAL3CROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLIDENTICAL3CROWS", run(|| core.CDLIDENTICAL3CROWS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3632,6 +4118,14 @@ fn legs_CDLINNECK(r: &mut Report) {
     let Ok(lb) = core.CDLINNECK_Lookback() else { r.no_legs("CDLINNECK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLINNECK", run(|| core.CDLINNECK(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3698,6 +4192,14 @@ fn legs_CDLINVERTEDHAMMER(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLINVERTEDHAMMER_Lookback() else { r.no_legs("CDLINVERTEDHAMMER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLINVERTEDHAMMER", run(|| core.CDLINVERTEDHAMMER(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3766,6 +4268,14 @@ fn legs_CDLKICKING(r: &mut Report) {
     let Ok(lb) = core.CDLKICKING_Lookback() else { r.no_legs("CDLKICKING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLKICKING", run(|| core.CDLKICKING(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3832,6 +4342,14 @@ fn legs_CDLKICKINGBYLENGTH(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLKICKINGBYLENGTH_Lookback() else { r.no_legs("CDLKICKINGBYLENGTH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLKICKINGBYLENGTH", run(|| core.CDLKICKINGBYLENGTH(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -3900,6 +4418,14 @@ fn legs_CDLLADDERBOTTOM(r: &mut Report) {
     let Ok(lb) = core.CDLLADDERBOTTOM_Lookback() else { r.no_legs("CDLLADDERBOTTOM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLLADDERBOTTOM", run(|| core.CDLLADDERBOTTOM(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -3966,6 +4492,14 @@ fn legs_CDLLONGLEGGEDDOJI(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLLONGLEGGEDDOJI_Lookback() else { r.no_legs("CDLLONGLEGGEDDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLLONGLEGGEDDOJI", run(|| core.CDLLONGLEGGEDDOJI(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4034,6 +4568,14 @@ fn legs_CDLLONGLINE(r: &mut Report) {
     let Ok(lb) = core.CDLLONGLINE_Lookback() else { r.no_legs("CDLLONGLINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLLONGLINE", run(|| core.CDLLONGLINE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4101,6 +4643,14 @@ fn legs_CDLMARUBOZU(r: &mut Report) {
     let Ok(lb) = core.CDLMARUBOZU_Lookback() else { r.no_legs("CDLMARUBOZU"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLMARUBOZU", run(|| core.CDLMARUBOZU(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4167,6 +4717,14 @@ fn legs_CDLMATCHINGLOW(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLMATCHINGLOW_Lookback() else { r.no_legs("CDLMATCHINGLOW"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLMATCHINGLOW", run(|| core.CDLMATCHINGLOW(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4237,6 +4795,14 @@ fn legs_CDLMATHOLD(r: &mut Report) {
     let Ok(lb) = core.CDLMATHOLD_Lookback(optInPenetration) else { r.no_legs("CDLMATHOLD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLMATHOLD", run(|| core.CDLMATHOLD(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4305,6 +4871,14 @@ fn legs_CDLMORNINGDOJISTAR(r: &mut Report) {
     let optInPenetration = Core::REAL_DEFAULT;
     let Ok(lb) = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration) else { r.no_legs("CDLMORNINGDOJISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLMORNINGDOJISTAR", run(|| core.CDLMORNINGDOJISTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4375,6 +4949,14 @@ fn legs_CDLMORNINGSTAR(r: &mut Report) {
     let Ok(lb) = core.CDLMORNINGSTAR_Lookback(optInPenetration) else { r.no_legs("CDLMORNINGSTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLMORNINGSTAR", run(|| core.CDLMORNINGSTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4441,6 +5023,14 @@ fn legs_CDLONNECK(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLONNECK_Lookback() else { r.no_legs("CDLONNECK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLONNECK", run(|| core.CDLONNECK(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4509,6 +5099,14 @@ fn legs_CDLPIERCING(r: &mut Report) {
     let Ok(lb) = core.CDLPIERCING_Lookback() else { r.no_legs("CDLPIERCING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLPIERCING", run(|| core.CDLPIERCING(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4575,6 +5173,14 @@ fn legs_CDLRICKSHAWMAN(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLRICKSHAWMAN_Lookback() else { r.no_legs("CDLRICKSHAWMAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLRICKSHAWMAN", run(|| core.CDLRICKSHAWMAN(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4643,6 +5249,14 @@ fn legs_CDLRISEFALL3METHODS(r: &mut Report) {
     let Ok(lb) = core.CDLRISEFALL3METHODS_Lookback() else { r.no_legs("CDLRISEFALL3METHODS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLRISEFALL3METHODS", run(|| core.CDLRISEFALL3METHODS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4709,6 +5323,14 @@ fn legs_CDLSEPARATINGLINES(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLSEPARATINGLINES_Lookback() else { r.no_legs("CDLSEPARATINGLINES"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLSEPARATINGLINES", run(|| core.CDLSEPARATINGLINES(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4777,6 +5399,14 @@ fn legs_CDLSHOOTINGSTAR(r: &mut Report) {
     let Ok(lb) = core.CDLSHOOTINGSTAR_Lookback() else { r.no_legs("CDLSHOOTINGSTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLSHOOTINGSTAR", run(|| core.CDLSHOOTINGSTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4843,6 +5473,14 @@ fn legs_CDLSHORTLINE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLSHORTLINE_Lookback() else { r.no_legs("CDLSHORTLINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLSHORTLINE", run(|| core.CDLSHORTLINE(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -4911,6 +5549,14 @@ fn legs_CDLSPINNINGTOP(r: &mut Report) {
     let Ok(lb) = core.CDLSPINNINGTOP_Lookback() else { r.no_legs("CDLSPINNINGTOP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLSPINNINGTOP", run(|| core.CDLSPINNINGTOP(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -4977,6 +5623,14 @@ fn legs_CDLSTALLEDPATTERN(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLSTALLEDPATTERN_Lookback() else { r.no_legs("CDLSTALLEDPATTERN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLSTALLEDPATTERN", run(|| core.CDLSTALLEDPATTERN(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -5045,6 +5699,14 @@ fn legs_CDLSTICKSANDWICH(r: &mut Report) {
     let Ok(lb) = core.CDLSTICKSANDWICH_Lookback() else { r.no_legs("CDLSTICKSANDWICH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLSTICKSANDWICH", run(|| core.CDLSTICKSANDWICH(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -5111,6 +5773,14 @@ fn legs_CDLTAKURI(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLTAKURI_Lookback() else { r.no_legs("CDLTAKURI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLTAKURI", run(|| core.CDLTAKURI(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -5179,6 +5849,14 @@ fn legs_CDLTASUKIGAP(r: &mut Report) {
     let Ok(lb) = core.CDLTASUKIGAP_Lookback() else { r.no_legs("CDLTASUKIGAP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLTASUKIGAP", run(|| core.CDLTASUKIGAP(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -5245,6 +5923,14 @@ fn legs_CDLTHRUSTING(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLTHRUSTING_Lookback() else { r.no_legs("CDLTHRUSTING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLTHRUSTING", run(|| core.CDLTHRUSTING(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -5313,6 +5999,14 @@ fn legs_CDLTRISTAR(r: &mut Report) {
     let Ok(lb) = core.CDLTRISTAR_Lookback() else { r.no_legs("CDLTRISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLTRISTAR", run(|| core.CDLTRISTAR(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -5379,6 +6073,14 @@ fn legs_CDLUNIQUE3RIVER(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.CDLUNIQUE3RIVER_Lookback() else { r.no_legs("CDLUNIQUE3RIVER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLUNIQUE3RIVER", run(|| core.CDLUNIQUE3RIVER(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -5447,6 +6149,14 @@ fn legs_CDLUPSIDEGAP2CROWS(r: &mut Report) {
     let Ok(lb) = core.CDLUPSIDEGAP2CROWS_Lookback() else { r.no_legs("CDLUPSIDEGAP2CROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLUPSIDEGAP2CROWS", run(|| core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -5514,6 +6224,14 @@ fn legs_CDLXSIDEGAP3METHODS(r: &mut Report) {
     let Ok(lb) = core.CDLXSIDEGAP3METHODS_Lookback() else { r.no_legs("CDLXSIDEGAP3METHODS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("CDLXSIDEGAP3METHODS", run(|| core.CDLXSIDEGAP3METHODS(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut outInteger)));
+    }
+    {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -5575,6 +6293,11 @@ fn legs_CEIL(r: &mut Report) {
     let Ok(lb) = core.CEIL_Lookback() else { r.no_legs("CEIL"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CEIL", run(|| core.CEIL(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("CEIL", "inReal", 0, run(|| core.CEIL(startIdx, endIdx, &inReal, &mut outReal)));
@@ -5616,6 +6339,14 @@ fn legs_CMF(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.CMF_Lookback(optInTimePeriod) else { r.no_legs("CMF"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CMF", run(|| core.CMF(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -5680,6 +6411,11 @@ fn legs_CMO(r: &mut Report) {
     let Ok(lb) = core.CMO_Lookback(optInTimePeriod) else { r.no_legs("CMO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CMO", run(|| core.CMO(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("CMO", "inReal", 0, run(|| core.CMO(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -5715,6 +6451,11 @@ fn legs_CMOU(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.CMOU_Lookback(optInTimePeriod) else { r.no_legs("CMOU"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CMOU", run(|| core.CMOU(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -5753,6 +6494,12 @@ fn legs_CORREL(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.CORREL_Lookback(optInTimePeriod) else { r.no_legs("CORREL"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal0: Vec<f64> = series("real", endIdx + 1);
+        let inReal1: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CORREL", run(|| core.CORREL(startIdx, endIdx, &inReal0, &inReal1, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
         let inReal1: Vec<f64> = series("real", endIdx + 1);
@@ -5795,6 +6542,11 @@ fn legs_COS(r: &mut Report) {
     let Ok(lb) = core.COS_Lookback() else { r.no_legs("COS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("COS", run(|| core.COS(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("COS", "inReal", 0, run(|| core.COS(startIdx, endIdx, &inReal, &mut outReal)));
@@ -5828,6 +6580,11 @@ fn legs_COSH(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.COSH_Lookback() else { r.no_legs("COSH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("COSH", run(|| core.COSH(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -5865,6 +6622,11 @@ fn legs_DEMA(r: &mut Report) {
     let Ok(lb) = core.DEMA_Lookback(optInTimePeriod) else { r.no_legs("DEMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("DEMA", run(|| core.DEMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("DEMA", "inReal", 0, run(|| core.DEMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -5900,6 +6662,12 @@ fn legs_DIV(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.DIV_Lookback() else { r.no_legs("DIV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal0: Vec<f64> = series("real", endIdx + 1);
+        let inReal1: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("DIV", run(|| core.DIV(startIdx, endIdx, &inReal0, &inReal1, &mut outReal)));
+    }
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
         let inReal1: Vec<f64> = series("real", endIdx + 1);
@@ -5947,6 +6715,13 @@ fn legs_DX(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.DX_Lookback(optInTimePeriod) else { r.no_legs("DX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("DX", run(|| core.DX(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -6002,6 +6777,12 @@ fn legs_EFI(r: &mut Report) {
     let Ok(lb) = core.EFI_Lookback(optInTimePeriod) else { r.no_legs("EFI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("EFI", run(|| core.EFI(startIdx, endIdx, &inClose, &inVolume, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inClose: Vec<f64> = Vec::with_capacity(1);
         let inVolume: Vec<f64> = series("volume", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -6045,6 +6826,11 @@ fn legs_EMA(r: &mut Report) {
     let Ok(lb) = core.EMA_Lookback(optInTimePeriod) else { r.no_legs("EMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("EMA", run(|| core.EMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("EMA", "inReal", 0, run(|| core.EMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -6079,6 +6865,11 @@ fn legs_EXP(r: &mut Report) {
     let Ok(lb) = core.EXP_Lookback() else { r.no_legs("EXP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("EXP", run(|| core.EXP(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("EXP", "inReal", 0, run(|| core.EXP(startIdx, endIdx, &inReal, &mut outReal)));
@@ -6112,6 +6903,11 @@ fn legs_FLOOR(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.FLOOR_Lookback() else { r.no_legs("FLOOR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("FLOOR", run(|| core.FLOOR(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -6149,6 +6945,11 @@ fn legs_HMA(r: &mut Report) {
     let Ok(lb) = core.HMA_Lookback(optInTimePeriod) else { r.no_legs("HMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HMA", run(|| core.HMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("HMA", "inReal", 0, run(|| core.HMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -6183,6 +6984,11 @@ fn legs_HT_DCPERIOD(r: &mut Report) {
     let Ok(lb) = core.HT_DCPERIOD_Lookback() else { r.no_legs("HT_DCPERIOD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HT_DCPERIOD", run(|| core.HT_DCPERIOD(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("HT_DCPERIOD", "inReal", 0, run(|| core.HT_DCPERIOD(startIdx, endIdx, &inReal, &mut outReal)));
@@ -6216,6 +7022,11 @@ fn legs_HT_DCPHASE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.HT_DCPHASE_Lookback() else { r.no_legs("HT_DCPHASE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HT_DCPHASE", run(|| core.HT_DCPHASE(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -6252,6 +7063,12 @@ fn legs_HT_PHASOR(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.HT_PHASOR_Lookback() else { r.no_legs("HT_PHASOR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outInPhase: Vec<f64> = vec![Default::default(); 5];
+        let mut outQuadrature: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HT_PHASOR", run(|| core.HT_PHASOR(startIdx, endIdx, &inReal, &mut outInPhase, &mut outQuadrature)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outInPhase: Vec<f64> = vec![Default::default(); 5];
@@ -6290,6 +7107,12 @@ fn legs_HT_SINE(r: &mut Report) {
     let Ok(lb) = core.HT_SINE_Lookback() else { r.no_legs("HT_SINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outSine: Vec<f64> = vec![Default::default(); 5];
+        let mut outLeadSine: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HT_SINE", run(|| core.HT_SINE(startIdx, endIdx, &inReal, &mut outSine, &mut outLeadSine)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outSine: Vec<f64> = vec![Default::default(); 5];
         let mut outLeadSine: Vec<f64> = vec![Default::default(); 5];
@@ -6325,6 +7148,11 @@ fn legs_HT_TRENDLINE(r: &mut Report) {
     let Ok(lb) = core.HT_TRENDLINE_Lookback() else { r.no_legs("HT_TRENDLINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HT_TRENDLINE", run(|| core.HT_TRENDLINE(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("HT_TRENDLINE", "inReal", 0, run(|| core.HT_TRENDLINE(startIdx, endIdx, &inReal, &mut outReal)));
@@ -6358,6 +7186,11 @@ fn legs_HT_TRENDMODE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.HT_TRENDMODE_Lookback() else { r.no_legs("HT_TRENDMODE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("HT_TRENDMODE", run(|| core.HT_TRENDMODE(startIdx, endIdx, &inReal, &mut outInteger)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outInteger: Vec<i32> = vec![Default::default(); 5];
@@ -6396,6 +7229,12 @@ fn legs_IMI(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.IMI_Lookback(optInTimePeriod) else { r.no_legs("IMI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("IMI", run(|| core.IMI(startIdx, endIdx, &inOpen, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -6440,6 +7279,11 @@ fn legs_KAMA(r: &mut Report) {
     let Ok(lb) = core.KAMA_Lookback(optInTimePeriod) else { r.no_legs("KAMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KAMA", run(|| core.KAMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("KAMA", "inReal", 0, run(|| core.KAMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -6475,6 +7319,11 @@ fn legs_LINEARREG(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.LINEARREG_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("LINEARREG", run(|| core.LINEARREG(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -6512,6 +7361,11 @@ fn legs_LINEARREG_ANGLE(r: &mut Report) {
     let Ok(lb) = core.LINEARREG_ANGLE_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG_ANGLE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("LINEARREG_ANGLE", run(|| core.LINEARREG_ANGLE(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("LINEARREG_ANGLE", "inReal", 0, run(|| core.LINEARREG_ANGLE(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -6547,6 +7401,11 @@ fn legs_LINEARREG_INTERCEPT(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG_INTERCEPT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("LINEARREG_INTERCEPT", run(|| core.LINEARREG_INTERCEPT(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -6584,6 +7443,11 @@ fn legs_LINEARREG_SLOPE(r: &mut Report) {
     let Ok(lb) = core.LINEARREG_SLOPE_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG_SLOPE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("LINEARREG_SLOPE", run(|| core.LINEARREG_SLOPE(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("LINEARREG_SLOPE", "inReal", 0, run(|| core.LINEARREG_SLOPE(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -6618,6 +7482,11 @@ fn legs_LN(r: &mut Report) {
     let Ok(lb) = core.LN_Lookback() else { r.no_legs("LN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("LN", run(|| core.LN(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("LN", "inReal", 0, run(|| core.LN(startIdx, endIdx, &inReal, &mut outReal)));
@@ -6651,6 +7520,11 @@ fn legs_LOG10(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.LOG10_Lookback() else { r.no_legs("LOG10"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("LOG10", run(|| core.LOG10(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -6713,6 +7587,11 @@ fn legs_MA(r: &mut Report) {
     let Ok(lb) = core.MA_Lookback(optInTimePeriod, optInMAType) else { r.no_legs("MA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MA", run(|| core.MA(startIdx, endIdx, &inReal, optInTimePeriod, optInMAType, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("MA", "inReal", 0, run(|| core.MA(startIdx, endIdx, &inReal, optInTimePeriod, optInMAType, &mut outReal)));
@@ -6754,6 +7633,13 @@ fn legs_MACD(r: &mut Report) {
     let optInSignalPeriod = i32::MIN;
     let Ok(lb) = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("MACD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outMACD: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDHist: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MACD", run(|| core.MACD(startIdx, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMACD: Vec<f64> = vec![Default::default(); 5];
@@ -6874,6 +7760,13 @@ fn legs_MACDEXT(r: &mut Report) {
     let Ok(lb) = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) else { r.no_legs("MACDEXT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outMACD: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDHist: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MACDEXT", run(|| core.MACDEXT(startIdx, endIdx, &inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMACD: Vec<f64> = vec![Default::default(); 5];
         let mut outMACDSignal: Vec<f64> = vec![Default::default(); 5];
@@ -6916,6 +7809,13 @@ fn legs_MACDFIX(r: &mut Report) {
     let Ok(lb) = core.MACDFIX_Lookback(optInSignalPeriod) else { r.no_legs("MACDFIX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outMACD: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDHist: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MACDFIX", run(|| core.MACDFIX(startIdx, endIdx, &inReal, optInSignalPeriod, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMACD: Vec<f64> = vec![Default::default(); 5];
         let mut outMACDSignal: Vec<f64> = vec![Default::default(); 5];
@@ -6957,6 +7857,12 @@ fn legs_MAMA(r: &mut Report) {
     let Ok(lb) = core.MAMA_Lookback(optInFastLimit, optInSlowLimit) else { r.no_legs("MAMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outMAMA: Vec<f64> = vec![Default::default(); 5];
+        let mut outFAMA: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MAMA", run(|| core.MAMA(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, &mut outFAMA)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMAMA: Vec<f64> = vec![Default::default(); 5];
         let mut outFAMA: Vec<f64> = vec![Default::default(); 5];
@@ -6995,6 +7901,13 @@ fn legs_MARKETFI(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.MARKETFI_Lookback() else { r.no_legs("MARKETFI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MARKETFI", run(|| core.MARKETFI(startIdx, endIdx, &inHigh, &inLow, &inVolume, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7076,6 +7989,12 @@ fn legs_MAVP(r: &mut Report) {
     let Ok(lb) = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) else { r.no_legs("MAVP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let inPeriods: Vec<f64> = series("inPeriods", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MAVP", run(|| core.MAVP(startIdx, endIdx, &inReal, &inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let inPeriods: Vec<f64> = series("inPeriods", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -7119,6 +8038,11 @@ fn legs_MAX(r: &mut Report) {
     let Ok(lb) = core.MAX_Lookback(optInTimePeriod) else { r.no_legs("MAX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MAX", run(|| core.MAX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("MAX", "inReal", 0, run(|| core.MAX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -7155,6 +8079,11 @@ fn legs_MAXINDEX(r: &mut Report) {
     let Ok(lb) = core.MAXINDEX_Lookback(optInTimePeriod) else { r.no_legs("MAXINDEX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("MAXINDEX", run(|| core.MAXINDEX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outInteger)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outInteger: Vec<i32> = vec![Default::default(); 5];
         r.leg("MAXINDEX", "inReal", 0, run(|| core.MAXINDEX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outInteger)));
@@ -7190,6 +8119,12 @@ fn legs_MEDPRICE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.MEDPRICE_Lookback() else { r.no_legs("MEDPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MEDPRICE", run(|| core.MEDPRICE(startIdx, endIdx, &inHigh, &inLow, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7239,6 +8174,14 @@ fn legs_MFI(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.MFI_Lookback(optInTimePeriod) else { r.no_legs("MFI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MFI", run(|| core.MFI(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7303,6 +8246,11 @@ fn legs_MIDPOINT(r: &mut Report) {
     let Ok(lb) = core.MIDPOINT_Lookback(optInTimePeriod) else { r.no_legs("MIDPOINT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MIDPOINT", run(|| core.MIDPOINT(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("MIDPOINT", "inReal", 0, run(|| core.MIDPOINT(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -7340,6 +8288,12 @@ fn legs_MIDPRICE(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.MIDPRICE_Lookback(optInTimePeriod) else { r.no_legs("MIDPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MIDPRICE", run(|| core.MIDPRICE(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7384,6 +8338,11 @@ fn legs_MIN(r: &mut Report) {
     let Ok(lb) = core.MIN_Lookback(optInTimePeriod) else { r.no_legs("MIN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MIN", run(|| core.MIN(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("MIN", "inReal", 0, run(|| core.MIN(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -7419,6 +8378,11 @@ fn legs_MININDEX(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.MININDEX_Lookback(optInTimePeriod) else { r.no_legs("MININDEX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("MININDEX", run(|| core.MININDEX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outInteger)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outInteger: Vec<i32> = vec![Default::default(); 5];
@@ -7458,6 +8422,12 @@ fn legs_MINMAX(r: &mut Report) {
     let Ok(lb) = core.MINMAX_Lookback(optInTimePeriod) else { r.no_legs("MINMAX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outMin: Vec<f64> = vec![Default::default(); 5];
+        let mut outMax: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MINMAX", run(|| core.MINMAX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outMin, &mut outMax)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMin: Vec<f64> = vec![Default::default(); 5];
         let mut outMax: Vec<f64> = vec![Default::default(); 5];
@@ -7496,6 +8466,12 @@ fn legs_MINMAXINDEX(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.MINMAXINDEX_Lookback(optInTimePeriod) else { r.no_legs("MINMAXINDEX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outMinIdx: Vec<i32> = vec![Default::default(); 5];
+        let mut outMaxIdx: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("MINMAXINDEX", run(|| core.MINMAXINDEX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outMinIdx, &mut outMaxIdx)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMinIdx: Vec<i32> = vec![Default::default(); 5];
@@ -7537,6 +8513,13 @@ fn legs_MINUS_DI(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.MINUS_DI_Lookback(optInTimePeriod) else { r.no_legs("MINUS_DI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MINUS_DI", run(|| core.MINUS_DI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7592,6 +8575,12 @@ fn legs_MINUS_DM(r: &mut Report) {
     let Ok(lb) = core.MINUS_DM_Lookback(optInTimePeriod) else { r.no_legs("MINUS_DM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MINUS_DM", run(|| core.MINUS_DM(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -7635,6 +8624,11 @@ fn legs_MOM(r: &mut Report) {
     let Ok(lb) = core.MOM_Lookback(optInTimePeriod) else { r.no_legs("MOM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MOM", run(|| core.MOM(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("MOM", "inReal", 0, run(|| core.MOM(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -7670,6 +8664,12 @@ fn legs_MULT(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.MULT_Lookback() else { r.no_legs("MULT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal0: Vec<f64> = series("real", endIdx + 1);
+        let inReal1: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MULT", run(|| core.MULT(startIdx, endIdx, &inReal0, &inReal1, &mut outReal)));
+    }
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
         let inReal1: Vec<f64> = series("real", endIdx + 1);
@@ -7717,6 +8717,13 @@ fn legs_NATR(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.NATR_Lookback(optInTimePeriod) else { r.no_legs("NATR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("NATR", run(|| core.NATR(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7770,6 +8777,12 @@ fn legs_NVI(r: &mut Report) {
     let Ok(lb) = core.NVI_Lookback() else { r.no_legs("NVI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("NVI", run(|| core.NVI(startIdx, endIdx, &inClose, &inVolume, &mut outReal)));
+    }
+    {
         let inClose: Vec<f64> = Vec::with_capacity(1);
         let inVolume: Vec<f64> = series("volume", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -7812,6 +8825,12 @@ fn legs_OBV(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.OBV_Lookback() else { r.no_legs("OBV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("OBV", run(|| core.OBV(startIdx, endIdx, &inReal, &inVolume, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let inVolume: Vec<f64> = series("volume", endIdx + 1);
@@ -7859,6 +8878,13 @@ fn legs_PLUS_DI(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.PLUS_DI_Lookback(optInTimePeriod) else { r.no_legs("PLUS_DI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PLUS_DI", run(|| core.PLUS_DI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7913,6 +8939,12 @@ fn legs_PLUS_DM(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.PLUS_DM_Lookback(optInTimePeriod) else { r.no_legs("PLUS_DM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PLUS_DM", run(|| core.PLUS_DM(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -7983,6 +9015,11 @@ fn legs_PPO(r: &mut Report) {
     let Ok(lb) = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { r.no_legs("PPO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PPO", run(|| core.PPO(startIdx, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("PPO", "inReal", 0, run(|| core.PPO(startIdx, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outReal)));
@@ -8018,6 +9055,12 @@ fn legs_PVI(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.PVI_Lookback() else { r.no_legs("PVI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PVI", run(|| core.PVI(startIdx, endIdx, &inClose, &inVolume, &mut outReal)));
+    }
     {
         let inClose: Vec<f64> = Vec::with_capacity(1);
         let inVolume: Vec<f64> = series("volume", endIdx + 1);
@@ -8088,6 +9131,11 @@ fn legs_PVO(r: &mut Report) {
     let Ok(lb) = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { r.no_legs("PVO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PVO", run(|| core.PVO(startIdx, endIdx, &inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outReal)));
+    }
+    {
         let inVolume: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("PVO", "inVolume", 0, run(|| core.PVO(startIdx, endIdx, &inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outReal)));
@@ -8125,6 +9173,12 @@ fn legs_QSTICK(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.QSTICK_Lookback(optInTimePeriod) else { r.no_legs("QSTICK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("QSTICK", run(|| core.QSTICK(startIdx, endIdx, &inOpen, &inClose, optInTimePeriod, &mut outReal)));
+    }
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -8169,6 +9223,11 @@ fn legs_ROC(r: &mut Report) {
     let Ok(lb) = core.ROC_Lookback(optInTimePeriod) else { r.no_legs("ROC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ROC", run(|| core.ROC(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("ROC", "inReal", 0, run(|| core.ROC(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -8204,6 +9263,11 @@ fn legs_ROCP(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.ROCP_Lookback(optInTimePeriod) else { r.no_legs("ROCP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ROCP", run(|| core.ROCP(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -8241,6 +9305,11 @@ fn legs_ROCR(r: &mut Report) {
     let Ok(lb) = core.ROCR_Lookback(optInTimePeriod) else { r.no_legs("ROCR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ROCR", run(|| core.ROCR(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("ROCR", "inReal", 0, run(|| core.ROCR(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -8277,6 +9346,11 @@ fn legs_ROCR100(r: &mut Report) {
     let Ok(lb) = core.ROCR100_Lookback(optInTimePeriod) else { r.no_legs("ROCR100"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ROCR100", run(|| core.ROCR100(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("ROCR100", "inReal", 0, run(|| core.ROCR100(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -8312,6 +9386,11 @@ fn legs_RSI(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.RSI_Lookback(optInTimePeriod) else { r.no_legs("RSI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("RSI", run(|| core.RSI(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -8351,6 +9430,12 @@ fn legs_SAR(r: &mut Report) {
     let optInMaximum = Core::REAL_DEFAULT;
     let Ok(lb) = core.SAR_Lookback(optInAcceleration, optInMaximum) else { r.no_legs("SAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SAR", run(|| core.SAR(startIdx, endIdx, &inHigh, &inLow, optInAcceleration, optInMaximum, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -8404,6 +9489,12 @@ fn legs_SAREXT(r: &mut Report) {
     let Ok(lb) = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) else { r.no_legs("SAREXT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SAREXT", run(|| core.SAREXT(startIdx, endIdx, &inHigh, &inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -8445,6 +9536,11 @@ fn legs_SIN(r: &mut Report) {
     let Ok(lb) = core.SIN_Lookback() else { r.no_legs("SIN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SIN", run(|| core.SIN(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("SIN", "inReal", 0, run(|| core.SIN(startIdx, endIdx, &inReal, &mut outReal)));
@@ -8478,6 +9574,11 @@ fn legs_SINH(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.SINH_Lookback() else { r.no_legs("SINH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SINH", run(|| core.SINH(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -8514,6 +9615,11 @@ fn legs_SMA(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.SMA_Lookback(optInTimePeriod) else { r.no_legs("SMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SMA", run(|| core.SMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -8559,6 +9665,14 @@ fn legs_SMI(r: &mut Report) {
     let optInSignalPeriod = i32::MIN;
     let Ok(lb) = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("SMI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outSMI: Vec<f64> = vec![Default::default(); 5];
+        let mut outSMISignal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SMI", run(|| core.SMI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outSMI, &mut outSMISignal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -8613,6 +9727,11 @@ fn legs_SQRT(r: &mut Report) {
     let Ok(lb) = core.SQRT_Lookback() else { r.no_legs("SQRT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SQRT", run(|| core.SQRT(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("SQRT", "inReal", 0, run(|| core.SQRT(startIdx, endIdx, &inReal, &mut outReal)));
@@ -8649,6 +9768,11 @@ fn legs_STDDEV(r: &mut Report) {
     let optInNbDev = Core::REAL_DEFAULT;
     let Ok(lb) = core.STDDEV_Lookback(optInTimePeriod, optInNbDev) else { r.no_legs("STDDEV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("STDDEV", run(|| core.STDDEV(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -8744,6 +9868,14 @@ fn legs_STOCH(r: &mut Report) {
     let Ok(lb) = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) else { r.no_legs("STOCH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outSlowK: Vec<f64> = vec![Default::default(); 5];
+        let mut outSlowD: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("STOCH", run(|| core.STOCH(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outSlowK, &mut outSlowD)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -8831,6 +9963,14 @@ fn legs_STOCHF(r: &mut Report) {
     let Ok(lb) = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) else { r.no_legs("STOCHF"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outFastK: Vec<f64> = vec![Default::default(); 5];
+        let mut outFastD: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("STOCHF", run(|| core.STOCHF(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outFastK, &mut outFastD)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -8915,6 +10055,12 @@ fn legs_STOCHRSI(r: &mut Report) {
     let Ok(lb) = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) else { r.no_legs("STOCHRSI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outFastK: Vec<f64> = vec![Default::default(); 5];
+        let mut outFastD: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("STOCHRSI", run(|| core.STOCHRSI(startIdx, endIdx, &inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outFastK, &mut outFastD)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outFastK: Vec<f64> = vec![Default::default(); 5];
         let mut outFastD: Vec<f64> = vec![Default::default(); 5];
@@ -8951,6 +10097,12 @@ fn legs_SUB(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.SUB_Lookback() else { r.no_legs("SUB"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal0: Vec<f64> = series("real", endIdx + 1);
+        let inReal1: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SUB", run(|| core.SUB(startIdx, endIdx, &inReal0, &inReal1, &mut outReal)));
+    }
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
         let inReal1: Vec<f64> = series("real", endIdx + 1);
@@ -8995,6 +10147,11 @@ fn legs_SUM(r: &mut Report) {
     let Ok(lb) = core.SUM_Lookback(optInTimePeriod) else { r.no_legs("SUM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SUM", run(|| core.SUM(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("SUM", "inReal", 0, run(|| core.SUM(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -9032,6 +10189,11 @@ fn legs_T3(r: &mut Report) {
     let Ok(lb) = core.T3_Lookback(optInTimePeriod, optInVFactor) else { r.no_legs("T3"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("T3", run(|| core.T3(startIdx, endIdx, &inReal, optInTimePeriod, optInVFactor, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("T3", "inReal", 0, run(|| core.T3(startIdx, endIdx, &inReal, optInTimePeriod, optInVFactor, &mut outReal)));
@@ -9066,6 +10228,11 @@ fn legs_TAN(r: &mut Report) {
     let Ok(lb) = core.TAN_Lookback() else { r.no_legs("TAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TAN", run(|| core.TAN(startIdx, endIdx, &inReal, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("TAN", "inReal", 0, run(|| core.TAN(startIdx, endIdx, &inReal, &mut outReal)));
@@ -9099,6 +10266,11 @@ fn legs_TANH(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.TANH_Lookback() else { r.no_legs("TANH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TANH", run(|| core.TANH(startIdx, endIdx, &inReal, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -9135,6 +10307,11 @@ fn legs_TEMA(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.TEMA_Lookback(optInTimePeriod) else { r.no_legs("TEMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TEMA", run(|| core.TEMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -9173,6 +10350,13 @@ fn legs_TRANGE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.TRANGE_Lookback() else { r.no_legs("TRANGE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TRANGE", run(|| core.TRANGE(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -9226,6 +10410,11 @@ fn legs_TRIMA(r: &mut Report) {
     let Ok(lb) = core.TRIMA_Lookback(optInTimePeriod) else { r.no_legs("TRIMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TRIMA", run(|| core.TRIMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("TRIMA", "inReal", 0, run(|| core.TRIMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -9262,6 +10451,11 @@ fn legs_TRIX(r: &mut Report) {
     let Ok(lb) = core.TRIX_Lookback(optInTimePeriod) else { r.no_legs("TRIX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TRIX", run(|| core.TRIX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("TRIX", "inReal", 0, run(|| core.TRIX(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
@@ -9297,6 +10491,11 @@ fn legs_TSF(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.TSF_Lookback(optInTimePeriod) else { r.no_legs("TSF"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TSF", run(|| core.TSF(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -9335,6 +10534,13 @@ fn legs_TYPPRICE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.TYPPRICE_Lookback() else { r.no_legs("TYPPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TYPPRICE", run(|| core.TYPPRICE(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -9394,6 +10600,13 @@ fn legs_ULTOSC(r: &mut Report) {
     let Ok(lb) = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) else { r.no_legs("ULTOSC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ULTOSC", run(|| core.ULTOSC(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -9447,6 +10660,11 @@ fn legs_VAR(r: &mut Report) {
     let Ok(lb) = core.VAR_Lookback(optInTimePeriod, optInNbDev) else { r.no_legs("VAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("VAR", run(|| core.VAR(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
         r.leg("VAR", "inReal", 0, run(|| core.VAR(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut outReal)));
@@ -9486,6 +10704,14 @@ fn legs_VWAP(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.VWAP_Lookback() else { r.no_legs("VWAP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("VWAP", run(|| core.VWAP(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -9552,6 +10778,12 @@ fn legs_VWMA(r: &mut Report) {
     let Ok(lb) = core.VWMA_Lookback(optInTimePeriod) else { r.no_legs("VWMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("VWMA", run(|| core.VWMA(startIdx, endIdx, &inReal, &inVolume, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let inVolume: Vec<f64> = series("volume", endIdx + 1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
@@ -9596,6 +10828,13 @@ fn legs_WAD(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.WAD_Lookback() else { r.no_legs("WAD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("WAD", run(|| core.WAD(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -9650,6 +10889,13 @@ fn legs_WCLPRICE(r: &mut Report) {
     let core = Core::new();
     let Ok(lb) = core.WCLPRICE_Lookback() else { r.no_legs("WCLPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("WCLPRICE", run(|| core.WCLPRICE(startIdx, endIdx, &inHigh, &inLow, &inClose, &mut outReal)));
+    }
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
@@ -9707,6 +10953,13 @@ fn legs_WILLR(r: &mut Report) {
     let Ok(lb) = core.WILLR_Lookback(optInTimePeriod) else { r.no_legs("WILLR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("WILLR", run(|| core.WILLR(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut outReal)));
+    }
+    {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
@@ -9758,6 +11011,11 @@ fn legs_WMA(r: &mut Report) {
     let optInTimePeriod = i32::MIN;
     let Ok(lb) = core.WMA_Lookback(optInTimePeriod) else { r.no_legs("WMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("WMA", run(|| core.WMA(startIdx, endIdx, &inReal, optInTimePeriod, &mut outReal)));
+    }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outReal: Vec<f64> = vec![Default::default(); 5];
