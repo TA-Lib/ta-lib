@@ -5493,13 +5493,18 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         int_idx = 0;
         let mut out_args: Vec<String> = Vec::new();
         for out in outputs {
-            if out.param_type == ParamType::Integer {
-                out_args.push(format!("&mut outIntBuf{int_idx}"));
+            let buf = if out.param_type == ParamType::Integer {
                 int_idx += 1;
+                format!("&mut outIntBuf{}", int_idx - 1)
             } else {
-                out_args.push(format!("&mut outBuf{real_idx}"));
                 real_idx += 1;
-            }
+                format!("&mut outBuf{}", real_idx - 1)
+            };
+            // A nullable output takes `Option<&mut [T]>` (rule B6a). The server
+            // always supplies it: a correctness request goes through the public
+            // API with every declared output bound, which is what the C
+            // reference is compared against.
+            out_args.push(if out.is_nullable() { format!("Some({buf})") } else { buf });
         }
         s.push_str(&format!("                {},\n", out_args.join(", ")));
         s.push_str("            );\n");
@@ -6338,8 +6343,12 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let mut fargs = String::new();
     for (i, is_int) in out_is_int.iter().enumerate() {
         let (ty, z) = if *is_int { ("i32", "0i32") } else { ("f64", "0.0f64") };
+        // A nullable output takes `Option<&mut [T]>` (rule B6a); this harness
+        // compares values, so it always supplies one.
+        let some = func.outputs.get(i).is_some_and(crate::ir::Output::is_nullable);
+        let (op, cl) = if some { ("Some(", ")") } else { ("", "") };
         let _ = writeln!(bdecls, "    let mut b{i}: Vec<{ty}> = vec![{z}; svN];");
-        let _ = write!(bargs, ", &mut b{i}");
+        let _ = write!(bargs, ", {op}&mut b{i}{cl}");
         // Canary-filled, not zero-filled: the slack above the produced range is
         // asserted untouched after the call (#205's write bound), so a write
         // past `nb` fails instead of landing in unread space.

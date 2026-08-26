@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  080226 MF,CC  First Version — the OutRange batch contract, ported from the
  *                Java BatchApiTest to the C# surface.
+ *  082526 MF,CC  Declinable outputs and distinct empty ones (#262).
  */
 
 /* Hand-written test; ta_codegen never opens this file. */
@@ -866,6 +867,102 @@ public static class BatchApiTest
         }
     }
 
+    /// <summary>
+    /// Rule B6a: an output the .yaml marks <c>nullable</c> may be declined, and
+    /// declining it changes nothing about the output that was asked for. MAMA's
+    /// <c>outFAMA</c> is the only one in the corpus.
+    /// </summary>
+    /// <remarks>C# cannot spell "absent" apart from "empty" — a <c>Span&lt;T&gt;</c>
+    /// is a ref struct and a null array converts to an empty span — so an empty
+    /// span IS the declination (Appendix F of the error-handling spec).
+    /// <para>Acceptance alone would not test this: a body that stopped computing
+    /// FAMA, or took a different path without it, would be accepted here just the
+    /// same. So the declining call has to reproduce the supplied one bit for bit
+    /// and leave everything above its own count untouched (rule N2). No
+    /// cross-language gate can see any of it — the JSON-RPC servers bind every
+    /// declared output.</para></remarks>
+    private static void ANullableOutputMayBeDeclined()
+    {
+        var core = new Core();
+        double[] input = Closes(252);
+        var mamaRef = new double[252];
+        var famaRef = new double[252];
+        OutRange reference = core.MAMA(0, 251, input, 0.5, 0.05, mamaRef, famaRef);
+        Check(reference.Count > 0, "the reference call produces values");
+
+        const double canary = -1.2345678901234e300;
+        var mama = new double[252];
+        Array.Fill(mama, canary);
+        OutRange r = core.MAMA(0, 251, input, 0.5, 0.05, mama, default);
+
+        Check(r.BegIdx == reference.BegIdx && r.Count == reference.Count,
+            "declining outFAMA leaves the reported range alone");
+        bool same = true;
+        for (int i = 0; i < reference.Count; i++)
+        {
+            same &= BitConverter.DoubleToInt64Bits(mama[i])
+                 == BitConverter.DoubleToInt64Bits(mamaRef[i]);
+        }
+        Check(same, "declining outFAMA leaves outMAMA bit-identical");
+        bool untouched = true;
+        for (int i = r.Count; i < mama.Length; i++)
+        {
+            untouched &= BitConverter.DoubleToInt64Bits(mama[i])
+                      == BitConverter.DoubleToInt64Bits(canary);
+        }
+        Check(untouched, "the declining call writes nothing past its own count");
+
+        // A null array converts to an empty span, so this is the same call —
+        // which is exactly why C# cannot tell "declined" from "empty".
+        double[]? absent = null;
+        core.MAMA(0, 251, input, 0.5, 0.05, new double[252], absent);
+
+        // Controls, so the acceptance above is about the FLAG and not about MAMA
+        // having stopped checking its outputs.
+        CheckThrows<ArgumentException>(
+            () => core.MAMA(0, 251, input, 0.5, 0.05, default, famaRef),
+            "the non-nullable output is still required", "MAMA", "outMAMA");
+        CheckThrows<ArgumentException>(
+            () => core.MAMA(0, 251, input, 0.5, 0.05, mamaRef, new double[1]),
+            "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
+    }
+
+    /// <summary>
+    /// Appendix D item 11: distinct zero-length outputs are not aliases. A range
+    /// shorter than the lookback produces nothing and needs no output space
+    /// (rule N1), so the call is a success with an empty range — which is what C
+    /// and Java always answered.
+    /// </summary>
+    /// <remarks>C# used to reject it outright: the pair guard carried an explicit
+    /// <c>a.IsEmpty &amp;&amp; b.IsEmpty</c> arm, because a span carries no
+    /// identity with no elements. That arm also made "declined" unspellable,
+    /// which is why it went with #262 rather than being narrowed.</remarks>
+    private static void DistinctEmptyOutputsAreNotAliases()
+    {
+        var core = new Core();
+        double[] input = Closes(252);
+        const int period = 253;
+        Check(core.ACCBANDS_Lookback(period) > 251,
+            "the probe needs a lookback past the range, or it proves nothing");
+
+        OutRange r = core.ACCBANDS(0, 251, input, input, input, period,
+            default, default, default);
+        Check(r.Count == 0, "a sub-lookback range needs no output space");
+
+        // Control: the same three empty spans on a range that DOES produce values
+        // are still rejected, so this is about the count and not about the bound
+        // having gone away.
+        CheckThrows<ArgumentException>(
+            () => core.ACCBANDS(0, 251, input, input, input, 20, default, default, default),
+            "an output that has to hold values is still bounded", "ACCBANDS");
+        // And a REAL alias of two outputs is still rejected.
+        var shared = new double[252];
+        CheckThrows<ArgumentException>(
+            () => core.ACCBANDS(0, 251, input, input, input, 20,
+                shared, shared, new double[252]),
+            "two outputs that are one span are still rejected", "ACCBANDS");
+    }
+
     public static int Run()
     {
         MaxWithKnownOutputs();
@@ -890,6 +987,8 @@ public static class BatchApiTest
         OutRangeValueSemantics();
         IntegerSentinelSelectsTheDocumentedDefault();
         EveryFailureCarriesItsCode();
+        ANullableOutputMayBeDeclined();
+        DistinctEmptyOutputsAreNotAliases();
 
         if (_failures == 0)
         {

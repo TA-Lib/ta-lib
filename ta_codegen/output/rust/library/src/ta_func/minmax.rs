@@ -112,7 +112,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMin.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMax.len());
-        if outMin.as_ptr() == outMax.as_ptr() {
+        if (!outMin.is_empty() && !outMax.is_empty() && outMin.as_ptr() == outMax.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -722,7 +722,7 @@ impl Core {
     pub fn MINMAX_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outMin: &mut [f64], outMax: &mut [f64],
     ) -> Result<(MINMAX_Stream, OutRange), RetCode> {
-        if outMin.as_ptr() == outMax.as_ptr() {
+        if !outMin.is_empty() && !outMax.is_empty() && outMin.as_ptr() == outMax.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

@@ -257,6 +257,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             matype_map: HashMap::new(),
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
+            nullable_outputs: HashSet::new(),
         },
         extrema_i32,
     }
@@ -571,7 +572,7 @@ fn emit_open_and_fill_wrapper(
         for b in &outs[i + 1..] {
             let _ = writeln!(
                 o,
-                "        if {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
+                "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
                 a = outs[i]
             );
         }
@@ -1435,7 +1436,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
             for b in &outs[i + 1..] {
                 let _ = writeln!(
                     o,
-                    "        if {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
+                    "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
                     a = outs[i]
                 );
             }
@@ -2722,6 +2723,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         matype_map: build_matype_map(enums),
         enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
+        nullable_outputs: HashSet::new(),
     }
 }
 

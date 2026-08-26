@@ -539,6 +539,12 @@ pub fn opt_flag_bits(flags: &[String]) -> u32 {
     b
 }
 
+/// `TA_OUT_NULLABLE` — the caller may decline this output (rule B6a). Named
+/// because a second reader of the bit exists: the Rust abstract tier has to
+/// wrap such an output in `Some(..)`, and a literal there would be a sixth
+/// place the number lives (see `flag_sync`).
+pub const OUT_NULLABLE: u32 = 0x0000_2000;
+
 pub fn output_flag_bits(flags: &[String]) -> u32 {
     let mut b = 0u32;
     for f in flags {
@@ -556,7 +562,7 @@ pub fn output_flag_bits(flags: &[String]) -> u32 {
             "zero" => b |= 0x0000_0400,
             "upper_limit" => b |= 0x0000_0800,
             "lower_limit" => b |= 0x0000_1000,
-            "nullable" => b |= 0x0000_2000,
+            "nullable" => b |= OUT_NULLABLE,
             _ => {}
         }
     }

@@ -90,12 +90,18 @@ pub fn guarded_docs(
         b.tag(&format!("param {}", opt.name), &param_doc(opt, doc, enums));
     }
     for out in &func.outputs {
+        // A nullable output may be declined; the signature alone does not say
+        // what `null` means there, so the parameter line does.
+        let sizing = if out.is_nullable() {
+            "Pass {@code null} to decline it: it is still computed where the \
+             algorithm needs it, but nothing is written out. Supplied, it must \
+             hold at least {@code endIdx - startIdx + 1} values."
+        } else {
+            "Must hold at least {@code endIdx - startIdx + 1} values."
+        };
         b.tag(
             &format!("param {}", out.name),
-            &format!(
-                "{} Must hold at least {{@code endIdx - startIdx + 1}} values.",
-                output_desc(out, doc)
-            ),
+            &format!("{} {sizing}", output_desc(out, doc)),
         );
     }
 

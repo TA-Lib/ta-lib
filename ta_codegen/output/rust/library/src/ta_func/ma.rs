@@ -214,7 +214,7 @@ impl Core {
             MAType::MAMA => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                retCode = self.MAMA_Impl(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
+                retCode = self.MAMA_Impl(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, None);
             }
             MAType::T3 => {
                 retCode = self.T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);

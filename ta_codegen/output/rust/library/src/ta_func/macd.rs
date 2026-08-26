@@ -197,7 +197,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
-        if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
+        if (!outMACD.is_empty() && !outMACDSignal.is_empty() && outMACD.as_ptr() == outMACDSignal.as_ptr()) || (!outMACD.is_empty() && !outMACDHist.is_empty() && outMACD.as_ptr() == outMACDHist.as_ptr()) || (!outMACDSignal.is_empty() && !outMACDHist.is_empty() && outMACDSignal.as_ptr() == outMACDHist.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -857,13 +857,13 @@ impl Core {
     pub fn MACD_OpenAndFill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<(MACD_Stream, OutRange), RetCode> {
-        if outMACD.as_ptr() == outMACDSignal.as_ptr() {
+        if !outMACD.is_empty() && !outMACDSignal.is_empty() && outMACD.as_ptr() == outMACDSignal.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if outMACD.as_ptr() == outMACDHist.as_ptr() {
+        if !outMACD.is_empty() && !outMACDHist.is_empty() && outMACD.as_ptr() == outMACDHist.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
+        if !outMACDSignal.is_empty() && !outMACDHist.is_empty() && outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

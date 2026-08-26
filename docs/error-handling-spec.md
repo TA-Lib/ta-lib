@@ -151,7 +151,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B4 | A required argument was not supplied — any declared input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
 | B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[6] | ✅<br>[7] | ✅<br>&nbsp; |
-| B6a | An output is **omitted** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
+| B6a | An output is **omitted** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B7 | A memory allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. **Warning: implemented, but no CI job or probe covers it** — provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors"). **Warning: implemented, but the individual sites are not tested** | `TA_INTERNAL_ERROR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 
@@ -201,12 +201,15 @@ sub-lookback sweep hand the body zero-length slices and observe what it touches.
 
 [6] **The condition cannot be written**: two `&mut [f64]` cannot alias, so the
 borrow checker rejects it at compile time. The `as_ptr()` guard behind the public
-entry point therefore never fires on a real alias — but it does fire on distinct
-zero-length outputs, which share a dangling pointer (Appendix F). It is emitted
-*after* the capacity asserts: B5 panics in Rust where B6 returns, so this is the
-one pair of batch rules whose order a caller can see in one backend and not the
-others. A call that is both undersized and "aliased" answers the panic; it used
-to answer `BadParam` — #261.
+entry point therefore never fires at all in safe code; it is kept for parity, and
+for the FFI boundary. It requires **both** operands to be non-empty, because two
+zero-length slices cannot clobber each other — without that it fired on distinct
+empty `Vec`s, which share a dangling pointer, while accepting distinct empty
+*subslices*, which do not (Appendix D item 11, #262). It is emitted *after* the
+capacity asserts: B5 panics in Rust where B6 returns, so this is the one pair of
+batch rules whose order a caller can see in one backend and not the others. A
+call that is both undersized and "aliased" answers the panic; it used to answer
+`BadParam` — #261.
 
 [7] **A run-time error.** Two Java arrays are either the same object or
 disjoint, so reference equality catches every case this rule covers.
@@ -630,9 +633,9 @@ Named so their absence is deliberate rather than an oversight.
 
 Every ❌ above, collected, plus the message-level deviations that sit
 alongside a passing rule (item 7), plus two that no rule row can carry: a
-divergence on a call every rule says is legal (item 11), and coverage a gate lost
-rather than a behaviour a backend got wrong (item 12). Each is measured, not
-inferred.
+divergence on a call every rule says is legal (item 11, now fixed), and coverage
+a gate lost rather than a behaviour a backend got wrong (item 12). Each is
+measured, not inferred.
 
 | # | Backend | Rule | Defect |
 |---|---|---|---|
@@ -646,7 +649,7 @@ inferred.
 | ~~8~~ | all | S6 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S3) down with it — see footnote [12]. |
 | 9 | Rust, Java, C# | S8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
 | ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
-| 11 | C#, Rust | B6 | Two **empty** output buffers are rejected as aliased. C# says so explicitly (`a.IsEmpty && b.IsEmpty` is a clause of the guard); Rust does it incidentally, because the guard compares `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejects *some* empty pairs and accepts others — which is worse than either). C and Java accept them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this is a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Unreachable until #236 step 2 sized the harness's output buffers to the produced count, which is why the servers floor that length at one. Superseded by rule B6a: an omitted output is a declaration, not an alias — Appendix F, #262. |
+| ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
 | 12 | Java, C# | B5 | **MA** is **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answers `TA_BAD_PARAM` before any array is reached, so the probe cannot tell "read nothing" from "never ran". The public API is unaffected — reached through the caller's own wrapper the callee's check is provably redundant, same `endIdx`, same array. **Was ten functions**; nine are resolved. Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` cannot: it is a dispatch function, and the generator admits only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on — so a guard there is a generator change, not an edit to `ma.c`. The one remaining route is giving the input bound the sub-lookback escape the output bound has, converging with C and Rust and giving up the stricter reading B5 adopted. The list is explicit and its size asserted in both suites, so the debt cannot grow silently. |
 
 Item 9 is the one that still changes what a *correct* caller can do: it turns a
@@ -705,36 +708,56 @@ safety, removing it is the change — not adding the check elsewhere.
 ## Appendix F — Omitted outputs
 
 An indicator may declare an output a caller can decline. `MAMA`'s `outFAMA` is
-the only one today, marked `flags: [nullable]` in `ta_codegen/input/mama/mama.yaml`.
-Declining it is not the same as passing a buffer too small: the caller is saying
-*do not compute this*, and the body's writes to it are guarded instead.
+the only one today, marked `flags: [nullable]` in `ta_codegen/input/mama/mama.yaml`,
+and it surfaces through `ta_abstract` as `TA_OUT_NULLABLE`. Declining it is not
+the same as passing a buffer too small: the caller is saying *do not write this*,
+so the presence and capacity checks are skipped for that output and the body's
+writes to it are guarded instead. Everything else is unchanged — the value is
+still computed where the algorithm needs it, and the other outputs are
+bit-identical to the same call with the output supplied.
 
-**How a caller spells "omitted" is not the same in every language**, and that is
-the whole difficulty:
+**How a caller spells "omitted" is not the same in every language.** Three of the
+four can say it outright; C# cannot, and does not need to:
 
-| backend | can express "omitted" distinctly from "empty"? |
-|---|---|
-| C | **Yes** — `NULL` is not a valid zero-length buffer |
-| Java | **Yes** — `null` is not `new double[0]` |
-| Rust | **No** — an omitted output and an empty one are both a zero-length slice |
-| C# | **No** — both are an empty `Span<T>` |
+| backend | "omitted" is | can it be told apart from "empty"? |
+|---|---|---|
+| C | `NULL` | **Yes** — `NULL` is not a valid zero-length buffer |
+| Rust | `None`, the output being `Option<&mut [T]>` | **Yes** |
+| Java | `null` | **Yes** — `null` is not `new double[0]` |
+| C# | an empty `Span<T>` | **No** — a `Span<T>` is a ref struct and a null array converts to an empty span |
 
-Two consequences follow, and both are open:
+C# is the exception because the type system leaves it no alternative, and the
+collapse costs nothing: an output that is declined is written to no more than one
+that has nothing to hold. What C# does keep is the distinction that matters — the
+length check is skipped for a nullable output that arrives empty and applied to it
+otherwise, so a sizing mistake on a *supplied* output is still an error.
 
-**Only C honours the declaration.** C skips the null check for a nullable output
-(`ta_MAMA.c:183` checks `outMAMA` and not `outFAMA`) and guards each write. Java
-and C# length-check `outFAMA` like any other output, so the same call is accepted
-in C and rejected in the managed backends. Rust has no way to decline it at all.
+Rust could have joined C# by reading a zero-length slice as the declination, and
+deliberately does not. `Option` is the shape a Rust caller expects, it makes the
+declination visible at the call site, and it keeps `&mut []` for a non-nullable
+output what it has always been: a sizing mistake, which B5 answers.
 
-**A zero-length output is ambiguous where null is unspellable.** Rust and C#
-cannot tell "I decline this output" from "nothing is produced, so I sized it
-zero", and today neither reads the `nullable` flag. Rust's `as_ptr()` aliasing
-guard makes this visible: three separately allocated empty `Vec`s all report the
-same dangling pointer, so `ACCBANDS` over a range shorter than its lookback —
-a call B5 explicitly permits with zero-length outputs — answers `BadParam`.
-Measured: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Distinct
-zero-length *subslices* of one buffer have real addresses and are accepted, so
-Rust rejects some empty triples and accepts others.
+**An omitted output is not an alias.** Two declined outputs are not the same
+buffer, and neither are two empty ones — a write to one cannot clobber the other,
+because neither is written. So rule B6's pair guard skips a pair whose operands
+are not both present and non-empty. C and Java guard each nullable operand
+non-null before comparing (two `NULL`s compare *equal*); C#'s `Overlaps` already
+answers false for an empty span; Rust requires both slices non-empty, which also
+closed the divergence in Appendix D item 11.
 
-Rule B6a states the intended contract. No backend implements it yet, which is
-why all four cells are deviations rather than passes — #262.
+**None of this is visible to a cross-language gate.** The JSON-RPC servers bind
+every declared output and floor its length at one, so a backend that went back to
+requiring `outFAMA` — or to rejecting distinct empty buffers — would stay green in
+`--codegen`, `--xlang-hash` and `--fuzz-064` alike. Each backend therefore carries
+its own probe: `testBatchArgumentContract` (C), `tests/nullable_outputs.rs`
+(Rust), and `BatchApiTest` (Java and C#). Each compares a declining call against
+the same call with the output supplied, rather than only asserting that it was
+accepted — a body that stopped computing the value, or took a different path
+without it, would pass the weaker check.
+
+**More than one nullable output per function** is generated but unshipped: the
+corpus has one, and the pair guard branches on which of a pair is nullable, so
+three of its four arms would be unreachable. `SYNTH10`
+(`ta_codegen/generator/input_synth/`) is the fixture that reaches them — three
+outputs, two of them declinable, driven end to end through all four backends by
+`scripts/synth_gate.py`.

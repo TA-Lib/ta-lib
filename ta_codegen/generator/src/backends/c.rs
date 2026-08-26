@@ -933,6 +933,17 @@ fn gen_func_inner(
                     pairs.push(format!("{guard}{} == {}", a.name, b.name));
                 }
             }
+            // More than one pair, and a guarded term carries `&&`: parenthesise
+            // it so the `&&` cannot read as binding across the `||` that joins
+            // the pairs, and `-Wparentheses` stays quiet. Single-pair functions
+            // (MAMA) keep the bare form.
+            if pairs.len() > 1 {
+                for p in &mut pairs {
+                    if p.contains(" && ") {
+                        *p = format!("({p})");
+                    }
+                }
+            }
             out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
             out.push_str("      return TA_BAD_PARAM;\n");
         }

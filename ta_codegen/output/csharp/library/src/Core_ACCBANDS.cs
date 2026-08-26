@@ -125,7 +125,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outRealUpperBand.Overlaps(outRealMiddleBand) || (outRealUpperBand.IsEmpty && outRealMiddleBand.IsEmpty) || outRealUpperBand.Overlaps(outRealLowerBand) || (outRealUpperBand.IsEmpty && outRealLowerBand.IsEmpty) || outRealMiddleBand.Overlaps(outRealLowerBand) || (outRealMiddleBand.IsEmpty && outRealLowerBand.IsEmpty) ) {
+      if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam ;
       }
       if( (outRealUpperBand.Overlaps(inHigh) && outRealUpperBand != inHigh) || (outRealUpperBand.Overlaps(inLow) && outRealUpperBand != inLow) || (outRealUpperBand.Overlaps(inClose) && outRealUpperBand != inClose) || (outRealMiddleBand.Overlaps(inHigh) && outRealMiddleBand != inHigh) || (outRealMiddleBand.Overlaps(inLow) && outRealMiddleBand != inLow) || (outRealMiddleBand.Overlaps(inClose) && outRealMiddleBand != inClose) || (outRealLowerBand.Overlaps(inHigh) && outRealLowerBand != inHigh) || (outRealLowerBand.Overlaps(inLow) && outRealLowerBand != inLow) || (outRealLowerBand.Overlaps(inClose) && outRealLowerBand != inClose) ) {
@@ -269,7 +269,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outRealUpperBand.Overlaps(outRealMiddleBand) || (outRealUpperBand.IsEmpty && outRealMiddleBand.IsEmpty) || outRealUpperBand.Overlaps(outRealLowerBand) || (outRealUpperBand.IsEmpty && outRealLowerBand.IsEmpty) || outRealMiddleBand.Overlaps(outRealLowerBand) || (outRealMiddleBand.IsEmpty && outRealLowerBand.IsEmpty) ) {
+      if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam ;
       }
       lookbackTotal = SMA_Lookback(optInTimePeriod);

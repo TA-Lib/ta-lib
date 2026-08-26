@@ -74,8 +74,16 @@ pub fn guarded_docs(
         d.bullet(&param_doc(opt, doc, enums));
     }
     for output in &func.outputs {
+        // A nullable output is the one place the signature alone does not say
+        // what `None` means, so the parameter line says it.
+        let declinable = if output.is_nullable() {
+            " Pass `None` to decline it: it is still computed where the \
+             algorithm needs it, but nothing is written out."
+        } else {
+            ""
+        };
         d.bullet(&format!(
-            "`{}` — {}",
+            "`{}` — {}{declinable}",
             output.name,
             output_desc(&output.name, doc)
         ));
@@ -549,7 +557,14 @@ fn example_doctest(
             _ => "0.0",
         };
         lines.push(format!("let mut {var} = vec![{zero}; {EXAMPLE_LEN}];"));
-        out_args.push(format!("&mut {var}"));
+        // A nullable output takes `Option<&mut [T]>` (rule B6a). The example
+        // supplies it — `None` is documented on the parameter, and an example
+        // that declined an output would not show what the function produces.
+        out_args.push(if output.is_nullable() {
+            format!("Some(&mut {var})")
+        } else {
+            format!("&mut {var}")
+        });
     }
 
     lines.push(String::new());

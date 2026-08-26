@@ -154,7 +154,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK.Overlaps(outFastD) || (outFastK.IsEmpty && outFastD.IsEmpty) ) {
+      if( outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam ;
       }
       if( (outFastK.Overlaps(inReal) && outFastK != inReal) || (outFastD.Overlaps(inReal) && outFastD != inReal) ) {
@@ -269,7 +269,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK.Overlaps(outFastD) || (outFastK.IsEmpty && outFastD.IsEmpty) ) {
+      if( outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam ;
       }
       outBegIdx = 0;

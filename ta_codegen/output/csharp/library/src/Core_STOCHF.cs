@@ -161,7 +161,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK.Overlaps(outFastD) || (outFastK.IsEmpty && outFastD.IsEmpty) ) {
+      if( outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam ;
       }
       if( (outFastK.Overlaps(inHigh) && outFastK != inHigh) || (outFastK.Overlaps(inLow) && outFastK != inLow) || (outFastK.Overlaps(inClose) && outFastK != inClose) || (outFastD.Overlaps(inHigh) && outFastD != inHigh) || (outFastD.Overlaps(inLow) && outFastD != inLow) || (outFastD.Overlaps(inClose) && outFastD != inClose) ) {
@@ -402,7 +402,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK.Overlaps(outFastD) || (outFastK.IsEmpty && outFastD.IsEmpty) ) {
+      if( outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam ;
       }
       lookbackK = optInFastK_Period - 1;

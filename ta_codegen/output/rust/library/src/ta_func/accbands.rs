@@ -132,7 +132,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
-        if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
+        if (!outRealUpperBand.is_empty() && !outRealMiddleBand.is_empty() && outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr()) || (!outRealUpperBand.is_empty() && !outRealLowerBand.is_empty() && outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr()) || (!outRealMiddleBand.is_empty() && !outRealLowerBand.is_empty() && outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -686,13 +686,13 @@ impl Core {
     pub fn ACCBANDS_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<(ACCBANDS_Stream, OutRange), RetCode> {
-        if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
+        if !outRealUpperBand.is_empty() && !outRealMiddleBand.is_empty() && outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() {
+        if !outRealUpperBand.is_empty() && !outRealLowerBand.is_empty() && outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
+        if !outRealMiddleBand.is_empty() && !outRealLowerBand.is_empty() && outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

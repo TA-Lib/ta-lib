@@ -198,7 +198,7 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( outMAMA.Overlaps(outFAMA) || (outMAMA.IsEmpty && outFAMA.IsEmpty) ) {
+      if( outMAMA.Overlaps(outFAMA) ) {
          return RetCode.BadParam ;
       }
       if( (outMAMA.Overlaps(inReal) && outMAMA != inReal) || (outFAMA.Overlaps(inReal) && outFAMA != inReal) ) {
@@ -477,7 +477,8 @@ public partial class Core
             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
              */
-            outFAMA[outIdx] = fama;
+            if( !outFAMA.IsEmpty )
+               outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
@@ -598,7 +599,7 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( outMAMA.Overlaps(outFAMA) || (outMAMA.IsEmpty && outFAMA.IsEmpty) ) {
+      if( outMAMA.Overlaps(outFAMA) ) {
          return RetCode.BadParam ;
       }
       a = 0.0962;
@@ -816,7 +817,8 @@ public partial class Core
          tempReal *= 0.5;
          fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outFAMA[outIdx] = fama;
+            if( !outFAMA.IsEmpty )
+               outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          Re = Math.FusedMultiplyAdd(0.8, Re, 0.2 * (Math.FusedMultiplyAdd(I2, prevI2, Q2 * prevQ2)));
@@ -877,8 +879,10 @@ public partial class Core
    /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
-   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
-   /// hold at least <c>endIdx - startIdx + 1</c> values.</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
+   /// an empty span to decline it: it is still computed where the algorithm
+   /// needs it, but nothing is written out. Supplied, it must hold at least
+   /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -908,7 +912,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MAMA", "inReal", inReal.Length, guardInLen);
       RequireLength("MAMA", "outMAMA", outMAMA.Length, guardOutLen);
-      RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
+      if( !outFAMA.IsEmpty ) RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
       RetCode retCode = MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -952,8 +956,10 @@ public partial class Core
    /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
-   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
-   /// hold at least <c>endIdx - startIdx + 1</c> values.</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
+   /// an empty span to decline it: it is still computed where the algorithm
+   /// needs it, but nothing is written out. Supplied, it must hold at least
+   /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -983,7 +989,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MAMA", "inReal", inReal.Length, guardInLen);
       RequireLength("MAMA", "outMAMA", outMAMA.Length, guardOutLen);
-      RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
+      if( !outFAMA.IsEmpty ) RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
       RetCode retCode = MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);

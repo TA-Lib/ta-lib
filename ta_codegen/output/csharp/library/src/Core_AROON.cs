@@ -112,7 +112,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outAroonDown.Overlaps(outAroonUp) || (outAroonDown.IsEmpty && outAroonUp.IsEmpty) ) {
+      if( outAroonDown.Overlaps(outAroonUp) ) {
          return RetCode.BadParam ;
       }
       if( (outAroonDown.Overlaps(inHigh) && outAroonDown != inHigh) || (outAroonDown.Overlaps(inLow) && outAroonDown != inLow) || (outAroonUp.Overlaps(inHigh) && outAroonUp != inHigh) || (outAroonUp.Overlaps(inLow) && outAroonUp != inLow) ) {
@@ -232,7 +232,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outAroonDown.Overlaps(outAroonUp) || (outAroonDown.IsEmpty && outAroonUp.IsEmpty) ) {
+      if( outAroonDown.Overlaps(outAroonUp) ) {
          return RetCode.BadParam ;
       }
       if( startIdx < optInTimePeriod ) {

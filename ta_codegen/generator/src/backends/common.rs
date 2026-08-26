@@ -343,6 +343,22 @@ pub fn find_sizeof_type(expr: &Expr) -> Option<String> {
     }
 }
 
+/// The outputs a caller may decline — the `nullable` flag in the .yaml, rule
+/// B6a of `docs/error-handling-spec.md`.
+///
+/// One source of truth for the four backends: each spells "declined" in its own
+/// way (`NULL` in C, `null` in Java, `None` in Rust, an empty `Span` in C#), but
+/// all four have to guard the same set of stores, and all four skip the same
+/// presence/capacity check on them.
+#[must_use]
+pub(crate) fn nullable_output_names(func: &FuncDef) -> std::collections::HashSet<String> {
+    func.outputs
+        .iter()
+        .filter(|o| o.is_nullable())
+        .map(|o| o.name.clone())
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

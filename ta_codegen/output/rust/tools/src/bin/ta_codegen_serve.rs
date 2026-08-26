@@ -14019,7 +14019,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inReal,
                 optInFastLimit,
                 optInSlowLimit,
-                &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, Some(&mut outBuf1),
             );
             rc = match _out {
                 Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
@@ -35952,7 +35952,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = match c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
+        let rc = match c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, Some(&mut b1)) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAMA_Open(&fz_c, optInFastLimit, optInSlowLimit).is_err();

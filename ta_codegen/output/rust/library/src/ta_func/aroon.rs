@@ -117,7 +117,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonDown.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonUp.len());
-        if outAroonDown.as_ptr() == outAroonUp.as_ptr() {
+        if (!outAroonDown.is_empty() && !outAroonUp.is_empty() && outAroonDown.as_ptr() == outAroonUp.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -636,7 +636,7 @@ impl Core {
     pub fn AROON_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
     ) -> Result<(AROON_Stream, OutRange), RetCode> {
-        if outAroonDown.as_ptr() == outAroonUp.as_ptr() {
+        if !outAroonDown.is_empty() && !outAroonUp.is_empty() && outAroonDown.as_ptr() == outAroonUp.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

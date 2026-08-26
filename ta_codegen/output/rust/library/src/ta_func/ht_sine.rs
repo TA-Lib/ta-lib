@@ -130,7 +130,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSine.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outLeadSine.len());
-        if outSine.as_ptr() == outLeadSine.as_ptr() {
+        if (!outSine.is_empty() && !outLeadSine.is_empty() && outSine.as_ptr() == outLeadSine.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -1515,7 +1515,7 @@ impl Core {
     pub fn HT_SINE_OpenAndFill(
         &self, inReal: &[f64], outSine: &mut [f64], outLeadSine: &mut [f64],
     ) -> Result<(HT_SINE_Stream, OutRange), RetCode> {
-        if outSine.as_ptr() == outLeadSine.as_ptr() {
+        if !outSine.is_empty() && !outLeadSine.is_empty() && outSine.as_ptr() == outLeadSine.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

@@ -698,13 +698,33 @@ fn c_batch_prologue_orders_parameters_before_presence() {
 /// comparison of its own — BBANDS elects its scratch with one — so a substring
 /// match would find that instead and read the order backwards.
 fn rust_alias_guard(func: &ir::FuncDef) -> String {
+    // Both operands non-empty: two zero-length slices cannot clobber each other,
+    // and every unallocated `Vec` hands out the same dangling pointer, so a bare
+    // `as_ptr()` comparison rejected a call rules N1 and B5 both permit
+    // (Appendix D item 11, #262). A nullable output is an `Option` and
+    // contributes a term only when it was supplied (rule B6a).
     let mut pairs: Vec<String> = Vec::new();
     for i in 0..func.outputs.len() {
         for j in (i + 1)..func.outputs.len() {
-            pairs.push(format!(
-                "{}.as_ptr() == {}.as_ptr()",
-                func.outputs[i].name, func.outputs[j].name
-            ));
+            let (a, b) = (&func.outputs[i], &func.outputs[j]);
+            pairs.push(match (a.is_nullable(), b.is_nullable()) {
+                (false, false) => format!(
+                    "(!{0}.is_empty() && !{1}.is_empty() && {0}.as_ptr() == {1}.as_ptr())",
+                    a.name, b.name
+                ),
+                (true, false) => format!(
+                    "{0}.as_deref().is_some_and(|a| !a.is_empty() && !{1}.is_empty() && a.as_ptr() == {1}.as_ptr())",
+                    a.name, b.name
+                ),
+                (false, true) => format!(
+                    "{1}.as_deref().is_some_and(|b| !{0}.is_empty() && !b.is_empty() && {0}.as_ptr() == b.as_ptr())",
+                    a.name, b.name
+                ),
+                (true, true) => format!(
+                    "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| !a.is_empty() && !b.is_empty() && a.as_ptr() == b.as_ptr())",
+                    a.name, b.name
+                ),
+            });
         }
     }
     format!(
@@ -795,10 +815,19 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
         // Every output's capacity is B5, so the guard has to follow ALL of the
         // asserts, not merely the first.
         for output in &func.outputs {
-            let cap = format!(
-                "assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());",
-                output.name
-            );
+            // A declined output has no capacity to bound, so its assert asks the
+            // question only when one was supplied (rule B6a).
+            let cap = if output.is_nullable() {
+                format!(
+                    "assert!(_assertStart > endIdx || {}.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));",
+                    output.name
+                )
+            } else {
+                format!(
+                    "assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());",
+                    output.name
+                )
+            };
             let cap_at = section
                 .find(&cap)
                 .unwrap_or_else(|| panic!("{where_}\n{} has no capacity assert", output.name));
@@ -7486,6 +7515,98 @@ fn test_c_ma_dispatch_stream_section() {
         c.contains("(const TA_SMA_Stream *)stream->sub"),
         "const sub cast in Peek"
     );
+}
+
+/// Rule B6a (`docs/error-handling-spec.md` 2.2, issue #262): an omitted output
+/// is accepted iff the .yaml marks it `nullable`. C has honoured it since #125;
+/// this pins the other three, each of which spells "declined" in its own way.
+///
+/// The pins are per-backend on purpose. The cross-language gates cannot see any
+/// of this: the servers always supply every output, so a backend that quietly
+/// went back to requiring `outFAMA` would stay green everywhere.
+#[test]
+fn test_mama_nullable_fama_is_declinable_in_every_backend() {
+    let (func, enums) = load_indicator("mama");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    // Rust: `Option<&mut [f64]>` — the one backend that can spell "declined"
+    // apart from "empty" and does, which leaves C# alone in overloading it.
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        rust.contains("outFAMA: Option<&mut [f64]>"),
+        "Rust declines a nullable output with None, not an empty slice"
+    );
+    assert!(
+        rust.contains("if let Some(outFAMA) = outFAMA.as_deref_mut() {"),
+        "every store into the declined output is guarded"
+    );
+    assert!(
+        rust.contains(
+            "assert!(_assertStart > endIdx || outFAMA.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));"
+        ),
+        "B5 asks for capacity only where an output was supplied"
+    );
+
+    // Java: `null`, and the length check has to be skipped for it and kept for
+    // outMAMA — the half a caller actually sees.
+    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        java.contains(
+            "if( outFAMA != null ) requireLength(\"MAMA\", \"outFAMA\", outFAMA, guardOutLen);"
+        ),
+        "Java requires a length only for a supplied output"
+    );
+    assert!(
+        java.contains("requireLength(\"MAMA\", \"outMAMA\", outMAMA, guardOutLen);")
+            && !java.contains("if( outMAMA != null ) requireLength"),
+        "the non-nullable output stays unconditionally required"
+    );
+    assert!(
+        java.contains("if( outFAMA != null )\n               outFAMA[outIdx] = fama;"),
+        "every store into the declined output is guarded"
+    );
+    assert!(
+        java.contains("if( outFAMA != null && outMAMA == outFAMA )"),
+        "two nulls compare equal, so the pair guard checks the nullable operand first"
+    );
+
+    // C#: an empty span IS the declination — a `Span<T>` is a ref struct and a
+    // null array converts to an empty one, so there is nothing else to use.
+    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        csharp.contains(
+            "if( !outFAMA.IsEmpty ) RequireLength(\"MAMA\", \"outFAMA\", outFAMA.Length, guardOutLen);"
+        ),
+        "C# requires a length only for a supplied output"
+    );
+    assert!(
+        csharp.contains("if( !outFAMA.IsEmpty )\n               outFAMA[outIdx] = fama;"),
+        "every store into the declined output is guarded"
+    );
+    assert!(
+        csharp.contains("if( outMAMA.Overlaps(outFAMA) ) {")
+            && !csharp.contains("outMAMA.IsEmpty && outFAMA.IsEmpty"),
+        "the empty-pair rejection is gone: it made 'declined' unspellable (item 11)"
+    );
+
+    // And MA's cross-call declines rather than allocating a buffer to throw away.
+    let (ma, ma_enums) = load_indicator("ma");
+    for (lang, out, want) in [
+        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
+         "outBegIdx, outNBElement, outReal, None)"),
+        ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
+         "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null)"),
+        ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
+         "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
+    ] {
+        assert!(out.contains(want), "{lang}: MA's MAMA arm must decline FAMA ({want})");
+        assert!(
+            !out.contains("new double[(int)(endIdx - startIdx + 1)]")
+                && !out.contains("&mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]"),
+            "{lang}: the throwaway FAMA buffer must be gone, not merely unread"
+        );
+    }
 }
 
 /// FAMA is a nullable output (issue #125). In the BATCH C: `Output::is_nullable`

@@ -462,6 +462,8 @@ typedef enum
   TA_BATCH_ARG_WRONG_CODE            = 1630,
   TA_BATCH_ARG_CONTROL               = 1631,
   TA_BATCH_ARG_VACUOUS               = 1632,
+  /* Rule B6a: declining a nullable output changed what the call produced. */
+  TA_BATCH_ARG_NULLABLE_DIVERGED     = 1633,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

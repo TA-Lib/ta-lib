@@ -109,7 +109,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMinIdx.Overlaps(outMaxIdx) || (outMinIdx.IsEmpty && outMaxIdx.IsEmpty) ) {
+      if( outMinIdx.Overlaps(outMaxIdx) ) {
          return RetCode.BadParam ;
       }
       /* Identify the minimum number of price bar needed
@@ -219,7 +219,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMinIdx.Overlaps(outMaxIdx) || (outMinIdx.IsEmpty && outMaxIdx.IsEmpty) ) {
+      if( outMinIdx.Overlaps(outMaxIdx) ) {
          return RetCode.BadParam ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;

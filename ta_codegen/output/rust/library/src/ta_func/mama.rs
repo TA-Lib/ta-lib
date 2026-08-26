@@ -124,7 +124,7 @@ impl Core {
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMAMA: &mut [f64],
-        outFAMA: &mut [f64],
+        outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
         return ta_lib_dispatch::dispatch_fma!(self, MAMA_Impl_fma, MAMA_Impl_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
@@ -143,7 +143,7 @@ impl Core {
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMAMA: &mut [f64],
-        outFAMA: &mut [f64],
+        outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
         self.MAMA_Impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
@@ -158,7 +158,7 @@ impl Core {
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMAMA: &mut [f64],
-        outFAMA: &mut [f64],
+        mut outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
         if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
@@ -180,8 +180,8 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outFAMA.len());
-        if outMAMA.as_ptr() == outFAMA.as_ptr() {
+        assert!(_assertStart > endIdx || outFAMA.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));
+        if outFAMA.as_deref().is_some_and(|b| !outMAMA.is_empty() && !b.is_empty() && outMAMA.as_ptr() == b.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -509,7 +509,9 @@ impl Core {
             if today >= startIdx {
                 // FAMA is nullable (issue #125): its write carries no outIdx advance so
                 // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-                outFAMA[outIdx] = fama;
+                if let Some(outFAMA) = outFAMA.as_deref_mut() {
+                    outFAMA[outIdx] = fama;
+                }
                 outMAMA[outIdx] = mama;
                 outIdx += 1;
             }
@@ -566,7 +568,9 @@ impl Core {
     /// * `optInSlowLimit` — Lower bound on the adaptive smoothing factor (default 0.05, range
     ///   0.01..=0.99)
     /// * `outMAMA` — Adaptive moving average (fast line)
-    /// * `outFAMA` — Following adaptive moving average, using half the alpha (slow line)
+    /// * `outFAMA` — Following adaptive moving average, using half the alpha (slow line) Pass
+    ///   `None` to decline it: it is still computed where the algorithm needs it, but nothing is
+    ///   written out.
     ///
     /// Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.
     ///
@@ -601,7 +605,7 @@ impl Core {
     /// let mut mama = vec![0.0; 252];
     /// let mut fama = vec![0.0; 252];
     ///
-    /// let out_range = core.MAMA(0, data.len() - 1, &data, 0.5, 0.05, &mut mama, &mut fama)?;
+    /// let out_range = core.MAMA(0, data.len() - 1, &data, 0.5, 0.05, &mut mama, Some(&mut fama))?;
     /// assert!(out_range.count > 0);
     /// assert!(mama[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -627,7 +631,7 @@ impl Core {
         optInFastLimit: f64,
         optInSlowLimit: f64,
         outMAMA: &mut [f64],
-        outFAMA: &mut [f64],
+        outFAMA: Option<&mut [f64]>,
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
@@ -1484,7 +1488,7 @@ impl Core {
     pub fn MAMA_OpenAndFill(
         &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<(MAMA_Stream, OutRange), RetCode> {
-        if outMAMA.as_ptr() == outFAMA.as_ptr() {
+        if !outMAMA.is_empty() && !outFAMA.is_empty() && outMAMA.as_ptr() == outFAMA.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

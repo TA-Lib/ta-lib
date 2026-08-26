@@ -154,7 +154,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastD.len());
-        if outFastK.as_ptr() == outFastD.as_ptr() {
+        if (!outFastK.is_empty() && !outFastD.is_empty() && outFastK.as_ptr() == outFastD.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -604,7 +604,7 @@ impl Core {
     pub fn STOCHRSI_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<(STOCHRSI_Stream, OutRange), RetCode> {
-        if outFastK.as_ptr() == outFastD.as_ptr() {
+        if !outFastK.is_empty() && !outFastD.is_empty() && outFastK.as_ptr() == outFastD.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

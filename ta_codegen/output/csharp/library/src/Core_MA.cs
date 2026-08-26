@@ -228,7 +228,7 @@ public partial class Core
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
          outBegIdx = _xr7.BegIdx;
          outNBElement = _xr7.Count;
          retCode = RetCode.Success;
@@ -336,7 +336,7 @@ public partial class Core
          retCode = RetCode.Success;
          break;
       case MAType.MAMA:
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
          outBegIdx = _xr7.BegIdx;
          outNBElement = _xr7.Count;
          retCode = RetCode.Success;

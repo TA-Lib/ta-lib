@@ -7838,14 +7838,14 @@ fn sub_MAMA(r: &mut Report) {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMAMA: Vec<f64> = Vec::with_capacity(1);
             let mut outFAMA: Vec<f64> = Vec::with_capacity(1);
-            core.MAMA(0, lb, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, &mut outFAMA)
+            core.MAMA(0, lb, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, Some(&mut outFAMA))
         }));
         if lb < 1 { r.no_quiet_range("MAMA", label); continue; }
         r.quiet("MAMA", label, lb, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMAMA: Vec<f64> = Vec::with_capacity(1);
             let mut outFAMA: Vec<f64> = Vec::with_capacity(1);
-            core.MAMA(0, lb - 1, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, &mut outFAMA)
+            core.MAMA(0, lb - 1, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, Some(&mut outFAMA))
         }));
     }
 }
@@ -7860,13 +7860,13 @@ fn legs_MAMA(r: &mut Report) {
         let inReal: Vec<f64> = series("real", endIdx + 1);
         let mut outMAMA: Vec<f64> = vec![Default::default(); 5];
         let mut outFAMA: Vec<f64> = vec![Default::default(); 5];
-        r.legs_control("MAMA", run(|| core.MAMA(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, &mut outFAMA)));
+        r.legs_control("MAMA", run(|| core.MAMA(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, Some(&mut outFAMA))));
     }
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
         let mut outMAMA: Vec<f64> = vec![Default::default(); 5];
         let mut outFAMA: Vec<f64> = vec![Default::default(); 5];
-        r.leg("MAMA", "inReal", 0, run(|| core.MAMA(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, &mut outFAMA)));
+        r.leg("MAMA", "inReal", 0, run(|| core.MAMA(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut outMAMA, Some(&mut outFAMA))));
     }
     r.legs_done("MAMA", 1);
 }

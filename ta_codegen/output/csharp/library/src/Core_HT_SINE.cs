@@ -168,7 +168,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( outSine.Overlaps(outLeadSine) || (outSine.IsEmpty && outLeadSine.IsEmpty) ) {
+      if( outSine.Overlaps(outLeadSine) ) {
          return RetCode.BadParam ;
       }
       if( (outSine.Overlaps(inReal) && outSine != inReal) || (outLeadSine.Overlaps(inReal) && outLeadSine != inReal) ) {
@@ -588,7 +588,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( outSine.Overlaps(outLeadSine) || (outSine.IsEmpty && outLeadSine.IsEmpty) ) {
+      if( outSine.Overlaps(outLeadSine) ) {
          return RetCode.BadParam ;
       }
       a = 0.0962;

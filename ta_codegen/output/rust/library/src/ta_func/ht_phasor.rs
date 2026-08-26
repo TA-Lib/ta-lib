@@ -124,7 +124,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInPhase.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outQuadrature.len());
-        if outInPhase.as_ptr() == outQuadrature.as_ptr() {
+        if (!outInPhase.is_empty() && !outQuadrature.is_empty() && outInPhase.as_ptr() == outQuadrature.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -1290,7 +1290,7 @@ impl Core {
     pub fn HT_PHASOR_OpenAndFill(
         &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<(HT_PHASOR_Stream, OutRange), RetCode> {
-        if outInPhase.as_ptr() == outQuadrature.as_ptr() {
+        if !outInPhase.is_empty() && !outQuadrature.is_empty() && outInPhase.as_ptr() == outQuadrature.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

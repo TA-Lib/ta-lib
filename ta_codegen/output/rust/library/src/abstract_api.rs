@@ -4149,7 +4149,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MAMA_Impl(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.MAMA_Impl(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, Some(&mut *o1));
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc

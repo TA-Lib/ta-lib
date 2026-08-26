@@ -156,7 +156,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastD.len());
-        if outFastK.as_ptr() == outFastD.as_ptr() {
+        if (!outFastK.is_empty() && !outFastD.is_empty() && outFastK.as_ptr() == outFastD.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -971,7 +971,7 @@ impl Core {
     pub fn STOCHF_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<(STOCHF_Stream, OutRange), RetCode> {
-        if outFastK.as_ptr() == outFastD.as_ptr() {
+        if !outFastK.is_empty() && !outFastD.is_empty() && outFastK.as_ptr() == outFastD.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

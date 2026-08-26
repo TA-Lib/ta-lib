@@ -45,6 +45,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
+- (#262) API (Rust, Java, C#): an output the library marks *nullable* can now be declined, as C has always allowed. `MAMA`'s `outFAMA` is the only one — pass `None` in Rust (its parameter is now `Option<&mut [f64]>`), `null` in Java, an empty span in C#. Declining skips the write, not the calculation: the other outputs are unchanged. It also removes the throwaway buffer those three languages allocated on every `MA` (and `BBANDS`, `STOCH`, …) call with an MA type of MAMA.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
@@ -82,6 +83,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#243) STDDEV and BBANDS returned exactly 0 for a standard deviation that was small but non-zero. In rare cases, was making the bands "collapse" on the middle line.
 - (#244) MFI returned 0 instead of the index whenever the window summed to less than 1.0. Also, no longer returns values slightly outside 0-100 (clamps the epsilon errors).
 - (#253) Fix many TA_IS_ZERO vs TA_IS_ZERO_SCALED choices. Numerically better for edge cases, like very small inputs (<10e-8) or mostly flat input prices.
+- (#262) Rust and C# rejected a call whose output buffers were separately allocated but empty, treating them as one buffer. A range shorter than the indicator's lookback produces no values and needs no output space, so that call is a success in C and Java; all four now agree.
 - Batch API: a NULL `outBegIdx` or `outNBElement` crashed instead of being rejected; every function now returns `TA_BAD_PARAM`.
 
 ## [0.7.1] 2026-07-03

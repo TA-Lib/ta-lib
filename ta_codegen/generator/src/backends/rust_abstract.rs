@@ -872,7 +872,15 @@ fn emit_call_arm(
             o,
             "                if o{k}.len() < need {{ self.{arr}[{k}] = Some(o{k}); return Err(RetCode::BadParam); }} // {ty}"
         );
-        args.push(format!("&mut *o{k}"));
+        // The abstract tier always supplies every declared output, so a
+        // `nullable` one (rule B6a, `TA_OUT_NULLABLE`) is handed `Some(..)`
+        // rather than declined: the catalogue's job is to reproduce the direct
+        // call, not to choose for the caller.
+        args.push(if out.flags & super::abstract_rows::OUT_NULLABLE == 0 {
+            format!("&mut *o{k}")
+        } else {
+            format!("Some(&mut *o{k})")
+        });
     }
 
     let _ = writeln!(o, "                let rc = self.core.{snake}_Impl({});", args.join(", "));

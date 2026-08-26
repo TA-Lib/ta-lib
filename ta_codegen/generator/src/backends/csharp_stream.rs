@@ -1381,6 +1381,8 @@ fn stream_ctx<'a>(
 ) -> CsRenderCtx<'a> {
     CsRenderCtx {
         single_precision: false,
+        // The streaming tier keeps every output required, so no store is guarded.
+        nullable_outputs: empty,
         double_address_of_vars: empty,
         float_input_params: empty,
         inline_counter: counter,
@@ -1924,6 +1926,7 @@ fn emit_open_region(
     let empty = HashSet::new();
     let ctx = CsRenderCtx {
         single_precision: false,
+        nullable_outputs: &empty,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &empty,
         inline_counter: counter,
@@ -3875,6 +3878,7 @@ fn emit_composed_open(
     let ins_double_address_of = collect_double_address_of_vars(&combined, &ins_address_of);
     let ins_ctx = CsRenderCtx {
         single_precision: false,
+        nullable_outputs: &empty,
         double_address_of_vars: &ins_double_address_of,
         float_input_params: &empty,
         inline_counter: counter,

@@ -526,9 +526,10 @@ static ErrorNumber testBatchArgumentContract( void )
    BAC_REJECT( "TA_CDLHIKKAKE(inOpen=NULL)",
                TA_CDLHIKKAKE( 0, 251, NULL, bars, bars, bars, &beg, &nb, outI ) );
 
-   /* A NULLABLE output is not a required argument: dropping it is legal, and
-    * that is what keeps the rejections above about absence rather than about
-    * NULL. The required half of the same call still answers TA_BAD_PARAM. */
+   /* Rule B6a: a NULLABLE output is not a required argument. Dropping it is
+    * legal, and that is what keeps the rejections above about absence rather
+    * than about NULL. The required half of the same call still answers
+    * TA_BAD_PARAM. */
    BAC_ACCEPT( "TA_MAMA(outFAMA=NULL)",
                TA_MAMA( 0, 251, bars, 0.5, 0.05, &beg, &nb, outA, NULL ) );
    BAC_REJECT( "TA_MAMA(outMAMA=NULL)",
@@ -536,12 +537,66 @@ static ErrorNumber testBatchArgumentContract( void )
    BAC_REJECT( "TA_MAMA(outNBElement=NULL)",
                TA_MAMA( 0, 251, bars, 0.5, 0.05, &beg, NULL, outA, outB ) );
 
+   /* "Compute but do not write it" is the whole claim, and acceptance alone
+    * does not test it: a body that stopped computing FAMA — or that took a
+    * different path when it is absent — would still be accepted here. So the
+    * declined call has to reproduce the supplied one, value for value, on the
+    * output it DID ask for, and leave the buffer it did not alone.
+    *
+    * The canary above the produced count is the other half: rule N2 says only
+    * the reported range is written, and a guard that leaked a store past its
+    * own condition would land there. */
+   {
+      int begRef = 0, nbRef = 0, begNull = -1, nbNull = -1;
+      int k;
+      TA_RetCode rcRef, rcNull;
+
+      for( k = 0; k < 512; k++ )
+      {
+         outA[k] = outB[k] = 0.0;
+         outC[k] = -1.2345678901234e300;
+      }
+      rcRef  = TA_MAMA( 0, 251, bars, 0.5, 0.05, &begRef, &nbRef, outA, outB );
+      rcNull = TA_MAMA( 0, 251, bars, 0.5, 0.05, &begNull, &nbNull, outC, NULL );
+      if( rcRef != TA_SUCCESS || rcNull != TA_SUCCESS || nbRef == 0 )
+      {
+         printf( "\nFailed: TA_MAMA nullable comparison did not run (%d, %d, nb %d)\n",
+                 (int)rcRef, (int)rcNull, nbRef );
+         return TA_BATCH_ARG_VACUOUS;
+      }
+      if( begRef != begNull || nbRef != nbNull )
+      {
+         printf( "\nFailed: declining outFAMA changed the reported range "
+                 "(%d,%d vs %d,%d)\n", begRef, nbRef, begNull, nbNull );
+         return TA_BATCH_ARG_NULLABLE_DIVERGED;
+      }
+      for( k = 0; k < nbRef; k++ )
+      {
+         if( memcmp( &outA[k], &outC[k], sizeof(double) ) != 0 )
+         {
+            printf( "\nFailed: declining outFAMA changed outMAMA[%d] "
+                    "(%.17g vs %.17g)\n", k, outA[k], outC[k] );
+            return TA_BATCH_ARG_NULLABLE_DIVERGED;
+         }
+      }
+      for( k = nbRef; k < 512; k++ )
+      {
+         if( outC[k] != -1.2345678901234e300 )
+         {
+            printf( "\nFailed: the declining call wrote outMAMA[%d], past its "
+                    "count of %d\n", k, nbRef );
+            return TA_BATCH_ARG_NULLABLE_DIVERGED;
+         }
+      }
+      bacAccept += 2;
+   }
+
    printf( "  Batch argument contract (B4): %d rejection(s), %d control(s)\n",
            bacReject, bacAccept );
 
    /* Literal floors: a count derived from the cases above would move with a
     * deleted case and still pass. */
-   if( bacReject < 19 || bacAccept < 8 )
+   if( bacReject < 19 || bacAccept < 10 )
    {
       printf( "\nFailed: the batch argument gate ran fewer checks than it was "
               "written with\n" );

@@ -1138,6 +1138,8 @@ fn stream_ctx<'a>(
         float_input_params: empty,
         inline_counter: counter,
         fma: Some(fma_sets),
+        // The streaming tier keeps every output required, so no store is guarded.
+        nullable_outputs: empty,
         // Stream bodies dispatch MA-type structurally, never via `== TA_MAType_*`.
         matype_map: HashMap::new(),
     }
@@ -1593,6 +1595,7 @@ fn emit_open_region(
     let empty = HashSet::new();
     let ctx = JavaRenderCtx {
         single_precision: false,
+        nullable_outputs: &empty,
         address_of_vars: &address_of_vars,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &empty,
@@ -3368,6 +3371,7 @@ fn emit_composed_open(
     }
     let ins_ctx = JavaRenderCtx {
         single_precision: false,
+        nullable_outputs: &empty,
         address_of_vars: &ins_address_of,
         double_address_of_vars: &ins_double_address_of,
         float_input_params: &empty,

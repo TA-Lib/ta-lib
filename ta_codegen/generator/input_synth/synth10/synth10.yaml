@@ -1,0 +1,23 @@
+name: SYNTH10
+group: Math Operators
+hint: Synthetic gate function 10 - two nullable outputs in one function (never shipped)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  # Declaration order is load-bearing: the output-distinctness guard walks the
+  # pairs (i, j) with i < j, and this order is the only one that produces all
+  # three nullable combinations from three outputs — (nullable, required),
+  # (nullable, nullable) and (required, nullable). MAMA, the one shipped
+  # function with a nullable output, has exactly one and reaches only the
+  # first. See issue #262.
+  - name: outFirstOptional
+    type: real
+    flags: [line, nullable]
+  - name: outRequired
+    type: real
+    flags: [line]
+  - name: outSecondOptional
+    type: real
+    flags: [line, nullable]

@@ -122,7 +122,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMin.Overlaps(outMax) || (outMin.IsEmpty && outMax.IsEmpty) ) {
+      if( outMin.Overlaps(outMax) ) {
          return RetCode.BadParam ;
       }
       if( (outMin.Overlaps(inReal) && outMin != inReal) || (outMax.Overlaps(inReal) && outMax != inReal) ) {
@@ -316,7 +316,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMin.Overlaps(outMax) || (outMin.IsEmpty && outMax.IsEmpty) ) {
+      if( outMin.Overlaps(outMax) ) {
          return RetCode.BadParam ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;

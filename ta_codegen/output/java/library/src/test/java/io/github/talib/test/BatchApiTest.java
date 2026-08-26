@@ -45,6 +45,7 @@
  *  072626 MF,CC  First Version — the OutRange batch contract. Absorbs the
  *                non-vacuous cases of the retired junit CoreTest.
  *  081826 MF,CC  Array-argument checks (#172 C2).
+ *  082526 MF,CC  Declinable outputs and distinct empty ones (#262).
  */
 
 package io.github.talib.test;
@@ -838,6 +839,95 @@ public class BatchApiTest {
             "a negative startIdx outranks a null enum", "startIdx");
     }
 
+    /**
+     * Rule B6a: an output the .yaml marks {@code nullable} may be declined with
+     * {@code null}, and declining it changes nothing about the output that was
+     * asked for. MAMA's {@code outFAMA} is the only one in the corpus.
+     *
+     * <p>Acceptance alone would not test this. A body that stopped computing
+     * FAMA, or took a different path without it, would be accepted here just the
+     * same — so the declining call has to reproduce the supplied one bit for
+     * bit, and leave everything above its own count untouched (rule N2).
+     *
+     * <p>No cross-language gate can see any of it: the JSON-RPC servers bind
+     * every declared output, so a wrapper that went back to requiring
+     * {@code outFAMA} stays green in {@code --codegen} and {@code --xlang-hash}
+     * alike.
+     */
+    static void aNullableOutputMayBeDeclined() {
+        final double[] in = closes(252);
+        final double[] mamaRef = new double[252];
+        final double[] famaRef = new double[252];
+        OutRange ref = Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, mamaRef, famaRef);
+        check(ref.count() > 0, "the reference call produces values");
+
+        final double CANARY = -1.2345678901234e300;
+        double[] mama = new double[252];
+        Arrays.fill(mama, CANARY);
+        OutRange r = Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, mama, null);
+
+        check(r.begIdx() == ref.begIdx() && r.count() == ref.count(),
+            "declining outFAMA leaves the reported range alone");
+        boolean same = true;
+        for (int i = 0; i < ref.count(); i++) {
+            same &= Double.doubleToRawLongBits(mama[i]) == Double.doubleToRawLongBits(mamaRef[i]);
+        }
+        check(same, "declining outFAMA leaves outMAMA bit-identical");
+        boolean untouched = true;
+        for (int i = r.count(); i < mama.length; i++) {
+            untouched &= Double.doubleToRawLongBits(mama[i]) == Double.doubleToRawLongBits(CANARY);
+        }
+        check(untouched, "the declining call writes nothing past its own count");
+
+        // The supplied output only has to hold the produced count; the declined
+        // one has no size to hold at all.
+        Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, new double[ref.count()], null);
+
+        // Controls, so the acceptance above is about the FLAG and not about
+        // MAMA having stopped checking its outputs.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, null, famaRef),
+            "the non-nullable output is still required", "MAMA", "outMAMA");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
+            "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
+    }
+
+    /**
+     * Appendix D item 11: three separately allocated zero-length outputs are
+     * three distinct buffers, and a range shorter than the lookback produces
+     * nothing, so the call is a success with an empty range (rule N1).
+     *
+     * <p>Java always accepted it — two arrays are the same object or disjoint,
+     * so its guard is reference equality and complete. It is here as the
+     * cross-language anchor: C# and Rust rejected the same call until #262, and
+     * this is the shape they now have to agree with.
+     */
+    static void distinctEmptyOutputsAreNotAliases() {
+        final double[] in = closes(252);
+        final int period = 253;
+        check(Core.DEFAULT.ACCBANDS_Lookback(period) > 251,
+            "the probe needs a lookback past the range, or it proves nothing");
+
+        OutRange r = Core.DEFAULT.ACCBANDS(0, 251, in, in, in, period,
+            new double[0], new double[0], new double[0]);
+        check(r.count() == 0, "a sub-lookback range needs no output space");
+
+        // Control: the same three empty arrays on a range that DOES produce
+        // values are still rejected, so this is about the count and not about
+        // the bound having gone away.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.ACCBANDS(0, 251, in, in, in, 20,
+                new double[0], new double[0], new double[0]),
+            "an output that has to hold values is still bounded", "ACCBANDS");
+        // And a REAL alias of two outputs is still rejected.
+        double[] shared = new double[252];
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.ACCBANDS(0, 251, in, in, in, 20,
+                shared, shared, new double[252]),
+            "two outputs that are one array are still rejected", "ACCBANDS");
+    }
+
     public static void main(String[] args) {
         maxWithKnownOutputs();
         begIdxEqualsLookback();
@@ -865,6 +955,8 @@ public class BatchApiTest {
         anIndexFaultOutranksAnAbsentArgument();
         aBadParameterOutranksAnAbsentBuffer();
         aNullEnumIsNamed();
+        aNullableOutputMayBeDeclined();
+        distinctEmptyOutputsAreNotAliases();
 
         if (failures == 0) {
             System.out.println("BatchApiTest: ALL PASS (" + checks + " checks)");

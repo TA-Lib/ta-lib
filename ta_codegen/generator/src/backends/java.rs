@@ -120,6 +120,11 @@ pub(crate) struct JavaRenderCtx<'a> {
     /// `optInMAType == TA_MAType_*` comparisons render; stream bodies dispatch
     /// MA-type structurally and leave this empty.
     pub(crate) matype_map: HashMap<String, String>,
+    /// Output parameters the caller may decline with `null` because their .yaml
+    /// marks them `nullable` (rule B6a). Every store into one is wrapped in an
+    /// `if( outX != null )`. Populated for the batch bodies; the stream tier
+    /// keeps its outputs required and leaves this empty.
+    pub(crate) nullable_outputs: &'a HashSet<String>,
 }
 
 /// Build the `TA_MAType_*` → `MAType.<Pascal>` map the [`ExprEmitter::var`] hook
@@ -763,10 +768,20 @@ fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
     }
     for output in &func.outputs {
         let name = &output.name;
-        let _ = writeln!(
-            out,
-            "      requireLength(\"{base_name}\", \"{name}\", {name}, guardOutLen);"
-        );
+        // A nullable output may be declined with `null` (rule B6a): the writes
+        // to it are guarded, so there is no length to require. Supplied, it is
+        // bounded like any other — "declined" is `null` and nothing else.
+        if output.is_nullable() {
+            let _ = writeln!(
+                out,
+                "      if( {name} != null ) requireLength(\"{base_name}\", \"{name}\", {name}, guardOutLen);"
+            );
+        } else {
+            let _ = writeln!(
+                out,
+                "      requireLength(\"{base_name}\", \"{name}\", {name}, guardOutLen);"
+            );
+        }
     }
     out
 }
@@ -1108,14 +1123,31 @@ fn gen_func_inner(
         out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
         // Output-distinctness (issue #108): aliasing two different output arrays
         // has no correct result, so reject it. Input == output stays allowed.
+        // A nullable operand is guarded non-null first — a declined output
+        // aliases nothing, and two nulls would otherwise compare equal and
+        // spuriously reject (rule B6a).
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
-                    pairs.push(format!(
-                        "{} == {}",
-                        func.outputs[i].name, func.outputs[j].name
-                    ));
+                    let (a, b) = (&func.outputs[i], &func.outputs[j]);
+                    let mut guard = String::new();
+                    if a.is_nullable() {
+                        let _ = write!(guard, "{} != null && ", a.name);
+                    }
+                    if b.is_nullable() {
+                        let _ = write!(guard, "{} != null && ", b.name);
+                    }
+                    pairs.push(format!("{guard}{} == {}", a.name, b.name));
+                }
+            }
+            // Parenthesise a guarded term when the `||` join could make its
+            // `&&` ambiguous to a reader — see the C emitter's note.
+            if pairs.len() > 1 {
+                for p in &mut pairs {
+                    if p.contains(" && ") {
+                        *p = format!("({p})");
+                    }
                 }
             }
             out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
@@ -1137,6 +1169,7 @@ fn gen_func_inner(
     // backends fuse identical sites. The index-param seeds never affect a fusion
     // decision (never float operands), so one seed set is used uniformly.
     let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
+    let nullable_outputs = super::common::nullable_output_names(func);
     let ctx = JavaRenderCtx {
         single_precision,
         address_of_vars: &address_of_vars,
@@ -1144,6 +1177,7 @@ fn gen_func_inner(
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
         fma: Some(&fma_sets),
+        nullable_outputs: &nullable_outputs,
         matype_map: build_matype_map(enums),
     };
 
@@ -1295,10 +1329,12 @@ pub fn render_statement(
     double_address_of_vars: &HashSet<String>,
     float_input_params: &HashSet<String>,
 ) -> String {
+    let no_nullable = HashSet::new();
     let ctx = JavaRenderCtx {
         single_precision,
         address_of_vars,
         double_address_of_vars,
+        nullable_outputs: &no_nullable,
         float_input_params,
         inline_counter,
         // Auxiliary entry (no body available to derive fusion sets); fusion for
@@ -1535,7 +1571,17 @@ impl StatementEmitter for JavaStmt<'_> {
 
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
         let value_str = render_expr(&new_value, self.ctx, self.registry, self.helpers);
-        out.push_str(&format!("{pad}{target_str} = {value_str};\n"));
+        // Writing into a nullable output — guard it so a `null` (declined)
+        // output is skipped (rule B6a). The `outIdx` advance rides the
+        // non-nullable partner's write (see mama.c), so guarding this store is
+        // complete.
+        if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
+            out.push_str(&format!(
+                "{pad}if( {base} != null )\n{pad}   {target_str} = {value_str};\n"
+            ));
+        } else {
+            out.push_str(&format!("{pad}{target_str} = {value_str};\n"));
+        }
         out
     }
 
@@ -1862,6 +1908,19 @@ pub(crate) fn render_java_switch_label(label: &str, enums: &HashMap<String, Enum
     }
 }
 
+/// If `target` stores into one of the `nullable` outputs (a `double outX[]` the
+/// caller may pass `null` to decline — rule B6a), return its base name so the
+/// store can be wrapped in `if( outX != null )`. Matches the array store
+/// `outX[i] = …` and the scalar store `outX = …`; the value side is never
+/// involved.
+fn nullable_target_base<'a>(target: &Expr, nullable: &'a HashSet<String>) -> Option<&'a String> {
+    let name = match target {
+        Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) | Expr::Var(n) => n,
+        _ => return None,
+    };
+    nullable.get(name)
+}
+
 fn render_assign_target(
     expr: &Expr,
     ctx: &JavaRenderCtx,
@@ -2116,6 +2175,7 @@ impl ExprEmitter for JavaExpr<'_> {
             single_precision: self.ctx.single_precision,
             address_of_vars: &empty,
             double_address_of_vars: &empty,
+            nullable_outputs: self.ctx.nullable_outputs,
             float_input_params: self.ctx.float_input_params,
             inline_counter: self.ctx.inline_counter,
             // Carry the fusion sets so any a*b+c inside the address-of expression
@@ -2441,14 +2501,14 @@ fn render_func_call(
         let rendered: Vec<String> = args
             .iter()
             .map(|a| match a {
-                // NULL for a nullable output the caller discards (MA passing NULL
-                // for MAMA's FAMA — issue #125). Java arrays are nullable, but the
-                // callee writes into it unconditionally, so materialize a throwaway
-                // spanning the output range (mirrors the discard buffer the C
-                // source used before nullable outputs). NULL appears only here.
-                Expr::Var(n) if n == "NULL" => {
-                    "new double[(int)(endIdx - startIdx + 1)]".to_string()
-                }
+                // NULL for a nullable output the caller declines (MA passing NULL
+                // for MAMA's FAMA — issue #125). Java arrays are nullable and the
+                // callee's stores are guarded, so this is a plain `null` and
+                // nothing is allocated — it used to materialize a throwaway
+                // spanning the output range, which is the discard buffer #125
+                // removed from the C and only Rust/Java/C# kept (#262). NULL
+                // appears only here.
+                Expr::Var(n) if n == "NULL" => "null".to_string(),
                 _ => render_expr(a, ctx, registry, helpers),
             })
             .collect();
@@ -2495,9 +2555,11 @@ fn render_cross_indicator_call(
     let mut call_args: Vec<String> = Vec::new();
     for a in args[..split].iter().chain(args[split + 2..].iter()) {
         call_args.push(match a {
-            // NULL for a nullable output the caller discards (#125): the callee
-            // writes it unconditionally, so materialize a throwaway.
-            Expr::Var(n) if n == "NULL" => "new double[(int)(endIdx - startIdx + 1)]".to_string(),
+            // NULL for a nullable output the caller declines (#125): the callee
+            // skips its stores and its public tier skips the length check, so
+            // this is a plain `null` (rule B6a, #262) rather than the throwaway
+            // buffer it used to allocate on every call.
+            Expr::Var(n) if n == "NULL" => "null".to_string(),
             _ => render_expr(a, ctx, registry, helpers),
         });
     }
@@ -2579,10 +2641,12 @@ fn render_lookback_code(
     let double_address_of_vars = HashSet::new();
     // Lookback bodies are always double-precision; no float input params needed
     let float_input_params: HashSet<String> = HashSet::new();
+    let no_nullable = HashSet::new();
     let ctx = JavaRenderCtx {
         single_precision: false,
         address_of_vars: &address_of_vars,
         double_address_of_vars: &double_address_of_vars,
+        nullable_outputs: &no_nullable,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
         // Lookback bodies are pure integer index arithmetic — no float multiply-add.

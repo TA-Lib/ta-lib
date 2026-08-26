@@ -162,7 +162,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMACD.Overlaps(outMACDSignal) || (outMACD.IsEmpty && outMACDSignal.IsEmpty) || outMACD.Overlaps(outMACDHist) || (outMACD.IsEmpty && outMACDHist.IsEmpty) || outMACDSignal.Overlaps(outMACDHist) || (outMACDSignal.IsEmpty && outMACDHist.IsEmpty) ) {
+      if( outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          return RetCode.BadParam ;
       }
       if( (outMACD.Overlaps(inReal) && outMACD != inReal) || (outMACDSignal.Overlaps(inReal) && outMACDSignal != inReal) || (outMACDHist.Overlaps(inReal) && outMACDHist != inReal) ) {
@@ -373,7 +373,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outMACD.Overlaps(outMACDSignal) || (outMACD.IsEmpty && outMACDSignal.IsEmpty) || outMACD.Overlaps(outMACDHist) || (outMACD.IsEmpty && outMACDHist.IsEmpty) || outMACDSignal.Overlaps(outMACDHist) || (outMACDSignal.IsEmpty && outMACDHist.IsEmpty) ) {
+      if( outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          return RetCode.BadParam ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {

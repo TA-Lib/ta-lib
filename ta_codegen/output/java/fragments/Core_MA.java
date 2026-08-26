@@ -175,7 +175,7 @@
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
          retCode = RetCode.Success;
@@ -279,7 +279,7 @@
          retCode = RetCode.Success;
          break;
       case MAMA:
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
          retCode = RetCode.Success;

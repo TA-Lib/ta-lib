@@ -181,7 +181,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outSMI.Overlaps(outSMISignal) || (outSMI.IsEmpty && outSMISignal.IsEmpty) ) {
+      if( outSMI.Overlaps(outSMISignal) ) {
          return RetCode.BadParam ;
       }
       if( (outSMI.Overlaps(inHigh) && outSMI != inHigh) || (outSMI.Overlaps(inLow) && outSMI != inLow) || (outSMI.Overlaps(inClose) && outSMI != inClose) || (outSMISignal.Overlaps(inHigh) && outSMISignal != inHigh) || (outSMISignal.Overlaps(inLow) && outSMISignal != inLow) || (outSMISignal.Overlaps(inClose) && outSMISignal != inClose) ) {
@@ -487,7 +487,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( outSMI.Overlaps(outSMISignal) || (outSMI.IsEmpty && outSMISignal.IsEmpty) ) {
+      if( outSMI.Overlaps(outSMISignal) ) {
          return RetCode.BadParam ;
       }
       lookbackTotal = SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);

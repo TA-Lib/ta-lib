@@ -277,7 +277,14 @@ fn call_args(func: &FuncDef, call_opts: &str) -> String {
         parts.push(call_opts.trim_end_matches(", ").to_string());
     }
     for o in &func.outputs {
-        parts.push(format!("&mut {}", o.name));
+        // A nullable output takes `Option<&mut [T]>` (rule B6a). The sweep hands
+        // it `Some(..)`: declining it would hide exactly the writes it is here
+        // to catch.
+        if o.is_nullable() {
+            parts.push(format!("Some(&mut {})", o.name));
+        } else {
+            parts.push(format!("&mut {}", o.name));
+        }
     }
     parts.join(", ")
 }
@@ -289,10 +296,11 @@ fn empty_call(func: &FuncDef, call_opts: &str, end_expr: &str, indent: usize) ->
     let mut s = String::new();
     // `with_capacity(1)`, not `Vec::new()`: the slices must be zero-LENGTH but
     // must not share an ADDRESS. Every unallocated Vec hands out the same
-    // dangling aligned pointer, and a multi-output function's overlap guard
-    // (`outUpper.as_ptr() == outMiddle.as_ptr()`) reads that as aliased buffers
-    // and answers BadParam before the body runs -- which silently cost this
-    // sweep all 14 multi-output indicators until the control arm said so.
+    // dangling aligned pointer, which a multi-output function's overlap guard
+    // once read as aliased buffers -- silently costing this sweep all 14
+    // multi-output indicators until the control arm said so. The guard now
+    // excludes empty operands (rule B6, #262), so this is belt and braces: it
+    // keeps the sweep independent of that guard's shape.
     for i in &func.inputs {
         let _ = writeln!(s, "{pad}let {}: Vec<{}> = Vec::with_capacity(1);", i.name, slice_ty(&i.param_type));
     }

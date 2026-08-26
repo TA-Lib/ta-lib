@@ -89,13 +89,16 @@ pub fn guarded_docs(
         b.param(&opt.name, &param_doc(opt, doc, enums));
     }
     for out in &func.outputs {
-        b.param(
-            &out.name,
-            &format!(
-                "{} Must hold at least <c>endIdx - startIdx + 1</c> values.",
-                output_desc(out, doc)
-            ),
-        );
+        // A nullable output may be declined; C# spells "declined" as an empty
+        // span, which the signature cannot say on its own.
+        let sizing = if out.is_nullable() {
+            "Pass an empty span to decline it: it is still computed where the \
+             algorithm needs it, but nothing is written out. Supplied, it must \
+             hold at least <c>endIdx - startIdx + 1</c> values."
+        } else {
+            "Must hold at least <c>endIdx - startIdx + 1</c> values."
+        };
+        b.param(&out.name, &format!("{} {sizing}", output_desc(out, doc)));
     }
 
     b.tag(

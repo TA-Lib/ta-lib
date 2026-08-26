@@ -186,7 +186,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outRealUpperBand.Overlaps(outRealMiddleBand) || (outRealUpperBand.IsEmpty && outRealMiddleBand.IsEmpty) || outRealUpperBand.Overlaps(outRealLowerBand) || (outRealUpperBand.IsEmpty && outRealLowerBand.IsEmpty) || outRealMiddleBand.Overlaps(outRealLowerBand) || (outRealMiddleBand.IsEmpty && outRealLowerBand.IsEmpty) ) {
+      if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam ;
       }
       if( (outRealUpperBand.Overlaps(inReal) && outRealUpperBand != inReal) || (outRealMiddleBand.Overlaps(inReal) && outRealMiddleBand != inReal) || (outRealLowerBand.Overlaps(inReal) && outRealLowerBand != inReal) ) {
@@ -486,7 +486,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outRealUpperBand.Overlaps(outRealMiddleBand) || (outRealUpperBand.IsEmpty && outRealMiddleBand.IsEmpty) || outRealUpperBand.Overlaps(outRealLowerBand) || (outRealUpperBand.IsEmpty && outRealLowerBand.IsEmpty) || outRealMiddleBand.Overlaps(outRealLowerBand) || (outRealMiddleBand.IsEmpty && outRealLowerBand.IsEmpty) ) {
+      if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam ;
       }
       if( optInMAType == MAType.SMA ) {

@@ -151,7 +151,7 @@
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( outMAMA == outFAMA ) {
+      if( outFAMA != null && outMAMA == outFAMA ) {
          return RetCode.BadParam ;
       }
       a = 0.0962;
@@ -427,7 +427,8 @@
             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
              */
-            outFAMA[outIdx] = fama;
+            if( outFAMA != null )
+               outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
@@ -546,7 +547,7 @@
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( outMAMA == outFAMA ) {
+      if( outFAMA != null && outMAMA == outFAMA ) {
          return RetCode.BadParam ;
       }
       a = 0.0962;
@@ -764,7 +765,8 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            outFAMA[outIdx] = fama;
+            if( outFAMA != null )
+               outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
@@ -822,7 +824,9 @@
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFAMA Following adaptive moving average, using half the alpha
-    *        (slow line) Must hold at least {@code endIdx - startIdx + 1} values.
+    *        (slow line) Pass {@code null} to decline it: it is still computed where
+    *        the algorithm needs it, but nothing is written out. Supplied, it must hold
+    *        at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -854,7 +858,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -894,7 +898,9 @@
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFAMA Following adaptive moving average, using half the alpha
-    *        (slow line) Must hold at least {@code endIdx - startIdx + 1} values.
+    *        (slow line) Pass {@code null} to decline it: it is still computed where
+    *        the algorithm needs it, but nothing is written out. Supplied, it must hold
+    *        at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -926,7 +932,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
