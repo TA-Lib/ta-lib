@@ -1,6 +1,6 @@
 ---
 title: Unstable Period
-description: "How many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output, and how to set it in C, Rust and C#."
+description: "How many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output, and how to set it in C, Rust, Java and C#."
 toc: false
 ---
 
@@ -85,7 +85,40 @@ There is no global to guard here: the period is fixed when the [`Core`](/api/rus
 is built and cannot change afterwards, which is what makes a `Core` `Send + Sync`.
 To use a different period, build another `Core` (or derive one with `to_builder()`).
 
-@tab C#
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.FuncUnstId;
+
+// Strip 30 extra bars from every EMA-based calculation:
+Core core = Core.builder()
+    .unstablePeriod(FuncUnstId.EMA, 30)
+    .build();
+
+// Apply the same unstable period to ALL affected functions at once:
+Core all = Core.builder()
+    .unstablePeriod(FuncUnstId.ALL, 30)
+    .build();
+
+int n = core.unstablePeriod(FuncUnstId.EMA);   // read it back
+```
+
+The period is an `int`; `unstablePeriod` throws `IllegalArgumentException`
+immediately if it is negative or greater than `MAX_INDEX` — unlike Rust and C#, a
+Java builder has no `build()`-time rejection to defer to, since each setter throws
+on the spot. Reading back the wildcard `FuncUnstId.ALL` throws the same way: it
+names no single function, so there is no value to return.
+
+Ids are spelled `FuncUnstId.<NAME>`, so `TA_FUNC_UNST_HT_DCPERIOD` is
+`FuncUnstId.HT_DCPERIOD`.
+
+There is no global to guard here either: `Core` is immutable, so its settings are
+fixed once built and every instance is safe to share across threads with no
+synchronization. To use a different period, build another `Core` (or derive one
+with `toBuilder()`).
+
+@tab C\#
 
 ```csharp
 using TALib;

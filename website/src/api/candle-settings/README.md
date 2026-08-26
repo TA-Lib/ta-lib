@@ -1,6 +1,6 @@
 ---
 title: Candlestick Settings
-description: "Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust and C#."
+description: "Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust, Java and C#."
 toc: false
 ---
 
@@ -83,7 +83,34 @@ it happens; the first one is latched and surfaced by `build()`. Check that
 `Result` — a discarded one loses the whole configuration, not just the offending
 setting.
 
-@tab C#
+@tab Java
+
+```java
+import io.github.talib.CandleSettingType;
+import io.github.talib.Core;
+import io.github.talib.RangeType;
+
+// Treat a "long body" as 1.2x the average real body of the last 10 candles:
+Core core = Core.builder()
+    .candleSetting(CandleSettingType.BodyLong, RangeType.RealBody, 10, 1.2)
+    .build();
+
+// ...later, restore the default for that one setting:
+Core restored = core.toBuilder()
+    .restoreCandleDefault(CandleSettingType.BodyLong)
+    .build();
+```
+
+The same domain applies: `avgPeriod` in `0..MAX_INDEX`, `factor` not NaN. A
+violation throws `IllegalArgumentException` right where `candleSetting` is
+called, rather than being deferred to `build()` the way Rust and C# report theirs.
+
+`Core` has no reader for a candle setting — only for the [unstable
+period](/api/unstable-period/#api). Settings are fixed when the `Core` is built,
+which is what makes it safe to share across threads; to change one, build
+another with `toBuilder()`.
+
+@tab C\#
 
 ```csharp
 using TALib;
@@ -109,8 +136,8 @@ Read a threshold back with `core.CandleSettings(CandleSettingType.BodyLong)`.
 ## Setting types and defaults
 
 The setting types, with the defaults every binding starts from. C spells them
-`TA_BodyLong`; Rust and C# spell them `CandleSettingType::BodyLong` and
-`CandleSettingType.BodyLong`.
+`TA_BodyLong`; Rust spells them `CandleSettingType::BodyLong`; Java and C# spell
+them `CandleSettingType.BodyLong`.
 
 | Setting            | Range type | avgPeriod | factor |
 |--------------------|------------|-----------|--------|
