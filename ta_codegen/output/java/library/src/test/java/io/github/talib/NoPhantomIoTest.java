@@ -562,14 +562,6 @@ public class NoPhantomIoTest {
      * <p>An explicit list, not a symptom test: a core that starts answering
      * {@code BadParam} here for any other reason is still a hard failure. The
      * size is asserted, so the debt can be paid down but not quietly grown.
-     *
-     * <p><b>Paying it down has a second edge.</b> The mechanism that withholds
-     * {@code ma} — a composed body cross-calling its callee's public tier — is
-     * the only thing that makes C#'s {@code FunctionCall.TryInvoke} catch
-     * reachable, since its thunks call the body, which answers a code. Route
-     * cross-calls to {@code _Impl} and this list empties, but that catch goes
-     * dead and {@code TryInvoke} silently stops converting anything. The two
-     * move together; change them together.
      */
     private static final java.util.Set<String> CROSS_CALL_GUARDED = java.util.Set.of("MA");
 
