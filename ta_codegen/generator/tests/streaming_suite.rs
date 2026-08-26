@@ -881,7 +881,7 @@ fn dispatch_hard_errors_when_flagged_delegation_hides_behind_unflagged_call() {
 /// guard, the second if `analyze_dispatch` stops admitting it. Before #267 the
 /// second was the live one — a leading `If` was an unrecognized top-level
 /// statement, which is why `ma` was the last core withheld from the phantom-I/O
-/// sweep (Appendix D item 12).
+/// sweep.
 #[test]
 fn ma_dispatch_admits_the_empty_range_guard() {
     let f = load("ma");
