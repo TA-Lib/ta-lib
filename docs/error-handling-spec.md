@@ -275,7 +275,10 @@ backend, every short-history arm in every backend reports this code and no other
 [13] No backend validates the fill output's capacity, in contrast with the batch
 tier which does (B5). An undersized or absent output faults inside the fill loop
 with the buffer already partly written — a raw index exception in Java and C#, a
-panic in Rust.
+panic in Rust. A *zero-length* output is the same story: the opener's own S6
+check means the fill always has at least one value to write, so there is no
+legitimate empty output here as there is in the batch tier (rule N1), and all
+three fault rather than reject. Appendix D item 9.
 
 [14] Only C has a bar count: the other three take slices or arrays, which carry
 their own lengths, so "negative" is unrepresentable.
@@ -647,7 +650,7 @@ measured, not inferred.
 | 6 | Java | S1 | A null history, or a null `OpenAndFill` output, yields a raw JVM exception from inside the algorithm. |
 | 7 | C# | S2 | Rule passes; the empty-history *message* omits the cross-language `<NAME> open: ` prefix. |
 | ~~8~~ | all | S6 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S3) down with it — see footnote [12]. |
-| 9 | Rust, Java, C# | S8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
+| 9 | Rust, Java, C# | S8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. The guard now excludes empty operands in both tiers (#262), so Rust faults here like the rest. One fewer answer to a call this item already says nobody validates; the item itself is unchanged. |
 | ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
 | ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
 | 12 | Java, C# | B5 | **MA** is **withheld from the phantom-I/O sweep**, the gate that pins rule N1's "reads nothing" half. That sweep hands `<N>_Impl` — the transcribed numerics, which validate parameters but not array lengths — zero-length arrays and reads what happens; since cross-calls go to the callee's public entry point, the callee's *input* bound answers `TA_BAD_PARAM` before any array is reached, so the probe cannot tell "read nothing" from "never ran". The public API is unaffected — reached through the caller's own wrapper the callee's check is provably redundant, same `endIdx`, same array. **Was ten functions**; nine are resolved. Eight never forwarded on such a range once their control arm learned to read the exception *kind* rather than demand one type, and `stddev` gained the "nothing to produce" early return `apo`, `bbands`, `ppo` and `pvo` already carried. `ma` cannot: it is a dispatch function, and the generator admits only decls, comments, the identity path, one switch and a final return at the top level of a dispatch body — the shape the stream planner is built on — so a guard there is a generator change, not an edit to `ma.c`. The one remaining route is giving the input bound the sub-lookback escape the output bound has, converging with C and Rust and giving up the stricter reading B5 adopted. The list is explicit and its size asserted in both suites, so the debt cannot grow silently. |
@@ -694,6 +697,21 @@ So the guarantee is set by the weakest member that can express the problem, whic
 C — and C is the one language where the check is not merely expensive but not
 straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
 making the state unreachable, which is not the same as enforcing it.
+
+**Outputs of different element types are not compared.** A `double` output and
+an `int` output are never checked against each other, in any backend. Three of
+the four cannot express the comparison at all — `double * == int *` is a
+constraint violation in C, `double[] == int[]` is "incomparable types" in Java,
+`*const f64 == *const i32` is a type error in Rust — and C#'s `Overlaps` is not
+defined across element types. So the rule is again set by what the weakest
+member can say, and here that is nothing.
+
+Nothing in the corpus mixes them: `ta_variant_frame` and `ta_stream_frame` carry
+one `outIsInteger` flag per **function** and assert that no function mixes, so a
+mixed-output definition fails the generator before any guard is reached. Skipping
+the pair is therefore what the emitters must do rather than a hole a caller can
+fall into — but it is what they must do, and until #262 three of them emitted a
+term that would not compile.
 
 **C# currently detects more than this specifies.** Its generated guard is
 `if (outReal.Overlaps(inReal) && outReal != inReal)`, which rejects a partial

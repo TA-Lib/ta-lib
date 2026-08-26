@@ -68,6 +68,28 @@ pub fn stream_type_name(func: &FuncDef) -> String {
     format!("{}_Stream", func.name)
 }
 
+
+/// The output pairs the distinctness guard (#108) compares: every pair of the
+/// same element type.
+///
+/// A cross-typed pair is skipped, as the batch emitters and both C# tiers skip
+/// it: `*const f64` and `*const i32` are not comparable, and safe code cannot
+/// lay a `&mut [f64]` over a `&mut [i32]` to begin with. Appendix E of
+/// `docs/error-handling-spec.md`, #262.
+fn distinct_output_pairs(func: &FuncDef) -> Vec<(String, String)> {
+    let mut pairs = Vec::new();
+    for i in 0..func.outputs.len() {
+        for j in (i + 1)..func.outputs.len() {
+            let (a, b) = (&func.outputs[i], &func.outputs[j]);
+            if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
+                continue;
+            }
+            pairs.push((a.name.clone(), b.name.clone()));
+        }
+    }
+    pairs
+}
+
 fn state_type_name(func: &FuncDef) -> String {
     format!("{}_StreamState", func.name)
 }
@@ -568,14 +590,11 @@ fn emit_open_and_fill_wrapper(
     // Distinctness only; the range/empty checks belong to the core, which runs
     // them on the very next line.
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-    for i in 0..outs.len() {
-        for b in &outs[i + 1..] {
-            let _ = writeln!(
-                o,
-                "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
-                a = outs[i]
-            );
-        }
+    for (a, b) in distinct_output_pairs(func) {
+        let _ = writeln!(
+            o,
+            "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}"
+        );
     }
     let _ = enums;
     let ins: Vec<String> = streaming::input_array_names(func);
@@ -1431,15 +1450,11 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
     if mode == OutMode::Fill {
         // Output mutual-distinctness (#108) — same guard the batch emits. FILL
         // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
-        let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-        for i in 0..outs.len() {
-            for b in &outs[i + 1..] {
-                let _ = writeln!(
-                    o,
-                    "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
-                    a = outs[i]
-                );
-            }
+        for (a, b) in distinct_output_pairs(func) {
+            let _ = writeln!(
+                o,
+                "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}"
+            );
         }
     }
     for p in &func.optional_inputs {

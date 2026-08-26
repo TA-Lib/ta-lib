@@ -30,12 +30,17 @@ fn func_unst_variant_names(enums: &HashMap<String, EnumDef>) -> Vec<String> {
 
 /// Generate the JSON response key for an output at position `idx` among all outputs.
 ///
-/// Naming convention (matches ta_regtest expectations):
-/// - Real outputs: index 0 → `"outReal"`, index 1 → `"outReal1"`, index 2 → `"outReal2"`
-/// - Integer outputs: index 0 → `"outInteger"`, index 1 → `"outInteger1"`
+/// Naming convention (matches ta_regtest expectations): the type name, then the
+/// output's rank among outputs of that same type, with the rank omitted at 0 —
+/// `outReal`, `outReal1`, `outReal2`, …, `outInteger`, `outInteger1`, … The rank
+/// is per-type, so two real outputs and one integer output yield `"outReal"`,
+/// `"outReal1"`, `"outInteger"` (not `"outInteger2"`).
 ///
-/// Counters are per-type: two real outputs and one integer output yield
-/// `"outReal"`, `"outReal1"`, `"outInteger"` (not `"outInteger2"`).
+/// Derived, not enumerated, and the same rule is built by hand in two other
+/// places that have to agree with it: the C server's abstract handler
+/// (`templates/c/ta_abstract_serve.c`) and the driver that reads its reply
+/// (`test_abstract.c`). Both used to pick from a hardcoded list that stopped at
+/// the corpus's widest function (#262).
 fn output_json_key(outputs: &[Output], idx: usize) -> String {
     let out = &outputs[idx];
     // Count how many outputs of the same type appear before this one.
@@ -360,7 +365,7 @@ pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) ->
     s.push_str(&generate_c_json_helpers());
 
     // Shared static buffers (used by both abstract handlers and per-function dispatch)
-    s.push_str(&generate_c_global_buffers());
+    s.push_str(&generate_c_global_buffers(funcs));
 
     // Generic ta_abstract handlers (abstract_call, abstract_get_lookback, abstract_for_each_func)
     s.push_str(&generate_c_abstract_handlers());
@@ -611,7 +616,7 @@ static long get_nanotime(void) {
 
 /// Emit shared static buffer declarations used by both abstract handlers and
 /// per-function dispatch.
-fn generate_c_global_buffers() -> String {
+fn generate_c_global_buffers(funcs: &[FuncDef]) -> String {
     let mut s = String::new();
     // Static buffers for input arrays — up to 6 for full OHLCV + openInterest.
     s.push_str("static double g_inBuf0[MAX_ARRAY_SIZE];\n");
@@ -628,13 +633,34 @@ fn generate_c_global_buffers() -> String {
     s.push_str("static float g_sinBuf3[MAX_ARRAY_SIZE];\n");
     s.push_str("static float g_sinBuf4[MAX_ARRAY_SIZE];\n");
     s.push_str("static float g_sinBuf5[MAX_ARRAY_SIZE];\n");
-    // Real output buffers — up to 3 for MACD/BBANDS/STOCH
-    s.push_str("static double g_outBuf0[MAX_ARRAY_SIZE];\n");
-    s.push_str("static double g_outBuf1[MAX_ARRAY_SIZE];\n");
-    s.push_str("static double g_outBuf2[MAX_ARRAY_SIZE];\n");
-    // Integer output buffers — for CDL* patterns and MINMAXINDEX
-    s.push_str("static int g_outIntBuf0[MAX_ARRAY_SIZE];\n");
-    s.push_str("static int g_outIntBuf1[MAX_ARRAY_SIZE];\n\n");
+    // Output buffers, one per slot the WIDEST function in the corpus uses —
+    // counted, not written down. Three reals (MACD/BBANDS/STOCH) and two
+    // integers (MINMAXINDEX) is what today's corpus needs; a literal there is
+    // what made a third integer output fail to compile (#262).
+    let (n_out_real, n_out_int) = crate::backends::common::max_output_arity(funcs);
+    for k in 0..n_out_real {
+        let _ = writeln!(s, "static double g_outBuf{k}[MAX_ARRAY_SIZE];");
+    }
+    for k in 0..n_out_int {
+        let _ = writeln!(s, "static int g_outIntBuf{k}[MAX_ARRAY_SIZE];");
+    }
+    // Indexable views of the same buffers, plus the widths, for the hand-written
+    // abstract handler (`templates/c/ta_abstract_serve.c`). It binds outputs by
+    // ordinal and cannot name `g_outBuf0..n` itself without hardcoding an arity
+    // — which is what it did: a third integer output bound `g_outIntBuf1` twice
+    // and `TA_CallFunc` rejected the call as two outputs sharing a buffer (#262).
+    let reals: Vec<String> = (0..n_out_real).map(|k| format!("g_outBuf{k}")).collect();
+    let ints: Vec<String> = (0..n_out_int).map(|k| format!("g_outIntBuf{k}")).collect();
+    let _ = writeln!(s, "static double *const g_outBufV[] = {{ {} }};", reals.join(", "));
+    let _ = writeln!(s, "static int *const g_outIntBufV[] = {{ {} }};", ints.join(", "));
+    let _ = writeln!(s, "#define TA_SERVE_MAX_OUT_REAL {n_out_real}");
+    let _ = writeln!(s, "#define TA_SERVE_MAX_OUT_INT {n_out_int}");
+    let _ = writeln!(
+        s,
+        "#define TA_SERVE_MAX_OUTPUT {}",
+        funcs.iter().map(|f| f.outputs.len()).max().unwrap_or(1).max(1)
+    );
+    s.push('\n');
 
     // Pre-loaded reference data (immutable after load_data, copied to working buffers per call)
     s.push_str("/* Pre-loaded OHLCV reference data for perftest.\n");
@@ -1926,12 +1952,22 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("#define SV_PEEK_EVERY 7\n");
     s.push_str("static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];\n");
     s.push_str("static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];\n");
-    s.push_str("static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];\n");
-    s.push_str("static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];\n");
-    // OpenAndFill scratch: the whole-history arrays it fills, compared bitwise
-    // against the batch buffers above (sv_b*/sv_ib*).
-    s.push_str("static double sv_f0[SV_MAXN], sv_f1[SV_MAXN], sv_f2[SV_MAXN];\n");
-    s.push_str("static int sv_if0[SV_MAXN], sv_if1[SV_MAXN];\n");
+    // Batch output buffers, then the OpenAndFill scratch it is compared against
+    // bitwise. One per slot the widest function uses, counted from the corpus
+    // for the reason `max_output_arity` gives.
+    let (sv_n_real, sv_n_int) = crate::backends::common::max_output_arity(funcs);
+    for (prefix, ty, n) in [
+        ("sv_b", "double", sv_n_real),
+        ("sv_f", "double", sv_n_real),
+        ("sv_ib", "int", sv_n_int),
+        ("sv_if", "int", sv_n_int),
+    ] {
+        if n == 0 {
+            continue;
+        }
+        let decl: Vec<String> = (0..n).map(|k| format!("{prefix}{k}[SV_MAXN]")).collect();
+        let _ = writeln!(s, "static {ty} {};", decl.join(", "));
+    }
     s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n");
     // Cross-tier compare (stream vs batch, and OpenAndFill's array vs batch).
     // Differing bits that are numerically equal can only be +0.0 vs -0.0, which

@@ -864,12 +864,22 @@ fn gen_guarded_func(
         let mut pairs: Vec<String> = Vec::new();
         for i in 0..func.outputs.len() {
             for j in (i + 1)..func.outputs.len() {
-                pairs.push(alias_pair_expr(&func.outputs[i], &func.outputs[j]));
+                let (a, b) = (&func.outputs[i], &func.outputs[j]);
+                // Cross-typed pairs are skipped: `*const f64` and `*const i32`
+                // are not comparable, and safe code cannot lay a `&mut [f64]`
+                // over a `&mut [i32]` to begin with. All four backends now skip
+                // them — Appendix E of `docs/error-handling-spec.md`, #262.
+                if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
+                    continue;
+                }
+                pairs.push(alias_pair_expr(a, b));
             }
         }
-        out.push_str(&format!("        if {} {{\n", pairs.join(" || ")));
-        out.push_str("            return RetCode::BadParam;\n");
-        out.push_str("        }\n");
+        if !pairs.is_empty() {
+            out.push_str(&format!("        if {} {{\n", pairs.join(" || ")));
+            out.push_str("            return RetCode::BadParam;\n");
+            out.push_str("        }\n");
+        }
     }
 
     if func.has_explicit_private {
@@ -5016,25 +5026,36 @@ fn render_cross_indicator_args(
         .enumerate()
         .map(|(i, arg)| {
             let is_output = i >= output_start;
-            // In-place aliasing: borrow the input immutably and redirect the output to the
-            // scratch buffer that `render_func_call` swaps back after the call.
-            if let Expr::Var(name) = arg {
-                if aliased_vars.contains(name) {
-                    if is_output {
-                        return format!("&mut _{name}_alias[..]");
+            let rendered = {
+                // In-place aliasing: borrow the input immutably and redirect the output to the
+                // scratch buffer that `render_func_call` swaps back after the call.
+                if let Expr::Var(name) = arg {
+                    if aliased_vars.contains(name) {
+                        if is_output {
+                            format!("&mut _{name}_alias[..]")
+                        } else {
+                            format!("&{name}")
+                        }
+                    } else if dup_vars.iter().any(|(idx, _)| *idx == i) {
+                        // Duplicate &mut borrow: the pre-declared dummy variable.
+                        "&mut _dup_out".to_string()
+                    } else {
+                        render_cross_indicator_arg(arg, i, is_output, ctx, opt_real_params, registry, helpers)
                     }
-                    return format!("&{name}");
+                } else if dup_vars.iter().any(|(idx, _)| *idx == i) {
+                    "&mut _dup_out".to_string()
+                } else {
+                    render_cross_indicator_arg(arg, i, is_output, ctx, opt_real_params, registry, helpers)
                 }
-            }
-            // Detect duplicate &mut borrows: use the pre-declared dummy variable
-            if let Some((_, _)) = dup_vars.iter().find(|(idx, _)| *idx == i) {
-                return "&mut _dup_out".to_string();
-            }
-            let rendered =
-                render_cross_indicator_arg(arg, i, is_output, ctx, opt_real_params, registry, helpers);
+            };
             // A `nullable` callee output takes an `Option<&mut [T]>` (rule B6a):
             // `NULL` already rendered as `None`, and anything else is a buffer
-            // the caller does supply.
+            // the caller does supply. This wraps EVERY way an output argument can
+            // be rendered, the scratch-buffer and dummy redirections included --
+            // it sat on the fall-through path alone at first, so a nullable slot
+            // reached by either of those would have emitted a bare `&mut [T]`
+            // where an `Option` is wanted (unreachable today: MAMA is the only
+            // nullable callee and MA hands it `NULL`).
             if is_output
                 && callee_out_nullable.get(i - output_start).copied().unwrap_or(false)
                 && rendered != "None"

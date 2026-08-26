@@ -1339,7 +1339,7 @@ impl StatementEmitter for CsStmt<'_> {
         }
 
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
-        let value_str = render_expr(&new_value, self.ctx, self.registry, self.helpers);
+        let value_str = render_assign_value(&new_value, self.ctx, self.registry, self.helpers);
         // Writing into a nullable output — guard it so a declined (empty) output
         // is skipped (rule B6a). The `outIdx` advance rides the non-nullable
         // partner's write (see mama.c), so guarding this store is complete.
@@ -2050,6 +2050,33 @@ impl ExprEmitter for CsExpr<'_> {
         let e = if matches!(else_expr, Expr::Ternary(..)) { format!("({e})") } else { e };
         format!("{c} ? {t} : {e}")
     }
+}
+
+/// Render `value` as the whole right-hand side of an assignment — see the Java
+/// twin, [`super::java::render_assign_value`], for why a `cond ? 1 : 0` must
+/// keep its ternary form here and collapse everywhere else.
+pub(crate) fn render_assign_value(
+    value: &Expr,
+    ctx: &CsRenderCtx,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    if let Expr::Ternary(cond, then_expr, else_expr) = value {
+        if bool_ternary_collapse(then_expr, else_expr).is_some() && !is_int_bitwise(cond) {
+            let c = render_expr(cond, ctx, registry, helpers);
+            let c = if matches!(cond.as_ref(), Expr::BinOp(..) | Expr::Ternary(..)) {
+                format!("({c})")
+            } else {
+                c
+            };
+            return format!(
+                "{c} ? {} : {}",
+                render_expr(then_expr, ctx, registry, helpers),
+                render_expr(else_expr, ctx, registry, helpers)
+            );
+        }
+    }
+    render_expr(value, ctx, registry, helpers)
 }
 
 pub(crate) fn render_expr(

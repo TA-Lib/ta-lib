@@ -5906,54 +5906,82 @@ fn java_output_scalar_assignment() {
 // Java: Ternary expression rendering exercises lines 1450-1468
 // ---------------------------------------------------------------------------
 
+/// `(cond) ? 1 : 0` collapses to the bare condition — in BOOLEAN position.
+///
+/// The vehicle is an `if`, not an assignment. It used to be an assignment, which
+/// pinned the collapse in the one position where it is wrong: C has no booleans,
+/// so an assignment's destination is always an `int`, and `x = a > b;` does not
+/// compile in Java (#262). The collapse rule itself is unchanged and still what
+/// this asserts.
 #[test]
 fn java_ternary_bool_to_int_optimization() {
-    // (cond) ? 1 : 0 should simplify to just the condition
-    let stmt = ir::Statement::Assign {
-        target: ir::Expr::Var("x".to_string()),
-        value: ir::Expr::Ternary(
-            Box::new(ir::Expr::BinOp(
-                Box::new(ir::Expr::Var("a".to_string())),
-                ir::BinOp::Greater,
-                Box::new(ir::Expr::Var("b".to_string())),
-            )),
-            Box::new(ir::Expr::IntLiteral(1)),
-            Box::new(ir::Expr::IntLiteral(0)),
-        ),
-        compound: false,
-    };
-    let rendered = render_java_stmt(&stmt);
-    // Should NOT have ternary syntax, just the condition
+    let flag = ir::Expr::Ternary(
+        Box::new(ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("a".to_string())),
+            ir::BinOp::Greater,
+            Box::new(ir::Expr::Var("b".to_string())),
+        )),
+        Box::new(ir::Expr::IntLiteral(1)),
+        Box::new(ir::Expr::IntLiteral(0)),
+    );
+    let rendered = render_java_stmt(&ir::Statement::If {
+        condition: flag.clone(),
+        then_body: vec![],
+        else_body: vec![],
+        cond_comments: vec![],
+    });
     assert!(
-        !rendered.contains("?"),
-        "Java ternary (cond)?1:0 should simplify to just cond: {rendered}"
+        !rendered.contains('?'),
+        "Java ternary (cond)?1:0 in an `if` should simplify to just cond: {rendered}"
     );
     assert!(
         rendered.contains("a > b"),
         "Java ternary should contain the condition directly: {rendered}"
     );
+
+    // The other half of the same rule: stored, it keeps the int form.
+    let stored = render_java_stmt(&ir::Statement::Assign {
+        target: ir::Expr::Var("x".to_string()),
+        value: flag,
+        compound: false,
+    });
+    assert!(
+        stored.contains("? 1 : 0"),
+        "an assignment's destination is an int, so the ternary must survive: {stored}"
+    );
 }
 
+/// `(cond) ? 0 : 1` collapses to `!(cond)` — again, in boolean position only.
 #[test]
 fn java_ternary_inverted_bool_optimization() {
-    // (cond) ? 0 : 1 should simplify to !(condition)
-    let stmt = ir::Statement::Assign {
-        target: ir::Expr::Var("x".to_string()),
-        value: ir::Expr::Ternary(
-            Box::new(ir::Expr::BinOp(
-                Box::new(ir::Expr::Var("a".to_string())),
-                ir::BinOp::Less,
-                Box::new(ir::Expr::Var("b".to_string())),
-            )),
-            Box::new(ir::Expr::IntLiteral(0)),
-            Box::new(ir::Expr::IntLiteral(1)),
-        ),
-        compound: false,
-    };
-    let rendered = render_java_stmt(&stmt);
+    let flag = ir::Expr::Ternary(
+        Box::new(ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("a".to_string())),
+            ir::BinOp::Less,
+            Box::new(ir::Expr::Var("b".to_string())),
+        )),
+        Box::new(ir::Expr::IntLiteral(0)),
+        Box::new(ir::Expr::IntLiteral(1)),
+    );
+    let rendered = render_java_stmt(&ir::Statement::If {
+        condition: flag.clone(),
+        then_body: vec![],
+        else_body: vec![],
+        cond_comments: vec![],
+    });
     assert!(
         rendered.contains("!("),
-        "Java ternary (cond)?0:1 should simplify to !(cond): {rendered}"
+        "Java ternary (cond)?0:1 in an `if` should simplify to !(cond): {rendered}"
+    );
+
+    let stored = render_java_stmt(&ir::Statement::Assign {
+        target: ir::Expr::Var("x".to_string()),
+        value: flag,
+        compound: false,
+    });
+    assert!(
+        stored.contains("? 0 : 1"),
+        "an assignment's destination is an int, so the ternary must survive: {stored}"
     );
 }
 
@@ -7515,6 +7543,231 @@ fn test_c_ma_dispatch_stream_section() {
         c.contains("(const TA_SMA_Stream *)stream->sub"),
         "const sub cast in Peek"
     );
+}
+
+/// `cond ? 1 : 0` collapses to the bare condition in Java and C#, and that is
+/// only valid where a boolean is wanted. C has no booleans, so the destination
+/// of an assignment never is — `outInteger[i] = a > b;` does not compile in
+/// either language.
+///
+/// Unreachable from the corpus: its four `? 1 : 0` are all
+/// `return (...) ? 1 : 0;` inside helper predicates, inlined into an `if`, where
+/// the collapse is right. A synthetic fixture storing a flag is what found it
+/// (#262), so the control below matters as much as the assertion — the collapse
+/// must still happen in boolean position, or this "fix" would churn every
+/// candlestick into `(x) != 0`.
+#[test]
+fn test_a_stored_bool_ternary_keeps_its_int_form() {
+    let (func, enums) = load_indicator("minmaxindex");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let out = func.outputs[0].name.clone();
+
+    let flag = || {
+        ir::Expr::Ternary(
+            Box::new(ir::Expr::BinOp(
+                Box::new(ir::Expr::Var("today".to_string())),
+                ir::BinOp::Greater,
+                Box::new(ir::Expr::IntLiteral(0)),
+            )),
+            Box::new(ir::Expr::IntLiteral(1)),
+            Box::new(ir::Expr::IntLiteral(0)),
+        )
+    };
+
+    // Stored into an integer output: the ternary has to survive.
+    // Streaming off on the mutated copies: appending a statement is not a shape
+    // the stream planner is asked to understand, and the batch emitters are the
+    // subject here.
+    let mut stored = func.clone();
+    stored.streaming = false;
+    stored.body.push(ir::Statement::Assign {
+        target: ir::Expr::ArrayAccess(
+            out.clone(),
+            Box::new(ir::Expr::Var("outIdx".to_string())),
+        ),
+        value: flag(),
+        compound: false,
+    });
+    for (lang, text) in [
+        ("Java", backends::java::generate(&stored, &enums, &registry, &helpers)),
+        ("C#", backends::csharp::generate(&stored, &enums, &registry, &helpers)),
+    ] {
+        assert!(
+            text.contains(&format!("{out}[outIdx] = (today > 0) ? 1 : 0;")),
+            "{lang}: a flag stored into an integer output must keep `? 1 : 0`"
+        );
+        assert!(
+            !text.contains(&format!("{out}[outIdx] = today > 0;")),
+            "{lang}: the collapsed form does not compile — the destination is an int"
+        );
+    }
+
+    // Control: in boolean position the collapse must still happen.
+    let mut tested = func.clone();
+    tested.streaming = false;
+    tested.body.push(ir::Statement::If {
+        condition: flag(),
+        then_body: vec![],
+        else_body: vec![],
+        cond_comments: vec![],
+    });
+    for (lang, text) in [
+        ("Java", backends::java::generate(&tested, &enums, &registry, &helpers)),
+        ("C#", backends::csharp::generate(&tested, &enums, &registry, &helpers)),
+    ] {
+        assert!(
+            text.contains("if( today > 0 )"),
+            "{lang}: a ternary in boolean position must still collapse"
+        );
+    }
+}
+
+/// Guarding a nullable store is complete only while the `outIdx` advance rides a
+/// store that is always made. `mama.c` says so in a comment; this is what makes
+/// it true.
+///
+/// The failure it forbids is silent: with the advance on the declined store, a
+/// caller who declines gets `outNBElement = 0`, every other output written
+/// repeatedly to index 0, and `Success`. The JSON-RPC servers bind every declared
+/// output, so no cross-language gate ever makes that call — which is why the
+/// generator refuses to emit the shape rather than a gate catching it.
+///
+/// Driven through `generate` rather than the helper, because the point is that a
+/// contributor cannot reach the emitters without the check: every backend now
+/// asks one producer for the declinable set, and asking is what runs it.
+#[test]
+fn test_a_nullable_output_may_not_carry_the_cursor() {
+    let (func, enums) = load_indicator("mama");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    // Control: the shipped shape renders. Without this the refusals below would
+    // pass against a generator that refused MAMA outright.
+    let _ = backends::c::generate(&func, &enums, &registry, &helpers);
+    let _ = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+
+    // The forbidden store, built directly: `outFAMA[outIdx++] = fama;` where
+    // outFAMA is the declinable output.
+    let cursor_on_nullable = ir::Statement::Assign {
+        target: ir::Expr::ArrayAccess(
+            "outFAMA".to_string(),
+            Box::new(ir::Expr::PostIncrement(Box::new(ir::Expr::Var(
+                "outIdx".to_string(),
+            )))),
+        ),
+        value: ir::Expr::Var("fama".to_string()),
+        compound: false,
+    };
+    let mut moved = func.clone();
+    moved.body.push(cursor_on_nullable);
+    type Emit = fn(&ir::FuncDef, &HashMap<String, ir::EnumDef>, &Registry, &HelperRegistry) -> String;
+    for (lang, emit) in [
+        ("C", backends::c::generate as Emit),
+        ("Rust", backends::rust_lang::generate as Emit),
+        ("Java", backends::java::generate as Emit),
+        ("C#", backends::csharp::generate as Emit),
+    ] {
+        let moved = moved.clone();
+        let enums = enums.clone();
+        let err = std::panic::catch_unwind(move || {
+            emit(&moved, &enums, &make_registry(), &HelperRegistry::empty())
+        })
+        .expect_err("a nullable output carrying the cursor must be refused");
+        let msg = panic_message(&err);
+        assert!(
+            msg.contains("outFAMA") && msg.contains("PostIncrement"),
+            "{lang}: the refusal must name the output and the step, got: {msg}"
+        );
+    }
+
+    // And a function whose outputs are ALL declinable has nowhere to put it.
+    let mut all_nullable = func.clone();
+    for out in &mut all_nullable.outputs {
+        if !out.is_nullable() {
+            out.flags.push("nullable".to_string());
+        }
+    }
+    let e2 = enums.clone();
+    let err = std::panic::catch_unwind(move || {
+        backends::c::generate(&all_nullable, &e2, &make_registry(), &HelperRegistry::empty())
+    })
+    .expect_err("every output declinable leaves the cursor no store to ride");
+    assert!(
+        panic_message(&err).contains("every output"),
+        "the refusal must say why"
+    );
+}
+
+fn panic_message(err: &Box<dyn std::any::Any + Send>) -> String {
+    err.downcast_ref::<String>()
+        .cloned()
+        .or_else(|| err.downcast_ref::<&str>().map(|s| (*s).to_string()))
+        .unwrap_or_default()
+}
+
+/// Rule B6, Appendix E: a **cross-typed** output pair is out of scope, so the
+/// distinctness guard skips it in every backend.
+///
+/// Not reachable from a fixture, which is why it is a render pin. Three of the
+/// four backends cannot even compile such a term — `double * == int *` is a
+/// constraint violation in C, `double[] == int[]` is "incomparable types" in
+/// Java, `*const f64 == *const i32` is a type error in Rust — and C# has always
+/// skipped them because `Overlaps` is not defined across element types. A
+/// synthetic fixture cannot carry the case either: `ta_variant_frame` and
+/// `ta_stream_frame` hold one `outIsInteger` flag per FUNCTION and assert that
+/// no function mixes, so a mixed-output definition fails the generator before it
+/// reaches any of this (#262).
+///
+/// MINMAXINDEX is the vehicle: two integer outputs, one of them re-typed here,
+/// which turns its single same-typed pair into a single cross-typed one. The
+/// guard must then disappear entirely rather than emit an uncompilable term.
+#[test]
+fn test_cross_typed_output_pairs_are_not_compared() {
+    let (mut func, enums) = load_indicator("minmaxindex");
+    assert_eq!(func.outputs.len(), 2, "MINMAXINDEX declares two outputs");
+    assert!(
+        func.outputs.iter().all(|o| o.param_type == ir::ParamType::Integer),
+        "both are integer outputs, so the control below is a real control"
+    );
+    let (a, b) = (func.outputs[0].name.clone(), func.outputs[1].name.clone());
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    // Control: same-typed, so every backend compares the pair.
+    for (lang, out, needle) in [
+        ("C", backends::c::generate(&func, &enums, &registry, &helpers), format!("{a} == {b}")),
+        ("Java", backends::java::generate(&func, &enums, &registry, &helpers), format!("{a} == {b}")),
+        ("Rust", backends::rust_lang::generate(&func, &enums, &registry, &helpers), format!("{a}.as_ptr() == {b}.as_ptr()")),
+        ("C#", backends::csharp::generate(&func, &enums, &registry, &helpers), format!("{a}.Overlaps({b})")),
+    ] {
+        assert!(out.contains(&needle), "{lang}: a same-typed pair must be compared ({needle})");
+    }
+
+    // Re-type the second output. The pair is now cross-typed and must vanish.
+    func.outputs[1].param_type = ir::ParamType::Real;
+    for (lang, out) in [
+        ("C", backends::c::generate(&func, &enums, &registry, &helpers)),
+        ("Java", backends::java::generate(&func, &enums, &registry, &helpers)),
+        ("Rust", backends::rust_lang::generate(&func, &enums, &registry, &helpers)),
+        ("C#", backends::csharp::generate(&func, &enums, &registry, &helpers)),
+    ] {
+        for needle in [
+            format!("{a} == {b}"),
+            format!("{a}.as_ptr() == {b}.as_ptr()"),
+            format!("{a}.Overlaps({b})"),
+        ] {
+            assert!(
+                !out.contains(&needle),
+                "{lang}: a cross-typed pair must not be compared ({needle})"
+            );
+        }
+        // And nothing is left behind: no empty `if( )` where the guard was.
+        assert!(
+            !out.contains("if(  )") && !out.contains("if  {"),
+            "{lang}: dropping the only pair must drop the whole guard, not leave an empty one"
+        );
+    }
 }
 
 /// Rule B6a (`docs/error-handling-spec.md` 2.2, issue #262): an omitted output

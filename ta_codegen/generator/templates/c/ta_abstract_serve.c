@@ -253,21 +253,27 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
       }
    }
 
-   /* Set output buffers based on ta_abstract metadata */
-   int outputIsInteger[3] = {0, 0, 0};
+   /* Set output buffers based on ta_abstract metadata.
+    *
+    * Bound by ORDINAL through the generated g_outBufV / g_outIntBufV views: the
+    * widths come from the corpus (TA_SERVE_MAX_OUT_*), so this file names no
+    * arity of its own. It used to pick between two integer buffers with a
+    * ternary, so a function with a third integer output bound g_outIntBuf1
+    * twice and TA_CallFunc rejected the call as two outputs sharing a buffer --
+    * with nothing in the tree able to reach it until SYNTH11 (#262). */
+   int outputIsInteger[TA_SERVE_MAX_OUTPUT] = {0};
    int realOutIdx = 0, intOutIdx = 0;
-   for( unsigned int i = 0; i < fi->nbOutput && i < 3; i++ ) {
+   for( unsigned int i = 0; i < fi->nbOutput && i < TA_SERVE_MAX_OUTPUT; i++ ) {
       const TA_OutputParameterInfo *oi;
       TA_GetOutputParameterInfo(handle, i, &oi);
       if( oi->type == TA_Output_Integer ) {
-         TA_SetOutputParamIntegerPtr(params, i,
-            intOutIdx == 0 ? g_outIntBuf0 : g_outIntBuf1);
+         if( intOutIdx >= TA_SERVE_MAX_OUT_INT ) return;
+         TA_SetOutputParamIntegerPtr(params, i, g_outIntBufV[intOutIdx]);
          outputIsInteger[i] = 1;
          intOutIdx++;
       } else {
-         TA_SetOutputParamRealPtr(params, i,
-            realOutIdx == 0 ? g_outBuf0 :
-            realOutIdx == 1 ? g_outBuf1 : g_outBuf2);
+         if( realOutIdx >= TA_SERVE_MAX_OUT_REAL ) return;
+         TA_SetOutputParamRealPtr(params, i, g_outBufV[realOutIdx]);
          realOutIdx++;
       }
    }
@@ -287,22 +293,24 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
       "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"lookback\":%d",
       (int)rc, outBegIdx, outNBElement, (int)lookback);
 
-   /* Serialize outputs with correct key naming (per-type counters) */
+   /* Serialize outputs. The key is built from the per-type ordinal -- `outReal`,
+    * `outReal1`, `outReal2`, ... -- rather than picked from a list, so the naming
+    * carries no arity either. test_abstract.c builds the same name the same way;
+    * the two must agree, and deriving both is what makes them. */
    int realKeyIdx = 0, intKeyIdx = 0;
-   for( unsigned int i = 0; i < fi->nbOutput && i < 3; i++ ) {
+   for( unsigned int i = 0; i < fi->nbOutput && i < TA_SERVE_MAX_OUTPUT; i++ ) {
+      char key[32];
       if( outputIsInteger[i] ) {
-         const char *key = intKeyIdx == 0 ? "outInteger" : "outInteger1";
-         int *buf = intKeyIdx == 0 ? g_outIntBuf0 : g_outIntBuf1;
+         if( intKeyIdx == 0 ) snprintf(key, sizeof(key), "outInteger");
+         else                 snprintf(key, sizeof(key), "outInteger%d", intKeyIdx);
          pos = json_appendf(resp, resp_size, pos, ",\"%s\":", key);
-         pos = json_write_int_array(resp, resp_size, pos, buf, outNBElement);
+         pos = json_write_int_array(resp, resp_size, pos, g_outIntBufV[intKeyIdx], outNBElement);
          intKeyIdx++;
       } else {
-         const char *key = realKeyIdx == 0 ? "outReal" :
-         realKeyIdx == 1 ? "outReal1" : "outReal2";
-         double *buf = realKeyIdx == 0 ? g_outBuf0 :
-         realKeyIdx == 1 ? g_outBuf1 : g_outBuf2;
+         if( realKeyIdx == 0 ) snprintf(key, sizeof(key), "outReal");
+         else                  snprintf(key, sizeof(key), "outReal%d", realKeyIdx);
          pos = json_appendf(resp, resp_size, pos, ",\"%s\":", key);
-         pos = json_write_double_array(resp, resp_size, pos, buf, outNBElement);
+         pos = json_write_double_array(resp, resp_size, pos, g_outBufV[realKeyIdx], outNBElement);
          realKeyIdx++;
       }
    }

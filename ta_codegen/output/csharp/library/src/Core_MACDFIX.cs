@@ -436,11 +436,13 @@ public partial class Core
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. An empty span — which is what
-   /// a null array becomes, since a span cannot be null — fails the same check,
-   /// because any valid range needs at least one element. Declared, not read: a
-   /// few candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same.</exception>
+   /// rejected call leaves every buffer untouched. Declared, not read: a few
+   /// candlestick patterns take an OHLC series they never index, and it is
+   /// required all the same. An empty span — which is what a null array becomes,
+   /// since a span cannot be null — is rejected on the same terms and no others:
+   /// it is too short whenever the range produces a value, and fine when it
+   /// produces none, and on an output this function documents as declinable it
+   /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
    public OutRange MACDFIX( int startIdx,
@@ -512,11 +514,13 @@ public partial class Core
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
    /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. An empty span — which is what
-   /// a null array becomes, since a span cannot be null — fails the same check,
-   /// because any valid range needs at least one element. Declared, not read: a
-   /// few candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same.</exception>
+   /// rejected call leaves every buffer untouched. Declared, not read: a few
+   /// candlestick patterns take an OHLC series they never index, and it is
+   /// required all the same. An empty span — which is what a null array becomes,
+   /// since a span cannot be null — is rejected on the same terms and no others:
+   /// it is too short whenever the range produces a value, and fine when it
+   /// produces none, and on an output this function documents as declinable it
+   /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
    public OutRange MACDFIX( int startIdx,

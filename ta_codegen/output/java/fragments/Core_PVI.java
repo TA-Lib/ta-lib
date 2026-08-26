@@ -176,8 +176,9 @@
     *        <i>declares</i> that does not reach {@code endIdx}, or an output that
     *        cannot hold the values produced. Declared, not read: a few candlestick
     *        patterns take an OHLC series they never index, and it is required all the
-    *        same. Checked before anything is written, so a rejected call leaves every
-    *        buffer untouched.
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
     */
    public OutRange PVI( int startIdx,
                         int endIdx,
@@ -245,8 +246,9 @@
     *        <i>declares</i> that does not reach {@code endIdx}, or an output that
     *        cannot hold the values produced. Declared, not read: a few candlestick
     *        patterns take an OHLC series they never index, and it is required all the
-    *        same. Checked before anything is written, so a rejected call leaves every
-    *        buffer untouched.
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
     */
    public OutRange PVI( int startIdx,
                         int endIdx,

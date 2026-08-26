@@ -13,6 +13,7 @@
 use crate::ir::{FuncDef, ParamType};
 use crate::server_gen::expand_input_names;
 use std::path::Path;
+use std::fmt::Write as _;
 
 pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
     // Resolve `PRAGMA TA_ALT` for this language before anything reads a body.
@@ -56,11 +57,16 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
     s.push_str(PRICE_DATA_GEN);
 
     s.push_str("#define MAX_POINTS 200000\n");
-    s.push_str("static double g_outBuf0[MAX_POINTS];\n");
-    s.push_str("static double g_outBuf1[MAX_POINTS];\n");
-    s.push_str("static double g_outBuf2[MAX_POINTS];\n");
-    s.push_str("static int g_outIntBuf0[MAX_POINTS];\n");
-    s.push_str("static int g_outIntBuf1[MAX_POINTS];\n\n");
+    // One buffer per output slot the widest function in the corpus uses —
+    // counted rather than written down; see `common::max_output_arity` (#262).
+    let (n_out_real, n_out_int) = crate::backends::common::max_output_arity(funcs);
+    for k in 0..n_out_real {
+        let _ = writeln!(s, "static double g_outBuf{k}[MAX_POINTS];");
+    }
+    for k in 0..n_out_int {
+        let _ = writeln!(s, "static int g_outIntBuf{k}[MAX_POINTS];");
+    }
+    s.push('\n');
 
     s.push_str(FUNC_MATCHES);
     generate_bench_func(&mut s, funcs);
@@ -600,11 +606,16 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     s.push_str(PRICE_DATA_GEN);
 
     s.push_str("#define MAX_POINTS 200000\n");
-    s.push_str("static double g_outBuf0[MAX_POINTS];\n");
-    s.push_str("static double g_outBuf1[MAX_POINTS];\n");
-    s.push_str("static double g_outBuf2[MAX_POINTS];\n");
-    s.push_str("static int g_outIntBuf0[MAX_POINTS];\n");
-    s.push_str("static int g_outIntBuf1[MAX_POINTS];\n\n");
+    // One buffer per output slot the widest function in the corpus uses —
+    // counted rather than written down; see `common::max_output_arity` (#262).
+    let (n_out_real, n_out_int) = crate::backends::common::max_output_arity(funcs);
+    for k in 0..n_out_real {
+        let _ = writeln!(s, "static double g_outBuf{k}[MAX_POINTS];");
+    }
+    for k in 0..n_out_int {
+        let _ = writeln!(s, "static int g_outIntBuf{k}[MAX_POINTS];");
+    }
+    s.push('\n');
 
     // Growing history batch@last appends into (distinct from the static price
     // arrays the update feed rotates over).

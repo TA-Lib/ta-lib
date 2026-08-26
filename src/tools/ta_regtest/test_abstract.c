@@ -1284,7 +1284,9 @@ static ErrorNumber abstract_verify_server_call(
 
             if( outInfo->type == TA_Output_Integer )
             {
-                const char *key = intKeyIdx == 0 ? "outInteger" : "outInteger1";
+                char key[32];
+                if( intKeyIdx == 0 ) snprintf(key, sizeof(key), "outInteger");
+                else                 snprintf(key, sizeof(key), "outInteger%d", intKeyIdx);
                 int srvOut[2000];
                 int n = abstract_json_get_int_array(g_abstractRespBuf, key, srvOut, 2000);
                 if( n != crefNbElement )
@@ -1306,8 +1308,9 @@ static ErrorNumber abstract_verify_server_call(
             }
             else
             {
-                const char *key = realKeyIdx == 0 ? "outReal" :
-                                  realKeyIdx == 1 ? "outReal1" : "outReal2";
+                char key[32];
+                if( realKeyIdx == 0 ) snprintf(key, sizeof(key), "outReal");
+                else                  snprintf(key, sizeof(key), "outReal%d", realKeyIdx);
                 double srvOut[2000];
                 int n = abstract_json_get_double_array(g_abstractRespBuf, key, srvOut, 2000);
                 if( n != crefNbElement )

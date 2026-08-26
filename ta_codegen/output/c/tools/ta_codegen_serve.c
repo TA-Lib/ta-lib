@@ -427,6 +427,11 @@ static double g_outBuf1[MAX_ARRAY_SIZE];
 static double g_outBuf2[MAX_ARRAY_SIZE];
 static int g_outIntBuf0[MAX_ARRAY_SIZE];
 static int g_outIntBuf1[MAX_ARRAY_SIZE];
+static double *const g_outBufV[] = { g_outBuf0, g_outBuf1, g_outBuf2 };
+static int *const g_outIntBufV[] = { g_outIntBuf0, g_outIntBuf1 };
+#define TA_SERVE_MAX_OUT_REAL 3
+#define TA_SERVE_MAX_OUT_INT 2
+#define TA_SERVE_MAX_OUTPUT 3
 
 /* Pre-loaded OHLCV reference data for perftest.
  * Stored separately from working buffers to protect against mutation. */
@@ -469,8 +474,8 @@ static void preload_to_working(int nInputs, int isPriceInput) {
 static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];
 static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];
 static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];
-static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];
 static double sv_f0[SV_MAXN], sv_f1[SV_MAXN], sv_f2[SV_MAXN];
+static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];
 static int sv_if0[SV_MAXN], sv_if1[SV_MAXN];
 static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }
 static int sv_xtier_ne(double a, double b, int *zsign) {

@@ -834,12 +834,7 @@ fn gen_func_inner(
     // fusion decision (never float operands), so one seed set is used uniformly
     // across variants.
     let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
-    let nullable_outputs: Vec<String> = func
-        .outputs
-        .iter()
-        .filter(|o| o.is_nullable())
-        .map(|o| o.name.clone())
-        .collect();
+    let nullable_outputs: Vec<String> = super::common::nullable_output_list(func);
     let ctx = &CRenderCtx {
         single_precision,
         inline_counter: &inline_counter,
@@ -917,12 +912,22 @@ fn gen_func_inner(
         // output in-place aliasing is deliberately left allowed. See issue #108.
         // A nullable operand is guarded non-NULL first (a dropped output aliases
         // nothing; two NULLs would otherwise compare equal and spuriously reject).
+        //
+        // Cross-typed pairs are skipped, as the C# emitter has always skipped
+        // them: comparing a `double *` with an `int *` is a constraint violation
+        // (`-Wcompare-distinct-pointer-types`), and the same pair is a compile
+        // error in Java and Rust and unreachable in safe code in both. The rule
+        // is set by the weakest member that can express it — Appendix E of
+        // docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
                     let a = &func.outputs[i];
                     let b = &func.outputs[j];
+                    if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
+                        continue;
+                    }
                     let mut guard = String::new();
                     if a.is_nullable() {
                         guard.push_str(&format!("{} != NULL && ", a.name));
@@ -944,8 +949,10 @@ fn gen_func_inner(
                     }
                 }
             }
-            out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
-            out.push_str("      return TA_BAD_PARAM;\n");
+            if !pairs.is_empty() {
+                out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
+                out.push_str("      return TA_BAD_PARAM;\n");
+            }
         }
         out.push('\n');
     }

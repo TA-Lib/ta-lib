@@ -83,7 +83,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#243) STDDEV and BBANDS returned exactly 0 for a standard deviation that was small but non-zero. In rare cases, was making the bands "collapse" on the middle line.
 - (#244) MFI returned 0 instead of the index whenever the window summed to less than 1.0. Also, no longer returns values slightly outside 0-100 (clamps the epsilon errors).
 - (#253) Fix many TA_IS_ZERO vs TA_IS_ZERO_SCALED choices. Numerically better for edge cases, like very small inputs (<10e-8) or mostly flat input prices.
-- (#262) Rust and C# rejected a call whose output buffers were separately allocated but empty, treating them as one buffer. A range shorter than the indicator's lookback produces no values and needs no output space, so that call is a success in C and Java; all four now agree.
+- (#262) Rust and C# rejected a call whose output buffers were separately allocated but empty, treating them as one buffer. A range shorter than the indicator's lookback produces no values and needs no output space, so that call is a success in C and Java; all four now agree. In the streaming API the same relaxation makes Rust's `OpenAndFill` fault on a zero-length output instead of returning `TA_BAD_PARAM`, which is what Java and C# have always done — the fill always has at least one value to write, so there is no legitimate empty output there.
 - Batch API: a NULL `outBegIdx` or `outNBElement` crashed instead of being rejected; every function now returns `TA_BAD_PARAM`.
 
 ## [0.7.1] 2026-07-03

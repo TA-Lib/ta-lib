@@ -101,11 +101,7 @@ fn uname(func: &FuncDef) -> String {
 /// (`*outFAMA = …`) is NULL-guarded exactly as the batch body's write is — this
 /// is what lets a dispatch pass NULL for a sub-stream output it doesn't want.
 fn nullable_out_names(func: &FuncDef) -> Vec<String> {
-    func.outputs
-        .iter()
-        .filter(|o| o.is_nullable())
-        .map(|o| o.name.clone())
-        .collect()
+    super::common::nullable_output_list(func)
 }
 
 /// The callee output-argument list for one supported dispatch arm, built from

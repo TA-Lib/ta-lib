@@ -1,0 +1,21 @@
+name: SYNTH11
+group: Math Operators
+hint: Synthetic gate function 11 - a third integer output (never shipped)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  # THREE integer outputs: one more than the corpus has ever had, and that count
+  # is what sizes the C harnesses' file-scope buffers. It was a literal 2 until
+  # issue #262, so a third one compiled to `'g_outIntBuf2' undeclared` with
+  # nothing in the tree able to reach it.
+  - name: outAbove
+    type: integer
+    flags: [line]
+  - name: outBelow
+    type: integer
+    flags: [line]
+  - name: outLarge
+    type: integer
+    flags: [line]

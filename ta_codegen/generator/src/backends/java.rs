@@ -1126,11 +1126,19 @@ fn gen_func_inner(
         // A nullable operand is guarded non-null first — a declined output
         // aliases nothing, and two nulls would otherwise compare equal and
         // spuriously reject (rule B6a).
+        //
+        // Cross-typed pairs are skipped: `double[] == int[]` is "incomparable
+        // types" and does not compile, and the two can never be one object
+        // anyway. C# has always skipped them and C and Rust now do — Appendix E
+        // of docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
                     let (a, b) = (&func.outputs[i], &func.outputs[j]);
+                    if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
+                        continue;
+                    }
                     let mut guard = String::new();
                     if a.is_nullable() {
                         let _ = write!(guard, "{} != null && ", a.name);
@@ -1150,9 +1158,11 @@ fn gen_func_inner(
                     }
                 }
             }
-            out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
-            out.push_str("         return RetCode.BadParam ;\n");
-            out.push_str("      }\n");
+            if !pairs.is_empty() {
+                out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
+                out.push_str("         return RetCode.BadParam ;\n");
+                out.push_str("      }\n");
+            }
         }
     }
 
@@ -1570,7 +1580,7 @@ impl StatementEmitter for JavaStmt<'_> {
         }
 
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
-        let value_str = render_expr(&new_value, self.ctx, self.registry, self.helpers);
+        let value_str = render_assign_value(&new_value, self.ctx, self.registry, self.helpers);
         // Writing into a nullable output — guard it so a `null` (declined)
         // output is skipped (rule B6a). The `outIdx` advance rides the
         // non-nullable partner's write (see mama.c), so guarding this store is
@@ -2230,6 +2240,46 @@ impl ExprEmitter for JavaExpr<'_> {
         let e = if matches!(else_expr, Expr::Ternary(..)) { format!("({e})") } else { e };
         format!("{c} ? {t} : {e}")
     }
+}
+
+
+/// Render `value` as the whole right-hand side of an assignment.
+///
+/// Identical to [`render_expr`] except that a `cond ? 1 : 0` keeps its ternary
+/// form instead of collapsing to the bare condition. The collapse is only valid
+/// where a boolean is wanted, and the destination of an assignment never is: C
+/// has no booleans, so every such destination is an `int`, and
+/// `outInteger[i] = a > b;` does not compile in Java or C#.
+///
+/// Nothing in the corpus reached this. Its four `? 1 : 0` are all
+/// `return (...) ? 1 : 0;` inside helper predicates, inlined into an `if` — a
+/// boolean position, where the collapse is right. A synthetic fixture storing a
+/// flag is what found it (#262). A collapsible ternary nested INSIDE a larger
+/// right-hand side is still collapsed and would still be wrong; that shape is
+/// equally unreachable today, and catching it needs the render context this
+/// deliberately does without.
+pub(crate) fn render_assign_value(
+    value: &Expr,
+    ctx: &JavaRenderCtx,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    if let Expr::Ternary(cond, then_expr, else_expr) = value {
+        if bool_ternary_collapse(then_expr, else_expr).is_some() && !is_int_bitwise(cond) {
+            let c = render_expr(cond, ctx, registry, helpers);
+            let c = if matches!(cond.as_ref(), Expr::BinOp(..) | Expr::Ternary(..)) {
+                format!("({c})")
+            } else {
+                c
+            };
+            return format!(
+                "{c} ? {} : {}",
+                render_expr(then_expr, ctx, registry, helpers),
+                render_expr(else_expr, ctx, registry, helpers)
+            );
+        }
+    }
+    render_expr(value, ctx, registry, helpers)
 }
 
 pub(crate) fn render_expr(
