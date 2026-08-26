@@ -1,6 +1,8 @@
 //! Generate the `ta_abstract` C layer from YAML-derived IR.
 //!
-//! Produces all files under `ta_codegen/output/c/ta_abstract/`:
+//! Produces all files under `src/ta_abstract/` — the shipped library, in place —
+//! plus `include/ta_func.h`. **None of them carries a generated banner**, so grep
+//! here before hand-editing anything in that directory; `generate` reverts it:
 //! - `ta_def_ui.h` / `ta_def_ui.c`
 //! - `ta_frame_priv.h`
 //! - `frames/ta_frame.h` / `frames/ta_frame.c`
@@ -73,7 +75,7 @@ const GROUPS: &[(&str, &str)] = &[
 // Public entry point
 // ---------------------------------------------------------------------------
 
-/// Generate all `ta_abstract` C files into `out_base/c/ta_abstract/`.
+/// Generate all `ta_abstract` C files into `src/ta_abstract/`, in place.
 #[allow(clippy::implicit_hasher)]
 pub fn generate(
     funcs: &[FuncDef],

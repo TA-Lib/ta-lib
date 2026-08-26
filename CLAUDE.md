@@ -107,7 +107,8 @@ hand-roll a body per entry point — theirs differ by which callee tier they cal
 and by an anchor clamp, not by a stride — so their `_OpenImpl` takes no
 `outStride`, which is the discriminator the gates key on rather than a name list.
 
-A cross-call inside a body calls the callee's *public* tier and lets its
+A cross-call inside a body calls the callee's *public* tier — in C, Java and C#;
+Rust is the exception, see the Rust Backend section — and lets its
 rejection throw, so the callers that need a code back convert it themselves:
 the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. `TryInvoke`'s
 conversion is now the *direct* path's too — since #265 its thunk calls the
@@ -121,6 +122,18 @@ that debt is `MA`'s withholding from `NoPhantomIoTest`'s sweep.
 is `TA_BAD_PARAM` in three of them and inexpressible in the fourth — C's setters
 take a bare pointer and carry no length. Rust and C# reached `<N>_Impl` until
 #265 and answered a panic and an `IndexOutOfRangeException` respectively.
+
+**And a rejected setter leaves the holder as it found it** — the price setter
+validates every consumed component before it writes any (#266). The case that
+makes it worth a rule is a *re-bind*: on a fresh holder a partial write is masked
+by the unbound-component report, but over a bundle that already worked the
+rejected call left the components at and after the offending one holding the
+previous bundle, and the next call succeeded over a mixture of the two — in C#
+with no code and no exception. C is deliberately NOT the ports' whole-struct
+assignment: its macro keeps the flag guard so an unconsumed component is skipped
+rather than clobbered, which makes the fix a no-op on every call that succeeds.
+`metadata_price_setter_validates_before_writing` pins all four on the PR gate,
+because the four runtime probes are nightly-only.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source

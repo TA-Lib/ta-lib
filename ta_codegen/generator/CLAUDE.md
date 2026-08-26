@@ -40,9 +40,10 @@ include/ta_func.h        (generated public header)
 - `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` / `CandleSettings`
   scaffolding, copied verbatim into the Rust crate (`output/rust/library/src/ta_func/types.rs`).
 - Four more, each copied verbatim and declared `#[cfg(test)]` in the generated
-  `mod.rs`, so none ships in a release build. All are run by
-  `cargo test --lib -p ta-lib`, which is the only thing that runs them —
-  `clippy --all-targets` compiles the test target without executing it:
+  `mod.rs`, so none ships in a release build. The nightly runs them with
+  `cargo test --tests -p ta-lib`, which is the only thing that runs them —
+  `clippy --all-targets` compiles the test target without executing it, and
+  `--tests` rather than `--lib` because it must also reach `library/tests/`:
   `templates/rust/scratch_election.rs` (the scratch-buffer election value gate,
   issue #146), `stream_finite.rs` (the streaming tier's non-finite input
   rejection), `stream_out_range.rs` (a handle's `OutRange` against batch, issue
@@ -52,6 +53,14 @@ Every Rust template is listed in `main.rs`'s `RUST_TEMPLATE_MODULES` (and the
 test-only ones in `RUST_TEST_ONLY_MODULES`) and in `RustBackend::clean_keep`, so
 `generate` copies them in and never deletes them. Adding another one means
 touching all three.
+
+A fifth `#[cfg(test)]` module is **generated, not copied**: the phantom-I/O sweep,
+`src/ta_func/no_phantom_io.rs`, emitted by `backends/rust_phantom_io.rs`. It lives
+in `src/` rather than `tests/` because it probes `<N>_Impl`, which is
+`pub(crate)` (#265). Its own list is `RUST_GENERATED_TEST_MODULES`, and it is in
+`clean_keep` too — the only entry there that is not a template, since the
+stale-file sweep would otherwise delete a `.rs` in `src/ta_func/` that names no
+indicator.
 - `templates/c/ta_retcode.c.template` — spliced with `src/ta_common/ta_retcode.csv`
   (`backends/retcode.rs`) → `src/ta_common/ta_retcode.c`.
 - `templates/c/ta_abstract_serve.c` — hand-written abstract-serve handlers `#include`d
@@ -69,7 +78,7 @@ touching all three.
 | `backends/java.rs` | Generates Java Core class methods |
 | `backends/csharp.rs` | Generates the shipped C# indicators — one `Core_<NAME>.cs` (`public partial class Core`) per function; XML docs via `csharp_doc.rs`, condition folding shared with Java via `compat_fold.rs` |
 | `backends/{c,rust,java,csharp}_stream.rs` | The four streaming emitters — one per backend, each rendering the *same* backend-neutral analysis from `streaming.rs` (`StreamPlan`, `StreamModel`, `build_transition`, the `NameMap` trait) into its own language. Adding a fifth means writing only the new emitter: the neutral layer and the other three stay untouched, which is what keeps them byte-frozen by construction while it lands. **The `NameMap` prefixes are shared on purpose** — `fma::stream_base` strips exactly `sp->`, `sp.` and `cur_` to decide integer-vs-float typing, so a backend that invents its own spelling silently changes which sites fuse `a*b+c`, i.e. ~1 ULP with nothing pointing at the cause |
-| `backends/csharp_metadata.rs` | Generates the shipped C# introspection registry (`TALib.Metadata` under `csharp/library/src/metadata/`): the vocabularies, the model records, `FunctionCall`, and one factory per function carrying its two dispatch thunks. The C# JSON-RPC server answers the `ta_abstract` RPCs out of *this* registry — its csproj compiles the library sources — so `test_abstract.c` proves the shipped artifact, not a test-only copy |
+| `backends/csharp_metadata.rs` | Generates the shipped C# introspection registry (`TALib.Metadata` under `csharp/library/src/metadata/`) **and, into the test project, `NoPhantomIoBinder.g.cs` — the phantom-I/O probe's own `<N>_Impl` call sites, which is what keeps that probe's corpus complete under `regen-check` (#265)**: the vocabularies, the model records, `FunctionCall`, and one factory per function carrying its two dispatch thunks. The C# JSON-RPC server answers the `ta_abstract` RPCs out of *this* registry — its csproj compiles the library sources — so `test_abstract.c` proves the shipped artifact, not a test-only copy |
 | `backends/abstract_rows.rs` | **The backend-neutral `ta_abstract` row model.** One derivation of every function's metadata (flags, price bundling, parameter domains, unstable-period id), rendered by `rust_abstract`, `java_abstract` (server table), `java_metadata` (shipped registry) and `csharp_metadata`. Sum-typed `OptDomain` + closed `Group`/`InputKind`/`OutputKind` enums, so a renderer cannot silently mis-tag a domain. **C and `func_api_xml` deliberately do NOT render from it** — see below |
 | `backends/ta_abstract_c.rs` | Generates `ta_abstract` introspection layer (tables, frames, group index, runtime API) |
 | `backends/price_bundle.rs` | Folds the expanded price components back into the single `TA_Input_Price` descriptor (`inPriceHLC` + flags). Shared by the C, Rust and Java abstract backends — that name and flags word are **public ABI** (wrappers read them; ta-lib-python renders them as `{'prices': [...]}`), so they are derived once, from the YAML declaration carried on each `Input` as a `PriceRef`, never re-inferred from argument names |
@@ -120,9 +129,9 @@ cd ta_codegen/generator && cargo clippy          # Strict pedantic lints enabled
 Tests are in `tests/backend_suite.rs` and `tests/integration_test.rs` — they verify IR-to-backend rendering, expression types, function signatures, and function variants across all backends.
 
 Value gates that need the *generated* library live in the crate itself, as
-`#[cfg(test)]` modules copied from `templates/rust/` (see
-`RUST_TEMPLATE_MODULES`); run them with `cargo test --lib -p ta-lib` in
-`ta_codegen/output/rust/`.
+`#[cfg(test)]` modules — four copied from `templates/rust/` (see
+`RUST_TEMPLATE_MODULES`) and one emitted (`RUST_GENERATED_TEST_MODULES`); run
+them with `cargo test --tests -p ta-lib` in `ta_codegen/output/rust/`.
 
 ## Cross-Language Testing Architecture
 

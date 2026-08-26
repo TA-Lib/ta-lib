@@ -1,4 +1,4 @@
-//! Generate `abstract_.rs` — the Rust function metadata registry (introspection layer).
+//! Generate `abstract_api.rs` — the Rust function metadata registry (introspection layer).
 //!
 //! This is the Rust analog of C's `ta_abstract` (`TA_GetFuncInfo`,
 //! `TA_Get*ParameterInfo`, `TA_ForEachFunc`). Instead of mirroring C's runtime
@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::Path;
 
-/// Generate `ta_codegen/output/rust/src/abstract_.rs` from the function defs.
+/// Generate `ta_codegen/output/rust/library/src/abstract_api.rs` from the function defs.
 ///
 /// [`rows`] sorts alphabetically by name (so `FuncId` discriminants and the name
 /// `match` are deterministic); this emits the registry and writes only if changed.

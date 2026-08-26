@@ -255,7 +255,7 @@ right, the message is not.
 
 [11] **Withdrawn.** The warm-up history is an input *array*, and the library
 does not scan those. Until this was removed it was the only array in the library
-that was checked — 174 of 174 `Open` and 174 of 174 `OpenAndFill` entry points,
+that was checked — 176 of 176 `Open` and 176 of 176 `OpenAndFill` entry points,
 in all four backends — which made "arrays are never scanned" a rule with one
 exception rather than a rule. The scan cost ≈0.3 ns per bar per array: a corpus
 median of 22% of an `Open`, up to 76% of a candlestick `OpenAndFill`. Folding it
@@ -277,7 +277,7 @@ it was too long; and C# needed a second code-to-exception mapper
 (`StreamFailure`) to keep short history off `ArgumentOutOfRangeException("endIdx")`.
 `StreamFailure` remains — the `"<NAME> <verb>: "` message prefix is a
 cross-language contract — but it no longer exists to hide a borrowed code.
-Verified as uniform, not incidental: across all 172 streaming functions per
+Verified as uniform, not incidental: across all 176 streaming functions per
 backend, every short-history arm in every backend reports this code and no other.
 
 [13] No backend validates the fill output's capacity, in contrast with the batch
@@ -333,7 +333,7 @@ the value arrives through the out-parameter of `Open`/`Update`/`Peek`, and in
 Rust through their return values — a caller who wants it later keeps it.
 
 U3 is checked with an explicit finite test, so it rejects NaN and both
-infinities alike. Verified: 174 of 174 `Update` and `Peek` entry points check
+infinities alike. Verified: 176 of 176 `Update` and `Peek` entry points check
 their bar, and every `UpdateAndFill` re-emits the same test inside its loop —
 re-emitted rather than reached by calling `Update` per bar, because the check
 lives in the public entry point and routing through it would buy the check at
@@ -540,9 +540,13 @@ raises from those from which a code cannot be recovered. And it is **lossless**:
 no two codes share one thrown representation.
 
 **Two entry points are outside that**, and deliberately: the global-settings
-builders (Part 2.5's G-rules) and the metadata/dynamic-binder tier, which
-Appendix C defers. Both still raise plain platform types. Neither is a function
-call, so neither has a `TA_RetCode` a caller would be recovering.
+builders (the G-rules) and the metadata/dynamic-binder tier, which Appendix C
+defers. Both still raise plain platform types for their *own* refusals — an
+unbound slot, a wrong kind, a slot index out of range — and neither of those is
+a function call, so neither has a `TA_RetCode` a caller would be recovering. The
+binder's *dispatch* is a different matter since #265: it calls the public entry
+point, so an indicator's rejection reaches the caller carrying its code in every
+backend.
 
 Rust needs none of this — it returns `Err(RetCode)` — and C is the vocabulary.
 
@@ -604,18 +608,17 @@ Each ✅ rests on two independent checks; neither alone is enough.
 
    | Claim | Result |
    |---|---|
-   | C batch: `startIdx` guard, then `endIdx` guard, before any other return | 174 / 174 |
+   | C batch: `startIdx` guard, then `endIdx` guard, before any other return | 176 / 176 |
    | C batch: parameter validation, then every input, the `OutRange` pointers and every output null-checked, inputs before outputs | 352 / 352 |
    | Rust batch: `startIdx` guard → `endIdx` guard → lookback (which returns B3) → every input, then every output length-checked | 176 / 176 |
    | Rust numerics: `startIdx` guard → `endIdx` guard → bounds asserts (following the FMA dispatcher to the real core) | 176 / 176 |
-   | Java batch: clamp (which raises B3), then every length check, then the core | 348 / 348 |
-   | C# batch: clamp, then every length check, then the core | 348 / 348 |
+   | Java batch: clamp (which raises B3), then every length check, then the core | 352 / 352 |
+   | C# batch: clamp, then every length check, then the core | 352 / 352 |
    | C# cores carrying an overlap guard wherever one is expressible | no core unguarded where the type expresses it |
-   | Short-history arm reports the catch-all (C, Rust) / the borrowed code (Java, C#) | 172 streaming functions per backend, no backend mixing the two |
+   | Short-history arm reports `TA_INSUFFICIENT_HISTORY` | 176 streaming functions per backend, no backend mixing it with anything else |
 
-   The 348 counts are 174 functions × the double and float overloads, so the
-   float surface is covered by the same evidence. The 352 is the same
-   two-per-function sweep over the 176 definitions in `ta_codegen/input/`.
+   Every 352 is the 176 definitions in `ta_codegen/input/` × the double and
+   float overloads, so the float surface is covered by the same evidence.
 
 Most of these probes are not committed. They are throwaway drivers: the shipped
 gates cover values, and these cover the failure paths once, to produce this
@@ -637,10 +640,16 @@ Named so their absence is deliberate rather than an oversight.
   dispatch calls the public entry point in all four**, so every rule above holds
   through it unchanged (#265). Rust and C# used to call `<N>_Impl` instead, and a
   leg bound to a buffer shorter than the range was a panic and an
-  `IndexOutOfRangeException` there against `TA_BAD_PARAM` in C and Java. What is
-  still unspecified is the tier's *own* surface: unbound and mis-typed
-  arguments, handle lookup, and the fact that C cannot express a short leg at all
-  — `TA_SetInputParamRealPtr` takes a bare pointer and carries no length.
+  `IndexOutOfRangeException` there against `TA_BAD_PARAM` in Java — C could not
+  answer it either way, having no length to check. A second thing is settled:
+  **a rejected setter leaves the holder as it found it** in all four, the price
+  setter validating every consumed component before it writes any (#266). That is
+  §1's "only the range it reports is written" applied to a holder's bound state,
+  and the case that makes it worth stating is a *re-bind*, where the partial write
+  is not masked by the unbound-component report: the next call then succeeded over
+  a mixture of two bundles — in C# with no code and no exception. What is still
+  unspecified is the tier's *own* surface: unbound and mis-typed arguments, and
+  handle lookup.
 - **JSON-RPC servers** — a test harness, not a shipped API. Their error
   behaviour is a property of the harness.
 - **`Copy` / `Clone` of a stream handle, and concurrent use** — the concurrency
