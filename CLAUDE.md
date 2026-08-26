@@ -191,12 +191,19 @@ Generated Rust lives in `ta_codegen/output/rust/` — a Cargo workspace: `librar
 is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
 Indicators are methods on a `Core` struct, one file per indicator.
 
+- **The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`, and
+  it owns the argument contract** — index range, parameters, then every buffer
+  length, answering `BadParam` (#265). Its input bound takes no sub-lookback
+  escape, so it is strictly stronger than the assert below and a `pub fn` call
+  cannot reach one that would reject it.
 - Indexing is safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds
   precondition panics — never undefined behavior. Each body carries a
   bounds-assert preamble (the LLVM proof that elides per-access bounds checks);
   it is skipped when the lookback clamp means the call computes nothing, so a
-  call that returns `Success` with zero elements cannot panic.
-- **Cross-indicator calls target `<N>_Impl`**, the crate-private entry point that keeps C's `RetCode` + out-param shape. (It validates parameters and the index range; array bounds are the `assert!` preamble above, not a length check — say which, because "guarded" once contrasted with a retired `Unguarded` tier and now has no anchor.) The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`. **Rust alone.** Java and C# route a cross-call to the callee's PUBLIC entry point (#236 step 3), which is what C has always done; Rust did not follow because its public tier is a thin `Result` adapter that adds no checks the body's asserts do not already make, so the move would buy nothing and would still owe the in-place `mem::swap` shim.
+  call that returns `Success` with zero elements cannot panic. That preamble is
+  the in-crate cross-call path's guard, not the caller's — a panic there is a
+  generator bug, which is what an `assert!` is for.
+- **Cross-indicator calls target `<N>_Impl`**, the crate-private entry point that keeps C's `RetCode` + out-param shape (it validates parameters and the index range; array bounds are the `assert!` preamble above). **Rust alone.** Java and C# route a cross-call to the callee's PUBLIC entry point (#236 step 3), which is what C has always done. #265 asked whether Rust should now follow, since the reason it did not — "the public tier adds no checks the body's asserts do not already make" — stopped being true. **Answer: no, and for three reasons, not the old one.** A cross-call's arguments are generated from the caller's own already-validated ones, same `endIdx`, same series, generator-sized scratch, so the checks are provably redundant on that path. `MAVP` calls its callee once per distinct period — up to `points` times — so "redundant" there is also per-bar. And the reach would go the wrong way: `no_phantom_io` probes `<N>_Impl`, so a callee's public input bound answering before any array is touched would blind it exactly as it blinds Java's, importing `CROSS_CALL_GUARDED` and Appendix D item 12 into the one backend that does not have them. The `mem::swap` shim is still owed either way.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.

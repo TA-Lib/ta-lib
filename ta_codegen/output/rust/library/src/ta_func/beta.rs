@@ -493,11 +493,9 @@ impl Core {
     /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
     /// [`OutRange::count`].
     ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
+    /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover
+    /// `startIdx..=endIdx`, and every output must hold the number of values produced for that
+    /// range. Sizing every output slice to the input length is always sufficient.
     ///
     /// # Examples
     ///
@@ -533,6 +531,24 @@ impl Core {
         optInTimePeriod: i32,
         outReal: &mut [f64],
     ) -> Result<OutRange, RetCode> {
+        if startIdx > Self::MAX_INDEX {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.BETA_Lookback(optInTimePeriod)?;
+        let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
+        if inReal0.len() < endIdx + 1 {
+            return Err(RetCode::BadParam);
+        }
+        if inReal1.len() < endIdx + 1 {
+            return Err(RetCode::BadParam);
+        }
+        let _guardOutLen = if _guardStart > endIdx { 0 } else { endIdx - _guardStart + 1 };
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let retCode = self.BETA_Impl(
@@ -1281,7 +1297,9 @@ impl Core {
     /// [`Core::BETA_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::BETA`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
+    /// this one does not check it: an undersized slice panics inside the fill, with the
+    /// buffer already partly written (rule S8).
     #[doc(alias = "TA_BETA_OpenAndFill")]
     pub fn BETA_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],

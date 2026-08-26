@@ -123,14 +123,12 @@ pub fn guarded_docs(
              it is [`Ok`] with a zero [`OutRange::count`].",
         );
     }
-
-    d.blank();
-    d.paragraph("# Panics");
     d.blank();
     d.paragraph(
-        "Input slices must cover `startIdx..=endIdx` and output slices must hold the \
-         number of values produced for that range; an undersized slice panics. Sizing \
-         every output slice to the input length is always sufficient.",
+        "Also [`RetCode::BadParam`] when a slice is too short: every input must cover \
+         `startIdx..=endIdx`, and every output must hold the number of values produced \
+         for that range. Sizing every output slice to the input length is always \
+         sufficient.",
     );
 
     if let Some(example) = example_doctest(func, snake, enums) {
@@ -264,9 +262,10 @@ pub fn private_docs(func: &FuncDef, snake: &str) -> String {
     ));
     d.blank();
     d.paragraph(&format!(
-        "Unlike [`Core::{snake}`] the bounds assertions here are unconditional: an \
+        "Unlike `{snake}_Impl` the bounds assertions here are unconditional: an \
          `endIdx` beyond the input slice panics even when the lookback clamp means \
-         no element would be read."
+         no element would be read. [`Core::{snake}`] rejects that with \
+         [`RetCode::BadParam`] and never reaches either."
     ));
     d.finish()
 }

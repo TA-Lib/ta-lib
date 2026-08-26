@@ -727,15 +727,34 @@ fn internal_callee(name: &str) -> String {
     }
 }
 
-/// Generate the batch entry point the crate actually exposes: a thin wrapper over
-/// `{snake}_Impl` returning `Result<OutRange, RetCode>`.
+/// Generate the batch entry point the crate actually exposes: the argument
+/// contract, then `{snake}_Impl`, returning `Result<OutRange, RetCode>`.
 ///
-/// This is the same two-tier shape Java and C# ship — their public `SMA` calls the
-/// code-returning one and turns a failure into an exception, returning `OutRange`
-/// otherwise. Here the exception is an `Err`, so the two values a caller wants
-/// (`begIdx`, `count`) come back by value and are unreachable on failure, which is
-/// exactly the guarantee C's "ignore the out-params unless TA_SUCCESS" rule states
-/// in prose and cannot enforce.
+/// This is the same two-tier shape Java and C# ship — their public `SMA` checks
+/// its arguments, calls the code-returning one and turns a failure into an
+/// exception, returning `OutRange` otherwise. Here the exception is an `Err`, so
+/// the two values a caller wants (`begIdx`, `count`) come back by value and are
+/// unreachable on failure, which is exactly the guarantee C's "ignore the
+/// out-params unless TA_SUCCESS" rule states in prose and cannot enforce.
+///
+/// **The buffer bounds live here, not in the body** (#265). `emit_bounds_asserts`
+/// stays where it is and states the same thing to LLVM, but an `assert!` is a
+/// panic, and a caller who handed a short slice deserves the code every other
+/// backend gives them. The two are consistent by construction: the output bound
+/// below is the same inequality the assert makes, and the input bound is
+/// strictly stronger — it drops the `_assertStart > endIdx ||` escape, so a
+/// short input is rejected on a sub-lookback range too, as in Java and C#.
+/// Nothing in the crate reaches this tier: cross-indicator calls target
+/// `<N>_Impl`, so the escape stays load-bearing where it is used (a re-based
+/// EMA chaining through MA/MACDEXT/TEMA/DEMA/T3 legitimately passes exactly
+/// sized buffers with `startIdx` below the lookback).
+///
+/// **Order is the contract, not an implementation detail.** The index rules
+/// (B1, B2) first, then the parameters (B3, carried by the `<N>_Lookback` call's
+/// `?`), then the buffers (B4, B5) — `docs/error-handling-spec.md` 2.2, and the
+/// same order [`super::java::gen_argument_checks`] emits. Put the input bound at
+/// the top and `SMA(10, 9, ..)` answers `BadParam` where `test_index_range_xlang`
+/// requires `OutOfRangeEndIndex`.
 fn gen_public_entry(
     func: &FuncDef,
     snake: &str,
@@ -773,6 +792,8 @@ fn gen_public_entry(
     args.push("&mut outNBElement".to_string());
     args.extend(func.outputs.iter().map(|o| o.name.clone()));
 
+    out.push_str(&gen_argument_checks(func, snake));
+
     out.push_str("        let mut outBegIdx: usize = 0;\n");
     out.push_str("        let mut outNBElement: usize = 0;\n");
     // Always one argument per line: the shortest call in the corpus is already
@@ -787,6 +808,73 @@ fn gen_public_entry(
     out.push_str("            e => Err(e),\n");
     out.push_str("        }\n");
     out.push_str("    }\n\n");
+    out
+}
+
+/// The public tier's argument contract: rules B1/B2, then B3, then B4/B5.
+///
+/// The Rust transcription of [`super::java::gen_argument_checks`], down to the
+/// two guard widths. `guardInLen` is `endIdx + 1` **unconditionally** — `endIdx`
+/// past the end of the series the caller supplied is a caller bug on every
+/// range, and the only reason C answers it with `TA_SUCCESS` is that it has no
+/// size to check against. `guardOutLen` is the count actually produced, which on
+/// a range shorter than the lookback is `0`: no output space is owed, so any
+/// length will do, including none (rule N1).
+///
+/// B3 rides on `<N>_Lookback`'s `?`. Rule L2 makes the lookback's parameter
+/// decision the batch tier's own B3 decision on the same parameters, so one call
+/// buys the check and the clamp together — which is what Java's `clampedStart`
+/// does, and what puts B3 ahead of B4/B5.
+///
+/// No `requireArgument` counterpart: a Rust enum cannot be absent, so B4's
+/// presence half is the type system's, as it is in C#.
+fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
+    let mut out = String::new();
+    // B1/B2 first. `_Impl` states them again -- it is reachable on its own from
+    // a cross-indicator call -- but they have to be HERE, ahead of the buffer
+    // bounds, or a malformed range answers the wrong code. They also make
+    // `endIdx + 1` below non-overflowing.
+    out.push_str("        if startIdx > Self::MAX_INDEX {\n");
+    out.push_str("            return Err(RetCode::OutOfRangeStartIndex);\n");
+    out.push_str("        }\n");
+    out.push_str("        if endIdx > Self::MAX_INDEX || endIdx < startIdx {\n");
+    out.push_str("            return Err(RetCode::OutOfRangeEndIndex);\n");
+    out.push_str("        }\n");
+    if func.inputs.is_empty() && func.outputs.is_empty() {
+        return out;
+    }
+    let lb_args: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+    out.push_str(&format!(
+        "        let _guardLb = self.{snake}_Lookback({})?;\n",
+        lb_args.join(", ")
+    ));
+    out.push_str(
+        "        let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };\n",
+    );
+    for input in &func.inputs {
+        out.push_str(&format!(
+            "        if {}.len() < endIdx + 1 {{\n            return Err(RetCode::BadParam);\n        }}\n",
+            input.name
+        ));
+    }
+    if !func.outputs.is_empty() {
+        out.push_str(
+            "        let _guardOutLen = if _guardStart > endIdx { 0 } else { endIdx - _guardStart + 1 };\n",
+        );
+    }
+    for output in &func.outputs {
+        // A nullable output may be declined with `None` (rule B6a): nothing is
+        // written to it, so there is no capacity to owe. Supplied, it is bounded
+        // like any other -- "declined" is `None` and nothing else.
+        let cond = if output.is_nullable() {
+            format!("{}.as_deref().is_some_and(|o| o.len() < _guardOutLen)", output.name)
+        } else {
+            format!("{}.len() < _guardOutLen", output.name)
+        };
+        out.push_str(&format!(
+            "        if {cond} {{\n            return Err(RetCode::BadParam);\n        }}\n"
+        ));
+    }
     out
 }
 
@@ -1201,11 +1289,19 @@ fn gen_private_func(
 /// length is fine.
 ///
 /// `guard_empty_range` makes the INPUT assertion take that same escape, and is set
-/// on the public guarded entry point only. A call whose lookback clamp pushes the
+/// on `<N>_Impl` only. A call whose lookback clamp pushes the
 /// start past `endIdx` returns `Success` with zero elements and touches neither
 /// array, so asserting on it would panic where the contract says success. On every
 /// call that *does* compute, the escape is false and the proof handed to LLVM is
 /// identical.
+///
+/// **This is not what a caller of the crate sees.** Since #265 the public entry
+/// point states the same bounds ahead of the call, as `RetCode::BadParam`
+/// ([`gen_argument_checks`]) — strictly stronger on the input side, since it
+/// takes no escape — so a `pub fn` call cannot reach these asserts with a slice
+/// they would reject. They remain the LLVM proof, and the guard on the in-crate
+/// cross-call path, where the escape is load-bearing and a panic is the right
+/// answer to what would be a generator bug.
 fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> String {
     let mut out = String::new();
     let needs_start = guard_empty_range || !func.outputs.is_empty();

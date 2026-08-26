@@ -126,7 +126,7 @@ The input and the output are separate borrows, so a function cannot read and wri
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-It is important that the output slice is large enough — the crate is `#![forbid(unsafe_code)]`, so an undersized slice panics rather than writing past the end. Here are three ways to determine the allocation size; all of them work for every TA function:
+It is important that the output slice is large enough — an undersized slice is `Err(RetCode::BadParam)`, never a write past the end. Here are three ways to determine the allocation size; all of them work for every TA function:
 
 | Method | Description |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -139,18 +139,15 @@ Each TA function has a matching `<NAME>_Lookback` method, taking the same option
 The lookback is the number of input elements consumed before the first output can be calculated. Example: a simple moving average (SMA) of period 10 has a lookback of 9.
 
 ```rust
-let lookback = core.SMA_Lookback(30);   // 29 for a 30-period SMA
+let lookback = core.SMA_Lookback(30)?;   // 29 for a 30-period SMA
 ```
 
-A lookback method returns `usize::MAX` when a parameter is out of range. Check for that before using the value as an allocation size.
+A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam` when a parameter is out of range — the same code the function itself would answer for it.
 
 Putting it together, the exact allocation for any TA function:
 
 ```rust
-let lookback = core.<NAME>_Lookback(..);
-if lookback == usize::MAX {
-    return Err(RetCode::BadParam);   // an optional parameter is out of range
-}
+let lookback = core.<NAME>_Lookback(..)?;
 
 let temp = lookback.max(startIdx);
 let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };
@@ -167,13 +164,13 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 
 | Code | Meaning |
 |------|---------|
-| `RetCode::BadParam` | An optional parameter is outside its documented range. |
+| `RetCode::BadParam` | An optional parameter is outside its documented range, or a slice is too short: every input must cover `startIdx..=endIdx`, and every output must hold the number of values produced for that range. |
 | `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::MAX_INDEX` (100,000,000). |
 | `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::MAX_INDEX`, or below `startIdx`. |
 
 `RetCode` also carries `Success` — the code C returns and the one the other ports expose — plus `AllocErr` and `InternalError`, which the safe Rust code paths do not produce.
 
-Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so a violated slice-size precondition panics rather than reading or writing out of bounds. A successful call that produced zero elements cannot panic.
+Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing here can read or write out of bounds. Slice sizes are checked before the call runs and reported as `BadParam`; a violated precondition anywhere below that is a panic, never memory corruption.
 
 ## 4.0 Advanced Features {#advanced}
 

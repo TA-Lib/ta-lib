@@ -82,8 +82,8 @@ defers the abstract tier, so no rule below produces any of the thirteen.
 
 *A buffer is too short* has no member of its own. Where it is detected it is
 reported as `TA_BAD_PARAM` (rule B5) — raised rather than returned, in the
-backends that raise (Appendix A) — and the ⚠️ on the code says C cannot detect it
-at all. Rule S8 reads *(none)* because no backend detects it.
+backends that raise (Appendix A); Rust returns it — and the ⚠️ on the code says C
+cannot detect it at all. Rule S8 reads *(none)* because no backend detects it.
 
 **`OutRange`.** What a successful call reports about its own output: the index
 of the first value written, in the input series' coordinates, and how many values
@@ -149,7 +149,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — any declared input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[2] | —<br>[3] |
-| B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ⚠️<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[4] | ✅<br>[5] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[6] | ✅<br>[7] | ✅<br>&nbsp; |
 | B6a | An output is **omitted** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B7 | A memory allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. **Warning: implemented, but no CI job or probe covers it** — provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
@@ -165,13 +165,14 @@ CDLHIKKAKE. Rust, Java and C# used to exempt exactly those, computing the set
 from the body, while C checked them like any other input, so
 `TA_CDL3OUTSIDE(0, 251, open, NULL, NULL, close, …)` was `TA_BAD_PARAM` in C and
 a success in the other three. Closed by #260: a declared input must be supplied,
-and that rule needs no exception list. What survives is not an exception but a
-range: Rust's assert preamble is switched off on a sub-lookback range, uniformly
-for every input of every function — footnote [5].
+and that rule needs no exception list. Nor a range: Rust's assert preamble is
+switched off on a sub-lookback range, but since #265 the bound a caller meets is
+the public tier's returned code, which takes no such escape — footnote [5].
 
 **Implementation**: `testIndexRange`, `checkOutputAliasRejected`,
 `testBatchArgumentContract` (`test_abstract.c`, `test_internals.c`);
 `c_batch_prologue_orders_parameters_before_presence`,
+`rust_public_entry_orders_the_argument_contract`,
 `rust_batch_impl_orders_capacity_before_aliasing`,
 `every_declared_input_is_checked_in_every_backend` (ta_codegen's suite);
 `BatchApiTest` (Java, C#); `no_phantom_io` (Rust); `--xlang-hash` for
@@ -190,14 +191,20 @@ reported by B5 instead, which names the buffer and both sizes.
 [4] C has no sizes to check against — a property of the ABI, not a defect. Part 3
 has what happens instead.
 
-[5] Rust panics rather than reporting: the assert is what lets LLVM elide the
-per-access bounds checks — and, since #260, also what states B4 and B5 for the
-seven legs no body indexes, where it proves LLVM nothing and rejects the caller
-anyway. It is skipped on a sub-lookback range, so there the input bound goes
-unchecked in Rust as it does in C — and unlike C, so does the presence half:
-Rust is the one backend that accepts an omitted input on a range that produces
-nothing. Removing that escape is not free — it is what lets `no_phantom_io`'s
-sub-lookback sweep hand the body zero-length slices and observe what it touches.
+[5] **Two tiers state this bound, and only one of them is the contract.**
+`pub fn <N>` returns `RetCode::BadParam`, exactly as Java and C# throw
+(#265). `<N>_Impl` also asserts it, which is what lets LLVM elide the per-access
+bounds checks and what the in-crate cross-indicator calls meet; that assert takes
+an escape on a sub-lookback range, where a re-based EMA chaining through
+MA/MACDEXT/TEMA/DEMA/T3 legitimately passes exactly sized buffers. The public
+bound takes no escape on the input side, so it is strictly the stronger of the
+two and a `pub fn` call cannot reach an assert that would reject it. Until #265
+the assert was all there was, and its escape was the contract — the input bound
+went unchecked on a sub-lookback range in Rust as it does in C, presence half
+included. What kept it that way was a test's reach: `no_phantom_io` was an
+integration test, so it could only hand zero-length slices to `pub fn`. It is an
+in-crate module naming `<N>_Impl` now, and the escape it needs is the assert's,
+which it still has.
 
 [6] **The condition cannot be written**: two `&mut [f64]` cannot alias, so the
 borrow checker rejects it at compile time. The `as_ptr()` guard behind the public
@@ -206,10 +213,11 @@ for the FFI boundary. It requires **both** operands to be non-empty, because two
 zero-length slices cannot clobber each other — without that it fired on distinct
 empty `Vec`s, which share a dangling pointer, while accepting distinct empty
 *subslices*, which do not (Appendix D item 11, #262). It is emitted *after* the
-capacity asserts: B5 panics in Rust where B6 returns, so this is the one pair of
-batch rules whose order a caller can see in one backend and not the others. A
-call that is both undersized and "aliased" answers the panic; it used to answer
-`BadParam` — #261.
+capacity asserts, and both sit below the public tier's B5 check, so a call that
+is both undersized and "aliased" answers B5 — with B5's code, from the public
+tier, rather than B6's. #261 asked which of the two a caller sees; the answer is
+still B5, and it is no longer a panic (#265). `<N>_Impl`'s own ordering, and
+`rust_batch_impl_orders_capacity_before_aliasing`, are unchanged.
 
 [7] **A run-time error.** Two Java arrays are either the same object or
 disjoint, so reference equality catches every case this rule covers.
@@ -437,11 +445,12 @@ the count the call produces, is read or written anyway, and the call faults
 guard-paged buffers, where the fault is observable rather than silent corruption
 of whatever sits next in the heap.
 
-C alone. Rust asserts the same bound — a panic, never memory corruption, since
-the crate forbids `unsafe` — and Java and C# reject the call naming the buffer
-and both sizes. The one gap the three share is `OpenAndFill`'s output (S8),
-which none of them checks either; there the failure is a raw index exception or
-a panic rather than undefined behaviour (Appendix D item 9).
+C alone. Rust returns `BadParam` from the public entry point, Java and C#
+reject the call naming the buffer and both sizes, and behind Rust's check the
+same bound is asserted for LLVM — a panic, never memory corruption, since the
+crate forbids `unsafe`. The one gap the three share is `OpenAndFill`'s output
+(S8), which none of them checks either; there the failure is a raw index
+exception or a panic rather than undefined behaviour (Appendix D item 9).
 
 ### Buffers that partially overlap
 
@@ -489,7 +498,7 @@ C#.
 
 | Condition | C | Rust | Java | C# |
 |---|---|---|---|---|
-| A buffer is too short (B5) | *cannot detect* | panic | `IllegalArgumentException` | `ArgumentException(paramName)` |
+| A buffer is too short (B5) | *cannot detect* | `Err(RetCode::BadParam)` | `IllegalArgumentException` | `ArgumentException(paramName)` |
 
 ### Internal errors
 
@@ -597,7 +606,8 @@ Each ✅ rests on two independent checks; neither alone is enough.
    |---|---|
    | C batch: `startIdx` guard, then `endIdx` guard, before any other return | 174 / 174 |
    | C batch: parameter validation, then every input, the `OutRange` pointers and every output null-checked, inputs before outputs | 352 / 352 |
-   | Rust batch: `startIdx` guard → `endIdx` guard → bounds asserts (following the FMA dispatcher to the real core) | 174 / 174 |
+   | Rust batch: `startIdx` guard → `endIdx` guard → lookback (which returns B3) → every input, then every output length-checked | 176 / 176 |
+   | Rust numerics: `startIdx` guard → `endIdx` guard → bounds asserts (following the FMA dispatcher to the real core) | 176 / 176 |
    | Java batch: clamp (which raises B3), then every length check, then the core | 348 / 348 |
    | C# batch: clamp, then every length check, then the core | 348 / 348 |
    | C# cores carrying an overlap guard wherever one is expressible | no core unguarded where the type expresses it |

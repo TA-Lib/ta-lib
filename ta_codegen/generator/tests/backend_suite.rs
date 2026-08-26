@@ -737,11 +737,18 @@ fn rust_alias_guard(func: &ir::FuncDef) -> String {
 /// and only then B6, two outputs that are the same buffer.
 ///
 /// Rust is the one backend where the order between those last two is
-/// *observable*, and it had them the wrong way round (#261). Its B5 is an
+/// *observable*, and it had them the wrong way round (#261). Here B5 is an
 /// `assert!` rather than a returned code — footnote [5], the LLVM proof that
 /// elides the per-access bounds checks — so a call that is both undersized and
 /// aliased answered `BadParam` where the specified order makes it a panic. C,
 /// Java and C# answer `TA_BAD_PARAM` for either, so no order is owed there.
+///
+/// **This tier, not the shipped one.** Since #265 the public entry point states
+/// B5 as a returned code ahead of both of these
+/// ([`rust_public_entry_orders_the_argument_contract`]), so a caller of the
+/// crate meets one code for either fault and cannot see the order at all. What
+/// this pins is the in-crate cross-call path, which reaches `_Impl` directly and
+/// where the distinction is still a panic against a return.
 ///
 /// Structural, and it has to be: two `&mut [f64]` cannot alias, so safe code
 /// cannot build the multi-fault call this pins.
@@ -841,6 +848,102 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
         with_params >= 12,
         "only {with_params} carried parameter validation — B3 is barely covered"
     );
+}
+
+/// The Rust public entry point states the argument contract in the specified
+/// order: B1, B2, then B3, then B4/B5 — inputs before outputs (#265).
+///
+/// **The order is not a style choice.** `SMA(10, 9, ..)` with an eight-element
+/// series has two faults at once, and the specification says `endIdx < startIdx`
+/// answers first. Put the input bound at the top and it answers `BadParam`,
+/// where `test_index_range_xlang` requires `TA_OUT_OF_RANGE_END_INDEX` in every
+/// language — and that leg is also the sole producer of codes 12 and 13 for the
+/// retCode census floor, so getting it wrong fails two gates for one reason.
+/// B3 rides on the `<N>_Lookback(..)?`, which is what makes an out-of-range
+/// parameter answer ahead of a short buffer, as it does in Java and C#.
+///
+/// Structural, because the runtime leg reaches three functions
+/// (`TA_SMA`, `TA_BBANDS`, `TA_AD`) and this reaches all 176. It is the only
+/// STATIC pin: `test_index_range_xlang` covers the same order at run time, and
+/// covers it well — its five cases all run on a fixed eight-element series, so
+/// four of them pair a short input with a malformed or oversized range — but it
+/// needs a built server and a live oracle, which the PR gate has neither of.
+#[test]
+fn rust_public_entry_orders_the_argument_contract() {
+    let mut scanned = 0usize;
+    let mut with_params = 0usize;
+    let mut inputs_checked = 0usize;
+    let mut outputs_checked = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, enums)) = try_load_indicator(&name) else {
+            continue;
+        };
+        let Some(out) = try_generate_all(&func, &enums) else {
+            continue;
+        };
+        // Everything the public entry does BEFORE handing over to the numerics.
+        // Bounded by that call, so a check emitted after it cannot satisfy this.
+        let snake = func.name.clone();
+        let section = extract_section(
+            &out.rust,
+            &format!("    pub fn {snake}(\n"),
+            &format!("        let retCode = self.{snake}_Impl("),
+        );
+        scanned += 1;
+        let where_ = format!("{snake}: {section}");
+
+        let b1 = section
+            .find("return Err(RetCode::OutOfRangeStartIndex);")
+            .unwrap_or_else(|| panic!("{where_}\nno startIdx guard"));
+        let b2 = section
+            .find("return Err(RetCode::OutOfRangeEndIndex);")
+            .unwrap_or_else(|| panic!("{where_}\nno endIdx guard"));
+        assert!(b1 < b2, "{where_}\nB1 must precede B2");
+
+        // B3 arrives as the lookback's `?` — rule L2 makes the lookback's
+        // parameter decision this tier's own, so one call buys the check and the
+        // clamp. It has to sit below B2 and above every buffer bound.
+        let b3 = section
+            .find(&format!("let _guardLb = self.{snake}_Lookback("))
+            .unwrap_or_else(|| panic!("{where_}\nno lookback call to carry B3 and the clamp"));
+        assert!(b2 < b3, "{where_}\nB2 must precede B3");
+        if !func.optional_inputs.is_empty() {
+            with_params += 1;
+        }
+
+        let mut last_input = b3;
+        for input in &func.inputs {
+            let at = section
+                .find(&format!("if {}.len() < endIdx + 1 {{", input.name))
+                .unwrap_or_else(|| panic!("{where_}\n{} has no input bound", input.name));
+            assert!(b3 < at, "{where_}\nB3 must precede B5 ({})", input.name);
+            inputs_checked += 1;
+            last_input = last_input.max(at);
+        }
+        for output in &func.outputs {
+            let needle = if output.is_nullable() {
+                format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", output.name)
+            } else {
+                format!("if {}.len() < _guardOutLen {{", output.name)
+            };
+            let at = section
+                .find(&needle)
+                .unwrap_or_else(|| panic!("{where_}\n{} has no output bound", output.name));
+            assert!(
+                last_input < at,
+                "{where_}\nevery input is bounded before any output ({})",
+                output.name
+            );
+            outputs_checked += 1;
+        }
+    }
+
+    // Literal floors: derived ones move with whatever the scan happens to find.
+    assert!(scanned >= 170, "only {scanned} public entries scanned");
+    assert!(with_params >= 80, "only {with_params} carried optional parameters");
+    assert!(inputs_checked >= 380, "only {inputs_checked} input bounds found");
+    assert!(outputs_checked >= 190, "only {outputs_checked} output bounds found");
 }
 
 #[test]
@@ -11336,8 +11439,10 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 /// A corpus sweep, because the exemption was DERIVED: it was never a list a
 /// reviewer could read, so any future indicator could have joined it silently.
 /// Each backend's own spelling of the check, since B4 and B5 are one condition
-/// per backend — a NULL test in C, the `assert!` bound in Rust, `requireLength`
-/// / `RequireLength` in Java and C#.
+/// per backend — a NULL test in C, `requireLength` / `RequireLength` in Java and
+/// C#, and **two** in Rust: the public tier's returned `BadParam`, which is what
+/// a caller meets, and the `assert!` bound in `<N>_Impl`, which is what the
+/// in-crate cross-call path meets and what LLVM reads (#265).
 ///
 /// Part two is what keeps part one honest. A sweep over every declared input
 /// passes trivially once no input is ever dropped, so it cannot tell you the
@@ -11384,6 +11489,12 @@ fn every_declared_input_is_checked_in_every_backend() {
                     format!("assert!(_assertStart > endIdx || endIdx < {n}.len());"),
                     1,
                 ),
+                // The public tier's own bound, which is what a caller of the
+                // crate actually meets (#265). Two needles for Rust, not one:
+                // the assert above states the same thing to LLVM and stays in
+                // `<N>_Impl` for the in-crate cross-call path, so it would go on
+                // satisfying this test after the caller-facing check was gone.
+                ("rust-pub", &out.rust, format!("if {n}.len() < endIdx + 1 {{"), 1),
                 (
                     "java",
                     &out.java,
@@ -11452,6 +11563,10 @@ fn every_declared_input_is_checked_in_every_backend() {
                 out.rust
                     .contains(&format!("assert!(_assertStart > endIdx || endIdx < {leg}.len());")),
                 "rust: {f}.{leg}"
+            );
+            assert!(
+                out.rust.contains(&format!("if {leg}.len() < endIdx + 1 {{")),
+                "rust public tier: {f}.{leg}"
             );
             assert!(
                 out.java

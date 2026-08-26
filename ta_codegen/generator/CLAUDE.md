@@ -65,7 +65,7 @@ touching all three.
 | `ir` | Intermediate representation (`FuncDef`, `ParamType`, `Statement`, `Expr`, etc.) |
 | `backends/c.rs` | Generates C indicator implementations (guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared) |
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded `<N>` plus `<N>_Private` where declared) |
-| `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`/`# Panics`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
+| `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
 | `backends/java.rs` | Generates Java Core class methods |
 | `backends/csharp.rs` | Generates the shipped C# indicators — one `Core_<NAME>.cs` (`public partial class Core`) per function; XML docs via `csharp_doc.rs`, condition folding shared with Java via `compat_fold.rs` |
 | `backends/{c,rust,java,csharp}_stream.rs` | The four streaming emitters — one per backend, each rendering the *same* backend-neutral analysis from `streaming.rs` (`StreamPlan`, `StreamModel`, `build_transition`, the `NameMap` trait) into its own language. Adding a fifth means writing only the new emitter: the neutral layer and the other three stay untouched, which is what keeps them byte-frozen by construction while it lands. **The `NameMap` prefixes are shared on purpose** — `fma::stream_base` strips exactly `sp->`, `sp.` and `cur_` to decide integer-vs-float typing, so a backend that invents its own spelling silently changes which sites fuse `a*b+c`, i.e. ~1 ULP with nothing pointing at the cause |
@@ -280,7 +280,7 @@ is concrete-`f64` only.
 | Variant | Purpose |
 |---------|---------|
 | `pub fn <N>_Lookback(...) -> usize` | Lookback (first valid output index) |
-| `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API. A thin generated wrapper with no out-params: it calls `<N>_Impl` and turns `Success` into `Ok(OutRange { beg_idx, count })`. Same two-tier shape Java (`<N>_Impl` + `OutRange`) and C# (`internal RetCode <N>_Impl` + `public OutRange <N>`) already ship |
+| `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API, and the tier that owns the argument contract (#265): B1/B2, then B3 via `<N>_Lookback(..)?`, then every input and output length-checked, before it calls `<N>_Impl` and turns `Success` into `Ok(OutRange { beg_idx, count })`. Same two-tier shape Java (`<N>_Impl` + `OutRange`) and C# (`internal RetCode <N>_Impl` + `public OutRange <N>`) already ship |
 | `pub(crate) fn <N>_Impl(...) -> RetCode` | The body: validates params and the index range, pre-computes optimization values, delegates. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits |
 | `fn <N>_Private(...)` | Only where the definition declares one. Extra pre-computed params, no validation prologue — its only caller is the `_Impl` body above it. No shipped indicator declares one; the construct is carried by the `SYNTH4` gate fixture (`input_synth/README.md`) |
 
@@ -291,6 +291,9 @@ conditional as the error, which `?` cannot express. **Rust alone** — since #23
 step 3 Java and C# route a cross-call to the callee's *public* tier, which is
 what C has always done. `<N>_Impl` carries the bounds-assert preamble; that
 preamble takes an empty-range escape so a call computing nothing cannot panic.
+The **public** wrapper states the same bounds as a returned `BadParam` and
+without that escape on the input side (#265), so it is the cross-call path alone
+that meets the assert.
 
 `rust_doc::guarded_docs` is the rustdoc for the **public** wrapper, so its
 `# Arguments` list must match that signature — not the `_Impl` one.

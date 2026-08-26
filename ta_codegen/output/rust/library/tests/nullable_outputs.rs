@@ -1,11 +1,17 @@
-//! Rule B6a and the empty-output half of rule B6, for the Rust batch API —
-//! `docs/error-handling-spec.md` 2.2 and Appendix F, issue #262.
+//! Rule B6a, the empty-output half of rule B6, and B5's two bounds, for the Rust
+//! batch API — `docs/error-handling-spec.md` 2.2 and Appendix F, issues #262 and
+//! #265.
 //!
-//! Neither is reachable from the cross-language gates. The JSON-RPC servers
-//! supply every declared output and floor its length at one, so a backend that
-//! went back to requiring `outFAMA`, or to rejecting distinct empty buffers,
-//! stays green in `--codegen`, `--xlang-hash` and `--fuzz-064` alike. That is
-//! what this file is for.
+//! None of it is reachable from the cross-language gates. The JSON-RPC servers
+//! supply every declared output and floor its length at one, and hand every
+//! input the full series, so a backend that went back to requiring `outFAMA`, to
+//! rejecting distinct empty buffers, or to accepting a slice that does not reach
+//! `endIdx`, stays green in `--codegen`, `--xlang-hash` and `--fuzz-064` alike.
+//! That is what this file is for.
+//!
+//! It is an **integration** test on purpose, where the phantom-I/O sweep is
+//! in-crate: these are public-API rules, so probing the public tier is the
+//! subject rather than a limitation (#265).
 
 #![allow(non_snake_case)]
 
@@ -78,15 +84,22 @@ fn a_declined_output_needs_no_capacity() {
     core.MAMA(0, 251, &data, 0.5, 0.05, &mut mama, None)
         .expect("a declined output imposes no size");
 
-    // Control: the supplied output is still bounded. One short must panic —
-    // Rust reports B5 as an assertion, footnote [5] of the spec.
+    // Control: the supplied output is still bounded. One short must be rejected
+    // — B5, from the public tier, as a code (#265). The body's assert states the
+    // same bound and is unreachable through here.
     let mut short = vec![0.0; 252 - lookback - 1];
+    assert_eq!(
+        core.MAMA(0, 251, &data, 0.5, 0.05, &mut short, None),
+        Err(RetCode::BadParam),
+        "an undersized supplied output must still be rejected"
+    );
     assert!(
-        panics(|| {
+        !panics(|| {
             let core = Core::new();
+            let mut short = vec![0.0; 252 - lookback - 1];
             let _ = core.MAMA(0, 251, &data, 0.5, 0.05, &mut short, None);
         }),
-        "an undersized supplied output must still panic"
+        "and rejected rather than panicked: the public tier answers before the assert"
     );
 }
 
@@ -134,19 +147,61 @@ fn distinct_empty_outputs_are_not_aliases() {
 
 /// Control for the test above: empty outputs are accepted because nothing is
 /// produced, not because the bound went away. On a range that DOES produce
-/// values the same three empty buffers must still fault.
+/// values the same three empty buffers must still be refused.
 #[test]
 fn empty_outputs_on_a_producing_range_still_fault() {
     let data = series(252);
-    assert!(
-        panics(|| {
-            let core = Core::new();
-            let mut a: Vec<f64> = Vec::new();
-            let mut b: Vec<f64> = Vec::new();
-            let mut c: Vec<f64> = Vec::new();
-            let _ = core.ACCBANDS(0, 251, &data, &data, &data, 20, &mut a, &mut b, &mut c);
-        }),
+    let core = Core::new();
+    let mut a: Vec<f64> = Vec::new();
+    let mut b: Vec<f64> = Vec::new();
+    let mut c: Vec<f64> = Vec::new();
+    assert_eq!(
+        core.ACCBANDS(0, 251, &data, &data, &data, 20, &mut a, &mut b, &mut c),
+        Err(RetCode::BadParam),
         "B5 must still bound an output that has to hold values"
+    );
+}
+
+/// B5's input half, which the public tier states without the sub-lookback escape
+/// the body's assert takes — so a short input is refused on a range that
+/// produces nothing as readily as on one that does (#265, spec footnote [5]).
+///
+/// This is the one bound where the crate answers a caller that C cannot: C is
+/// handed bare pointers and reads past the end. Java and C# have said it since
+/// #260; here it used to be an assert with an escape, so the sub-lookback call
+/// below was a silent `Ok`.
+#[test]
+fn a_short_input_is_refused_on_every_range() {
+    let core = Core::new();
+    let short = series(100);
+
+    // A range that produces values.
+    let mut out = vec![0.0; 252];
+    assert_eq!(
+        core.SMA(0, 251, &short, 30, &mut out),
+        Err(RetCode::BadParam),
+        "an input that does not reach endIdx is a caller bug"
+    );
+
+    // And one that does not: startIdx..=endIdx is shorter than the lookback, so
+    // no value is produced and no output space is owed — the input bound holds
+    // anyway.
+    let mut none: Vec<f64> = Vec::new();
+    assert!(
+        core.SMA_Lookback(30).expect("a valid lookback") > 10,
+        "the probe needs a sub-lookback range, or it repeats the case above"
+    );
+    assert_eq!(
+        core.SMA(0, 10, &short[..5], 30, &mut none),
+        Err(RetCode::BadParam),
+        "the input bound takes no sub-lookback escape"
+    );
+
+    // Control: the same call with the input one element longer succeeds, so the
+    // rejections above are the length and not the fixture.
+    assert_eq!(
+        core.SMA(0, 10, &short[..11], 30, &mut none),
+        Ok(OutRange { beg_idx: 0, count: 0 })
     );
 }
 
