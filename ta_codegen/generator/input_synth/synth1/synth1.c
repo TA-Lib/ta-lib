@@ -10,12 +10,9 @@
  *  -------------------------------------------------------------------
  *  080326 MF,CC Creation (synthetic gate: bitwise operator family, #157)
  *
- * SYNTHETIC GATE FUNCTION - never shipped. Exercises generator constructs
- * no real indicator uses, end to end through every backend (see
- * ta_codegen/generator/input_synth/README.md). Every intermediate feeds the output,
- * so a miscompile in any language changes outInteger and fails the gate.
- * All state stays in [0,1023]: shifts never see a negative operand, and
- * integer results are bit-identical across C, Rust, Java and C#.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth1.md — one copy, so there is one thing to keep true.
  */
 
 int synth1_lookback(int optInTimePeriod)

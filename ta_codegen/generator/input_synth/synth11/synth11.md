@@ -2,7 +2,7 @@
 
 ## Summary
 
-Synthetic gate function: exercises **a third integer output** — one more than the shipped corpus has ever declared, and the count that sizes the C harnesses' file-scope output buffers — and **a `cond ? 1 : 0` stored into an integer output**, which Java and C# used to collapse into code that does not compile. Both were literals or folds the corpus happened never to reach. It exists only to verify the code generator; it is never shipped (see `ta_codegen/generator/input_synth/README.md`).
+Synthetic gate function: exercises **a third integer output** — one more than the shipped corpus has ever declared — and **a `cond ? 1 : 0` stored into an integer output**. Neither is reachable from the shipped corpus. It exists only to verify the code generator; it is never shipped (see `ta_codegen/generator/input_synth/README.md`).
 
 ## Formula
 
@@ -10,10 +10,11 @@ outAbove[i] = 1 if real_i > 0 else 0; outBelow[i] = 1 if real_i < 0 else 0; outL
 
 ## Notes
 
-- The C harnesses — `ta_codegen_serve`, `ta_bench`, `ta_bench_stream` and the in-server `stream_verify` — hand every function the same file-scope buffers, and the counts were the literals 3 (double) and 2 (int): what MACD/BBANDS/STOCH and MINMAXINDEX happen to need. A third integer output compiled to `'g_outIntBuf2' undeclared`, and nothing in the tree could reach it. The counts now come from `common::max_output_arity`, and this fixture is what makes them move — and what fails if anyone writes a literal back.
-- **A `cond ? 1 : 0` stored into an integer output.** Java and C# collapse that ternary to the bare condition — right where a boolean is wanted, wrong here: C has no booleans, so the destination is an `int`, and `outAbove[outIdx] = bar > 0.0;` does not compile in either language. The corpus writes `? 1 : 0` only inside helper predicates consumed by an `if`, so nothing reached the bad case. The emitters now keep the ternary on an assignment's right-hand side, and these three stores are what prove it.
-- **Not here, deliberately: a real output beside the integer ones.** The output-distinctness guard could not compile a cross-typed term in three of the four backends and now skips such pairs (Appendix E of `docs/error-handling-spec.md`), but that is not the only thing in the way — `ta_variant_frame` and `ta_stream_frame` carry one `outIsInteger` flag per *function*, and `test_variants.c` branches on it. Mixing output types is a feature with its own assert, not a fixture away.
-- No `(int)` cast anywhere. The outputs come from comparisons, which are IEEE-identical in all four languages, rather than from a conversion the family's rules warn is defined differently in each of them.
+- Covers a THIRD integer output — one more than the corpus has ever declared, MINMAXINDEX's two being the maximum — and a `cond ? 1 : 0` stored into an integer output. Verified against `ta_codegen/input/`: the corpus's only `? 1 : 0` are four helper predicates in `helpers/candlestick.c`, each RETURNED from the helper and consumed in an `if` condition — never stored into an output array, which is the form under test.
+- Coverage trap: three integer outputs, not two. The C harnesses size their file-scope output buffers from the corpus's maximum arity, so dropping one output here puts that sizing back under the corpus's own ceiling — the state in which a third integer output failed to compile.
+- Not here, deliberately: a real output beside the integer ones. `ta_variant_frame` and `ta_stream_frame` carry one `outIsInteger` flag per FUNCTION and `test_variants.c` branches on it, so mixing output types is a feature with its own assert, not a fixture away.
+- No `(int)` cast anywhere: the outputs come from comparisons, which are IEEE-identical in all four languages.
+- Each output is a different function of the same bar, so a store that landed in the wrong buffer changes a value the gates compare.
 - Issue #262.
 
 ## Inputs

@@ -71,21 +71,12 @@ step 5 deleted it.
 | `_Impl` | the numerics — a transcribed body, nothing else |
 | `_Internal` | a **variant** of an entry point, not a tier: the `startIdx`-anchored seams `_OpenInternal` / `_OpenAndFillInternal` |
 
-`_OpenPass` was a third word for the first meaning, and existed only because
-Java and C# put an adapter above the numerics and wore `_OpenImpl` on *that*.
-With the adapters gone the name is free, so the streaming numerics is
-`<N>_OpenImpl` in all four backends. `Core` and `Body` were rejected: `Core` is
-the struct a caller holds and the documented contrast with the Streaming API,
-and `Body` reads as markup. `Pass` was chosen (`408f7c23d`) for being
-descriptive where `_Impl` is relational — a real preference, retired because one
-word per concept beats it once the collision that forced it is gone.
-
-The step and release tiers were three more words for it — `_StepInternal` (C),
-`_step_internal` (Rust), `_StreamStep` (Java/C#) — and none of them was a variant
-of anything: no backend has a `<N>_Step` entry point. They are `<N>_StepImpl` in
-all four now, plus C-only `TA_<N>_ReleaseImpl` (Rust has `Drop`, the managed
-backends have GC). The tier is private everywhere, so no runtime gate can see the
-spelling — `the_transition_tier_is_step_impl_in_every_backend` is what pins it.
+Those two are the whole vocabulary, deliberately — one word per concept. So the
+streaming numerics is `<N>_OpenImpl` in all four backends, and the transition
+tier is `<N>_StepImpl` in all four, plus C-only `TA_<N>_ReleaseImpl` (Rust has
+`Drop`, the managed backends have GC). Neither tier is public anywhere, so no
+runtime gate can see the spelling —
+`the_transition_tier_is_step_impl_in_every_backend` is what pins it.
 
 **The `_Open*` family is five methods, symmetric, two hops deep:**
 
@@ -97,10 +88,9 @@ PKG  <N>_OpenAndFillInternal(in, sIdx, ..)  -> <N>_OpenImpl(.., 1)
 PRV  <N>_OpenImpl(sp, in, sIdx, params, outBeg, outNb, outs, outStride)
 ```
 
-Both public entries delegate at anchor 0, so **no seam is emitted unreachable** —
-before that symmetry, 159 of 175 `_OpenAndFillInternal` had no caller at all in
-every backend. The guard sits on the public frame because that is the only one
-handed an array it did not vet: the plain open sinks into fresh arrays, and a
+Both public entries delegate at anchor 0, so **no seam is emitted unreachable**.
+The guard sits on the public frame because that is the only one handed an array
+it did not vet: the plain open sinks into fresh arrays, and a
 composed call's destination is already proved disjoint by
 `SubCallStep::is_fusable`. `MA` (Dispatch) and `MAVP` (PeriodBank) are exempt and
 hand-roll a body per entry point — theirs differ by which callee tier they call
@@ -120,8 +110,7 @@ that debt is `MA`'s withholding from `NoPhantomIoTest`'s sweep.
 (`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk) and Rust
 (`ParamHolder::call`) all do, so binding a leg shorter than the requested range
 is `TA_BAD_PARAM` in three of them and inexpressible in the fourth — C's setters
-take a bare pointer and carry no length. Rust and C# reached `<N>_Impl` until
-#265 and answered a panic and an `IndexOutOfRangeException` respectively.
+take a bare pointer and carry no length (#265).
 
 **And a rejected setter leaves the holder as it found it** — the price setter
 validates every consumed component before it writes any (#266). The case that
@@ -140,6 +129,33 @@ overwritten on the next `generate`. The converse trap: some hand-written source
 lives under `output/` too (the Java shared types, `pom.xml`, `Core.java` outside
 the GENCODE markers, the test suites, the C# `TALib.csproj`); the generator
 preserves those and never overwrites them.
+
+## Comments and docs: guidance, not narration
+
+Assume the reader is an AI that can read the code faster than the prose about
+it. A comment or a `.md` earns its place only by saying something the code
+cannot:
+
+- **Guidance, not description.** Why this shape, what breaks if you change it,
+  which invariant is load-bearing. Not what the lines below do.
+- **Never re-explain another file.** That copy goes stale the moment the
+  original moves, and a stale description costs a reader either a wrong belief
+  or a re-verification. When you find one that has drifted, delete it — do not
+  re-sync it. Drift is the symptom; the duplication is the defect.
+- **Delete the scaffolding of solved problems.** A workaround that is gone, a
+  bug that is fixed, a tier that was retired: the post-mortem belongs in the
+  issue and the commit message, which are timestamped and do not pretend to be
+  current.
+- **A real pitfall is worth writing down** — but state the rule, not the
+  history. "Keep every `(int)` cast the whole right-hand side" beats a paragraph
+  naming the emitter function that used to get it wrong.
+- **Named internals are the tell** — a function, a struct field, a symbol out of
+  a compiler error. They are the part most likely to be renamed out from under
+  the comment, and naming them is usually description wearing a rule's clothes.
+
+Applies to `ta_codegen/input/**` headers and `.md` files as much as to the
+generator's own source. `ta_codegen/generator/input_synth/README.md` states the
+gate-fixture form of the rule.
 
 ## Quick Reference Commands
 

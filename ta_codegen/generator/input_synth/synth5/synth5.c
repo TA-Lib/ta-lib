@@ -10,26 +10,9 @@
  *  -------------------------------------------------------------------
  *  081126 MF,CC Creation (synthetic gate: PRAGMA TA_ALT stream alternate, #190)
  *
- * SYNTHETIC GATE FUNCTION - never shipped. Exercises generator constructs
- * no real indicator uses, end to end through every backend (see
- * ta_codegen/generator/input_synth/README.md).
- *
- * The construct under test is `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` with the
- * alternate supplying the STREAM tier -- the orientation the six
- * rolling-extremum functions ship. The base indexes its window by the window's
- * START, so it reads `inReal[i + nbInitialElementNeeded]` ahead of the bar it
- * is emitting; that is exactly the access the stream analyzer cannot turn into
- * a per-bar automaton. Without the alternate this function does not generate
- * at all, which is what makes the gate non-vacuous: the alternate is not a
- * nicer spelling of something that already worked.
- *
- * synth5_ALT1 walks the same window with a trailing cursor instead, so it is an
- * ordinary T3 ring, and it adds the two bars in the SAME order -- the two are
- * bit-identical, not merely close, which is the contract an alternate owes its
- * base.
- *
- * Arithmetic is +,- only and the output is quantized to a 10-bit integer, so
- * every gate compares exactly.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth5.md — one copy, so there is one thing to keep true.
  */
 
 int synth5_lookback(int optInTimePeriod)

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Synthetic gate function: regression driver for issues #158 (integer locals typed by declaration, not by name), #159/#163 (an int-array element compared against the unsigned index domain) and #165 (a signed local inside an expression rather than standing alone). Each bar folds its value into an integer, runs it through a wrap-by-one-period bookkeeping step whose locals are deliberately named so that every naming heuristic in the code generator gets them wrong, then packs the results of eight comparisons between a small int-array element and the index domain. It exists only to verify the code generator end to end across all backends; it is never shipped (see `ta_codegen/generator/input_synth/README.md`).
+Synthetic gate function: regression driver for issues #158 (integer locals typed by declaration, not by name), #159/#163 (an int-array element compared against the unsigned index domain) and #165 (a signed local inside an expression rather than standing alone). Its locals are deliberately named so that every naming heuristic in the code generator gets them wrong. It exists only to verify the code generator end to end across all backends; it is never shipped (see `ta_codegen/generator/input_synth/README.md`).
 
 ## Formula
 
@@ -10,10 +10,11 @@ outInteger[i] = ((2 × optInTimePeriod + fold(inReal[i])) & 65535) | (hits << 16
 
 ## Notes
 
-- Deterministic and integer-only, so cross-language comparisons are exact.
-- Every value is bar-local, so the function is not path-dependent and batch and streaming agree bar for bar.
-- The lookback body carries the same compound-assignment shape as the main body: that context used to be rendered with no type information at all.
-- Every int-array intermediate is held non-negative on purpose. C compares in the signed domain while Rust widens to the unsigned one, so a negative intermediate would wrap and the languages would disagree by construction — a documented limitation of the index-domain convention, and not something this fixture may depend on.
+- Covers integer locals typed by their DECLARATION rather than their name (#158), an int-array element in mixed arithmetic against the unsigned index domain (#159, #163), and a signed local inside an expression rather than standing alone (#165) — in the main body and again in the lookback body, which is a separate rendering context. Verified against `ta_codegen/input/`: ULTOSC holds the corpus's only local int arrays and never puts one in mixed arithmetic.
+- Coverage trap: the locals are named so that a name-based type heuristic gets them wrong — `k` is EMA's smoothing factor, and `slot`, `lag` and `barVal` are on no list at all. Rename them to something a heuristic would classify correctly and the fixture passes without testing anything.
+- Coverage trap: the empty comment and the bare-asterisk comment in the body are fixtures too — a comment whose content reduces to nothing used to abort `generate`. Tidying either away removes that coverage silently.
+- Coverage trap: every int-array intermediate is held non-negative. C compares in the signed domain and Rust widens to the unsigned one, so a negative intermediate makes this red for the index-domain convention's documented limitation instead of for what it tests.
+- Issues #158, #159, #163, #165.
 
 ## Inputs
 

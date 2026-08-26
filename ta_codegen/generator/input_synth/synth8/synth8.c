@@ -10,49 +10,9 @@
  *  -------------------------------------------------------------------
  *  081426 KL   Creation (synthetic gate: ta_candleaverage values, #216).
  *
- * SYNTHETIC GATE FUNCTION - never shipped. Exercises generator constructs
- * no real indicator uses, end to end through every backend (see
- * ta_codegen/generator/input_synth/README.md).
- *
- * The construct under test is ta_candleaverage with its VALUE as the output;
- * SYNTH7 is the same idea for ta_candlerange, and carries the rationale for
- * making these intermediates observable at all.
- *
- * Two outputs cover both of the helper's branches and both of its divisors:
- *
- *    outAvgShadows     ShadowShort     avgPeriod 10 -> divides the running
- *                                      sum; rangeType Shadows -> the /2
- *                                      divisor; and the divergent arm
- *    outAvgCurrentBar  ShadowVeryLong  avgPeriod 0 -> reads the CURRENT
- *                                      bar's range instead of the sum, the
- *                                      branch that had no cross-language
- *                                      coverage at all (#216 gap 5);
- *                                      rangeType RealBody -> divisor 1.0
- *
- * The sum passed for outAvgCurrentBar is ignored by that branch by
- * construction. It is passed anyway because that is what a real caller does,
- * and a backend that wrongly consulted it would diverge here.
- *
- * TWO PROPERTIES MAKE THIS SAFE TO ALIAS, and both are load-bearing:
- *
- *   1. The window's per-bar ranges are kept in a circular buffer, so a bar
- *      that has left the window is never read from the input arrays again --
- *      the same reason cmf.c carries its volume in the buffer rather than
- *      re-reading inVolume[] at the trailing index.
- *   2. Every read of the current bar happens BEFORE any output is written.
- *      outReal may alias an input array, and the C backend maps these helpers
- *      onto macros that read inOpen[i]/inHigh[i]/... directly, so storing one
- *      output before computing the next would hand the next helper a
- *      clobbered bar.
- *
- * No shipped candlestick has to satisfy either: their outputs are int, which
- * the alias gate never aliases onto a double input. SYNTH7 and SYNTH8 are the
- * first OHLC consumers with real outputs, so they are the first to be held to
- * it -- and the gate caught both of them the first time round.
- *
- * Nothing is clamped, for the reason given in synth7.c: the divergent region
- * is bars whose low sits below half their high, and clamping those away would
- * hide exactly what the gate measures.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth8.md — one copy, so there is one thing to keep true.
  */
 
 int synth8_lookback(void)

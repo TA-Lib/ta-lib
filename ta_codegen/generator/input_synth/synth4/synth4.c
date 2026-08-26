@@ -10,31 +10,9 @@
  *  -------------------------------------------------------------------
  *  081026 MF,CC Creation (synthetic gate: explicit _private variant, #183)
  *
- * SYNTHETIC GATE FUNCTION - never shipped. Exercises generator constructs
- * no real indicator uses, end to end through every backend (see
- * ta_codegen/generator/input_synth/README.md).
- *
- * The construct under test is the explicit `<name>_private()` variant: a
- * second entry point holding the algorithm, taking an extra parameter the
- * guarded entry point pre-computes and passes down. It drives
- * has_explicit_private across the parser, the IR, all four backends, the
- * single-precision tier and the streaming emitter -- including the rule that
- * the extra parameter is derived AFTER the validation prologue has resolved
- * an integer sentinel (deriving it before yields a k computed from INT_MIN,
- * returned with TA_SUCCESS -- the TA_S_EMA defect fixed in 2e9767397).
- *
- * The state is a smoothing recursion so the extra parameter is a float
- * multiply operand, which also pins the FMA site selection: a private extra
- * param is a PARAMETER, never a body VarDecl, so `build_fma_var_sets` cannot
- * see it as Real and NO site here fuses. That is uniform across C, Rust, Java
- * and C# -- and it is the mechanism that kept TA_EMA unfused while every
- * inlined EMA cascade fused, until #183 folded the private away. A backend
- * that started fusing here on its own would break cross-language bit parity,
- * which is what the gate compares.
- *
- * Arithmetic is +,-,* only, so the state is IEEE identical in all four
- * languages, and the output is quantized to a 10-bit integer so every gate
- * compares exactly.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth4.md — one copy, so there is one thing to keep true.
  */
 
 int synth4_lookback(int optInTimePeriod)

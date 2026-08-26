@@ -10,11 +10,12 @@ outAvgShadows[i] = candleAverage(ShadowShort, sum, bar i); outAvgCurrentBar[i] =
 
 ## Notes
 
-- The two outputs cover both branches of the helper and both of its divisors: an averaged `Shadows` window (`avgPeriod != 0`, the halving divisor, and the divergent arm) and the `avgPeriod == 0` branch that reads the current bar's range instead of the running sum (divisor 1.0).
-- The sum passed for `outAvgCurrentBar` is ignored by that branch by construction. It is passed anyway because that is what a real caller does, and a backend that wrongly consulted it would diverge here.
-- The window's per-bar ranges live in a circular buffer, so a bar that has left the window is never re-read from the input arrays — the same reason `cmf.c` carries its volume in the buffer. Together with reading the current bar fully before writing any output, that is what makes these outputs safe to alias an input.
-- No shipped candlestick has to satisfy either property: their outputs are `int`, which the in-place alias gate never aliases onto a `double` input. SYNTH7 and SYNTH8 are the first OHLC consumers with real outputs, and the gate caught both of them the first time round.
-- Nothing is clamped, for the reason given in SYNTH7: the divergent region is bars whose low sits below half their high, and clamping those away would hide what the gate measures.
+- Covers the VALUE of `ta_candleaverage` as real outputs, both of the helper's branches and both of its divisors: an averaged window (`avgPeriod != 0`, the halving divisor, the divergent arm) and the `avgPeriod == 0` branch that reads the current bar's range instead of the running sum. SYNTH7 carries why the shipped corpus cannot observe either.
+- Coverage trap: the window update stays ONE expression, `sum += new - old`, as every shipped candlestick writes it. Split into `-= old` then `+= new` it rounds twice against the running total instead of once against the difference, and measurably re-rounds the per-bar 1-ULP difference away — green and blind.
+- Coverage trap: nothing is clamped, and the helper result goes to a local rather than inline — both for the reasons given in SYNTH7.
+- The sum handed to the `avgPeriod == 0` output is ignored by that branch by construction. It is passed anyway because that is what a real caller does, and a backend that wrongly consulted it diverges here.
+- The window's per-bar ranges live in a circular buffer, so a bar that has left the window is never re-read from the inputs; with every read of the current bar happening before any store, that is what lets these real outputs alias an input. No shipped candlestick has to satisfy either property — their outputs are `int`, which the alias gate never aliases onto a `double` input.
+- Issue #216.
 
 ## Inputs
 

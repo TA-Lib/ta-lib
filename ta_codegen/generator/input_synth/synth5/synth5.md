@@ -2,7 +2,7 @@
 
 ## Summary
 
-Synthetic gate function: the sum of the first and last bar of a rolling window, written twice — a base indexed by the window's start (which reads ahead of the emitted bar, so it cannot be streamed) and a `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` alternate that walks the same window with a trailing cursor. It exists only to verify the code generator end to end across all backends; it is never shipped (see `ta_codegen/generator/input_synth/README.md`).
+Synthetic gate function: the sum of the first and last bar of a rolling window, written twice — a base indexed by the window's start and a `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` alternate that walks the same window with a trailing cursor. It exists only to verify the code generator end to end across all backends; it is never shipped (see `ta_codegen/generator/input_synth/README.md`).
 
 ## Formula
 
@@ -10,9 +10,10 @@ outInteger[i] = ((int)(x(i - period + 1) + x(i))) mod 1024
 
 ## Notes
 
-- The base is deliberately unstreamable: `inReal[i + nbInitialElementNeeded]` reads past the bar being emitted. Delete the alternate and the function stops generating, so the gate cannot pass by accident.
-- Both bodies add the two bars in the same order, so they are bit-identical rather than merely equal — the contract an alternate owes its base.
-- Bars are clamped to [0, 1000000) before any arithmetic, so the sum stays bounded and the integer cast is identical in every language.
+- Covers `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}`. That orientation is not unreached — six shipped rolling-extremum functions ship it — so what this fixture adds is a base that CANNOT generate without its alternate: `inReal[i + nbInitialElementNeeded]` reads past the bar being emitted, which no per-bar automaton can express. Delete the alternate and generation fails, so the gate cannot pass by accident.
+- Named by `tests/alt_suite.rs`, which asserts on the emitted statements per tier — an alternate is generator input and never becomes a symbol, so nothing else can show which body won. SYNTH6 is the mirror; the pair is what defeats an always-base or always-alternate resolver.
+- Coverage trap: both bodies add the same two bars in the SAME order, so base and alternate are bit-identical rather than merely equal. Reorder either sum and this fails on rounding instead of on resolution.
+- Issue #190.
 
 ## Inputs
 

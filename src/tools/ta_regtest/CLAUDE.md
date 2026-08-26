@@ -1016,9 +1016,9 @@ the driver core in `test_codegen.c` (`codegen_output_hash` /
 The hard-coded tests validate **in-process C vs the expected constants** at a
 legitimate tolerance. `server_verify` runs the *transitive* check: feed the same
 inputs to another language and compare to what C computed — which must be
-**exact** (same algorithm + same inputs ⇒ same bits). A `1e-6` re-compare there
-would be strictly weaker than "C == server, then C == expected ⇒ server ==
-expected", so the old `SV_EPSILON` was deleted.
+**exact** (same algorithm + same inputs ⇒ same bits). Do not give it a
+tolerance: a `1e-6` re-compare would be strictly weaker than "C == server, then
+C == expected ⇒ server == expected".
 
 - **Lossless input.** Inputs are serialized as **hex-of-IEEE-bits** strings (one
   16-hex group per double, via `to_bits`/`from_bits` — no float-parse rounding,

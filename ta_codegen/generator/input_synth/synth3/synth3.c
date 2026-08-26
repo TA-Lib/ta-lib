@@ -12,36 +12,9 @@
  *  080426 MF,CC Int-array element typing and cast placement (#159, #163)
  *  080426 MF,CC Signed locals inside expressions (#165)
  *
- * SYNTHETIC GATE FUNCTION - never shipped (see input_synth/README.md).
- * Regression driver for issue #158: an integer local must be typed by its
- * DECLARATION, never by its name. Every local below is named so that the
- * Rust backend's naming heuristics get it wrong if they are consulted:
- * `k` is on that backend's hard-coded float-name list (it is EMA's k
- * factor), and `slot` / `lag` / `barVal` are on no list at all. The
- * lookback body carries the same shape, because that context used to be
- * rendered with no type information whatsoever.
- *
- * It also drives #165 — a SIGNED local (one `collect_signed_int_vars` elected
- * i32) inside an expression rather than standing alone — and the two sibling
- * defects in the same emitter (#159, #163):
- * an int-ARRAY element compared against the unsigned index domain. #163 is
- * the typing half — arithmetic over such an element had no cast at all and
- * did not compile — and #159 is the spelling half, because the cast this
- * produces lands immediately left of a `<`, which Rust cannot parse unless
- * the whole cast is parenthesised. ULTOSC is the only shipped function with
- * a local int array and it never puts one in mixed arithmetic, so nothing
- * else in the corpus reaches either path.
- *
- * Every value here is bar-local, so the function is not path-dependent and
- * batch and streaming agree bar for bar.
- *
- * EVERY int-array intermediate below is held non-negative on purpose. C
- * compares `ring[head] - 1 < slot` in the signed domain and Rust widens the
- * i32 to usize, so a negative intermediate wraps and the two disagree by
- * construction. That is a documented limitation of the emitter's
- * index-domain convention, not something this fixture may depend on: a
- * single subtraction that can reach -1 would make this gate red for a
- * reason unrelated to what it is testing.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth3.md — one copy, so there is one thing to keep true.
  */
 
 int synth3_lookback(int optInTimePeriod)

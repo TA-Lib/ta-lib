@@ -10,25 +10,9 @@
  *  -------------------------------------------------------------------
  *  081126 MF,CC Creation (synthetic gate: PRAGMA TA_ALT batch alternate, #190)
  *
- * SYNTHETIC GATE FUNCTION - never shipped. Exercises generator constructs
- * no real indicator uses, end to end through every backend (see
- * ta_codegen/generator/input_synth/README.md).
- *
- * The construct under test is `PRAGMA TA_ALT={BATCH,ALL_LANGUAGES}` -- the
- * orientation NO shipped function uses. SYNTH5 covers the mirror image, an
- * alternate claiming STREAM; between them the resolver is exercised in both
- * directions, so a bug that always returned the base, or always returned the
- * alternate, fails one of the two.
- *
- * Here the BASE is the streamable trailing-cursor walk and the ALTERNATE is
- * the batch-only form indexed by the window's start. Both add the same two
- * bars in the same order, so they are bit-identical. The gate's teeth: the
- * generated batch tier must contain `nbInitialElementNeeded` as an ARRAY
- * INDEX offset (only the alternate does that) while the stream tier must
- * carry a trailing cursor (only the base does).
- *
- * Arithmetic is +,- only and the output is quantized to a 10-bit integer, so
- * every gate compares exactly.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth6.md — one copy, so there is one thing to keep true.
  */
 
 int synth6_lookback(int optInTimePeriod)

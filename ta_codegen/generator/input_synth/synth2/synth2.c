@@ -10,15 +10,9 @@
  *  -------------------------------------------------------------------
  *  080326 MF,CC Creation (synthetic gate: negative (int) casts, #160)
  *
- * SYNTHETIC GATE FUNCTION - never shipped (see input_synth/README.md).
- * Regression driver for issue #160: a C `(int)` cast of a NEGATIVE double
- * must keep its sign in every backend. Exercises both use classes that
- * #160 identified: magnitude (floor/ceiling clamps, like MAVP's period
- * clamp) and bit-pattern (two's-complement low bits of a negative).
- * The range guard folds bars outside (-1e6, 1e6) — far inside i32 range
- * even after the *4 scaling — so signed bars flow into the casts on the
- * signed fuzz shapes while overflow (a separate per-language divergence,
- * see synth1) stays excluded.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth2.md — one copy, so there is one thing to keep true.
  */
 
 int synth2_lookback(int optInTimePeriod)

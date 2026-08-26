@@ -10,8 +10,11 @@ outInteger[i] = S(i), where S is a path-dependent 10-bit state: rotate by 3, XOR
 
 ## Notes
 
-- Deterministic and integer-only, so cross-language comparisons are exact.
-- State stays in [0, 1023]; shift operands are never negative.
+- Covers every bitwise operator and compound form (`&`, `|`, `^`, `~`, `<<`, `>>`, `&=`, `|=`, `^=`, `<<=`, `>>=`), integer truthiness, and a `switch` on an expression. Verified against `ta_codegen/input/`: none of them appears in a shipped body except `>>` (TRIMA halves its period), and the corpus's three `switch`es (`ma.c` twice, `helpers/candlestick.c` once) are all on a bare variable rather than an expression.
+- `do`/`while` is not exclusive to this fixture — 74 shipped bodies use one — so it rides along rather than being covered by this fixture.
+- Coverage trap: every intermediate feeds `outInteger`, so a miscompile of any one operator changes a compared value. An operator whose result stops reaching the output is covered by nothing.
+- Coverage trap: the state is held in `[0, 1023]` and no shift ever sees a negative operand. Widen either and this goes red for a language difference the README already forbids, not for a generator defect.
+- Issue #157.
 
 ## Inputs
 

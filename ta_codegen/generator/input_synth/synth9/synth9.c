@@ -11,50 +11,9 @@
  *  -------------------------------------------------------------------
  *  081726 MF,CC  Creation (synthetic gate: scientific-notation literals).
  *
- * SYNTHETIC GATE FUNCTION - never shipped. Exercises generator constructs
- * no real indicator uses, end to end through every backend (see
- * ta_codegen/generator/input_synth/README.md).
- *
- * The construct under test is the SCIENTIFIC-NOTATION FLOAT LITERAL.
- *
- * Until this fixture existed the lexer did not accept one at all: it read the
- * 'e' as an identifier and aborted with "Expected '=' or compound assignment
- * after 'e'". Nothing in the tree noticed, because the corpus does not contain
- * one. It does contain the strings 1e-14, 1e-6 and 2e-10 -- in var.c, tema.c,
- * t3.c and marketfi.c -- but every one of them is inside a COMMENT, which the
- * lexer skips. So the number path had never been handed the token, and the
- * only thing standing between that and a contributor writing `1e-13` was luck.
- *
- * Every mantissa/exponent shape the lexer distinguishes appears below, because
- * they take different branches: a negative exponent (the one that used to
- * abort), an explicit '+', an upper-case 'E', an exponent with NO decimal point
- * (which must still produce a float -- read as an integer it would change the
- * type of the expression around it), and a leading-dot mantissa with an
- * exponent.
- *
- * 1e300 is here for the emitter, not the lexer. It is whole but too large for
- * the `.0` branch, and Rust's f64 Display never uses exponent notation, so the
- * naive rendering is 301 digits carrying neither '.' nor 'e' -- an INTEGER
- * constant in C, and past LLONG_MAX an ill-formed one. It has to come back out
- * as 1e300, and it has to do so in four languages at once.
- *
- * Real outputs rather than the integer ones this family prefers, for synth7's
- * reason: the value of the literal IS the thing under test, and an integer
- * output would quantize away exactly the difference the gate exists to see.
- * Each output also has to DEPEND on its literal -- `1e300 / (1e300 + x)` would
- * be a tidy bounded expression and a vacuous one, since it answers 1.0 whether
- * the exponent is 300 or 301.
- *
- * Magnitudes are kept small on purpose. --xlang-hash and stream_verify compare
- * bitwise and would not care, but the plain --codegen sweep crosses JSON at
- * %.15g and compares at an epsilon; an output near 1e291 would fail that on
- * transport rounding alone and say nothing about literals. Dividing BY the
- * large literal instead of multiplying by it keeps every output under ~1e3
- * while leaving the answer a strict function of the exponent.
- *
- * The mantissa multiply and the addition are separate statements so the
- * fusion detector (backends/fma.rs) sees no `a*b+c` site. FMA is covered
- * elsewhere; here it would only add a second variable to any failure.
+ * SYNTHETIC GATE FUNCTION - never shipped; see input_synth/README.md.
+ * What this fixture covers, and what would silently reduce that coverage,
+ * is in synth9.md — one copy, so there is one thing to keep true.
  */
 
 int synth9_lookback(void)
