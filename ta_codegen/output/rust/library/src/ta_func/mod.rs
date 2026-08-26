@@ -85,6 +85,10 @@ mod stream_finite;
 #[cfg(test)]
 mod stream_out_range;
 
+// Generated test-only modules.
+#[cfg(test)]
+mod no_phantom_io;
+
 // Generated indicator modules:
 mod ac;
 mod accbands;

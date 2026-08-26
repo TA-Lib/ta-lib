@@ -2269,6 +2269,16 @@ const RUST_TEMPLATE_MODULES: &[&str] =
 const RUST_TEST_ONLY_MODULES: &[&str] =
     &["div_zero", "scratch_election", "stream_finite", "stream_out_range"];
 
+/// `#[cfg(test)]` modules that `generate` WRITES into `src/ta_func/` rather than
+/// copying from `templates/rust/` — the phantom-I/O sweep, whose two probes per
+/// indicator and their ~970 call sites are emitted from the IR
+/// (`backends::rust_phantom_io`).
+///
+/// In `src/` rather than `tests/` because it probes `<N>_Impl`, which is
+/// `pub(crate)` (#265). Also listed in the Rust backend's `clean_keep`, or the
+/// stale-file sweep deletes it for naming no indicator.
+const RUST_GENERATED_TEST_MODULES: &[&str] = &["no_phantom_io"];
+
 /// Version of the `ta-lib-dispatch` support crate — deliberately decoupled from
 /// the repo `VERSION` the other three members track, because it changes only
 /// when its one macro does.
@@ -2738,6 +2748,14 @@ pub use types::*;
             "\n// Hand-written test-only modules (not generated; see templates/rust/).\n",
         );
         for module in RUST_TEST_ONLY_MODULES {
+            mod_rs.push_str(&format!("#[cfg(test)]\nmod {module};\n"));
+        }
+    }
+
+    // Generated test-only modules.
+    if !RUST_GENERATED_TEST_MODULES.is_empty() {
+        mod_rs.push_str("\n// Generated test-only modules.\n");
+        for module in RUST_GENERATED_TEST_MODULES {
             mod_rs.push_str(&format!("#[cfg(test)]\nmod {module};\n"));
         }
     }

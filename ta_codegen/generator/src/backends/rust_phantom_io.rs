@@ -1,4 +1,5 @@
-//! Generate `tests/no_phantom_io.rs` — the Rust half of the phantom-I/O probe.
+//! Generate `src/ta_func/no_phantom_io.rs` — the Rust half of the phantom-I/O
+//! probe.
 //!
 //! Negative-space coverage: array lengths chosen so that any access the contract
 //! forbids is a panic rather than a comment. The Java suite of the same name
@@ -13,21 +14,22 @@
 //! it produces is invisible to `--xlang-hash` by construction, so each
 //! backend's phantom-I/O coverage is only ever its own.
 //!
-//! **Why Rust can host it.** Java and C# have a guarded public tier and an
-//! unguarded body, and the probe has to pick the second or it measures the
-//! guard. Rust has no such split: `pub fn SMA` is a thin `Result` mapper over
-//! `SMA_Impl`, and the bounds check lives *in the body* as the `assert!`
-//! preamble plus the indexing itself, under `#![forbid(unsafe_code)]`. The
-//! public API reaches it directly.
+//! **An in-crate `#[cfg(test)]` module calling `<N>_Impl` directly**, which is
+//! what the Java suite does and what #265 made every probe do. It was an
+//! integration test under `library/tests/` reaching the public tier, which works
+//! only while that tier is a pure forwarder — and that reach is precisely what
+//! kept Rust's argument contract stated as an `assert!` in the numerics instead
+//! of a code from the public tier. The probe's subject is what the *body*
+//! touches, so it names the body; the public tier's own contract is
+//! `tests/nullable_outputs.rs`'s and `BatchApiTest`'s business.
 //!
 //! **Generated rather than hand-written**, unlike the Java suite. Java discovers
 //! its corpus by reflection, so a new indicator is probed the day it lands.
 //! Rust has no reflection, and the one dynamic binder it does have —
-//! `abstract_api::ParamHolder` — validates output capacity before dispatch
-//! (`if o0.len() < need { return Err(BadParam) }`), which is the very guard the
-//! probe must get behind. A hand-written table of 174 call sites would rot
-//! silently; generating it makes `regen-check` the thing that keeps the corpus
-//! complete.
+//! `abstract_api::ParamHolder` — validates its own arguments before dispatch,
+//! which is the very guard the probe must get behind. A hand-written table of
+//! 174 call sites would rot silently; generating it makes `regen-check` the
+//! thing that keeps the corpus complete.
 
 // An integer parameter's `range:` and `default:` are integers that the IR
 // carries as `f64`, so narrowing them back is exact by construction -- the same
@@ -198,11 +200,11 @@ fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     // Control arm: one bar longer than the quiet range produces exactly one
     // value, so it must index an array; with zero-length arrays that is a panic.
     let _ = writeln!(o, "        r.control(\"{name}\", label, run(|| {{");
-    let _ = writeln!(o, "{}", empty_call(func, &call_opts, "lb", 12));
+    let _ = write!(o, "{}", empty_call(func, &call_opts, "lb", 12));
     let _ = writeln!(o, "        }}));");
     let _ = writeln!(o, "        if lb < 1 {{ r.no_quiet_range(\"{name}\", label); continue; }}");
     let _ = writeln!(o, "        r.quiet(\"{name}\", label, lb, run(|| {{");
-    let _ = writeln!(o, "{}", empty_call(func, &call_opts, "lb - 1", 12));
+    let _ = write!(o, "{}", empty_call(func, &call_opts, "lb - 1", 12));
     let _ = writeln!(o, "        }}));");
     let _ = writeln!(o, "    }}");
     let _ = writeln!(o, "}}\n");
@@ -227,19 +229,19 @@ fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     // and produce values. Without it "every leg tripped the preamble" is satisfiable
     // by a broken fixture -- a mis-sized `series`, a vector the lookback rejects --
     // and the sweep would read green while probing nothing.
-    let args = call_args(func, &call_opts);
     let _ = write!(o, "{}", sized_call_block(func, None));
-    let _ = writeln!(
-        o,
-        "        r.legs_control(\"{name}\", run(|| core.{name}(startIdx, endIdx, {args})));\n    }}"
-    );
+    let _ = writeln!(o, "        r.legs_control(\"{name}\", run(|| {{");
+    let _ = write!(o, "{}", impl_call(func, &call_opts, "startIdx", "endIdx", 12));
+    let _ = writeln!(o, "        }}));\n    }}");
     for (leg, input) in func.inputs.iter().enumerate() {
         let _ = write!(o, "{}", sized_call_block(func, Some(&input.name)));
         let _ = writeln!(
             o,
-            "        r.leg(\"{name}\", \"{}\", {leg}, run(|| core.{name}(startIdx, endIdx, {args})));\n    }}",
+            "        r.leg(\"{name}\", \"{}\", {leg}, run(|| {{",
             input.name
         );
+        let _ = write!(o, "{}", impl_call(func, &call_opts, "startIdx", "endIdx", 12));
+        let _ = writeln!(o, "        }}));\n    }}");
     }
     let _ = writeln!(o, "    r.legs_done(\"{name}\", {});", func.inputs.len());
     let _ = writeln!(o, "}}\n");
@@ -270,12 +272,17 @@ fn sized_call_block(func: &FuncDef, hole: Option<&str>) -> String {
     s
 }
 
-/// The argument list of a `Core::NAME(...)` call, after `startIdx, endIdx`.
+/// The argument list of a `Core::NAME_Impl(...)` call, after `startIdx, endIdx`.
+///
+/// The numerics tier keeps C's shape, so the two out-params sit between the
+/// optional parameters and the output slices.
 fn call_args(func: &FuncDef, call_opts: &str) -> String {
     let mut parts: Vec<String> = func.inputs.iter().map(|i| format!("&{}", i.name)).collect();
     if !call_opts.is_empty() {
         parts.push(call_opts.trim_end_matches(", ").to_string());
     }
+    parts.push("&mut _b".to_string());
+    parts.push("&mut _n".to_string());
     for o in &func.outputs {
         // A nullable output takes `Option<&mut [T]>` (rule B6a). The sweep hands
         // it `Some(..)`: declining it would hide exactly the writes it is here
@@ -287,6 +294,29 @@ fn call_args(func: &FuncDef, call_opts: &str) -> String {
         }
     }
     parts.join(", ")
+}
+
+/// One `<N>_Impl` call over `start_expr..=end_expr`, as the tail of a `run(||)`
+/// closure: the two out-params, the call, and `(rc, count)` for the classifier.
+fn impl_call(
+    func: &FuncDef,
+    call_opts: &str,
+    start_expr: &str,
+    end_expr: &str,
+    indent: usize,
+) -> String {
+    let pad = " ".repeat(indent);
+    let mut s = String::new();
+    let _ = writeln!(s, "{pad}let mut _b: usize = 0;");
+    let _ = writeln!(s, "{pad}let mut _n: usize = 0;");
+    let _ = writeln!(
+        s,
+        "{pad}let rc = core.{}_Impl({start_expr}, {end_expr}, {});",
+        func.name,
+        call_args(func, call_opts)
+    );
+    let _ = writeln!(s, "{pad}(rc, _n)");
+    s
 }
 
 /// A call with a zero-length array for every input and every output, over
@@ -307,12 +337,17 @@ fn empty_call(func: &FuncDef, call_opts: &str, end_expr: &str, indent: usize) ->
     for o in &func.outputs {
         let _ = writeln!(s, "{pad}let mut {}: Vec<{}> = Vec::with_capacity(1);", o.name, slice_ty(&o.param_type));
     }
-    let args = call_args(func, call_opts);
-    let _ = write!(s, "{pad}core.{}(0, {end_expr}, {args})", func.name);
+    s.push_str(&impl_call(func, call_opts, "0", end_expr, indent));
     s
 }
 
-/// Generate `ta_codegen/output/rust/library/tests/no_phantom_io.rs`.
+/// Generate `ta_codegen/output/rust/library/src/ta_func/no_phantom_io.rs`.
+///
+/// In `src/`, not `tests/`: the sweep probes `<N>_Impl`, which is
+/// `pub(crate)`. The generated `mod.rs` declares it `#[cfg(test)]`
+/// (`RUST_GENERATED_TEST_MODULES` in `main.rs`) and the Rust backend's
+/// `clean_keep` spares it from the stale-file sweep, which would otherwise see
+/// a `.rs` in `src/ta_func/` that names no indicator.
 #[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &Path) {
     let mut sorted: Vec<&FuncDef> = funcs.iter().collect();
@@ -333,7 +368,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     used.sort_unstable();
     used.dedup();
     for ty in used {
-        let _ = writeln!(o, "use ta_lib::{ty};");
+        let _ = writeln!(o, "use crate::{ty};");
     }
     o.push('\n');
     o.push_str(HARNESS);
@@ -351,7 +386,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     let _ = writeln!(o, "];\n");
     let _ = write!(o, "{}", driver(sorted.len()));
 
-    let dir = out_base.join("rust/library/tests");
+    let dir = out_base.join("rust/library/src/ta_func");
     std::fs::create_dir_all(&dir).unwrap();
     super::write_if_changed(&dir.join("no_phantom_io.rs"), &o, "no_phantom_io.rs", sorted.len());
 }
@@ -363,9 +398,23 @@ fn driver(n: usize) -> String {
         r#"#[test]
 fn no_phantom_io() {{
     // One test, both sweeps, sequential: the panic hook is process-global, and
-    // two tests racing to install and restore it is a flake with no bug behind it.
-    let prior = std::panic::take_hook();
-    std::panic::set_hook(Box::new(|_| {{}}));
+    // two tests racing to install it is a flake with no bug behind it.
+    //
+    // It silences EXACTLY the calls `run` wraps, and delegates everything else to
+    // the hook installed before it. A bare `|_| {{}}` was enough while this lived
+    // in its own integration-test binary; in-crate, libtest runs the other unit
+    // tests concurrently in this same process, so it would have swallowed a
+    // sibling's assertion message -- and any panic a probe raised OUTSIDE `run`,
+    // which is a bug rather than a verdict. Not restored afterwards, because with
+    // `IN_PROBE` false the delegating hook is exactly the one it replaced.
+    let _ = PRIOR_HOOK.set(std::panic::take_hook());
+    std::panic::set_hook(Box::new(|info| {{
+        if !IN_PROBE.with(std::cell::Cell::get) {{
+            if let Some(prior) = PRIOR_HOOK.get() {{
+                prior(info);
+            }}
+        }}
+    }}));
 
     let mut r = Report::new();
     for (name, sub, _) in PROBES {{
@@ -379,15 +428,13 @@ fn no_phantom_io() {{
     }}
     r.finish_legs();
 
-    std::panic::set_hook(prior);
-
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
     assert_eq!(PROBES.len(), {n}, "probe count");
     assert_eq!(
         PROBES.len(),
-        ta_lib::abstract_api::funcs().count(),
+        crate::abstract_api::funcs().count(),
         "every registered function has a probe"
     );
 
@@ -400,8 +447,15 @@ fn no_phantom_io() {{
 
 const PREAMBLE: &str = r#"//! GENERATED by ta_codegen -- DO NOT EDIT.
 //!
-//! Negative-space coverage for the Rust batch API: array lengths chosen so that
-//! any access the contract forbids is a panic rather than a comment.
+//! Negative-space coverage for the Rust numerics tier: array lengths chosen so
+//! that any access the contract forbids is a panic rather than a comment.
+//!
+//! It probes `<N>_Impl`, the crate-private C-shaped body, which is why this is
+//! an in-crate `#[cfg(test)]` module and not an integration test under
+//! `tests/`. That is what the Java suite does, and since #265 what every
+//! backend's phantom-I/O probe does. Reaching the numerics from outside the
+//! crate was only ever possible while `pub fn SMA` forwarded without checking,
+//! so the probe's reach was silently deciding what the shipped API could do.
 //!
 //! The value gates (`ta_regtest`, `--xlang-hash`, `--fuzz-064`) can only see
 //! work that reaches an output. Work a function does and then discards -- a read
@@ -464,16 +518,15 @@ const PREAMBLE: &str = r#"//! GENERATED by ta_codegen -- DO NOT EDIT.
 //!   withholds MA, whose rejection arrives from a callee's public input bound as
 //!   a RETURN rather than the throw Java's probe reads. Rust has no such tier to
 //!   lose: the delta is exactly that one core, in Rust's favour.
-//! * **declared legs: the two suites no longer measure the same thing, and
-//!   cannot.** Java's `unreadLegSweep` probes `<N>_Impl`, the numerics tier,
-//!   which carries the index and parameter checks but no ARRAY check at all --
-//!   so it still reads the BODY and reports the 40 legs a zero-length array
-//!   sails through at the default candle settings. Rust has no such tier to
-//!   reach: `pub fn SMA` is a thin `Result`
-//!   mapper over `SMA_Impl`, and the preamble lives inside it, so from outside
-//!   the crate every declared leg is bounded and none sails through. Before #260
-//!   Rust saw 7 of Java's 40; it now sees 0, by construction rather than by
-//!   accident, and this sweep pins that construction.
+//! * **declared legs: the two suites probe the same tier and still measure
+//!   different things.** Java's `unreadLegSweep` probes `<N>_Impl` and reports
+//!   the 40 legs a zero-length array sails through at the default candle
+//!   settings, because Java's numerics tier carries the index and parameter
+//!   checks and no ARRAY check at all -- its array bound lives one tier up. In
+//!   Rust the bound IS in the numerics, as the `assert!` preamble, so the same
+//!   tier answers all 442 legs and none sails through. Before #260 Rust saw 7
+//!   of Java's 40; it now sees 0, by construction rather than by accident, and
+//!   this sweep pins that construction.
 //!
 //! # What is deliberately not here
 //!
@@ -487,13 +540,12 @@ const PREAMBLE: &str = r#"//! GENERATED by ta_codegen -- DO NOT EDIT.
 //! renders it. It is not a substitute for the Java and C# suites: an emitter bug
 //! that changes what ONE backend touches without changing what it produces is
 //! invisible to `--xlang-hash` by construction, so each backend needs its own.
+//!
+//! No module-inner `#![allow]`s: the crate root already carries
+//! `non_snake_case` and `clippy::all`/`clippy::pedantic` (which is where
+//! `type_complexity` lives, and SAREXT's eight-wide vector tuple needs it).
 
-#![allow(non_snake_case)]
-// SAREXT takes eight optional parameters, so its vector tuple is eight wide.
-// Naming a type per arity would be eight aliases used once each.
-#![allow(clippy::type_complexity)]
-
-use ta_lib::Core;
+use crate::{Core, RetCode};
 "#;
 
 const HARNESS: &str = r#"/// What one call did to the arrays it was given.
@@ -509,11 +561,29 @@ enum Touch {
     Other(String),
 }
 
+/// The hook installed before this sweep's, so everything that is not one of its
+/// own expected panics still reports normally.
+static PRIOR_HOOK: std::sync::OnceLock<
+    Box<dyn Fn(&std::panic::PanicHookInfo<'_>) + Sync + Send>,
+> = std::sync::OnceLock::new();
+
+thread_local! {
+    /// True only inside [`run`]'s `catch_unwind`, where a panic is a verdict.
+    static IN_PROBE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
 /// Run one call, classifying a panic by what produced it.
-fn run(f: impl FnOnce() -> Result<ta_lib::OutRange, ta_lib::RetCode>) -> Touch {
-    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
-        Ok(Ok(range)) => Touch::Quiet(true, range.count),
-        Ok(Err(_)) => Touch::Quiet(false, 0),
+///
+/// The closure hands back the numerics tier's own pair -- a `RetCode` and the
+/// count it wrote into `outNBElement` -- rather than a `Result`, because that
+/// is the shape `<N>_Impl` has.
+fn run(f: impl FnOnce() -> (RetCode, usize)) -> Touch {
+    IN_PROBE.with(|p| p.set(true));
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(f));
+    IN_PROBE.with(|p| p.set(false));
+    match outcome {
+        Ok((RetCode::Success, count)) => Touch::Quiet(true, count),
+        Ok((_, _)) => Touch::Quiet(false, 0),
         Err(e) => {
             let msg = e
                 .downcast_ref::<String>()
@@ -615,7 +685,7 @@ impl Report {
                 "{name}[{label}] at endIdx == lookback returned {} ({n} value(s)) without \
                  touching an array; a call that produces a value must index one, so this \
                  sweep could not detect I/O for it",
-                if ok { "Ok" } else { "Err" }
+                if ok { "Success" } else { "a failure code" }
             )),
             Touch::Other(msg) => {
                 self.fail(format!("{name}[{label}] at endIdx == lookback panicked with {msg}"));
@@ -650,7 +720,7 @@ impl Report {
                 lb - 1
             )),
             Touch::Quiet(false, _) => self.fail(format!(
-                "{name}[{label}] (lookback {lb}, endIdx {}) returned Err, expected a \
+                "{name}[{label}] (lookback {lb}, endIdx {}) returned a failure code, expected a \
                  success with no values",
                 lb - 1
             )),
@@ -688,7 +758,7 @@ impl Report {
             Touch::Quiet(ok, n) => self.fail(format!(
                 "{name} with every leg correctly sized returned {} ({n} value(s)); the leg sweep \
                  is probing a call that does nothing, so every rejection below proves nothing",
-                if ok { "Ok" } else { "Err" }
+                if ok { "Success" } else { "a failure code" }
             )),
             Touch::Bounded => self.fail(format!(
                 "{name} tripped its own bounds assert with every leg correctly sized: the \

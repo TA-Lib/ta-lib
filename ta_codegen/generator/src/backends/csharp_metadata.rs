@@ -62,7 +62,8 @@ const EMITTED: &[&str] = &[
 ];
 
 /// Generate the whole `TALib.Metadata` namespace into `dir`
-/// (`.../csharp/library/src/metadata`).
+/// (`.../csharp/library/src/metadata`), plus the phantom-I/O probe's binder
+/// into the test project.
 #[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path) {
     std::fs::create_dir_all(dir).unwrap_or_else(|e| panic!("creating {}: {e}", dir.display()));
@@ -85,6 +86,143 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
     write(dir, "FunctionDescription.g.cs", &function_description(funcs));
 
     println!("  C# metadata registry -> {} ({} functions)", dir.display(), rows.len());
+
+    // The phantom-I/O probe's `<N>_Impl` binder, into the TEST project (#265).
+    // Not shipped, so it does not shape the public API the way the catalogue's
+    // own thunk did; generated rather than hand-written, because reflection
+    // cannot pass a `ReadOnlySpan<double>` and a table of 176 call sites kept by
+    // hand cannot track a corpus that changes -- `scripts/synth_gate.py` adds
+    // eleven functions and the suite went red on all of them.
+    let test_dir = dir
+        .parent()
+        .and_then(Path::parent)
+        .expect("metadata dir sits under csharp/library/src")
+        .join("test");
+    std::fs::create_dir_all(&test_dir)
+        .unwrap_or_else(|e| panic!("creating {}: {e}", test_dir.display()));
+    super::write_if_changed_silent(
+        &test_dir.join("NoPhantomIoBinder.g.cs"),
+        &phantom_io_binder(&rows, &by_name),
+    );
+    println!("  C# phantom-I/O binder -> {} ({} functions)", test_dir.display(), rows.len());
+}
+
+/// The phantom-I/O probe's own binder: one `<N>_Impl` call site per function.
+///
+/// **Why the probe needs one at all.** Its subject is what a *body* touches, so
+/// it must reach the numerics tier. It used to get there through
+/// `FunctionCall.TryInvoke`, whose thunks were pinned to `<N>_Impl` for exactly
+/// that reason — which made a test's reach the thing deciding which tier the
+/// shipped metadata API called (#265).
+///
+/// **Why it cannot use reflection.** A generated `<N>_Impl` takes
+/// `ReadOnlySpan<double>` and `Span<double>`; a ref struct cannot be boxed, so
+/// `MethodInfo.Invoke` cannot pass one. Java's probe discovers its corpus by
+/// reflection and Rust's is generated; C#'s has to be written out.
+///
+/// **Why generated rather than hand-written.** The corpus is not fixed:
+/// `scripts/synth_gate.py` swaps eleven `SYNTH*` functions into
+/// `ta_codegen/input/` and regenerates, and a table kept by hand covered none of
+/// them — the probe's own completeness check turned the whole nightly gate red.
+/// Emitting it makes `regen-check` what keeps the corpus complete, which is the
+/// same argument `rust_phantom_io` makes for generating the Rust sweep.
+///
+/// It lands in the TEST project, not `src/`, so it is not shipped and cannot
+/// shape the public API the way the catalogue's own thunk did.
+fn phantom_io_binder(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
+    let mut s = header();
+    s.push_str(
+        r#"
+using System;
+using System.Collections.Generic;
+using TALib;
+using TALib.Metadata;
+
+namespace TALib.Test;
+
+/// <summary>
+/// <c>NoPhantomIoTest</c>'s own binder: one call site per function, each naming
+/// <c>NAME_Impl</c> — the transcribed numerics and nothing above them.
+/// </summary>
+/// <remarks>
+/// <para>The probe's subject is what a <i>body</i> touches, so it names the
+/// body. It used to reach it through <see cref="FunctionCall.TryInvoke"/>, whose
+/// thunks were pinned to <c>NAME_Impl</c> for exactly that reason — which made a
+/// test's reach the thing deciding which tier the shipped metadata API called
+/// (issue #265). The catalogue's thunk calls the public entry point now, like
+/// C's frames and Java's Dispatch, and the probe brings its own.</para>
+///
+/// <para>Reflection cannot substitute: a generated <c>NAME_Impl</c> takes
+/// <c>ReadOnlySpan&lt;double&gt;</c>, and a ref struct cannot be boxed for
+/// <c>MethodInfo.Invoke</c>. Buffers and parameters still come from
+/// <see cref="FunctionCall"/> — the probe binds them through the public setters
+/// and reads them back through the same internal accessors the catalogue's
+/// thunks use. Only the call itself is local.</para>
+/// </remarks>
+internal static class NoPhantomIoBinder
+{
+    /// <summary>What one numerics call produced: the code and the range.</summary>
+    /// <remarks>The probe's own, because the numerics tier answers a code and the
+    /// shipped <see cref="InvokeThunk"/> no longer does — its thunks call the
+    /// public overload, which throws.</remarks>
+    internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
+
+    internal delegate CallOutcome Thunk(Core core, FunctionCall c, int startIdx, int endIdx);
+
+    /// <summary>Runs one function's numerics over the bound buffers.</summary>
+    /// <remarks>Reports failure as a code, like
+    /// <see cref="FunctionCall.TryInvoke"/> and for the same reason: a composed
+    /// body cross-calls its callee's PUBLIC tier, and that throws. Converting it
+    /// here keeps the sweeps reading one thing. Anything that is not the
+    /// library's own failure is left to propagate — the sweeps classify it.
+    /// <para>No boundness check: the sweeps bind every input and output before
+    /// calling, and an unbound slot faulting is a fixture bug the sweeps should
+    /// see rather than a code they should read.</para></remarks>
+    internal static RetCode Invoke(string name, Core core, FunctionCall call,
+                                   int startIdx, int endIdx, out OutRange range)
+    {
+        try
+        {
+            CallOutcome outcome = Thunks[name](core, call, startIdx, endIdx);
+            range = new OutRange(outcome.BegIdx, outcome.Count);
+            return outcome.Code;
+        }
+        catch (Exception e) when (e is ITaLibFailure f)
+        {
+            range = new OutRange(0, 0);
+            return f.RetCode;
+        }
+    }
+
+    /// <summary>One thunk per catalogued function, by name.</summary>
+    internal static readonly Dictionary<string, Thunk> Thunks = new(StringComparer.Ordinal)
+    {
+"#,
+    );
+
+    for r in rows {
+        let def = by_name[r.name.as_str()];
+        let mut args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
+        args.extend(input_arg_exprs(r));
+        args.extend(opt_arg_exprs(def));
+        args.push("out int b".into());
+        args.push("out int n".into());
+        for (k, out) in r.outputs.iter().enumerate() {
+            args.push(match out.kind {
+                OutputKind::Real => format!("c.RealOut({k})"),
+                OutputKind::Integer => format!("c.IntOut({k})"),
+            });
+        }
+        let _ = writeln!(s, "        [\"{}\"] = static (core, c, startIdx, endIdx) =>", r.name);
+        s.push_str("        {\n");
+        let _ = writeln!(s, "            RetCode rc = core.{}_Impl(", r.name);
+        let _ = writeln!(s, "                {});", args.join(", "));
+        s.push_str("            return new CallOutcome(rc, b, n);\n");
+        s.push_str("        },\n");
+    }
+
+    s.push_str("    };\n}\n");
+    s
 }
 
 fn write(dir: &Path, name: &str, body: &str) {

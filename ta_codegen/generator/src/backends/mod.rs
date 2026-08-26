@@ -272,13 +272,16 @@ impl LanguageBackend for RustBackend {
     }
     fn clean_keep(&self) -> &'static [&'static str] {
         // Hand-written modules copied from `templates/rust/` (see
-        // `RUST_TEMPLATE_MODULES`) plus the generated `mod.rs`.
+        // `RUST_TEMPLATE_MODULES`) plus the generated `mod.rs`, and the
+        // phantom-I/O sweep, which `generate` writes here but which names no
+        // indicator (`RUST_GENERATED_TEST_MODULES`).
         &[
             "types.rs",
             "div_zero.rs",
             "scratch_election.rs",
             "stream_finite.rs",
             "stream_out_range.rs",
+            "no_phantom_io.rs",
             "mod.rs",
         ]
     }

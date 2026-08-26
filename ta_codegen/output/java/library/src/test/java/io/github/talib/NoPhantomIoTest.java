@@ -132,18 +132,21 @@ import java.util.TreeSet;
  * {@code --xlang-hash} by construction.
  *
  * <p><b>Rust now carries sweeps 1 and 3 too</b>, in the generated
- * {@code ta_codegen/output/rust/library/tests/no_phantom_io.rs} (issue #235).
- * Two things it has that the sweeps below do not. It reaches every core: since
- * #236 step 3 routed cross-calls through the public callee, a composed core is
- * out of reach here and is named in {@code CROSS_CALL_GUARDED}, while
- * Rust's cross-calls still target {@code NAME_Impl} and so probe all 176.
- * And it covers the <i>Rust</i> emitter — an emitter bug of the kind described
- * above is invisible to every other backend's probe, by the same argument.
+ * {@code ta_codegen/output/rust/library/src/ta_func/no_phantom_io.rs}
+ * (issue #235). Two things it has that the sweeps below do not. It reaches
+ * every core: since #236 step 3 routed cross-calls through the public callee, a
+ * composed core is out of reach here and is named in
+ * {@code CROSS_CALL_GUARDED}, while Rust's cross-calls still target
+ * {@code NAME_Impl} and so probe all 176. And it covers the <i>Rust</i>
+ * emitter — an emitter bug of the kind described above is invisible to every
+ * other backend's probe, by the same argument.
  *
- * <p>Rust can host it because it has no guarded/unguarded split to pick
- * between: {@code pub fn SMA} is a thin {@code Result} mapper over the body,
- * whose bounds check is the {@code assert!} preamble and the indexing itself,
- * so the public API reaches the body directly.
+ * <p>It names {@code NAME_Impl} directly, exactly as this suite does, and is an
+ * in-crate {@code #[cfg(test)]} module for the same reason this class sits in
+ * {@code io.github.talib}: the numerics tier is not public. Reaching it from
+ * outside the crate worked only while {@code pub fn SMA} forwarded without
+ * checking, so what the probe could reach was deciding what the shipped API was
+ * allowed to do (issue #265).
  *
  * <p>Lives in {@code io.github.talib} rather than the sibling {@code .test} package
  * because the cores and {@link MInteger} are package-private; from here they are
