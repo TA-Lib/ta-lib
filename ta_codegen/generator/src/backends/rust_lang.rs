@@ -1627,9 +1627,8 @@ fn nullable_target_base<'a>(
     target: &Expr,
     nullable: &'a std::collections::HashSet<String>,
 ) -> Option<&'a String> {
-    let name = match target {
-        Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) | Expr::Var(n) => n,
-        _ => return None,
+    let (Expr::ArrayAccess(name, _) | Expr::PointerDeref(name) | Expr::Var(name)) = target else {
+        return None;
     };
     nullable.get(name)
 }

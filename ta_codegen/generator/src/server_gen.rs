@@ -1936,7 +1936,11 @@ fn emit_sv_state_report(s: &mut String, steq: bool) {
     s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"state_checked\\\":%d,\\\"state_legs\\\":%d,\\\"state_ok\\\":%d,\\\"state_bad\\\":\\\"%s\\\"\", stateChecked, stateLegs, stateOk, stateWhat);\n");
 }
 
-#[allow(clippy::too_many_lines)]
+// `cognitive_complexity`: the same allow the other whole-server emitters carry.
+// This one crossed the threshold when #262's declined-output arm landed, and the
+// shape it is complaining about is the sequence of `emit_sv_*` calls this
+// function exists to order.
+#[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
     s.push_str("/* ---- stream_verify: bitwise batch-vs-stream comparison ---- */\n");

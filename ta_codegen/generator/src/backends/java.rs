@@ -1924,9 +1924,8 @@ pub(crate) fn render_java_switch_label(label: &str, enums: &HashMap<String, Enum
 /// `outX[i] = …` and the scalar store `outX = …`; the value side is never
 /// involved.
 fn nullable_target_base<'a>(target: &Expr, nullable: &'a HashSet<String>) -> Option<&'a String> {
-    let name = match target {
-        Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) | Expr::Var(n) => n,
-        _ => return None,
+    let (Expr::ArrayAccess(name, _) | Expr::PointerDeref(name) | Expr::Var(name)) = target else {
+        return None;
     };
     nullable.get(name)
 }
