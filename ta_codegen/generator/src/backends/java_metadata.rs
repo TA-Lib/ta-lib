@@ -213,12 +213,10 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
 
 /// `TA_FunctionDescriptionXML`'s analog, carrying the real XML.
 ///
-/// The server used to answer the XML RPC with a `(length, checksum)` pair the
-/// generator baked at generation time. `test_abstract.c` compares those two
-/// numbers against C's actual bytes — but comparing a constant the generator
-/// computed from the same string C's table is built from is the generator
-/// agreeing with itself, and could not fail. Java now ships the XML the way
-/// Rust does, so the gate compares two real copies (#164).
+/// Ships the real XML, never a `(length, checksum)` pair baked at generation
+/// time: `test_abstract.c` compares it against C's actual bytes, and a constant
+/// the generator computed from the same string C's table is built from is the
+/// generator agreeing with itself — a gate that cannot fail (#164).
 ///
 /// Split across parts because a `CONSTANT_Utf8` entry is length-prefixed with a
 /// `u2`: one 195 KB literal does not fit in a class file. They are joined at
@@ -1164,15 +1162,11 @@ final class Dispatch {
 
         // Argument order comes STRAIGHT from the row the registry publishes:
         // a price bundle is one slot, and `signature_components` is the order
-        // the typed method takes its arrays in. This used to re-fold `FuncDef`
-        // with a second `price_bundle::group` pass, whose agreement with the
-        // row's own slot numbering nothing checked.
-        //
-        // Not merely equivalent to the old fold — strictly safer than it. That
-        // one keyed a `HashMap<String, _>` on the input NAME, which is derived
-        // from the price component, so two bundles sharing a component would
-        // have collided and pointed both at one slot. Reading the row cannot:
-        // the slot IS the row's index.
+        // the typed method takes its arrays in. Do not re-fold `FuncDef` with a
+        // second `price_bundle::group` pass here — nothing would check its
+        // agreement with the row's own slot numbering, and keying that fold by
+        // input NAME collides for two bundles sharing a component. Reading the
+        // row cannot: the slot IS the row's index.
         let mut args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
         for (slot, inp) in f.inputs.iter().enumerate() {
             match inp.kind {

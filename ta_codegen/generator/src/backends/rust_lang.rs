@@ -199,8 +199,8 @@ pub(crate) fn prune_enum_locals(
 /// The Rust type of an optional parameter.
 ///
 /// An `enum:` parameter is spelled as its enum, exactly as the YAML declares it
-/// and as C, Java and C# have always emitted it — the backend used to fold it in
-/// with `Integer` and hand callers a bare `i32`.
+/// and as C, Java and C# emit it — never folded in with `Integer`, which hands
+/// callers a bare `i32`.
 pub(crate) fn opt_param_type(t: &ParamType) -> String {
     match t {
         ParamType::Real => "f64".to_string(),
@@ -265,12 +265,11 @@ impl RustRenderCtx {
 
     /// Context for a `LookbackExpr::Code` body.
     ///
-    /// Issue #158: this used to be built empty, so every local in a lookback
-    /// body fell through to the naming heuristics — `expr_is_float_typed`
-    /// hard-codes `k` as a Real name (EMA's k factor), so `int k; k +=
-    /// optInTimePeriod;` in a lookback rendered an `as f64` RHS onto a `usize`
-    /// declaration and did not compile, while the same code named `j` did. The
-    /// declared IR type decides, exactly as it does for batch bodies.
+    /// Must carry the body's declarations (#158). Built empty, every local in a
+    /// lookback falls through to the naming heuristics — `expr_is_float_typed`
+    /// hard-codes `k` as a Real name, EMA's k factor — so the same code compiles
+    /// or does not depending on what its locals are called. The declared IR type
+    /// decides, exactly as it does for batch bodies.
     pub fn for_lookback(body: &[Statement]) -> Self {
         let mut index_vars = std::collections::HashSet::new();
         let mut real_vars = std::collections::HashSet::new();
@@ -717,9 +716,9 @@ fn gen_lookback(
 /// The name the LEGACY expression-position rendering calls a sibling indicator
 /// by — the C-shaped `<N>_Impl`.
 ///
-/// A transcribed body no longer reaches this: since #267 a cross-call is
-/// rewritten at statement level by [`render_cross_indicator_call`], which names
-/// the public tier. What is left here is the fallback for a cross-call in
+/// A transcribed body does not reach this: a cross-call is rewritten at
+/// statement level by [`render_cross_indicator_call`], which names the public
+/// tier (#267). What is left here is the fallback for a cross-call in
 /// expression position, a shape no definition in the corpus has (the same status
 /// Java's registry branch in `render_func_call` has had since #236 step 3), and
 /// the `_Private` carve-out, which already names a distinct function.
@@ -890,9 +889,9 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
 ///
 /// This keeps C's shape — a `RetCode` plus `&mut outBegIdx` / `&mut outNBElement`
 /// — because that is what the transcribed bodies are written against, and it is
-/// where the FMA dispatch sits. It is no longer a cross-call target: since #267
-/// a transcribed body reaches its sibling through the public tier
-/// ([`render_cross_indicator_call`]), as C, Java and C# do. `gen_public_entry`
+/// where the FMA dispatch sits. It is not a cross-call target: a transcribed
+/// body reaches its sibling through the public tier
+/// ([`render_cross_indicator_call`]), as C, Java and C# do (#267). `gen_public_entry`
 /// wraps this into the `Result<OutRange, RetCode>` the crate actually exposes.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_guarded_func(
@@ -921,10 +920,9 @@ fn gen_guarded_func(
     // Range check. `usize` makes C's two negative-index conditions
     // unrepresentable, so MAX_INDEX is what gives OutOfRangeStartIndex a
     // producer here at all. The end-index arm answers OutOfRangeEndIndex to
-    // match C and the crate's own abstract tier (#180; C6 of #179 -- every
-    // batch entry point used to answer OutOfRangeStartIndex for endIdx <
-    // startIdx, which no gate could see: the JSON-RPC server re-implements
-    // C's guard, so the crate's answer never reached the driver).
+    // match C and the crate's own abstract tier (#180; C6 of #179). No gate can
+    // see this arm: the JSON-RPC server re-implements C's guard, so the crate's
+    // own answer never reaches the driver.
     out.push_str("        if startIdx > Self::MAX_INDEX {\n");
     out.push_str("            return RetCode::OutOfRangeStartIndex;\n");
     out.push_str("        }\n");
@@ -2977,17 +2975,17 @@ impl StatementEmitter for RustStmt<'_, '_> {
                             // Issue #158: the target's Rust type is classified
                             // POSITIVELY (declared IR type first, naming
                             // heuristics only for names no declaration covers).
-                            // It used to be a negative test — "not recognised as
-                            // index-ish, therefore f64" — which put an `as f64`
-                            // RHS on an integer local whose name happened not to
-                            // be on the hard-coded list.
+                            // Never a negative test — "not recognised as
+                            // index-ish, therefore f64" puts an `as f64` RHS on
+                            // any integer local whose name is off the hard-coded
+                            // list.
                             let target_ty = scalar_target_ty(tname, self.ctx, self.opt_real_params, self.helpers);
                             let rhs_wrapped = match target_ty {
                                 ScalarTy::F64 => {
                                     // `_ctx` and `renders_usize` rather than the
                                     // bare predicates: a sentinel local and a
                                     // usize⊕i32 BinOp both reach an f64 target
-                                    // as integers, and both used to arrive uncast.
+                                    // as integers, and neither may arrive uncast.
                                     if expr_is_untyped_integer(right)
                                         || expr_is_i32_typed_ctx(right, self.ctx)
                                         || (compound_rhs_renders_usize(right, self.ctx)
@@ -4478,10 +4476,11 @@ fn expr_is_i32_typed_ctx(expr: &Expr, ctx: &RustRenderCtx) -> bool {
     }
     match expr {
         Expr::Var(name) => ctx.sentinel_vars.contains(name),
-        // The same operator set `expr_is_i32_typed` folds over. It used to stop
-        // at the four arithmetic ones, so `lag & 3` — a signed local masked by a
-        // literal — was typed by nothing, and a usize target took no cast from
-        // the assign ladder while `head = lag` took one. Issue #165.
+        // The SAME operator set `expr_is_i32_typed` folds over — the shifts and
+        // the bitwise ones included, not just the four arithmetic. Stop at those
+        // four and `lag & 3` (a signed local masked by a literal) is typed by
+        // nothing, so a usize target takes no cast from the assign ladder, though
+        // the bare `head = lag` does. Issue #165.
         Expr::BinOp(
             left,
             BinOp::Add
@@ -4924,16 +4923,16 @@ fn render_func_call(
             })
             .collect();
         let call = format!("self.{}({})", rust_name, rendered_args.join(", "));
-        // The callee now returns `Result<usize, RetCode>`. Inside another
+        // The callee returns `Result<usize, RetCode>`. Inside another
         // Result-returning body (a lookback body composing a callee's lookback,
         // or the stream tier) the failure genuinely propagates with `?`.
         // Inside the plain batch/`_Impl` tier (bare `RetCode`, no `?` available)
         // the call sits at a point where the same parameters were already
-        // validated by this function's own prologue against an identical
-        // range — so `Err` here is unreachable in practice — but rather than
-        // assert that per call site, `unwrap_or(usize::MAX)` reproduces
-        // exactly the sentinel this call used to return directly, so behavior
-        // is unchanged if that ever turns out not to hold.
+        // validated by this function's own prologue against an identical range,
+        // so `Err` is unreachable in practice. `unwrap_or(usize::MAX)` rather
+        // than an assert per call site: it yields the same sentinel a failing
+        // lookback reports, so the behaviour holds even if that ever stops
+        // being true.
         if ctx.is_lookback || ctx.result_error_returns {
             format!("{call}?")
         } else {
@@ -5373,10 +5372,9 @@ pub(crate) fn render_cross_indicator_arg(
         }
         // NULL in an output position: a nullable output the caller declines (MA
         // passes NULL for MAMA's FAMA — issue #125). The callee's parameter is
-        // `Option<&mut [T]>`, so this is `None` and nothing is allocated — it
-        // used to materialize a throwaway buffer spanning the output range,
-        // which is the "unchecked malloc-dummy-discard" #125 removed from the C
-        // and only Rust/Java/C# kept (#262).
+        // `Option<&mut [T]>`, so this is `None` and nothing is allocated --
+        // never a throwaway buffer spanning the output range, the "unchecked
+        // malloc-dummy-discard" #125 removed from C and #262 from the rest.
         Expr::Var(name) if is_output_position && name == "NULL" => "None".to_string(),
         // Vec<T> local variables: &name for input position, &mut name[..] for output position
         Expr::Var(name) if ctx.vec_vars.contains(name) || is_vec_local_var(name) => {

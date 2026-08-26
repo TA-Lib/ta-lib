@@ -130,11 +130,11 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
 
     // The directory IS the name, lower-cased. Several derivations lean on that —
     // the Rust module path and file name, the registry's dir-keyed lookups, and
-    // the `<dir>/<dir>.yaml` convention that located this file. Nothing used to
-    // check it, so a mismatch would not fail here: it would surface far away as
-    // a module that does not resolve, or a cross-indicator call to a name no
-    // backend defines. Checked at parse time so every loader inherits it rather
-    // than whichever one happens to run first.
+    // the `<dir>/<dir>.yaml` convention that located this file. Unchecked, a
+    // mismatch does not fail here — it surfaces far away as a module that does
+    // not resolve, or a cross-indicator call to a name no backend defines. At
+    // parse time so every loader inherits it, rather than in whichever one
+    // happens to run first.
     if let Some(dir) = path.parent().and_then(std::path::Path::file_name) {
         let dir = dir.to_string_lossy();
         assert!(

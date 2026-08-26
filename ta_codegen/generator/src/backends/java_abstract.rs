@@ -104,11 +104,10 @@ fn emit_outputs(outputs: &[OutputRow]) -> String {
 /// `AbsOpt` carries every domain's fields; the handler serializes the ones `type`
 /// selects, so the slots the domain does not use stay literal `0`.
 ///
-/// `hint` is carried now that `test_abstract.c` compares it. It used to be
-/// omitted precisely because nothing compared it — which is what made it worth
-/// adding: for the ~80 opt slots whose C descriptor is a predefined
-/// `TA_DEF_UI_*`, C's hint is a hand-written literal in `ta_abstract_c.rs` and
-/// is not derived from the YAML, so the comparison is genuinely non-circular.
+/// `hint` is carried because `test_abstract.c` compares it, and the comparison
+/// is genuinely non-circular: for the ~80 opt slots whose C descriptor is a
+/// predefined `TA_DEF_UI_*`, C's hint is a hand-written literal in
+/// `ta_abstract_c.rs` rather than something derived from the YAML.
 fn emit_opts(opts: &[OptRow]) -> String {
     opts.iter()
         .map(|o| {

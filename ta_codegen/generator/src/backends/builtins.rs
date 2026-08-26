@@ -1,12 +1,10 @@
 //! Typed taxonomy of builtin function calls shared by the language backends.
 //!
 //! Indicator source calls a handful of `<math.h>` functions (`sqrt`, `sin`,
-//! `max`, …) by name as `Expr::FuncCall`. Each backend used to classify those
-//! names against its own `const MATH_FUNCTIONS: &[&str]` list — three copies that
-//! had already drifted (e.g. only the Rust list carried a stray lowercase `abs`).
-//! [`MathFn`] replaces all three with one classifier, so a name is recognised as a
-//! math builtin in exactly one place and the compiler enforces that every backend
-//! handles each variant.
+//! `max`, …) by name as `Expr::FuncCall`. [`MathFn`] is the one classifier for
+//! those names — never a per-backend `&[&str]` list, which is three copies free
+//! to drift — so a name is recognised as a math builtin in exactly one place and
+//! the compiler enforces that every backend handles each variant.
 //!
 //! Name aliases that render identically within every backend collapse into one
 //! variant: `max`/`fmax` → [`MathFn::Max`], `min`/`fmin` → [`MathFn::Min`],

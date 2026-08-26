@@ -110,25 +110,24 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
 /// The phantom-I/O probe's own binder: one `<N>_Impl` call site per function.
 ///
 /// **Why the probe needs one at all.** Its subject is what a *body* touches, so
-/// it must reach the numerics tier. It used to get there through
-/// `FunctionCall.TryInvoke`, whose thunks were pinned to `<N>_Impl` for exactly
-/// that reason — which made a test's reach the thing deciding which tier the
-/// shipped metadata API called (#265).
+/// it must reach the numerics tier — and it must do so without borrowing the
+/// shipped metadata API's call path, or a test's reach decides which tier that
+/// API calls (#265).
 ///
 /// **Why it cannot use reflection.** A generated `<N>_Impl` takes
 /// `ReadOnlySpan<double>` and `Span<double>`; a ref struct cannot be boxed, so
 /// `MethodInfo.Invoke` cannot pass one. Java's probe discovers its corpus by
 /// reflection and Rust's is generated; C#'s has to be written out.
 ///
-/// **Why generated rather than hand-written.** The corpus is not fixed:
-/// `scripts/synth_gate.py` swaps eleven `SYNTH*` functions into
-/// `ta_codegen/input/` and regenerates, and a table kept by hand covered none of
-/// them — the probe's own completeness check turned the whole nightly gate red.
-/// Emitting it makes `regen-check` what keeps the corpus complete, which is the
-/// same argument `rust_phantom_io` makes for generating the Rust sweep.
+/// **Why generated rather than hand-written.** The corpus is not fixed —
+/// `scripts/synth_gate.py` swaps the `SYNTH*` fixtures into `ta_codegen/input/`
+/// and regenerates — so a hand-kept table covers none of them and fails the
+/// probe's own completeness check. Emitting it makes `regen-check` what keeps
+/// the corpus complete, the same argument `rust_phantom_io` makes for the Rust
+/// sweep.
 ///
 /// It lands in the TEST project, not `src/`, so it is not shipped and cannot
-/// shape the public API the way the catalogue's own thunk did.
+/// shape the public API.
 fn phantom_io_binder(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
     let mut s = header();
     s.push_str(
@@ -146,11 +145,10 @@ namespace TALib.Test;
 /// </summary>
 /// <remarks>
 /// <para>The probe's subject is what a <i>body</i> touches, so it names the
-/// body. It used to reach it through <see cref="FunctionCall.TryInvoke"/>, whose
-/// thunks were pinned to <c>NAME_Impl</c> for exactly that reason — which made a
-/// test's reach the thing deciding which tier the shipped metadata API called
-/// (issue #265). The catalogue's thunk calls the public entry point now, like
-/// C's frames and Java's Dispatch, and the probe brings its own.</para>
+/// body — and it brings its own call site rather than borrowing
+/// <see cref="FunctionCall.TryInvoke"/>, whose thunks call the public entry
+/// point like C's frames and Java's Dispatch. Sharing one would make a test's
+/// reach decide which tier the shipped metadata API calls (issue #265).</para>
 ///
 /// <para>Reflection cannot substitute: a generated <c>NAME_Impl</c> takes
 /// <c>ReadOnlySpan&lt;double&gt;</c>, and a ref struct cannot be boxed for
@@ -163,8 +161,8 @@ internal static class NoPhantomIoBinder
 {
     /// <summary>What one numerics call produced: the code and the range.</summary>
     /// <remarks>The probe's own, because the numerics tier answers a code and the
-    /// shipped <see cref="InvokeThunk"/> no longer does — its thunks call the
-    /// public overload, which throws.</remarks>
+    /// shipped <see cref="InvokeThunk"/> does not — its thunks call the public
+    /// overload, which throws.</remarks>
     internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
 
     internal delegate CallOutcome Thunk(Core core, FunctionCall c, int startIdx, int endIdx);
@@ -910,11 +908,10 @@ fn emit_list(s: &mut String, label: &str, items: &[String]) {
 
 /// `TA_FunctionDescriptionXML`'s analog, carrying the real XML.
 ///
-/// The server used to answer the XML RPC with a `(length, checksum)` pair baked
-/// at generation time. `test_abstract.c` compares those numbers against C's
-/// actual bytes — but a constant the generator computed from the same string
-/// C's own table is built from is the generator agreeing with itself, and could
-/// not fail. C# now ships the XML the way Rust does (#164).
+/// Ships the real XML, never a `(length, checksum)` pair baked at generation
+/// time: `test_abstract.c` compares it against C's actual bytes, and a constant
+/// the generator computed from the same string C's own table is built from is
+/// the generator agreeing with itself — a gate that cannot fail (#164).
 ///
 /// A verbatim literal: the XML is ASCII with no backslashes, so only `"` needs
 /// doubling, and C# has no per-literal size limit to work around.
@@ -1595,13 +1592,13 @@ public sealed class FunctionCall
     /// <exception cref="ArgumentException">The slot is not a price input.</exception>
     /// <remarks>A component the function does not consume is accepted and ignored,
     /// matching C's <c>TA_SetInputParamPricePtr</c> (whose <c>SET_PARAM_INFO</c>
-    /// stores only the flagged components) and Java's <c>ParamHolder</c>. This
-    /// used to throw. It reads like the stricter, safer choice and is not: no
+    /// stores only the flagged components) and Java's <c>ParamHolder</c>. Do not
+    /// make it throw: that reads like the stricter, safer choice and is not — no
     /// function in the catalogue consumes <see cref="PriceComponents.OpenInterest"/>,
-    /// so the natural generic call — hand the binder a whole OHLCV bundle and let
-    /// it take what it needs — threw for every price function here while working
-    /// against C and Java. Rejecting a MISSING required component is the check
-    /// that earns its keep, and all three backends still do it.</remarks>
+    /// so the natural generic call (hand the binder a whole OHLCV bundle and let
+    /// it take what it needs) would throw for every price function here while
+    /// working against C and Java. Rejecting a MISSING required component is the
+    /// check that earns its keep, and all three backends do it.</remarks>
     public FunctionCall SetPriceInput(int slot, PriceComponents component, double[] series)
     {
         InputInfo info = CheckInput(slot, InputKind.Price);

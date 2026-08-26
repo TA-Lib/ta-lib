@@ -615,7 +615,7 @@ fn emit_open_and_fill_wrapper(
     // caller for every function instead of only the sixteen something composes
     // over. Rust needs no aliasing guard between the two frames -- `&[f64]` and
     // `&mut [f64]` cannot overlap -- so they differ only in the anchor, and
-    // `args` already carries it as the literal 0 the numerics used to take.
+    // `args` already carries it as the literal 0 the numerics take.
     let _ = writeln!(
         o,
         "        let handle = self.{sn}_OpenAndFillInternal({args}, &mut outBegIdx, &mut outNBElement, {})?;",
@@ -2659,8 +2659,8 @@ fn emit_dual_open(
     // Identity (HMA period 1) short-circuits ahead of the predicate: the whole
     // union sits at its defaults, including the buffers only the general arm
     // touches. What keeps that arm from running is the step's own guard, hoisted
-    // ABOVE the mode predicate (the arms no longer carry it), so which arm the
-    // predicate would have picked is moot.
+    // ABOVE the mode predicate, so which arm the predicate would have picked is
+    // moot.
     let union_fields = dual_union_fields(func, &fields_a, &fields_b);
     emit_identity_fast_path(o, func, ma, &union_fields, typing, registry, helpers, counter);
     let _ = writeln!(o, "        if {pred} {{");

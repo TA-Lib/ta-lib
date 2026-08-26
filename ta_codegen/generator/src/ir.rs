@@ -425,7 +425,7 @@ pub struct DocDef {
 ///
 /// This enum is the single definition of the two representations' correspondence, so the
 /// flag bit, the `inPriceXXX` suffix letter and the argument name cannot drift apart
-/// across the four backends that each used to carry their own copy.
+/// across the four backends.
 ///
 /// `TA_IN_PRICE_TIMESTAMP` (0x40) is deliberately absent: `TA_PricePtrs`
 /// (`src/ta_abstract/ta_frame_priv.h`) has no timestamp field, so a bundle declaring one

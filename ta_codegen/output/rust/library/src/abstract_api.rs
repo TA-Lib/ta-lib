@@ -5252,8 +5252,8 @@ mod binder_tests {
 
     /// An output sized to the count the call PRODUCES is enough — the bound is
     /// B5's, `endIdx - max(startIdx, lookback) + 1`, not the width of the
-    /// requested range. This tier used to demand the latter and reject a caller
-    /// who had allocated by the published formula (#265).
+    /// requested range. Demanding the latter rejects a caller who allocated by
+    /// the published formula (#265).
     #[test]
     fn an_output_sized_to_the_produced_count_is_enough() {
         let core = Core::new();

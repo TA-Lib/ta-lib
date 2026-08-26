@@ -936,7 +936,7 @@ fn named_bullets(lines: &[&str]) -> Vec<(String, String)> {
 /// Turn `## See Also` entries (`ADX · DX · …`) into source-root-absolute `.md` links
 /// (`/functions/<name>.md`) to sibling pages, leaving any non-function token untouched.
 ///
-/// Absolute, not bare-relative: relative resolution used to escape the site source root.
+/// Absolute, not bare-relative: relative resolution escapes the site source root.
 /// `.md`, not extensionless: VuePress rewrites a `.md` target to the built `/functions/
 /// <name>.html` and marks it `class="route-link"`, so the href matches the page's own
 /// `<link rel=canonical>` and clicks navigate client-side. The extensionless form emits a
@@ -1497,10 +1497,10 @@ mod tests {
         assert!(out.contains("| Window length, measured in bars |"), "{out}");
     }
 
-    /// The exact case the review reproduced: a non-named bullet tucked directly under a
-    /// parameter bullet (no blank line, so the stray-block check does not see it). Its
-    /// wrapped line used to be grafted onto the preceding parameter's description on the
-    /// website while rustdoc dropped the whole item — the two surfaces silently disagreeing.
+    /// A non-named bullet tucked directly under a parameter bullet (no blank line, so the
+    /// stray-block check does not see it). Untreated, its wrapped line grafts onto the
+    /// preceding parameter's description on the website while rustdoc drops the whole
+    /// item — the two surfaces silently disagreeing.
     #[test]
     fn an_unparseable_bullet_cannot_graft_itself_onto_the_previous_parameter() {
         let f = func(

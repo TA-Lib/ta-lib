@@ -96,19 +96,19 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, ta_defs_pat
     // FuncUnstId carries one trailing sentinel after its variants.
     //
     // TA_FUNC_UNST_ALL is pinned at 65535 rather than sitting immediately above
-    // the last function id. Deriving it from the variant count meant every new
-    // unstable indicator silently moved it, breaking any wrapper that had recorded
-    // the old value -- the same class of break as the 0.6.0 renumbering. Pinned,
-    // it never moves and the id space below it stays free to grow contiguously.
+    // the last function id, and MUST STAY pinned: derived from the variant count
+    // it moves whenever an unstable indicator is added, silently breaking every
+    // wrapper that recorded the old value. Pinned, the id space below it stays
+    // free to grow contiguously.
     //
-    // 65535 rather than INT_MAX so the value keeps arithmetic headroom: code that
-    // writes `TA_FUNC_UNST_ALL + 1` (this repo's own test did) would be signed
-    // overflow at INT_MAX, and a wrapper that narrows the id anywhere still holds
-    // 65535 exactly. It stays ~2700x above any plausible function count.
+    // 65535 rather than INT_MAX so the value keeps arithmetic headroom: at
+    // INT_MAX, `TA_FUNC_UNST_ALL + 1` is signed overflow, and a wrapper that
+    // narrows the id anywhere still holds 65535 exactly. It stays ~2700x above
+    // any plausible function count.
     //
-    // The count that used to be spelled TA_FUNC_UNST_ALL is emitted separately as
-    // TA_FUNC_UNST_COUNT -- a macro, not an enumerator, so it can never be mistaken
-    // for an id. It is what sizes unstablePeriod[] and bounds the range checks.
+    // The COUNT is emitted separately as TA_FUNC_UNST_COUNT -- a macro, not an
+    // enumerator, so it can never be mistaken for an id. It is what sizes
+    // unstablePeriod[] and bounds the range checks.
     //
     // A COUNT here and MIN/MAX on TA_MAType is not an inconsistency to converge.
     // COUNT answers "how many ids exist", and every use of it is a table size or a

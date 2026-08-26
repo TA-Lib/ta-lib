@@ -11,11 +11,9 @@
 //! 3. `backends/func_api_xml.rs` — XML display labels
 //! 4. `include/ta_abstract.h` — the C ABI's authoritative `#define`s
 //!
-//! (`backends/java_shipped.rs` used to be a fifth, numeric surface feeding the
-//! `CoreAnnotated` annotations. Both are gone with the idiomatic-signature
-//! break. Java, Rust and C# stay covered here through surface 2 rather than
-//! three copies — which is exactly why surface 2 is a shared module and not one
-//! backend's private helper.)
+//! (Java, Rust and C# are covered through surface 2 rather than three copies of
+//! it — which is why surface 2 is a shared module and not one backend's private
+//! helper.)
 //!
 //! The tests below make `include/ta_abstract.h` the single authority: every
 //! `TA_FUNC_FLG_*` / `TA_OPTIN_*` / `TA_OUT_*` constant must be known — with
@@ -23,8 +21,7 @@
 //! surface. **Adding a new flag (e.g. `TA_FUNC_FLG_PATH_DEP`) fails
 //! `cargo test` here until ALL surfaces learn it**; the failure message lists
 //! exactly what to update. A surface knowing a name the header doesn't define
-//! (the `TA_OPTIN_IS_ADVANCED` drift this gate was born from) fails the
-//! name-equality assert.
+//! fails the name-equality assert.
 
 #[cfg(test)]
 mod tests {

@@ -230,8 +230,8 @@ pub(crate) fn block_comment(lines: &[String], indent: usize) -> String {
     let pad = " ".repeat(indent);
     // A comment whose content reduces to nothing — `/*  */`, or `/* * */`,
     // whose lone `*` is eaten as a continuation prefix — arrives here with no
-    // lines at all. Both are ordinary C, and this used to index `lines[1..]`
-    // on an empty slice and abort the whole `generate`.
+    // lines at all. Both are ordinary C, and indexing `lines[1..]` here is an
+    // empty-slice panic that aborts the whole `generate`.
     if lines.is_empty() {
         return format!("{pad}/* */\n");
     }

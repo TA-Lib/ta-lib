@@ -2553,10 +2553,9 @@ fn render_func_call(
                 // NULL for a nullable output the caller declines (MA passing NULL
                 // for MAMA's FAMA — issue #125). Java arrays are nullable and the
                 // callee's stores are guarded, so this is a plain `null` and
-                // nothing is allocated — it used to materialize a throwaway
-                // spanning the output range, which is the discard buffer #125
-                // removed from the C and only Rust/Java/C# kept (#262). NULL
-                // appears only here.
+                // nothing is allocated -- never a throwaway buffer spanning the
+                // output range, the discard #125 removed from C and #262 from
+                // the rest. NULL appears only here.
                 Expr::Var(n) if n == "NULL" => "null".to_string(),
                 _ => render_expr(a, ctx, registry, helpers),
             })
@@ -2569,11 +2568,11 @@ fn render_func_call(
 ///
 /// The C source is written in C's idiom -- `retCode = ma( .., &beg, &nb, buf );
 /// if( retCode != TA_SUCCESS ) return retCode;` -- and the transcription is
-/// literal, so every backend needed a callee that answered a code through
-/// out-parameters. C never did: `ta_APO.c` calls `TA_MA`, which IS C's public
-/// API. The managed backends now do the same, which is what puts the callee's
-/// argument checks on the composed path -- the one place a scratch buffer sized
-/// by the CALLER meets a bound computed from the CALLEE's lookback.
+/// literal, so the rendering has to bridge that to a callee that throws. Doing
+/// it against the PUBLIC entry point, as `ta_APO.c` calling `TA_MA` already
+/// does, is what puts the callee's argument checks on the composed path -- the
+/// one place a scratch buffer sized by the CALLER meets a bound computed from
+/// the CALLEE's lookback.
 ///
 /// The two out-parameter arguments are dropped from the call and bound from the
 /// returned range instead. They are found positionally: the callee's signature
@@ -2606,8 +2605,8 @@ fn render_cross_indicator_call(
         call_args.push(match a {
             // NULL for a nullable output the caller declines (#125): the callee
             // skips its stores and its public tier skips the length check, so
-            // this is a plain `null` (rule B6a, #262) rather than the throwaway
-            // buffer it used to allocate on every call.
+            // this is a plain `null` (rule B6a, #262) -- never a throwaway buffer
+            // allocated on every call.
             Expr::Var(n) if n == "NULL" => "null".to_string(),
             _ => render_expr(a, ctx, registry, helpers),
         });

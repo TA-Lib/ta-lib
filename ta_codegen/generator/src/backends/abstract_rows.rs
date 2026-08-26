@@ -10,15 +10,11 @@
 //!
 //! ## Why the model is typed rather than a bag of `i32` codes
 //!
-//! The flat shape this replaces carried a raw `ty: i32` per parameter and a
-//! field for every domain's data, `ty` selecting which fields meant anything.
-//! Two renderers over that shape had already disagreed about the same code:
-//! `java_abstract`'s `_ =>` arm rendered `ty == 1` (`RealList`) as an
-//! `IntegerRange`, while `java_metadata` named it `REAL_LIST`. Neither was
-//! caught, because no shipped function declares a real list — the disagreement
-//! was latent, waiting for the first one. [`OptDomain`] makes that
-//! unrepresentable: the domain *is* the data, every renderer matches
-//! exhaustively, and a new domain fails compilation in each of them.
+//! A raw `ty: i32` plus a field per domain lets two renderers disagree about
+//! the same code, and stay latent until the first function declares that
+//! domain. [`OptDomain`] makes it unrepresentable: the domain *is* the data,
+//! every renderer matches exhaustively, and a new domain fails compilation in
+//! each of them.
 //!
 //! ## What is deliberately NOT rendered from these rows
 //!
@@ -268,8 +264,8 @@ pub struct InputRow {
     /// Carried because a renderer that has to unfold the bundle back into
     /// argument positions (a dynamic-dispatch thunk) would otherwise re-derive
     /// it from `FuncDef` — a second fold whose agreement with this row's own
-    /// slot numbering nothing checks. Both `java_metadata::dispatch_class` and
-    /// the C# thunks used to do that; they read this field now.
+    /// slot numbering nothing checks. `java_metadata::dispatch_class` and the C#
+    /// thunks read this field instead.
     ///
     /// Canonical OHLCV order is irrelevant to it: this is the DECLARATION
     /// order, which is the order the generated signature takes the arrays in,

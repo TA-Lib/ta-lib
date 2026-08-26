@@ -2336,8 +2336,8 @@ fn emit_dual_mode(
         // Identity (HMA period 1) short-circuits ahead of the predicate: the
         // whole union sits at its defaults, including the arrays only the
         // general arm touches. What keeps that arm from running is the step's
-        // own guard, hoisted ABOVE the mode predicate (the arms no longer carry
-        // it), so which arm the predicate would pick is moot.
+        // own guard, hoisted ABOVE the mode predicate, so which arm the predicate
+        // would pick is moot.
         emit_identity_fast_path(o, func, ma, &fields, registry, helpers, stream_fma, counter);
         let pred = render_predicate(&dmp.predicate, &ctx, registry, helpers);
         let _ = writeln!(o, "      if( {pred} ) {{");
@@ -3330,9 +3330,8 @@ fn emit_composed_open(
     // the sub's insufficient history.
     //
     // Cost: one lookback call per OPEN, on a path that already allocates
-    // `historyLen` doubles per output; `update` is untouched. On the rejecting
-    // path it is now cheaper, because the scratch allocations below no longer
-    // happen before the reject.
+    // `historyLen` doubles per output; `update` is untouched. The rejecting path
+    // is cheaper for it -- the scratch allocations below never happen.
     {
         let lb_args: Vec<String> =
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();

@@ -7,10 +7,10 @@
 //! that Rust can host.
 //!
 //! **What this reaches that the Java suite does not.** All three suites probe
-//! `<N>_Impl` and all three now reach every one of the 176 cores -- routing a
-//! cross-call through the public callee used to put a composed core out of the
-//! Java sweep's reach, and `ma` was the last one withheld until #267 gave a
-//! dispatch body the "nothing to produce" guard every other composed core had.
+//! `<N>_Impl` and all three reach every one of the 176 cores. That takes a
+//! dispatch body carrying the "nothing to produce" guard every other composed
+//! core has (#267); without it, routing a cross-call through the public callee
+//! puts a composed core out of a sweep's reach.
 //! What is left that is Rust's alone is the *Rust* emitter: a bug that changes
 //! what one backend touches without changing what it produces is invisible to
 //! `--xlang-hash` by construction, so each backend's phantom-I/O coverage is

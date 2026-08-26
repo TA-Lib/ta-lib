@@ -111,14 +111,12 @@ impl Registry {
         // clamped to the composite's lookback lands exactly on the callee's.
         //
         // All four resolve it to the PUBLIC entry point, which is what C has
-        // always done (`TA_MA` is C's public API, declared in ta_func.h).
-        // Java used to route to the package-private `…_Impl` so the caller
-        // could pass the C-shaped MInteger out-params; the call sites now bind
-        // the returned `OutRange` instead (#236 step 3), which is what puts the
-        // callee's argument checks on the composed path. Rust followed in #267
-        // and binds an `OutRange` the same way. C# needs no change of name at
-        // all: its two tiers are overloads, and dropping the two `out int`
-        // arguments selects the public one.
+        // always done (`TA_MA` is C's public API, declared in ta_func.h). Java
+        // (#236 step 3) and Rust (#267) bind the returned `OutRange` rather than
+        // C-shaped out-params, which is what puts the callee's argument checks on
+        // the composed path. C# needs no change of name at all: its two tiers are
+        // overloads, and dropping the two `out int` arguments selects the public
+        // one.
         if self.contains(func_name) {
             let name = self.name_of(func_name);
             return match lang {
@@ -217,13 +215,11 @@ mod tests {
         );
 
         // Bare indicator names resolve to the PUBLIC entry point — the one a
-        // user can reach — in every backend. Java used to route to the
-        // package-private `…_Impl` so the caller could hand the C-shaped
-        // MInteger out-params straight through; the call sites bind the returned
-        // OutRange instead since #236 step 3, which is what puts the callee's
-        // argument checks on the composed path. C# needs no name change at all:
-        // its two tiers are overloads, and dropping the two `out int` arguments
-        // is what selects the public one.
+        // user can reach — in every backend. Java's call sites bind the returned
+        // OutRange rather than C-shaped MInteger out-params (#236 step 3), which
+        // is what puts the callee's argument checks on the composed path. C#
+        // needs no name change at all: its two tiers are overloads, and dropping
+        // the two `out int` arguments is what selects the public one.
         assert_eq!(registry.resolve_call("ema", Lang::C), "TA_EMA");
         assert_eq!(registry.resolve_call("ema", Lang::Rust), "EMA");
         assert_eq!(registry.resolve_call("ema", Lang::Java), "EMA");

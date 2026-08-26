@@ -627,22 +627,18 @@ fn gen_public_wrapper(
     // `endIdx`, every output must hold `endIdx - max(startIdx, lookback) + 1`
     // values, the count actually produced.
     //
-    // There is no separate emptiness check. There used to be one, on every
-    // declared input, and the length bound subsumes it: on any call the core
-    // actually runs, `guardInLen` is `endIdx + 1` and therefore at least 1, so an
-    // empty input fails the length check anyway — and fails it with a message
-    // naming both sizes rather than just the word "empty".
-    //
-    // Where the two differed, the emptiness check was WRONG. It ran before
-    // anything else, so `SMA(-1, 50, empty, 10, out)` reported "inReal is empty"
-    // when the caller's actual mistake was the startIdx: it pre-empted the
-    // RetCode the core exists to produce. The length bound cannot, because
-    // `ClampedStart` returns -1 for exactly those arguments and switches it off.
+    // Do NOT add a separate emptiness check. The length bound subsumes it — on
+    // any call the core actually runs `guardInLen` is `endIdx + 1`, so an empty
+    // input fails it anyway, with a message naming both sizes — and an emptiness
+    // check runs before everything else, so it pre-empts the RetCode the core
+    // exists to produce: `SMA(-1, 50, empty, 10, out)` would report "inReal is
+    // empty" when the caller's mistake was the startIdx. The length bound cannot,
+    // because `ClampedStart` returns -1 for exactly those arguments and switches
+    // it off.
     //
     // It covers EVERY declared input, the seven candlestick legs no body indexes
-    // included (#260). Skipping those made "a declared input must be supplied" a
-    // rule with an exception list, and C never had one, so the identical call was
-    // `TA_BAD_PARAM` there and a success here.
+    // included (#260): C has no exception list, so skipping those makes the
+    // identical call `TA_BAD_PARAM` there and a success here.
     let checked_inputs: Vec<&str> = func.inputs.iter().map(|i| i.name.as_str()).collect();
     if !checked_inputs.is_empty() || !func.outputs.is_empty() {
         let lb_args: Vec<String> =
@@ -915,21 +911,18 @@ fn gen_func_inner(
         // correct result, so reject it. Input/output overlap stays allowed —
         // several bodies are written to compute in place.
         //
-        // `Overlaps`, NOT `==`. Under the old `double[]` surface two arrays
-        // were identical or disjoint, so reference equality was complete. Spans
-        // made the in-between expressible: `buf.AsSpan(0, n)` against
-        // `buf.AsSpan(0, n + 1)` is the SAME memory at the SAME start, and span
-        // `==` (ref AND length) reads false. Leaving this on `==` let 13
-        // multi-output functions return Success with every value wrong.
+        // `Overlaps`, NOT `==`. Spans make partial overlap expressible:
+        // `buf.AsSpan(0, n)` against `buf.AsSpan(0, n + 1)` is the SAME memory at
+        // the SAME start, and span `==` (ref AND length) reads false on it.
         //
-        // Zero-length operands are NOT rejected. `Overlaps` short-circuits to
-        // false when either side is empty, which is the right answer: two empty
-        // spans cannot clobber each other. An explicit `a.IsEmpty && b.IsEmpty`
-        // arm used to reject them, which made a range shorter than the lookback
-        // — a documented success with no values, needing no output space (rule
-        // N1) — answer BadParam in C# and Rust while C and Java accepted it
-        // (Appendix D item 11, #262). It also meant "declined" was unspellable:
-        // an empty span is how a C# caller declines a nullable output (B6a).
+        // Zero-length operands are NOT rejected, and must not be. `Overlaps`
+        // short-circuits to false when either side is empty, which is the right
+        // answer: two empty spans cannot clobber each other. Rejecting them makes
+        // a range shorter than the lookback — a documented success with no values,
+        // needing no output space (rule N1) — answer BadParam here while C and
+        // Java accept it (Appendix D item 11, #262), and it makes "declined"
+        // unspellable, since an empty span is how a C# caller declines a nullable
+        // output (B6a).
         //
         // Cross-typed pairs are skipped: `Span<double>` and `Span<int>` cannot
         // be laid over the same memory, and `Overlaps` is not defined across
@@ -1724,7 +1717,7 @@ fn render_cross_indicator_call(
             // NULL for a nullable output the caller declines (#125): an empty
             // span is how C# spells that, the callee skips its stores and its
             // public tier skips the length check, so nothing is allocated —
-            // this used to materialize a throwaway on every call (B6a, #262).
+            // never a throwaway materialized on every call (B6a, #262).
             Expr::Var(n) if n == "NULL" => "default".to_string(),
             _ => render_expr(a, ctx, registry, helpers),
         });
@@ -2565,11 +2558,10 @@ mod tests {
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        // `&localBegIdx` used to lower to `out localBegIdx` at the cross-call.
-        // Since #236 step 3 the two out-parameters are not passed at all — that
-        // omission is what selects the callee's PUBLIC overload — and the range
-        // it returns is bound to the same two locals instead. The `out` lowering
-        // itself is still live, on the streaming sub-opens, which keep the
+        // At a cross-call the two out-parameters are not passed at all — that
+        // omission is what selects the callee's PUBLIC overload (#236 step 3) —
+        // and the range it returns is bound to the same two locals instead. The
+        // `out` lowering stays live on the streaming sub-opens, which keep the
         // C-shaped shape because they have no public entry point.
         assert!(
             output.contains("MA(startIdx, endIdx, inReal, minUsed"),

@@ -55,9 +55,3 @@ pub fn generate_core(
     super::write_if_changed(core_path, &new, "Core.java (GENCODE)", funcs.len());
 }
 
-// `CoreAnnotated.java` and the `meta/annotation/` reflection island used to be
-// generated here, along with a private copy of the flag bit-values for their
-// annotations. All three went with the idiomatic-signature break: the annotations
-// were emitted against the old `RetCode` + `MInteger` shape, and the flag copy had
-// no other consumer — Java's abstract table takes its bits from
-// `rust_abstract`'s helpers, which `flag_sync` still gates.

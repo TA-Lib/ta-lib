@@ -349,10 +349,9 @@ pub fn find_sizeof_type(expr: &Expr) -> Option<String> {
 /// The C harnesses — `ta_codegen_serve`, `ta_bench`, `ta_bench_stream` and the
 /// in-server `stream_verify` — hand every function the same file-scope buffers,
 /// so they need one per output slot any function can use. That count has to come
-/// from the corpus. It used to be the literals 3 and 2, which is what the corpus
-/// happens to need today: a function with a third integer output compiled to
-/// `'g_outIntBuf2' undeclared`, with nothing in the tree to say so until a
-/// synthetic fixture tried it (#262).
+/// from the corpus and never from a literal: a literal is only ever the corpus's
+/// current maximum, and the first function past it fails to compile against a
+/// buffer that was never declared (#262).
 ///
 /// The split follows the emitters' own test — `ParamType::Integer` is the `int`
 /// buffer, everything else is `double` — so the three cannot drift apart.

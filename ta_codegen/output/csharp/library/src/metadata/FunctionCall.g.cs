@@ -192,13 +192,13 @@ public sealed class FunctionCall
     /// <exception cref="ArgumentException">The slot is not a price input.</exception>
     /// <remarks>A component the function does not consume is accepted and ignored,
     /// matching C's <c>TA_SetInputParamPricePtr</c> (whose <c>SET_PARAM_INFO</c>
-    /// stores only the flagged components) and Java's <c>ParamHolder</c>. This
-    /// used to throw. It reads like the stricter, safer choice and is not: no
+    /// stores only the flagged components) and Java's <c>ParamHolder</c>. Do not
+    /// make it throw: that reads like the stricter, safer choice and is not — no
     /// function in the catalogue consumes <see cref="PriceComponents.OpenInterest"/>,
-    /// so the natural generic call — hand the binder a whole OHLCV bundle and let
-    /// it take what it needs — threw for every price function here while working
-    /// against C and Java. Rejecting a MISSING required component is the check
-    /// that earns its keep, and all three backends still do it.</remarks>
+    /// so the natural generic call (hand the binder a whole OHLCV bundle and let
+    /// it take what it needs) would throw for every price function here while
+    /// working against C and Java. Rejecting a MISSING required component is the
+    /// check that earns its keep, and all three backends do it.</remarks>
     public FunctionCall SetPriceInput(int slot, PriceComponents component, double[] series)
     {
         InputInfo info = CheckInput(slot, InputKind.Price);

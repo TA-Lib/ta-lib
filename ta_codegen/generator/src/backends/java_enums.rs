@@ -32,9 +32,9 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
 
     // Each variant's ordinal IS the index into unstablePeriod[], and for the
     // function ids the ordinal equals the C value. `ALL` is the one exception:
-    // it carries C's pinned 0x7FFFFFFF, which no ordinal can express, so every
+    // it carries C's pinned 65535, which no ordinal can express, so every
     // constant declares its value explicitly and `value()` exposes it.
-    // `COUNT` sizes the table -- it is what `ALL` used to be worth.
+    // `COUNT` sizes the table.
     let mut body = String::from("public enum FuncUnstId {\n");
     body.push('\t');
     body.push('\n');

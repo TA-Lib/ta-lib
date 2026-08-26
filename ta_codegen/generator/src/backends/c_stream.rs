@@ -245,8 +245,8 @@ pub fn open_and_fill_internal_signature(func: &FuncDef) -> String {
 /// `OpenInternal` needs for sub-stream composition), the batch output triplet,
 /// and `outStride`. File-static: with two call sites the compiler decides per
 /// function whether to share the body or inline it into both wrappers, and when
-/// it inlines, `outStride` constant-folds to 0/1 and the arm is exactly what the
-/// two separate bodies used to be. Forcing `noinline` measured LARGER.
+/// it inlines, `outStride` constant-folds to 0/1 and the arm is exactly what a
+/// separate body per entry point would be. Forcing `noinline` measured LARGER.
 fn open_core_signature(func: &FuncDef) -> String {
     let n = uname(func);
     let mut history = String::new();
@@ -372,8 +372,8 @@ fn public_open_guards(func: &FuncDef, fail: &str) -> String {
     // The OUTPUT pointers are checked here too, even though this wrapper does
     // not touch them: `<N>_OpenImpl` rejects a NULL output BEFORE it range-checks
     // `historyLen`, so leaving them out would make a >TA_MAX_INDEX history with
-    // a NULL output report TA_OUT_OF_RANGE_END_INDEX where it used to report
-    // TA_BAD_PARAM. Same set, same order, same answer.
+    // a NULL output report TA_OUT_OF_RANGE_END_INDEX instead of TA_BAD_PARAM.
+    // Same set, same order, same answer.
     let nullable = nullable_out_names(func);
     let nulls: Vec<String> = inputs
         .iter()

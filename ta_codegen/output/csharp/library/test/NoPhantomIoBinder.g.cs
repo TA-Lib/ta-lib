@@ -53,11 +53,10 @@ namespace TALib.Test;
 /// </summary>
 /// <remarks>
 /// <para>The probe's subject is what a <i>body</i> touches, so it names the
-/// body. It used to reach it through <see cref="FunctionCall.TryInvoke"/>, whose
-/// thunks were pinned to <c>NAME_Impl</c> for exactly that reason — which made a
-/// test's reach the thing deciding which tier the shipped metadata API called
-/// (issue #265). The catalogue's thunk calls the public entry point now, like
-/// C's frames and Java's Dispatch, and the probe brings its own.</para>
+/// body — and it brings its own call site rather than borrowing
+/// <see cref="FunctionCall.TryInvoke"/>, whose thunks call the public entry
+/// point like C's frames and Java's Dispatch. Sharing one would make a test's
+/// reach decide which tier the shipped metadata API calls (issue #265).</para>
 ///
 /// <para>Reflection cannot substitute: a generated <c>NAME_Impl</c> takes
 /// <c>ReadOnlySpan&lt;double&gt;</c>, and a ref struct cannot be boxed for
@@ -70,8 +69,8 @@ internal static class NoPhantomIoBinder
 {
     /// <summary>What one numerics call produced: the code and the range.</summary>
     /// <remarks>The probe's own, because the numerics tier answers a code and the
-    /// shipped <see cref="InvokeThunk"/> no longer does — its thunks call the
-    /// public overload, which throws.</remarks>
+    /// shipped <see cref="InvokeThunk"/> does not — its thunks call the public
+    /// overload, which throws.</remarks>
     internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
 
     internal delegate CallOutcome Thunk(Core core, FunctionCall c, int startIdx, int endIdx);

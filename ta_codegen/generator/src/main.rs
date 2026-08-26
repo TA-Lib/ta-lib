@@ -592,19 +592,21 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // generating all functions (no filter), so a --func run cannot remove files
     // for functions it is not regenerating.
     //
-    // Ordering is load-bearing at both ends. It sits BELOW Phase 1, which only
-    // parses and validates: every gate that can `process::exit` (naming, docs,
-    // the per-function streaming gate) runs while the tree is still intact. It
-    // used to sit above Phase 1, and a gate firing there aborted with 174 files
-    // per backend already deleted, `src/ta_func/*.c` among them -- a rejected
-    // input left the shipped library gutted. And it sits ABOVE the server
-    // generation, which splices per-function fragments off disk: a fragment for
-    // a dropped indicator has to be gone before anything reads that directory.
+    // Ordering is load-bearing on three sides; do not move this call. It sits:
     //
-    // It also sits below Phase 2 rather than above it, which is what lets an
-    // unchanged file keep its mtime -- see `emit::write_if_changed`. Deleting
-    // first and rewriting told cargo, CMake and the gcc server build that all
-    // 175 indicators had changed on every run.
+    // BELOW Phase 1, which only parses and validates, so every gate that can
+    // `process::exit` (naming, docs, the per-function streaming gate) runs while
+    // the tree is still intact. Above it, a gate that fires aborts with every
+    // per-function file already deleted, `src/ta_func/*.c` among them, leaving
+    // the shipped library gutted on a merely rejected input.
+    //
+    // ABOVE the server generation, which splices per-function fragments off
+    // disk: a fragment for a dropped indicator has to be gone before anything
+    // reads that directory.
+    //
+    // BELOW Phase 2, which is what lets an unchanged file keep its mtime -- see
+    // `emit::write_if_changed`. Deleting first and rewriting tells cargo, CMake
+    // and the gcc server build that every indicator changed on every run.
     if func_filter.is_none() {
         for backend in &backends_to_run {
             remove_stale_generated_files(&out_base, backend, &generated_funcs);
@@ -1228,10 +1230,8 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                 std::fs::create_dir_all(&class_dir).ok();
                 // The server's ta_abstract RPCs answer from the SHIPPED registry
                 // (io.github.talib.metadata), so the library's sources are on the
-                // source path. Before that they came from a server-private table
-                // and the abstract gate never touched what ships (issue #164) --
-                // the reason #162's Java half went unseen while its C# twin, whose
-                // server does bind through the shipped FunctionCall, was caught.
+                // source path. Never a server-private table: the abstract gate
+                // would then never touch what ships (issue #164).
                 // The main source root only: under the Maven layout the test
                 // package lives in a sibling root, so it is not on the server's
                 // source path at all.
@@ -1498,11 +1498,11 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     collect_java_sources(&src_root, &mut sources, &mut junit_skipped);
     sources.sort();
     junit_skipped.sort();
-    // A junit-importing suite used to be dropped from `sources` with an informational
-    // line, so it was neither compiled nor run and the build stayed green -- the exact
-    // AllTests vacuity the discovery below exists to prevent, reachable again now that
-    // Maven could supply a junit dependency in one line. Fail instead: either add the
-    // dependency and run it, or do not ship the file.
+    // Do NOT drop a junit-importing suite from `sources` with an informational
+    // line: it is then neither compiled nor run and the build stays green -- the
+    // exact AllTests vacuity the discovery below exists to prevent. Fail instead:
+    // either add the dependency (Maven supplies it in one line) and run the
+    // suite, or do not ship the file.
     if !junit_skipped.is_empty() {
         println!(
             "  Building Java tests... FAILED ({} junit-dependent file(s) would be \

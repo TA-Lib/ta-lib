@@ -39,8 +39,9 @@ fn func_unst_variant_names(enums: &HashMap<String, EnumDef>) -> Vec<String> {
 /// Derived, not enumerated, and the same rule is built by hand in two other
 /// places that have to agree with it: the C server's abstract handler
 /// (`templates/c/ta_abstract_serve.c`) and the driver that reads its reply
-/// (`test_abstract.c`). Both used to pick from a hardcoded list that stopped at
-/// the corpus's widest function (#262).
+/// (`test_abstract.c`). Neither may go back to a hardcoded list of keys — such a
+/// list stops at the corpus's widest function and silently blinds the gate past
+/// it (#262).
 fn output_json_key(outputs: &[Output], idx: usize) -> String {
     let out = &outputs[idx];
     // Count how many outputs of the same type appear before this one.
@@ -153,10 +154,10 @@ fn price_input_to_rust_ref(name: &str) -> Option<&'static str> {
 /// Map a function name to its unstable-period id, derived from `enums.yaml`.
 ///
 /// A function owns the id whose enumerator is `TA_FUNC_UNST_<NAME>` — the whole
-/// naming convention of the enum. This used to be a hardcoded `match` carrying a
-/// second copy of the numbering, which is exactly how ta-lib-python's ids came to
-/// mis-target after the 0.6.0 renumbering; a duplicated table drifts silently
-/// because both the writer and the reader use the same wrong value.
+/// naming convention of the enum. Never a hardcoded `match`: a second copy of
+/// the numbering drifts silently, because the writer and the reader both use the
+/// same wrong value. That is how ta-lib-python's ids came to mis-target after
+/// the 0.6.0 renumbering.
 ///
 /// Retired slots (`TA_FUNC_UNST_UNUSED_*`) match no function and yield `None`.
 fn func_unst_id(name: &str, enums: &HashMap<String, EnumDef>) -> Option<i32> {
@@ -770,8 +771,8 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
     // (bad params, e.g. an out-of-list enum hitting a dispatch default arm)
     // or an empty range — the stream's Open must reject too. Open mirrors
     // the batch validation and min-history by construction, so a stream
-    // that opens where batch fails is always a contract break; forcing
-    // ok=1 on batch errors (the old behavior) shielded exactly that.
+    // that opens where batch fails is always a contract break. Never force
+    // ok=1 on a batch error -- that shields exactly this case.
     if candle {
         s.push_str("            if( !openRejects ) allOk = 0;\n");
         s.push_str("            if( rd + 1 < rounds ) continue;\n");
@@ -3774,21 +3775,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // Call
         // ---- Correctness goes through the PUBLIC API; the benchmark does not.
         //
-        // The harness drove the C-shaped tier, so the tier a user can actually
-        // reach — its argument checks, its exception mapping, the OutRange it
-        // returns — was compared against nothing (#236 step 4). It is compared
-        // now, and the exception is normalised HERE, in the server, rather than
-        // by the library pre-flattening it: a thrown failure carries its code
-        // (#236 step 1), the server reads it and reports the same
-        // retCode / outBegIdx / outNBElement wire shape it always did.
+        // A correctness request calls the tier a user can actually reach, and
+        // the exception is normalised HERE, in the server, rather than by the
+        // library pre-flattening it: a thrown failure carries its code, the
+        // server reads it and reports the retCode / outBegIdx / outNBElement
+        // wire shape (#236 steps 1 and 4).
         //
         // A request that declares itself TIMED (`"timed":1`, which only ta_bench
         // sends) calls the BODY -- the numerics and nothing else -- inside the
         // timed loop. These servers ARE the cross-language benchmark, and
         // nothing measured may quietly acquire the public tier's argument
-        // checks. Before #236 step 5 this went through the C-shaped shim, which
-        // wrapped the same body in a try/catch; the shim is gone and the body is
-        // what it always meant.
+        // checks.
         //
         // Declared, not inferred from `iters > 1`: `ta_bench --iters=1` is a
         // legitimate invocation, and inferring would have made it measure the
@@ -4590,10 +4587,9 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        int bench_iters = GetInt(p, \"iters\", 1);\n");
         s.push_str("        if (bench_iters < 1) bench_iters = 1;\n");
         // bench_mode (ta_bench --mode): 0 = batch (default), 1 = the streaming
-        // warm-up <N>_Open, 2 = <N>_OpenAndFill (issue #256 -- C# now HAS a
-        // streaming API; this used to unconditionally answer "unsupported_mode"
-        // from before it did, silently timing nothing for --mode=open/openfill
-        // here). Handles are GC-managed (no Close), and the public Open/
+        // warm-up <N>_Open, 2 = <N>_OpenAndFill (issue #256). Answering
+        // "unsupported_mode" here silently times nothing for --mode=open and
+        // --mode=openfill. Handles are GC-managed (no Close), and the public Open/
         // OpenAndFill throw instead of returning a code, same as the batch
         // call below -- the arms convert the throw into a RetCode the same way.
         s.push_str("        int bench_mode = GetInt(p, \"bench_mode\", 0);\n");
@@ -5102,10 +5098,10 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // inputs have used since #115 -- one string of concatenated 16-hex-char
     // groups, each value's IEEE-754 bits. serde_json's ryu formatting is
     // shortest-round-trip for a finite value, but `Number::from_f64` has no
-    // number at all for a NaN or an infinity, which is why this used to fall
-    // back to bare `nan`/`inf` tokens the driver's strtod parser had to be
-    // taught. `to_bits` needs no fallback and no token: every f64 has a
-    // spelling, and it is the same one hash mode hashes (#257/#258).
+    // number at all for a NaN or an infinity, so a decimal spelling needs a
+    // bare `nan`/`inf` fallback token every driver's parser has to be taught.
+    // `to_bits` needs no fallback and no token: every f64 has a spelling, and it
+    // is the same one hash mode hashes (#257/#258).
     s.push_str("fn json_f64_array(data: &[f64]) -> String {\n");
     s.push_str("    let mut s = String::with_capacity(data.len() * 16 + 2);\n");
     s.push_str("    s.push('\"');\n");

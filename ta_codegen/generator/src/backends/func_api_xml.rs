@@ -258,11 +258,10 @@ fn write_integer_opt(
         // reals. Restated here rather than shared, on the same reasoning as the
         // C tables: the two derivations stay independently checkable (#164).
         //
-        // This used to emit the range MAXIMUM for all three, for gen_code
-        // bug-compatibility. That made two shipped surfaces disagree — QSTICK
-        // reads 4/200/1 through `TA_GetOptInputParameterInfo` and 100000 three
-        // times here — across 71 of 171 functions, and it degenerated the
-        // parameter-optimisation hint these fields exist for (issue #207).
+        // NOT the range maximum for all three, which is what gen_code emitted:
+        // that makes this surface disagree with `TA_GetOptInputParameterInfo` on
+        // most of the corpus and degenerates the parameter-optimisation hint the
+        // fields exist for (issue #207).
         let (start_i, end_i, inc_i) = match opt.suggested {
             Some((a, b, c)) => (a as i32, b as i32, c as i32),
             None => (min_i, max_i.min(200), 1),
