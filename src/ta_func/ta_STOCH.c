@@ -266,6 +266,8 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
       tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
       if( !tempBuffer )
       {
+         *outBegIdx= 0;
+         *outNBElement= 0;
          return TA_ALLOC_ERR;
       }
    }
@@ -357,10 +359,6 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     * the already smoothed %K.
     */
    retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
-   /* The rejection is answered before the copy, never after: a rejected ma()
-    * leaves *outNBElement holding %K's count, and the copy would then overrun
-    * outSlowK by lookbackDSlow (issue #269).
-    */
    if( retCode != TA_SUCCESS )
    {
       /* Something wrong happen while processing %D? */
@@ -498,6 +496,8 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
       if( !tempBuffer )
       {
+         *outBegIdx= 0;
+         *outNBElement= 0;
          return TA_ALLOC_ERR;
       }
    }
@@ -1043,10 +1043,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
          }
       }
       retCode = subRc;
-      /* The rejection is answered before the copy, never after: a rejected ma()
-       * leaves *outNBElement holding %K's count, and the copy would then overrun
-       * outSlowK by lookbackDSlow (issue #269).
-       */
       if( retCode != TA_SUCCESS )
       {
          /* Something wrong happen while processing %D? */

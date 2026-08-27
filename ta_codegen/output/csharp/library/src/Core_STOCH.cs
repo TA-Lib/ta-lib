@@ -367,10 +367,6 @@ public partial class Core
       outBegIdx = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
-      /* The rejection is answered before the copy, never after: a rejected ma()
-       * leaves *outNBElement holding %K's count, and the copy would then overrun
-       * outSlowK by lookbackDSlow (issue #269).
-       */
       if( retCode != RetCode.Success ) {
          /* Something wrong happen while processing %D? */
          if( (bufferIsAllocated) != 0 ) {
@@ -1319,10 +1315,6 @@ public partial class Core
       tempBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
       MA_Stream sub1 = MA_OpenAndFillInternal(subSrc1_0, 0, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
-      /* The rejection is answered before the copy, never after: a rejected ma()
-       * leaves *outNBElement holding %K's count, and the copy would then overrun
-       * outSlowK by lookbackDSlow (issue #269).
-       */
       if( retCode != RetCode.Success ) {
          /* Something wrong happen while processing %D? */
          if( (bufferIsAllocated) != 0 ) {

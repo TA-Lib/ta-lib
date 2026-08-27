@@ -161,6 +161,8 @@ TA_RetCode stoch(int startIdx, int endIdx,
       tempBuffer = malloc((endIdx-today+1) * sizeof(double));
       if( !tempBuffer )
       {
+         *outBegIdx = 0;
+         *outNBElement = 0;
          return TA_ALLOC_ERR;
       }
    }
@@ -261,10 +263,6 @@ TA_RetCode stoch(int startIdx, int endIdx,
       optInSlowD_MAType,
       outBegIdx, outNBElement, outSlowD );
 
-   /* The rejection is answered before the copy, never after: a rejected ma()
-    * leaves *outNBElement holding %K's count, and the copy would then overrun
-    * outSlowK by lookbackDSlow (issue #269).
-    */
    if( retCode != TA_SUCCESS )
    {
       /* Something wrong happen while processing %D? */

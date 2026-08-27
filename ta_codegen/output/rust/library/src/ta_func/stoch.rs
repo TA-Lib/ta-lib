@@ -366,9 +366,6 @@ impl Core {
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
-        // The rejection is answered before the copy, never after: a rejected ma()
-        // leaves *outNBElement holding %K's count, and the copy would then overrun
-        // outSlowK by lookbackDSlow (issue #269).
         if retCode != RetCode::Success {
             // Something wrong happen while processing %D?
             if bufferIsAllocated != 0 {
@@ -949,9 +946,6 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.MA_OpenAndFillInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..])?;
         retCode = RetCode::Success;
-        // The rejection is answered before the copy, never after: a rejected ma()
-        // leaves *outNBElement holding %K's count, and the copy would then overrun
-        // outSlowK by lookbackDSlow (issue #269).
         if retCode != RetCode::Success {
             // Something wrong happen while processing %D?
             if bufferIsAllocated != 0 {

@@ -70,7 +70,11 @@ TA_RetCode adxr(int startIdx, int endIdx,
 
    adx = malloc((endIdx-startIdx+optInTimePeriod) * sizeof(double));
    if( !adx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
       return TA_ALLOC_ERR;
+   }
 
    /* Compute ADX over a range that starts (period-1) bars earlier, so each
     * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.

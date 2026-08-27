@@ -385,12 +385,16 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
    tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer1 )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer2 )
    {
       free(tempBuffer1);
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    /* Calculate the middle band moving average. */
@@ -664,12 +668,16 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
    tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer1 )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer2 )
    {
       free(tempBuffer1);
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    retCode = TA_S_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);

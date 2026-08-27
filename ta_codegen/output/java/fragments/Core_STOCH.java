@@ -313,10 +313,6 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      /* The rejection is answered before the copy, never after: a rejected ma()
-       * leaves *outNBElement holding %K's count, and the copy would then overrun
-       * outSlowK by lookbackDSlow (issue #269).
-       */
       if( retCode != RetCode.Success ) {
          /* Something wrong happen while processing %D? */
          if( (bufferIsAllocated) != 0 ) {
@@ -1252,10 +1248,6 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
-      /* The rejection is answered before the copy, never after: a rejected ma()
-       * leaves *outNBElement holding %K's count, and the copy would then overrun
-       * outSlowK by lookbackDSlow (issue #269).
-       */
       if( retCode != RetCode.Success ) {
          /* Something wrong happen while processing %D? */
          if( (bufferIsAllocated) != 0 ) {

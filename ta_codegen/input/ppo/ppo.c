@@ -62,7 +62,11 @@ TA_RetCode ppo(int startIdx, int endIdx,
    /* Allocate an intermediate buffer. */
    tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
    if( !tempBuffer )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
       return TA_ALLOC_ERR;
+   }
 
    /* Make sure slow is really slower than
     * the fast period! if not, swap...

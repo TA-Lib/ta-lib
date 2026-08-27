@@ -292,11 +292,17 @@ TA_RetCode bbands(int startIdx, int endIdx,
 
    tempBuffer1 = malloc((endIdx-startIdx+1) * sizeof(double));
    if( !tempBuffer1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
       return TA_ALLOC_ERR;
+   }
    tempBuffer2 = malloc((endIdx-startIdx+1) * sizeof(double));
    if( !tempBuffer2 )
    {
       free( tempBuffer1 );
+      *outBegIdx = 0;
+      *outNBElement = 0;
       return TA_ALLOC_ERR;
    }
 

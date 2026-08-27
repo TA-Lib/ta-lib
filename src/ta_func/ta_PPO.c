@@ -145,6 +145,8 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    /* Make sure slow is really slower than
@@ -244,6 +246,8 @@ TA_RetCode TA_S_PPO( int    startIdx,
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    if( optInSlowPeriod < optInFastPeriod )

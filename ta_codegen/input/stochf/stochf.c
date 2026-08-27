@@ -158,6 +158,8 @@ TA_RetCode stochf(int startIdx, int endIdx,
       tempBuffer = malloc((endIdx-today+1) * sizeof(double));
       if( !tempBuffer )
       {
+         *outBegIdx = 0;
+         *outNBElement = 0;
          return TA_ALLOC_ERR;
       }
    }

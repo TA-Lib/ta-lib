@@ -145,6 +145,8 @@ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
    adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
    if( !adx )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    /* Compute ADX over a range that starts (period-1) bars earlier, so each
@@ -221,6 +223,8 @@ TA_RetCode TA_S_ADXR( int    startIdx,
    adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
    if( !adx )
    {
+      *outBegIdx= 0;
+      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    retCode = TA_S_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);

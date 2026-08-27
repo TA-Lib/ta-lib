@@ -246,6 +246,8 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
       tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
       if( !tempBuffer )
       {
+         *outBegIdx= 0;
+         *outNBElement= 0;
          return TA_ALLOC_ERR;
       }
    }
@@ -445,6 +447,8 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
       if( !tempBuffer )
       {
+         *outBegIdx= 0;
+         *outNBElement= 0;
          return TA_ALLOC_ERR;
       }
    }
