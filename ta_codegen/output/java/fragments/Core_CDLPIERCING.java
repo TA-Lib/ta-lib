@@ -717,7 +717,9 @@
     * to {@link Core#CDLPIERCING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLPIERCING_Stream#outRange()}.
     */
@@ -728,7 +730,11 @@
       requireArgument("CDLPIERCING openAndFill", "inHigh", inHigh);
       requireArgument("CDLPIERCING openAndFill", "inLow", inLow);
       requireArgument("CDLPIERCING openAndFill", "inClose", inClose);
-      requireArgument("CDLPIERCING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLPIERCING openAndFill", inOpen.length, CDLPIERCING_Lookback());
+      requireHistoryLength("CDLPIERCING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLPIERCING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLPIERCING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

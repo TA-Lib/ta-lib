@@ -492,6 +492,172 @@ public static class StreamApiTest
         }
     }
 
+
+    /// <summary>Rule B6a at the opener: an empty span declines
+    /// <c>outFAMA</c>, and declining changes nothing but the write.</summary>
+    /// <remarks>Non-vacuous in three directions. The supplied run is the oracle,
+    /// so a fill that stopped computing FAMA when it is declined — the easy way
+    /// to "support" this — fails on <c>Value</c>, which the handle caches from
+    /// the same expression the guarded store writes. The declined run must still
+    /// reject an undersized <c>outMAMA</c>, so the conditional bound cannot have
+    /// been dropped wholesale. And a SUPPLIED but undersized <c>outFAMA</c> is
+    /// still rejected, so "declinable" did not become "unchecked".</remarks>
+    private static void ADeclinedFillOutputIsStillComputed()
+    {
+        var core = new Core();
+        double[] closes = Closes(252);
+        int produced = closes.Length - core.MAMA_Lookback(0.5, 0.05);
+
+        var refMama = new double[produced];
+        var refFama = new double[produced];
+        Core.MAMA_Stream both = core.MAMA_OpenAndFill(closes, 0.5, 0.05, refMama, refFama);
+
+        var soloMama = new double[produced];
+        Core.MAMA_Stream declined = core.MAMA_OpenAndFill(closes, 0.5, 0.05, soloMama, default);
+
+        _b6a++;
+        Check(refMama.AsSpan().SequenceEqual(soloMama),
+            "declining outFAMA leaves outMAMA bit-identical");
+        Check(both.OutRange.BegIdx == declined.OutRange.BegIdx
+              && both.OutRange.Count == declined.OutRange.Count,
+            "declining outFAMA leaves the reported range unchanged");
+        _b6a++;
+        Check(BitConverter.DoubleToInt64Bits(both.Value.FAMA)
+              == BitConverter.DoubleToInt64Bits(declined.Value.FAMA),
+            "a declined outFAMA is still computed: the handle reports it");
+        _b6a++;
+        Check(BitConverter.DoubleToInt64Bits(refFama[produced - 1])
+              == BitConverter.DoubleToInt64Bits(declined.Value.FAMA),
+            "and it is the value the supplied run wrote last");
+        _b6a++;
+
+        CheckThrows<ArgumentException>(
+            () => core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced - 1], default),
+            "an undersized outMAMA is still rejected when outFAMA is declined");
+        _b6a++;
+        CheckThrows<ArgumentException>(
+            () => core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced],
+                      new double[produced - 1]),
+            "a supplied outFAMA is still bounded");
+        _b6a++;
+    }
+
+    /// <summary>Rule S5, from both sides. The bound is
+    /// <c>historyLen - lookback</c> — the count the fill actually writes, not
+    /// the width of the history — so an exactly-sized output has to be ACCEPTED
+    /// and one element shorter REJECTED. Only the pair pins the arithmetic: a
+    /// bound of <c>historyLen</c> would reject the first, and no bound at all
+    /// would accept the second.</summary>
+    /// <remarks>An undersized output used to fault inside the fill with an
+    /// <c>IndexOutOfRangeException</c>, the buffer already partly written.</remarks>
+    private static void TheFillOutputBoundFromBothSides()
+    {
+        var core = new Core();
+        double[] closes = Closes(252);
+        int lookback = core.SMA_Lookback(30);
+        int produced = closes.Length - lookback;
+
+        Check(lookback == 29, "the probe needs a lookback it can be one short of");
+        Check(produced < closes.Length, "the produced count is shorter than the history");
+
+        var exact = new double[produced];
+        Core.SMA_Stream h = core.SMA_OpenAndFill(closes, 30, exact);
+        Check(h.OutRange.BegIdx == lookback, "the fill starts at the lookback");
+        Check(h.OutRange.Count == produced, "the fill wrote exactly the bound");
+
+        CheckThrows<ArgumentException>(
+            () => core.SMA_OpenAndFill(closes, 30, new double[produced - 1]),
+            "one element short of the produced count throws ArgumentException");
+        CheckRetCode(() => core.SMA_OpenAndFill(closes, 30, new double[produced - 1]),
+                     RetCode.BadParam,
+                     "an undersized fill output carries BadParam");
+        _s5++;
+
+        // A rejected fill writes nothing: the check is ahead of the numerics,
+        // not a report from inside them.
+        var shortOut = new double[produced - 1];
+        Array.Fill(shortOut, -3e37);
+        try
+        {
+            core.SMA_OpenAndFill(closes, 30, shortOut);
+            Check(false, "expected the undersized fill to be rejected");
+        }
+        catch (ArgumentException)
+        {
+            bool untouched = true;
+            foreach (double v in shortOut)
+            {
+                if (v != -3e37) { untouched = false; }
+            }
+            Check(untouched, "a rejected fill leaves the output as it found it");
+        }
+
+        // An oversized output is legal and bit-identical: the bound is a
+        // minimum, which is what says the exact case above was not luck.
+        var roomy = new double[closes.Length];
+        core.SMA_OpenAndFill(closes, 30, roomy);
+        bool same = true;
+        for (int i = 0; i < produced; i++)
+        {
+            if (BitConverter.DoubleToInt64Bits(exact[i]) != BitConverter.DoubleToInt64Bits(roomy[i]))
+            {
+                same = false;
+            }
+        }
+        Check(same, "the exactly-sized fill is bit-identical to the roomy one");
+    }
+
+    /// <summary>The same bound on the tiers that hand-roll their own fill: the
+    /// dispatch tier (including its identity arm, whose lookback is 0), the
+    /// period bank, and a composed multi-output whose output spans double as its
+    /// sub-calls' scratch — each output bounded separately.</summary>
+    private static void TheFillOutputBoundHoldsOnEveryTier()
+    {
+        var core = new Core();
+        double[] closes = Closes(252);
+        var periods = new double[252];
+        Array.Fill(periods, 5.0);
+
+        foreach (int period in new[] { 30, 1 })
+        {
+            int lb = core.MA_Lookback(period, MAType.EMA);
+            int produced = closes.Length - lb;
+            core.MA_OpenAndFill(closes, period, MAType.EMA, new double[produced]);
+            CheckThrows<ArgumentException>(
+                () => core.MA_OpenAndFill(closes, period, MAType.EMA, new double[produced - 1]),
+                "MA one short of the bound");
+            _s5++;
+        }
+
+        int mavpLb = core.MAVP_Lookback(2, 30, MAType.SMA);
+        int mavpProduced = closes.Length - mavpLb;
+        core.MAVP_OpenAndFill(closes, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
+        CheckThrows<ArgumentException>(
+            () => core.MAVP_OpenAndFill(closes, periods, 2, 30, MAType.SMA,
+                new double[mavpProduced - 1]),
+            "MAVP one short of the bound");
+        _s5++;
+
+        int bbLb = core.BBANDS_Lookback(20, 2.0, 2.0, MAType.SMA);
+        int bbProduced = closes.Length - bbLb;
+        core.BBANDS_OpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
+            new double[bbProduced], new double[bbProduced], new double[bbProduced]);
+        CheckThrows<ArgumentException>(
+            () => core.BBANDS_OpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
+                new double[bbProduced], new double[bbProduced], new double[bbProduced - 1]),
+            "each output is bounded separately");
+        _s5++;
+
+        // A history too short to produce anything is still S7, whatever the
+        // output holds: the bound floors at zero rather than going negative.
+        CheckThrows<InsufficientHistoryException>(
+            () => core.SMA_OpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
+            "a short history reaches the warm-up check, not the capacity one");
+
+        // The floors for this method and the declined-output one live in Run(),
+        // where a deleted CALL cannot take its own floor with it.
+    }
+
     /// <summary>int.MinValue selects the documented default, as in batch.</summary>
     private static void IntegerSentinelSelectsTheDocumentedDefault()
     {
@@ -672,6 +838,12 @@ public static class StreamApiTest
 
     /* Non-finite counters, incremented AT the assertion rather than derived
        from the loop, so deleting the assertions inside shows up here. */
+    /* Rule S5's own counter and floor: sharing the non-finite ones would let a
+       deleted capacity case hide behind a bar-rejection one. */
+    private static int _s5;
+    /* Rule B6a at the opener — a declined output, counted apart from S5's. */
+    private static int _b6a;
+
     private static int _nfOpen;
     private static int _nfBar;
     private static int _nfState;
@@ -1141,6 +1313,13 @@ public static class StreamApiTest
         MisuseThrowsTheDocumentedException();
         OpenAndFillRejectsAliasing();
         NullArgumentsAreNamed();
+        TheFillOutputBoundFromBothSides();
+        ADeclinedFillOutputIsStillComputed();
+        TheFillOutputBoundHoldsOnEveryTier();
+        // Literal floors, HERE and not inside the methods above: a floor that
+        // rides its own method is deleted along with the call it guards.
+        Check(_s5 >= 5, $"the fill-capacity gate ran fewer checks than it was written with ({_s5})");
+        Check(_b6a >= 6, $"the declined-output gate ran fewer checks than it was written with ({_b6a})");
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();
         UpdateDoesNotAllocate();

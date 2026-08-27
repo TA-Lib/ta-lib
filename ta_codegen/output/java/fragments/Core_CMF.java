@@ -880,7 +880,9 @@
     * to {@link Core#CMF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CMF_Stream#outRange()}.
     */
@@ -891,7 +893,11 @@
       requireArgument("CMF openAndFill", "inLow", inLow);
       requireArgument("CMF openAndFill", "inClose", inClose);
       requireArgument("CMF openAndFill", "inVolume", inVolume);
-      requireArgument("CMF openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CMF openAndFill", inHigh.length, CMF_Lookback(optInTimePeriod));
+      requireHistoryLength("CMF openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CMF openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("CMF openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("CMF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("CMF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

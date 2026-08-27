@@ -1302,14 +1302,32 @@ impl Core {
 
     /// [`Core::HT_PHASOR_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::HT_PHASOR`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::HT_PHASOR_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_HT_PHASOR_OpenAndFill")]
     pub fn HT_PHASOR_OpenAndFill(
         &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<(HT_PHASOR_Stream, OutRange), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inReal.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.HT_PHASOR_Lookback()?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outInPhase.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outQuadrature.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         if !outInPhase.is_empty() && !outQuadrature.is_empty() && outInPhase.as_ptr() == outQuadrature.as_ptr() {
             return Err(RetCode::BadParam);
         }

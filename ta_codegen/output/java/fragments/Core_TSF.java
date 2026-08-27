@@ -1018,7 +1018,9 @@
     * to {@link Core#TSF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TSF_Stream#outRange()}.
     */
@@ -1026,7 +1028,8 @@
    {
       requireArgument("TSF openAndFill", "inReal", inReal);
       requireHistory("TSF openAndFill", inReal.length);
-      requireArgument("TSF openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TSF openAndFill", inReal.length, TSF_Lookback(optInTimePeriod));
+      requireLength("TSF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

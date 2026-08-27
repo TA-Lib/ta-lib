@@ -807,7 +807,9 @@
     * to {@link Core#MINMAXINDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MINMAXINDEX_Stream#outRange()}.
     */
@@ -815,8 +817,9 @@
    {
       requireArgument("MINMAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MINMAXINDEX openAndFill", inReal.length);
-      requireArgument("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx);
-      requireArgument("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx);
+      int guardOutLen = openFillCount("MINMAXINDEX openAndFill", inReal.length, MINMAXINDEX_Lookback(optInTimePeriod));
+      requireLength("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx, guardOutLen);
+      requireLength("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx, guardOutLen);
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
          throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

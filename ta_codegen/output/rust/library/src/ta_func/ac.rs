@@ -583,9 +583,6 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if inLow.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 5;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -599,6 +596,9 @@ impl Core {
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 5;
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -851,14 +851,32 @@ impl Core {
 
     /// [`Core::AC_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::AC`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::AC_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_AC_OpenAndFill")]
     pub fn AC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outReal: &mut [f64],
     ) -> Result<(AC_Stream, OutRange), RetCode> {
+        if inHigh.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inHigh.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        if inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        let _guardOutLen = inHigh.len().saturating_sub(_guardLb);
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.AC_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outReal)?;

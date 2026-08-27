@@ -1214,6 +1214,7 @@
    {
       requireArgument("BBANDS open", "inReal", inReal);
       requireHistory("BBANDS open", inReal.length);
+      requireArgument("BBANDS open", "optInMAType", optInMAType);
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
    /**
@@ -1221,7 +1222,9 @@
     * to {@link Core#BBANDS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link BBANDS_Stream#outRange()}.
     */
@@ -1229,9 +1232,11 @@
    {
       requireArgument("BBANDS openAndFill", "inReal", inReal);
       requireHistory("BBANDS openAndFill", inReal.length);
-      requireArgument("BBANDS openAndFill", "outRealUpperBand", outRealUpperBand);
-      requireArgument("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand);
-      requireArgument("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand);
+      requireArgument("BBANDS openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("BBANDS openAndFill", inReal.length, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      requireLength("BBANDS openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
+      requireLength("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+      requireLength("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          throw new TaLibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

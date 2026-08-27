@@ -1572,7 +1572,9 @@
     * to {@link Core#SAREXT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SAREXT_Stream#outRange()}.
     */
@@ -1581,7 +1583,9 @@
       requireArgument("SAREXT openAndFill", "inHigh", inHigh);
       requireHistory("SAREXT openAndFill", inHigh.length);
       requireArgument("SAREXT openAndFill", "inLow", inLow);
-      requireArgument("SAREXT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SAREXT openAndFill", inHigh.length, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

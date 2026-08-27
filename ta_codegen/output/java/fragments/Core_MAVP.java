@@ -1044,6 +1044,7 @@
    {
       requireArgument("MAVP open", "inReal", inReal);
       requireHistory("MAVP open", inReal.length);
+      requireArgument("MAVP open", "optInMAType", optInMAType);
       requireArgument("MAVP open", "inPeriods", inPeriods);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
@@ -1052,7 +1053,9 @@
     * to {@link Core#MAVP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MAVP_Stream#outRange()}.
     */
@@ -1060,8 +1063,11 @@
    {
       requireArgument("MAVP openAndFill", "inReal", inReal);
       requireHistory("MAVP openAndFill", inReal.length);
+      requireArgument("MAVP openAndFill", "optInMAType", optInMAType);
       requireArgument("MAVP openAndFill", "inPeriods", inPeriods);
-      requireArgument("MAVP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MAVP openAndFill", inReal.length, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+      requireHistoryLength("MAVP openAndFill", "inPeriods", inPeriods.length, inReal.length);
+      requireLength("MAVP openAndFill", "outReal", outReal, guardOutLen);
       MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

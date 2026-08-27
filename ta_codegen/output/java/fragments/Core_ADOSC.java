@@ -839,7 +839,9 @@
     * to {@link Core#ADOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADOSC_Stream#outRange()}.
     */
@@ -850,7 +852,11 @@
       requireArgument("ADOSC openAndFill", "inLow", inLow);
       requireArgument("ADOSC openAndFill", "inClose", inClose);
       requireArgument("ADOSC openAndFill", "inVolume", inVolume);
-      requireArgument("ADOSC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADOSC openAndFill", inHigh.length, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+      requireHistoryLength("ADOSC openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADOSC openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("ADOSC openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("ADOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -1216,7 +1216,9 @@
     * to {@link Core#CDLADVANCEBLOCK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLADVANCEBLOCK_Stream#outRange()}.
     */
@@ -1227,7 +1229,11 @@
       requireArgument("CDLADVANCEBLOCK openAndFill", "inHigh", inHigh);
       requireArgument("CDLADVANCEBLOCK openAndFill", "inLow", inLow);
       requireArgument("CDLADVANCEBLOCK openAndFill", "inClose", inClose);
-      requireArgument("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLADVANCEBLOCK openAndFill", inOpen.length, CDLADVANCEBLOCK_Lookback());
+      requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

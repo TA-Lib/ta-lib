@@ -751,7 +751,9 @@
     * to {@link Core#TRIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TRIX_Stream#outRange()}.
     */
@@ -759,7 +761,8 @@
    {
       requireArgument("TRIX openAndFill", "inReal", inReal);
       requireHistory("TRIX openAndFill", inReal.length);
-      requireArgument("TRIX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, TRIX_Lookback(optInTimePeriod));
+      requireLength("TRIX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

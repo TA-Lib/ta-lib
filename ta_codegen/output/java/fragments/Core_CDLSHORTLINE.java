@@ -751,7 +751,9 @@
     * to {@link Core#CDLSHORTLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSHORTLINE_Stream#outRange()}.
     */
@@ -762,7 +764,11 @@
       requireArgument("CDLSHORTLINE openAndFill", "inHigh", inHigh);
       requireArgument("CDLSHORTLINE openAndFill", "inLow", inLow);
       requireArgument("CDLSHORTLINE openAndFill", "inClose", inClose);
-      requireArgument("CDLSHORTLINE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSHORTLINE openAndFill", inOpen.length, CDLSHORTLINE_Lookback());
+      requireHistoryLength("CDLSHORTLINE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSHORTLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

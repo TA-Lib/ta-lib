@@ -666,7 +666,9 @@
     * to {@link Core#MAXINDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MAXINDEX_Stream#outRange()}.
     */
@@ -674,7 +676,8 @@
    {
       requireArgument("MAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MAXINDEX openAndFill", inReal.length);
-      requireArgument("MAXINDEX openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, MAXINDEX_Lookback(optInTimePeriod));
+      requireLength("MAXINDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -80,7 +80,9 @@ defers the abstract tier, so no rule below produces any of the thirteen.
 *A buffer is too short* has no member of its own. Where it is detected it is
 reported as `TA_BAD_PARAM` (rule B5) — raised rather than returned, in the
 backends that raise (Appendix A); Rust returns it — and the ⚠️ on the code says C
-cannot detect it at all. Rule S5 reads *(none)* because no backend detects it.
+cannot detect it at all. Rule S5 carries the same code and the same ⚠️, for the
+same reason: three backends bound the fill's output, and C has no size to bound
+it against.
 
 **`OutRange`.** What a successful call reports about its own output: the index
 of the first value written, in the input series' coordinates, and how many values
@@ -170,7 +172,7 @@ has what happens instead.
 | S2 | The history is longer than `MAX_INDEX + 1` — the implied `endIdx` of `historyLen - 1` leaves the index domain | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] |
 | S3 | An optional parameter is outside its documented range | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | S4 | A required argument was not supplied — the handle, any declared input, any output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[6] | —<br>[2] |
-| S5 | (`OpenAndFill`) an output is too short for the fill | *(none)* | ⚠️<br>[3] | ❌<br>[7] | ❌<br>[7] | ❌<br>[7] |
+| S5 | A buffer is too short: every declared input must be the history's length, and an `OpenAndFill` output must hold `historyLen - lookback`, the count the fill writes | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>[7] | ✅<br>[7] | ✅<br>[7] |
 | S6 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | S7 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅<br>[8] | ✅<br>[8] | ✅<br>[8] | ✅<br>[8] |
 | S8 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [9] | — | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
@@ -186,7 +188,7 @@ stream at all (`TA_INSUFFICIENT_HISTORY`).
 Unlike the batch tier, `OpenAndFill` outputs may **not** be the same buffer as
 the inputs (no in-place execution).
 
-**Test Coverage** (S1, S2, S4 and S7; the rest of this tier is not yet mapped):
+**Test Coverage** (S1, S2, S4, S5 and S7; the rest of this tier is not yet mapped):
 `testStreamShortHistory` drives S1, S2's rejecting side and S7 in C — 9, 3 and 8
 rejections, with S7's 16 controls. Three of S1's cases are *also* an absent
 argument, which is what makes them about the order and not only the code.
@@ -201,6 +203,31 @@ covers the other 175. It reads the *core's* arm, which in Java and C# the public
 frame makes unreachable, so those two frames are covered corpus-wide by
 `java_public_openers_check_arguments_then_the_index_pair` and
 `csharp_public_openers_reject_an_empty_history_as_an_index_fault` instead.
+
+S5 is probed from **both sides** in each of the three backends that can express
+it — an exactly-sized output accepted and filled, one element shorter rejected —
+because only the pair pins the arithmetic: a bound of `historyLen` would reject
+the first, and no bound at all would accept the second. Each also drives the
+tiers that hand-roll their fill (the dispatch tier including its identity arm,
+the period bank, and a composed multi-output, whose sub-calls fill scratch of
+their own rather than the caller's arrays), and asserts that a rejected fill left
+the buffer untouched.
+Corpus-wide, the width is pinned by the three `*_public_*fill*` /
+`*_public_openers_*` gates in `backend_suite.rs`, which require it to be read
+from the function's own lookback rather than from the history's length, that the
+bound REJECT rather than merely exist, and that a `nullable` output be bounded
+conditionally while every other output is not.
+
+**A declined output** (rule B6a here, Appendix F) has its own probe in each of
+the three, beside S5's: `MAMA_OpenAndFill` with `outFAMA` declined must be
+accepted, must leave the other output and the reported range bit-identical to
+the supplied run, and must still report FAMA through the handle — the check that
+fails if a backend "supports" declining by not computing the value. Both bounds
+stay armed on that call: an undersized `outMAMA` beside a declined `outFAMA` is
+still rejected, and so is an undersized `outFAMA` that WAS supplied.
+`test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend` pins the
+emitted shape in all four on the PR gate, because the three runtime probes are
+nightly.
 
 [4] **The one check that precedes the pair** is not the same in each backend,
 and in each it is a precondition for evaluating the pair rather than an argument
@@ -219,18 +246,40 @@ legal upper edge, a history of exactly `MAX_INDEX + 1` bars, is out of reach
 everywhere for the same reason.
 
 [6] The presence checks sit on the public frame, because `<N>_OpenImpl` reads the
-history's length before anything else could look at it. Every output is required
-there, the one marked `nullable` included: unlike C's, this fill guards no output
-write, so declining one has never worked in this tier — naming it was the whole
-change, since the call was already rejected, by `NullPointerException`.
+history's length before anything else could look at it. An output marked
+`nullable` is the exception, as it is in the batch tier: it may be declined, and
+naming it was the whole change — the call used to be rejected either way, by
+`NullPointerException`.
 
-[7] No backend validates the fill output's capacity, in contrast with the batch
-tier which does (B5). An undersized or absent output faults inside the fill loop
-with the buffer already partly written — a raw index exception in Java and C#, a
-panic in Rust. A *zero-length* output is the same story: the opener's own S7
-check means the fill always has at least one value to write, so there is no
-legitimate empty output here as there is in the batch tier (rule N1), and all
-three fault rather than reject. Appendix D item 9.
+[7] **The input half first.** B5 states its two halves as one rule, inputs ahead
+of outputs, and this is B5 over `[0, historyLen - 1]`: the history's own length
+IS the range, so every other declared input is that length rather than merely
+reaching it — which is what the generated per-function docs have always
+promised. It is checked on the public frame for the same reason the output half
+is: the core makes the test too, but only after the capacity bound would have
+answered, so a short input series was reported as an output-capacity fault.
+
+**The output half** is B5's produced count read over the same range, which
+collapses it to `historyLen - lookback` — never the width of the history. It has
+no legitimate zero case the way B5 does: S7 refuses a history shorter than
+`lookback + 1`, so a fill that runs writes at least one value, and there is no
+empty output here as there is in the batch tier (rule N1). A short history is
+floored to zero so that it reaches S7; a lookback of `-1` is not floored but
+raised, which is what keeps S3 ahead of the buffer rules — the same thing the
+batch tier's `clampedStart` does.
+
+It sits on the **public** frame, never on `<N>_OpenAndFillInternal`: that seam
+takes an anchor and writes `historyLen - max(lookback, startIdx)` — fewer — so
+the same bound there would reject the composed sub-calls that pass a non-zero
+anchor. It would also be redundant: a composed destination is proved disjoint by
+`SubCallStep::is_fusable` and sized by construction, the generator having
+allocated it. The frame reads the count from the function's own `<N>_Lookback`,
+whose default substitution and range validation come with it.
+
+An output marked `nullable` is bounded only when it is supplied — rule B6a read
+on this tier, and the same conditional the batch wrapper emits. Declining one is
+not a capacity fault: the value is still computed, the handle still reports it,
+and nothing is written out (footnote [6], Appendix F).
 
 [8] All four converge on `TA_INSUFFICIENT_HISTORY`, which leaves a history
 *longer* than `MAX_INDEX + 1` (rule S2) as the only producer of
@@ -251,10 +300,11 @@ untouched: a bar handed to `Update` or `Peek` is a single value.
 their own lengths, so "negative" is unrepresentable.
 
 [11] C is handed bare pointers and has no sizes — the same blind spot as B5 and
-S5. The other three answer both before committing anything, which makes
-`UpdateAndFill` the one filling entry point whose output capacity IS validated
-outside C; `OpenAndFill`'s (S5) still is not, and closing that is Appendix D
-item 9.
+S5, and ⚠️ for the same reason they are: a property of the ABI rather than a
+defect, so there is nothing here for Appendix D to track. The other three answer
+both before committing anything. `OpenAndFill`'s output capacity (S5) is now
+validated outside C as well, so the two filling entry points agree; until #268's
+follow-up `UpdateAndFill` was the only one that checked.
 
 [12] Rust cannot express it: `&[f64]` and `&mut [f64]` cannot alias, so the
 borrow checker rejects the call at compile time.
@@ -267,8 +317,8 @@ borrow checker rejects the call at compile time.
 | U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
 | U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[10] | n/a<br>[10] | n/a<br>[10] |
-| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ❌<br>[11] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ❌<br>[11] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ⚠️<br>[11] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ⚠️<br>[11] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[12] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
@@ -404,9 +454,9 @@ of whatever sits next in the heap.
 C alone. Rust returns `BadParam` from the public entry point, Java and C#
 reject the call naming the buffer and both sizes, and behind Rust's check the
 same bound is asserted for LLVM — a panic, never memory corruption, since the
-crate forbids `unsafe`. The one gap the three share is `OpenAndFill`'s output
-(S5), which none of them checks either; there the failure is a raw index
-exception or a panic rather than undefined behaviour (Appendix D item 9).
+crate forbids `unsafe`. `OpenAndFill`'s output is checked the same way and for
+the same reason (rule S5); C is the one backend that cannot, so an undersized
+fill output there lands in this section beside the batch case.
 
 ### Buffers that partially overlap
 
@@ -438,11 +488,11 @@ carries `ParamName` `"startIdx"`, an opener's carries the history series
 (`"inReal"`, `"inHigh"`, …), which is the argument a caller can actually change.
 Type and code are the table's.
 
-S2 is the table's in Java and **is not** in C#: Java's opener answers it from the
-same frame as S1, C#'s from the core, through the shared streaming ladder whose
-default arm is `ArgumentException` — no `ParamName`, and not the
-`ArgumentOutOfRangeException` the table names. Unprobed for the same reason it is
-⚠️ in rule S2 (footnote [5]): reaching it needs a 100 000 001-element span.
+S2 is the table's in Java and in C#: both openers answer it from the same frame
+as S1, and C#'s throws the `ArgumentOutOfRangeException` the table names rather
+than leaving it to the core's shared streaming ladder. Unprobed in both for the
+reason rule S2 is ⚠️ there (footnote [5]): reaching it needs a
+100 000 001-element array.
 
 **Where the `OutRange` arrives** differs by tier as well as by backend:
 
@@ -589,6 +639,7 @@ Each ✅ rests on two independent checks; neither alone is enough.
    | Empty-history arm reports `TA_OUT_OF_RANGE_START_INDEX` | every opener arm in all four backends, no backend mixing it with anything else |
    | Java public opener: the history's null test, then the index pair, then every other argument | 176 `Open` + 176 `OpenAndFill` |
    | C# public opener: an empty history is the index fault, ahead of every other input | 176 `Open` + 176 `OpenAndFill` |
+   | Rust/Java/C# public `OpenAndFill`: every output bounded by `historyLen - <N>_Lookback(...)` | 176 per backend |
 
    Every 352 is the 176 definitions in `ta_codegen/input/` × the double and
    float overloads, so the float surface is covered by the same evidence.
@@ -633,10 +684,15 @@ Named so their absence is deliberate rather than an oversight.
 
 ## Appendix D — Open items
 
-Every ❌ above, collected, plus a message-level deviation (item 7) and one that
-no rule row can carry, now fixed: a divergence on a call every rule says is
-legal (item 11). Numbering is append-only — a retired item leaves a gap rather
-than renumbering the rest. Each is measured, not inferred.
+Every ❌ above, collected — there are none left — plus a message-level deviation
+(item 7) and one that no rule row can carry: a divergence on a call every rule
+says is legal (item 11). Numbering is append-only — a retired item leaves a gap
+rather than renumbering the rest. Each was measured, not inferred.
+
+A `⚠️` is not tracked here. It marks a deviation that is deliberate, or a rule
+implemented but not covered by a CI probe; the rule's own footnote says which.
+The four places C carries one for a buffer size (B5, S5, U5, U6) are the same
+fact each time: C is handed bare pointers and has no sizes to check against.
 
 | # | Backend | Rule | Defect |
 |---|---|---|---|
@@ -648,19 +704,23 @@ than renumbering the rest. Each is measured, not inferred.
 | ~~6~~ | Java | S4 | *Fixed.* A null history, or a null `OpenAndFill` output, yielded a raw JVM exception from inside the algorithm — the length was read straight off the array, and an output faulted in the fill loop. The public openers now check every argument, and item 13 fixed the order they are checked in. |
 | ~~7~~ | C# | S1 | *Fixed.* The empty-history *message* omitted the cross-language `<NAME> open: ` prefix. Taken with item 13, as predicted: the two were faults of one line. |
 | ~~8~~ | all | S7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S2) down with it — see footnote [8]. |
-| 9 | Rust, Java, C# | S5 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. The guard now excludes empty operands in both tiers (#262), so Rust faults here like the rest. One fewer answer to a call this item already says nobody validates; the item itself is unchanged. |
+| ~~9~~ | Rust, Java, C# | S5 | *Fixed.* `OpenAndFill` validated no output capacity, unlike the batch tier which does, so an undersized output faulted inside the fill with the buffer already partly written — a raw index exception in Java and C#, a panic in Rust. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`, the count the fill writes. (C still cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. #262 excluded empty operands from both guards, and now the capacity check answers that shape and every other one alike. |
 | ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
 | ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
 | ~~13~~ | all | S1 | *Fixed.* An empty history answered `TA_BAD_PARAM` where S1 specifies `TA_OUT_OF_RANGE_START_INDEX`, and the index pair was not evaluated first: C checked argument presence (S4) ahead of it, so a call that was both an absent output and an empty history reported S4's code — and a caller who fixed that argument got the same rejection back for a reason nothing had mentioned. All four openers now answer the pair ahead of every presence check, except for the one check each language makes a precondition of reading the length at all (footnote [4]). What was measured on a zero-length history before: `TA_BAD_PARAM` in C, `Err(BadParam)` in Rust, `TaLibArgumentException` carrying `BadParam` in Java, `ArgumentException` in C#. |
 
-Item 9 is the one that still changes what a *correct* caller can do: it turns a
-sizing mistake into a partly-written buffer. (Item 8 was the other; a caller can
-now tell "send more bars" from "your code is wrong" and retry.)
+**Nothing is left.** Items 6, 7 and 13 went with #268, which took all three at
+once because they were the same prologue; item 9 followed it, for the same
+reason — the frame the three of them had just been moved onto is the frame that
+knows the history's length, and calling `<N>_Lookback` there is what turns that
+into a width.
 
-**One is left, and nothing sequences it.** Items 6, 7 and 13 went with #268,
-which took all three at once because they were the same prologue; item 9 is the
-`OpenAndFill` output capacity nobody validates, and it is independent of
-everything above.
+The two that changed what a *correct* caller could do are both closed: item 8
+let a caller tell "send more bars" from "your code is wrong" and retry, and item
+9 stopped a sizing mistake from becoming a partly-written buffer.
+
+This appendix is empty of open items for the first time. Numbering stays
+append-only, so the next one starts at 14.
 
 ---
 
@@ -735,6 +795,16 @@ so the presence and capacity checks are skipped for that output and the body's
 writes to it are guarded instead. Everything else is unchanged — the value is
 still computed where the algorithm needs it, and the other outputs are
 bit-identical to the same call with the output supplied.
+
+**The opener honours it too.** A streaming `OpenAndFill` accepts a declined output
+exactly as the batch call does: rule S5's capacity bound is skipped for it, the
+fill's writes to it are guarded, and the handle still reports its value — the
+handle caches what the guarded store would have written, so `value()` is the
+same whether the output was supplied or not. `MA`'s `MAMA` arm is the caller
+that proves it: it declines `outFAMA` outright in all four backends, where three
+of them used to allocate a `historyLen`-sized buffer per open and throw it away.
+`UpdateAndFill` is not covered: only C accepts a declined output there, and
+nothing in this document claims otherwise.
 
 **How a caller spells "omitted" is not the same in every language.** Three of the
 four can say it outright; C# cannot, and does not need to:

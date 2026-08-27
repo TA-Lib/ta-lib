@@ -656,7 +656,9 @@
     * to {@link Core#QSTICK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link QSTICK_Stream#outRange()}.
     */
@@ -665,7 +667,9 @@
       requireArgument("QSTICK openAndFill", "inOpen", inOpen);
       requireHistory("QSTICK openAndFill", inOpen.length);
       requireArgument("QSTICK openAndFill", "inClose", inClose);
-      requireArgument("QSTICK openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("QSTICK openAndFill", inOpen.length, QSTICK_Lookback(optInTimePeriod));
+      requireHistoryLength("QSTICK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("QSTICK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

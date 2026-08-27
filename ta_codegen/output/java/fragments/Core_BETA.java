@@ -1610,7 +1610,9 @@
     * to {@link Core#BETA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link BETA_Stream#outRange()}.
     */
@@ -1619,7 +1621,9 @@
       requireArgument("BETA openAndFill", "inReal0", inReal0);
       requireHistory("BETA openAndFill", inReal0.length);
       requireArgument("BETA openAndFill", "inReal1", inReal1);
-      requireArgument("BETA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("BETA openAndFill", inReal0.length, BETA_Lookback(optInTimePeriod));
+      requireHistoryLength("BETA openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("BETA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

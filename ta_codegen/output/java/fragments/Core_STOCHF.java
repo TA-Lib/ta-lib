@@ -1250,6 +1250,7 @@
    {
       requireArgument("STOCHF open", "inHigh", inHigh);
       requireHistory("STOCHF open", inHigh.length);
+      requireArgument("STOCHF open", "optInFastD_MAType", optInFastD_MAType);
       requireArgument("STOCHF open", "inLow", inLow);
       requireArgument("STOCHF open", "inClose", inClose);
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -1259,7 +1260,9 @@
     * to {@link Core#STOCHF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STOCHF_Stream#outRange()}.
     */
@@ -1267,10 +1270,14 @@
    {
       requireArgument("STOCHF openAndFill", "inHigh", inHigh);
       requireHistory("STOCHF openAndFill", inHigh.length);
+      requireArgument("STOCHF openAndFill", "optInFastD_MAType", optInFastD_MAType);
       requireArgument("STOCHF openAndFill", "inLow", inLow);
       requireArgument("STOCHF openAndFill", "inClose", inClose);
-      requireArgument("STOCHF openAndFill", "outFastK", outFastK);
-      requireArgument("STOCHF openAndFill", "outFastD", outFastD);
+      int guardOutLen = openFillCount("STOCHF openAndFill", inHigh.length, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      requireHistoryLength("STOCHF openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCHF openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("STOCHF openAndFill", "outFastK", outFastK, guardOutLen);
+      requireLength("STOCHF openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
          throw new TaLibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -807,6 +807,7 @@
    {
       requireArgument("STOCHRSI open", "inReal", inReal);
       requireHistory("STOCHRSI open", inReal.length);
+      requireArgument("STOCHRSI open", "optInFastD_MAType", optInFastD_MAType);
       return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
@@ -814,7 +815,9 @@
     * to {@link Core#STOCHRSI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STOCHRSI_Stream#outRange()}.
     */
@@ -822,8 +825,10 @@
    {
       requireArgument("STOCHRSI openAndFill", "inReal", inReal);
       requireHistory("STOCHRSI openAndFill", inReal.length);
-      requireArgument("STOCHRSI openAndFill", "outFastK", outFastK);
-      requireArgument("STOCHRSI openAndFill", "outFastD", outFastD);
+      requireArgument("STOCHRSI openAndFill", "optInFastD_MAType", optInFastD_MAType);
+      int guardOutLen = openFillCount("STOCHRSI openAndFill", inReal.length, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      requireLength("STOCHRSI openAndFill", "outFastK", outFastK, guardOutLen);
+      requireLength("STOCHRSI openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
          throw new TaLibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

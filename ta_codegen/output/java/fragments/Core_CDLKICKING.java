@@ -824,7 +824,9 @@
     * to {@link Core#CDLKICKING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLKICKING_Stream#outRange()}.
     */
@@ -835,7 +837,11 @@
       requireArgument("CDLKICKING openAndFill", "inHigh", inHigh);
       requireArgument("CDLKICKING openAndFill", "inLow", inLow);
       requireArgument("CDLKICKING openAndFill", "inClose", inClose);
-      requireArgument("CDLKICKING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLKICKING openAndFill", inOpen.length, CDLKICKING_Lookback());
+      requireHistoryLength("CDLKICKING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLKICKING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLKICKING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLKICKING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

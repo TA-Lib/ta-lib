@@ -662,10 +662,14 @@ impl Core {
 
     /// [`Core::MA_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::MA`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::MA_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_MA_OpenAndFill")]
     pub fn MA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
@@ -683,6 +687,11 @@ impl Core {
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
+        }
+        let _guardLb = self.MA_Lookback(optInTimePeriod, optInMAType)?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
@@ -728,7 +737,7 @@ impl Core {
                 (MA_Sub::KAMA(sub), fillRange)
             }
             MAType::MAMA => {
-                let (sub, fillRange) = self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, &mut vec![0.0_f64; inReal.len()][..])?;
+                let (sub, fillRange) = self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, None)?;
                 (MA_Sub::MAMA(sub), fillRange)
             }
             MAType::T3 => {
@@ -807,7 +816,7 @@ impl Core {
                 self.KAMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
             MAType::MAMA => MA_Sub::MAMA(
-                self.MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
+                self.MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, None)?,
             ),
             MAType::T3 => MA_Sub::T3(
                 self.T3_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,

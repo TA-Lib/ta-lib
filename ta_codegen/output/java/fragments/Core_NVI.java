@@ -575,7 +575,9 @@
     * to {@link Core#NVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link NVI_Stream#outRange()}.
     */
@@ -584,7 +586,9 @@
       requireArgument("NVI openAndFill", "inClose", inClose);
       requireHistory("NVI openAndFill", inClose.length);
       requireArgument("NVI openAndFill", "inVolume", inVolume);
-      requireArgument("NVI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("NVI openAndFill", inClose.length, NVI_Lookback());
+      requireHistoryLength("NVI openAndFill", "inVolume", inVolume.length, inClose.length);
+      requireLength("NVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

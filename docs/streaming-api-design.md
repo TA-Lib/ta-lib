@@ -193,8 +193,8 @@ one at a time.
 
 The alternative was to read the `n` bars as an input *array* — never scanned,
 `count += n` unconditionally, marginally faster. It was rejected because the two
-reasons the warm-up scan was deleted (`docs/error-handling-spec.md` footnote
-[17]) both stop applying here. That scan was an extra pass over caller memory;
+reasons the warm-up scan was deleted (`docs/error-handling-spec.md`, the
+withdrawn rule S8) both stop applying here. That scan was an extra pass over caller memory;
 this check is a comparison on a value the loop has already loaded to step on.
 And a partial fill was unacceptable in `OpenAndFill` because it leaves no handle
 and a half-written array with nothing to describe it, where here it leaves `k`
@@ -436,8 +436,11 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
 - Open rejections are unchecked exceptions: `InsufficientHistoryException`
   (an `IllegalArgumentException` subclass — the one routine, data-dependent
   condition, catchable separately) for `historyLen < lookback + 1`, plain
-  `IllegalArgumentException` for out-of-range parameters and `OpenAndFill`
-  aliasing, `IllegalStateException` for capture invariants. Messages carry the
+  `IllegalArgumentException` for out-of-range parameters, an absent argument, an
+  input series that is not the history's length, an `OpenAndFill` output too
+  short for the fill, and `OpenAndFill` aliasing; `IllegalStateException` for
+  capture invariants. An empty history and one past `MAX_INDEX + 1` are the two
+  index faults, and carry the range codes (`docs/error-handling-spec.md` §2.3). Messages carry the
   stable prefix `"<NAME> open:"`. Post-open, `update`/`peek` throw only
   `IllegalArgumentException` on a non-finite bar (prefix `"<NAME> update:"` /
   `"<NAME> peek:"`), leaving the handle untouched.

@@ -819,7 +819,9 @@
     * to {@link Core#CDLUNIQUE3RIVER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLUNIQUE3RIVER_Stream#outRange()}.
     */
@@ -830,7 +832,11 @@
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inHigh", inHigh);
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inLow", inLow);
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inClose", inClose);
-      requireArgument("CDLUNIQUE3RIVER openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLUNIQUE3RIVER openAndFill", inOpen.length, CDLUNIQUE3RIVER_Lookback());
+      requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLUNIQUE3RIVER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

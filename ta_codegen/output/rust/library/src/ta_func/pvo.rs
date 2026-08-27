@@ -580,14 +580,29 @@ impl Core {
 
     /// [`Core::PVO_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::PVO`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::PVO_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_PVO_OpenAndFill")]
     pub fn PVO_OpenAndFill(
         &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(PVO_Stream, OutRange), RetCode> {
+        if inVolume.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inVolume.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
+        let _guardOutLen = inVolume.len().saturating_sub(_guardLb);
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.PVO_OpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal)?;

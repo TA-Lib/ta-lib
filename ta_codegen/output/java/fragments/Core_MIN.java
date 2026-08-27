@@ -771,7 +771,9 @@
     * to {@link Core#MIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MIN_Stream#outRange()}.
     */
@@ -779,7 +781,8 @@
    {
       requireArgument("MIN openAndFill", "inReal", inReal);
       requireHistory("MIN openAndFill", inReal.length);
-      requireArgument("MIN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MIN openAndFill", inReal.length, MIN_Lookback(optInTimePeriod));
+      requireLength("MIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

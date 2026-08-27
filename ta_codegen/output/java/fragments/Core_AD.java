@@ -540,7 +540,9 @@
     * to {@link Core#AD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AD_Stream#outRange()}.
     */
@@ -551,7 +553,11 @@
       requireArgument("AD openAndFill", "inLow", inLow);
       requireArgument("AD openAndFill", "inClose", inClose);
       requireArgument("AD openAndFill", "inVolume", inVolume);
-      requireArgument("AD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AD openAndFill", inHigh.length, AD_Lookback());
+      requireHistoryLength("AD openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("AD openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("AD openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("AD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

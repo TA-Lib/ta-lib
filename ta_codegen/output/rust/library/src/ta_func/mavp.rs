@@ -636,9 +636,6 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if inPeriods.len() != inReal.len() {
-            return Err(RetCode::BadParam);
-        }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
         } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
@@ -651,6 +648,9 @@ impl Core {
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
+        }
+        if inPeriods.len() != inReal.len() {
+            return Err(RetCode::BadParam);
         }
         // An inverted [min, max] period window is invalid (batch rejects).
         if optInMinPeriod > optInMaxPeriod {
@@ -720,10 +720,14 @@ impl Core {
 
     /// [`Core::MAVP_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::MAVP`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::MAVP_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_MAVP_OpenAndFill")]
     pub fn MAVP_OpenAndFill(
         &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
@@ -733,9 +737,6 @@ impl Core {
         }
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if inPeriods.len() != inReal.len() {
-            return Err(RetCode::BadParam);
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
@@ -749,6 +750,14 @@ impl Core {
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
+        }
+        if inPeriods.len() != inReal.len() {
+            return Err(RetCode::BadParam);
+        }
+        let _guardLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
         }
         // An inverted [min, max] period window is invalid (batch rejects).
         if optInMinPeriod > optInMaxPeriod {

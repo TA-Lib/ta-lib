@@ -1064,7 +1064,9 @@
     * to {@link Core#MACD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MACD_Stream#outRange()}.
     */
@@ -1072,9 +1074,10 @@
    {
       requireArgument("MACD openAndFill", "inReal", inReal);
       requireHistory("MACD openAndFill", inReal.length);
-      requireArgument("MACD openAndFill", "outMACD", outMACD);
-      requireArgument("MACD openAndFill", "outMACDSignal", outMACDSignal);
-      requireArgument("MACD openAndFill", "outMACDHist", outMACDHist);
+      int guardOutLen = openFillCount("MACD openAndFill", inReal.length, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      requireLength("MACD openAndFill", "outMACD", outMACD, guardOutLen);
+      requireLength("MACD openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
+      requireLength("MACD openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          throw new TaLibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

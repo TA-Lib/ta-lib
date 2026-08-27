@@ -557,7 +557,9 @@
     * to {@link Core#AVGDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AVGDEV_Stream#outRange()}.
     */
@@ -565,7 +567,8 @@
    {
       requireArgument("AVGDEV openAndFill", "inReal", inReal);
       requireHistory("AVGDEV openAndFill", inReal.length);
-      requireArgument("AVGDEV openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, AVGDEV_Lookback(optInTimePeriod));
+      requireLength("AVGDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

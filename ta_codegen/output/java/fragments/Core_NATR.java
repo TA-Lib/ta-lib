@@ -992,7 +992,9 @@
     * to {@link Core#NATR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link NATR_Stream#outRange()}.
     */
@@ -1002,7 +1004,10 @@
       requireHistory("NATR openAndFill", inHigh.length);
       requireArgument("NATR openAndFill", "inLow", inLow);
       requireArgument("NATR openAndFill", "inClose", inClose);
-      requireArgument("NATR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("NATR openAndFill", inHigh.length, NATR_Lookback(optInTimePeriod));
+      requireHistoryLength("NATR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("NATR openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("NATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

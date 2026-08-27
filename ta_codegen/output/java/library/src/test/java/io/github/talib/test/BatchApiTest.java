@@ -88,6 +88,9 @@ public class BatchApiTest {
     private static int s1Reject = 0;
     private static int s4Reject = 0;
     private static int s4Accept = 0;
+    private static int s5Reject = 0;
+    /** Rule B6a at the opener — a declined output, counted apart from S5's. */
+    private static int b6aOpen = 0;
 
     private static void check(boolean condition, String what) {
         checks++;
@@ -987,9 +990,21 @@ public class BatchApiTest {
             "MAVP_Open(inPeriods=null)", "MAVP open", "inPeriods");
         streamRejects(() -> Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA, null),
             "MAVP_OpenAndFill(outReal=null)", "MAVP openAndFill", "outReal");
-        // A nullable output the streaming fill writes unguarded.
-        streamRejects(() -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, out, null),
-            "MAMA_OpenAndFill(outFAMA=null)", "MAMA openAndFill", "outFAMA");
+        // A nullable output may be DECLINED at the opener, exactly as in the
+        // batch tier (rule B6a) and as C has always allowed: `null` is not an
+        // absent argument here, it is an answer. Proved below, in
+        // `aDeclinedFillOutputIsStillComputed`, that declining changes nothing
+        // but the write.
+
+        aDeclinedFillOutputIsStillComputed(in);
+
+        // Rule S3 ahead of the buffer rules, and the one shape that can tell
+        // `openFillCount`'s raise from the flooring it replaced: with a rejected
+        // parameter AND an absent output, flooring the `-1` lookback to 0 let
+        // the output be reported (S4), where the fault is the parameter.
+        streamRejects(() -> Core.DEFAULT.SMA_OpenAndFill(in, 0, null),
+            "a bad parameter outranks an absent output", "SMA openAndFill", "bad parameter");
+        s5Reject++;
 
         // Controls: the same calls with every argument supplied still open.
         streamAccepts(() -> Core.DEFAULT.SMA_Open(in, 30), "SMA_Open");
@@ -1079,6 +1094,61 @@ public class BatchApiTest {
         checkThrows(IllegalArgumentException.class, body, what, needles);
     }
 
+    /**
+     * Rule B6a at the opener: {@code outFAMA} may be declined with {@code null},
+     * and declining changes nothing but the write.
+     *
+     * <p>Non-vacuous in three directions. The supplied run is the oracle, so a
+     * fill that stopped computing FAMA when it is declined — the easy way to
+     * "support" this — fails on {@code value()}, which the handle caches from
+     * the same expression the guarded store writes. The declined run must still
+     * reject an undersized {@code outMAMA}, so the conditional bound cannot have
+     * been dropped wholesale. And the supplied-but-undersized {@code outFAMA} is
+     * still rejected, so "declinable" did not become "unchecked".
+     */
+    private static void aDeclinedFillOutputIsStillComputed(double[] in) {
+        int lb = Core.DEFAULT.MAMA_Lookback(0.5, 0.05);
+        int produced = in.length - lb;
+
+        double[] refMama = new double[produced];
+        double[] refFama = new double[produced];
+        Core.MAMA_Stream both =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, refMama, refFama);
+
+        double[] soloMama = new double[produced];
+        Core.MAMA_Stream declined =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, soloMama, null);
+
+        b6aOpen++;
+        check(java.util.Arrays.equals(refMama, soloMama),
+            "declining outFAMA leaves outMAMA bit-identical");
+        check(both.outRange().begIdx() == declined.outRange().begIdx()
+                && both.outRange().count() == declined.outRange().count(),
+            "declining outFAMA leaves the reported range unchanged");
+        b6aOpen++;
+        check(Double.doubleToRawLongBits(both.value().fama())
+                == Double.doubleToRawLongBits(declined.value().fama()),
+            "a declined outFAMA is still computed: the handle reports it");
+        b6aOpen++;
+        check(Double.doubleToRawLongBits(refFama[produced - 1])
+                == Double.doubleToRawLongBits(declined.value().fama()),
+            "and it is the value the supplied run wrote last");
+        b6aOpen++;
+
+        // Declining one output does not disarm the other's bound, nor its own
+        // when it IS supplied.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced - 1], null),
+            "an undersized outMAMA is still rejected when outFAMA is declined",
+            "outMAMA");
+        b6aOpen++;
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced],
+                    new double[produced - 1]),
+            "a supplied outFAMA is still bounded", "outFAMA");
+        b6aOpen++;
+    }
+
     private static void streamAccepts(Runnable body, String what) {
         s4Accept++;
         checks++;
@@ -1088,6 +1158,123 @@ public class BatchApiTest {
             failures++;
             System.out.println("  FAIL: " + what + " was rejected (" + e + ")");
         }
+    }
+
+
+    /**
+     * Rule S5, from both sides. The bound is {@code historyLen - lookback} — the
+     * count the fill actually writes, not the width of the history — so an
+     * exactly-sized output has to be ACCEPTED and one element shorter REJECTED.
+     * Only the pair pins the arithmetic: a bound of {@code historyLen} would
+     * reject the first, and no bound at all would accept the second.
+     *
+     * <p>Until #268's follow-up an undersized output faulted inside the fill
+     * with an {@link ArrayIndexOutOfBoundsException}, the buffer already partly
+     * written and no {@link OutRange} to say how far it got.
+     */
+    static void theFillOutputBoundFromBothSides() {
+        final double[] in = closes(252);
+        final int lookback = Core.DEFAULT.SMA_Lookback(30);
+        final int produced = in.length - lookback;
+
+        check(lookback == 29, "the probe needs a lookback it can be one short of");
+        check(produced < in.length, "the produced count is shorter than the history");
+
+        double[] exact = new double[produced];
+        Core.SMA_Stream h = Core.DEFAULT.SMA_OpenAndFill(in, 30, exact);
+        check(h.outRange().begIdx() == lookback, "the fill starts at the lookback");
+        check(h.outRange().count() == produced, "the fill wrote exactly the bound");
+
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.SMA_OpenAndFill(in, 30, new double[produced - 1]),
+            "one element short of the produced count -> IllegalArgument",
+            "SMA openAndFill", "outReal", String.valueOf(produced - 1), String.valueOf(produced));
+        s5Reject++;
+
+        // A rejected fill writes nothing — the check is ahead of the numerics,
+        // not a report from inside them.
+        final double[] shortOut = new double[produced - 1];
+        Arrays.fill(shortOut, -3e37);
+        try {
+            Core.DEFAULT.SMA_OpenAndFill(in, 30, shortOut);
+            check(false, "expected the undersized fill to be rejected");
+        } catch (IllegalArgumentException expected) {
+            boolean untouched = true;
+            for (double v : shortOut) {
+                if (v != -3e37) { untouched = false; }
+            }
+            check(untouched, "a rejected fill leaves the output as it found it");
+        }
+
+        // An oversized output is legal and bit-identical: the bound is a
+        // minimum, which is what says the exact case above was not luck.
+        double[] roomy = new double[in.length];
+        Core.DEFAULT.SMA_OpenAndFill(in, 30, roomy);
+        boolean same = true;
+        for (int i = 0; i < produced; i++) {
+            if (Double.doubleToRawLongBits(exact[i]) != Double.doubleToRawLongBits(roomy[i])) {
+                same = false;
+            }
+        }
+        check(same, "the exactly-sized fill is bit-identical to the roomy one");
+    }
+
+    /**
+     * The same bound on the tiers that hand-roll their own fill — the dispatch
+     * tier (including its identity arm, whose lookback is 0), the period bank,
+     * and a composed multi-output, whose sub-calls fill scratch of
+     * their own rather than the caller's arrays. Each output is bounded separately.
+     */
+    static void theFillOutputBoundHoldsOnEveryTier() {
+        final double[] in = closes(252);
+        final double[] periods = new double[252];
+        Arrays.fill(periods, 5.0);
+
+        for (int[] arm : new int[][] { {30, 0}, {1, 0} }) {
+            final int period = arm[0];
+            final int lb = Core.DEFAULT.MA_Lookback(period, MAType.EMA);
+            final int produced = in.length - lb;
+            Core.DEFAULT.MA_OpenAndFill(in, period, MAType.EMA, new double[produced]);
+            checkThrows(IllegalArgumentException.class,
+                () -> Core.DEFAULT.MA_OpenAndFill(in, period, MAType.EMA, new double[produced - 1]),
+                "MA one short of the bound", "MA openAndFill", "outReal");
+            s5Reject++;
+        }
+
+        final int mavpLb = Core.DEFAULT.MAVP_Lookback(2, 30, MAType.SMA);
+        final int mavpProduced = in.length - mavpLb;
+        Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA,
+                new double[mavpProduced - 1]),
+            "MAVP one short of the bound", "MAVP openAndFill", "outReal");
+        s5Reject++;
+
+        final int bbLb = Core.DEFAULT.BBANDS_Lookback(20, 2.0, 2.0, MAType.SMA);
+        final int bbProduced = in.length - bbLb;
+        Core.DEFAULT.BBANDS_OpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
+            new double[bbProduced], new double[bbProduced], new double[bbProduced]);
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.BBANDS_OpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
+                new double[bbProduced], new double[bbProduced], new double[bbProduced - 1]),
+            "each output is bounded separately", "BBANDS openAndFill", "outRealLowerBand");
+        s5Reject++;
+
+        // A history too short to produce anything is still S7, whatever the
+        // output holds: the bound floors at zero rather than going negative.
+        checkThrows(InsufficientHistoryException.class,
+            () -> Core.DEFAULT.SMA_OpenAndFill(Arrays.copyOf(in, 29), 30, new double[0]),
+            "a short history reaches the warm-up check, not the capacity one");
+
+        // A null enum is a parameter outside its domain, named — it reaches the
+        // lookback call the bound is derived from.
+        // Rule S3, not S5 — a null enum with a full-length output. It belongs
+        // here because the enum check has to precede the lookback call the S5
+        // bound is derived from, but it is not one of S5's cases and is not
+        // counted as one.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.MA_OpenAndFill(in, 30, null, new double[in.length]),
+            "a null enum at the opener is named", "MA openAndFill", "optInMAType");
     }
 
     public static void main(String[] args) {
@@ -1121,10 +1308,15 @@ public class BatchApiTest {
         distinctEmptyOutputsAreNotAliases();
         streamingOpenersCheckTheirArguments();
         anEmptyHistoryOutranksAnAbsentArgument();
+        theFillOutputBoundFromBothSides();
+        theFillOutputBoundHoldsOnEveryTier();
 
         // Literal floors, not derived from the calls above: a count computed
         // from the cases would move with a deleted one and still "pass".
-        if (s4Reject < 12 || s4Accept < 5 || s1Reject < 6) {
+        // s4Reject is 11, not 12: the twelfth was `MAMA_OpenAndFill(outFAMA=null)`,
+        // which is no longer an absent argument but a declined output — rule B6a,
+        // and it has its own counter and its own probe.
+        if (s4Reject < 11 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5 || b6aOpen < 6) {
             failures++;
             System.out.println("  FAIL: the streaming-opener gate ran fewer checks"
                 + " than it was written with");

@@ -794,7 +794,9 @@
     * to {@link Core#CDLHOMINGPIGEON} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHOMINGPIGEON_Stream#outRange()}.
     */
@@ -805,7 +807,11 @@
       requireArgument("CDLHOMINGPIGEON openAndFill", "inHigh", inHigh);
       requireArgument("CDLHOMINGPIGEON openAndFill", "inLow", inLow);
       requireArgument("CDLHOMINGPIGEON openAndFill", "inClose", inClose);
-      requireArgument("CDLHOMINGPIGEON openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHOMINGPIGEON openAndFill", inOpen.length, CDLHOMINGPIGEON_Lookback());
+      requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHOMINGPIGEON openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHOMINGPIGEON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

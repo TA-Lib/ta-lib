@@ -1161,8 +1161,23 @@ public class NoPhantomIoTest {
         check(fillCount == history.length - lookback,
               "openAndFill fills historyLen - lookback (" + fillCount + " of "
               + (history.length - lookback) + ")");
-        check(throwsOob(() -> core.SMA_OpenAndFill(history, 30, new double[fillCount - 1])),
-              "an openAndFill output one short of outRange throws, so sweep 4 can fail");
+        // Rejected rather than faulted, since the public frame checks the
+        // capacity (rule S5). What sweep 4 needs from this leg is that an
+        // undersized output does not silently succeed — so the assertion is on
+        // the REJECTION, not on which exception carries it. Typing it as an
+        // IndexOutOfBoundsException is what broke when S1 became one.
+        check(rejects(() -> core.SMA_OpenAndFill(history, 30, new double[fillCount - 1])),
+              "an openAndFill output one short of outRange is rejected, so sweep 4 can fail");
+    }
+
+    /** The library refused, carrying its code — as opposed to faulting inside. */
+    private static boolean rejects(Runnable body) {
+        try {
+            body.run();
+            return false;
+        } catch (RuntimeException ex) {
+            return ex instanceof TaLibFailure;
+        }
     }
 
     private static boolean throwsOob(Runnable body) {

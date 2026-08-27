@@ -8266,6 +8266,173 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
     }
 }
 
+/// The Java argument helpers exist TWICE — hand-written in the shipped
+/// `Core.java`, and as string literals in `server_gen.rs` that the JSON-RPC
+/// server's inlined `Core` gets — and nothing compared them until this.
+///
+/// Neither copy is reachable from the other's tests: the shipped one is what
+/// `BatchApiTest` drives, the server one is what `--codegen` and `--xlang-hash`
+/// drive, and every server request hands `OpenAndFill` a full-length output, so
+/// a divergence in the bound itself is invisible to both. Compared on tokens,
+/// not on text: the two are indented differently on purpose.
+#[test]
+fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
+    fn method(src: &str, sig: &str, what: &str) -> String {
+        let at = src
+            .find(sig)
+            .unwrap_or_else(|| panic!("{what}: `{sig}` not found"));
+        let mut depth = 0usize;
+        let mut end = at;
+        for (i, ch) in src[at..].char_indices() {
+            match ch {
+                '{' => depth += 1,
+                '}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        end = at + i + 1;
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        assert!(end > at, "{what}: `{sig}` has no body");
+        src[at..end].split_whitespace().collect::<Vec<_>>().join(" ")
+    }
+
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let core = std::fs::read_to_string(
+        root.join("ta_codegen/output/java/library/src/main/java/io/github/talib/Core.java"),
+    )
+    .expect("the shipped Core.java");
+    let server =
+        std::fs::read_to_string(root.join("ta_codegen/output/java/tools/TaCodegenServe.java"))
+            .expect("the generated Java server");
+
+    for sig in [
+        "static int openFillCount(String funcName, int historyLen, int lookback) {",
+        "static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {",
+        "static void requireHistory(String funcName, int historyLen) {",
+        "static void requireIndexRange(String funcName, int startIdx, int endIdx) {",
+    ] {
+        assert_eq!(
+            method(&core, sig, "Core.java"),
+            method(&server, sig, "TaCodegenServe.java"),
+            "the two copies of `{sig}` have drifted"
+        );
+    }
+}
+
+/// Rule B6a at the STREAMING opener, in all four backends: a nullable output
+/// may be declined there exactly as it may in the batch tier.
+///
+/// C has always allowed it; the other three rejected the declined output as a
+/// capacity fault the moment rule S5 arrived, which is the divergence this pins.
+/// Four clauses per backend, because three of them can pass while the feature is
+/// broken: the bound must be conditional, the fill's store must be guarded, the
+/// handle's cached value must NOT be read back from an array the caller declined
+/// — that is the one that faults at run time — and `MA`'s dispatch arm must
+/// decline rather than allocate a `historyLen` buffer to throw away.
+#[test]
+fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
+    let (func, enums) = load_indicator("mama");
+    let (ma, ma_enums) = load_indicator("ma");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        rust.contains("outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,")
+            && rust.contains("outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,"),
+        "Rust: the opener family takes Option, `mut` on the transcription alone"
+    );
+    assert!(
+        rust.contains("if outFAMA.as_deref().is_some_and(|o| o.len() < _guardOutLen) {"),
+        "Rust: S5 bounds a nullable output only where it was supplied"
+    );
+    assert!(
+        rust.contains("Some(&mut sink_outFAMA)"),
+        "Rust: the scalar open reports every output, so it never declines one"
+    );
+
+    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        java.contains("if( outFAMA != null ) requireLength(\"MAMA openAndFill\", \"outFAMA\", outFAMA, guardOutLen);"),
+        "Java: S5 bounds a nullable output only where it was supplied"
+    );
+    assert!(
+        java.contains("lastCur_outFAMA = fama;") && java.contains("sp.cur_outFAMA = lastCur_outFAMA;"),
+        "Java: the handle's cached value comes from the store, not from the caller's array"
+    );
+    assert!(
+        !java.contains("sp.cur_outFAMA = outFAMA["),
+        "Java: reading a declined output back is the fault this rule creates"
+    );
+
+    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        csharp.contains("if( !outFAMA.IsEmpty ) RequireFillLength(\"MAMA\", \"openAndFill\", \"outFAMA\", outFAMA.Length, guardOutLen);"),
+        "C#: S5 bounds a nullable output only where it was supplied"
+    );
+    assert!(
+        csharp.contains("lastCur_outFAMA = fama;") && csharp.contains("sp.cur_outFAMA = lastCur_outFAMA;"),
+        "C#: the handle's cached value comes from the store, not from the caller's span"
+    );
+    assert!(
+        !csharp.contains("sp.cur_outFAMA = outFAMA["),
+        "C#: reading a declined output back is the fault this rule creates"
+    );
+
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let at_open = c
+        .find("TA_RetCode TA_MAMA_OpenImpl(")
+        .expect("C: the streaming transcription");
+    let c_open = &c[at_open..];
+    assert!(
+        c_open.contains("if( outFAMA != NULL )"),
+        "C: the FILL's store into the nullable output stays guarded — the batch \
+         body's guard is not evidence about this one"
+    );
+    assert!(
+        c_open.contains("(outFAMA != NULL && (const void *)outMAMA == (const void *)outFAMA)"),
+        "C: the opener's distinctness guard treats a declined output as aliasing nothing"
+    );
+
+    // Java and C#: the shadow must be the SOURCE of the cached value, not merely
+    // present — a break that keeps `lastCur_` around and still reads the array
+    // back passes a bare substring test.
+    for (lang, src, decl, shadow_store, capture) in [
+        ("Java", &java, "double lastCur_outFAMA = 0;", "lastCur_outFAMA = fama;",
+         "sp.cur_outFAMA = lastCur_outFAMA;"),
+        ("C#", &csharp, "double lastCur_outFAMA = 0;", "lastCur_outFAMA = fama;",
+         "sp.cur_outFAMA = lastCur_outFAMA;"),
+    ] {
+        let at_decl = src.find(decl).unwrap_or_else(|| panic!("{lang}: the shadow is not declared"));
+        let at_store = src.find(shadow_store).unwrap_or_else(|| panic!("{lang}: the shadow is never written"));
+        let at_capture = src.find(capture).unwrap_or_else(|| panic!("{lang}: the capture does not read the shadow"));
+        assert!(
+            at_decl < at_store && at_store < at_capture,
+            "{lang}: the shadow must be declared, then written by the fill, then captured"
+        );
+    }
+
+    // MA's streaming arm declines instead of allocating a throwaway.
+    for (lang, out, want, gone) in [
+        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
+         "outReal, None)", "vec![0.0_f64; inReal.len()][..]"),
+        ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
+         "MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, null)", "new double[historyLen])"),
+        ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
+         "MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, default)", "new double[historyLen])"),
+    ] {
+        assert!(out.contains(want), "{lang}: MA's streaming MAMA arm must decline FAMA ({want})");
+        assert!(
+            !out.contains(gone),
+            "{lang}: the throwaway FAMA buffer must be gone from the opener, not merely unread"
+        );
+    }
+}
+
 /// FAMA is a nullable output (issue #125). In the BATCH C: `Output::is_nullable`
 /// is set from the `nullable` flag, the guarded function skips its NULL-check but
 /// keeps outMAMA's, the distinctness check guards the nullable operand, and every
@@ -11534,6 +11701,112 @@ fn test_composed_open_fuses_every_sub_call() {
     );
 }
 
+/// Rule S5 on EVERY Rust public `OpenAndFill` — corpus-wide, because Rust's own
+/// probe (`tests/stream_open_contract.rs`) names six functions and runs nightly.
+///
+/// Two clauses. The width has to come from the function's OWN lookback, not from
+/// the history's length — `historyLen - lookback` is what the fill writes, and a
+/// bound of `historyLen` would reject every correctly-sized call. And the
+/// capacity has to precede the output-distinctness guard, which is the order the
+/// specification lists (S5, then S6).
+#[test]
+fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let enums = load_enums();
+    let mut checked = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, _)) = try_load_indicator(&name) else { continue };
+        if !func.streaming {
+            continue;
+        }
+        let src = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let sn = func.name.to_lowercase();
+        let entry = format!("pub fn {}_OpenAndFill(", func.name.to_uppercase());
+        let at = src
+            .find(&entry)
+            .unwrap_or_else(|| panic!("{}: no public OpenAndFill", func.name));
+        // The PUBLIC frame only. Rust emits `<N>_OpenAndFillInternal` after it,
+        // so a needle searched to end-of-file would be satisfied by the anchored
+        // seam — which is exactly where this bound must NOT be.
+        let frame_len = src[at..]
+            .find("\n    }\n")
+            .unwrap_or_else(|| panic!("{}: public OpenAndFill has no end", func.name));
+        let body = &src[at..at + frame_len];
+        let width = format!("let _guardOutLen = {}.len().saturating_sub(_guardLb);",
+                            streaming::input_array_names(&func)[0]);
+        let at_width = body.find(&width).unwrap_or_else(|| {
+            panic!("{}: OpenAndFill does not derive the fill width from the history", func.name)
+        });
+        let lb = format!("let _guardLb = self.{}_Lookback(", sn.to_uppercase());
+        assert!(
+            body[..at_width].contains(&lb),
+            "{}: the fill width is not read from the function's own lookback",
+            func.name
+        );
+        // S5's INPUT half — B5's first clause, read on this range — and its
+        // position: after S3 (the lookback's own rejection) and before the
+        // output capacity, which is the order B5 states.
+        let inputs = streaming::input_array_names(&func);
+        if inputs.len() > 1 {
+            let disagree: Vec<String> = inputs[1..]
+                .iter()
+                .map(|extra| format!("{extra}.len() != {}.len()", inputs[0]))
+                .collect();
+            let needle = format!("if {} {{", disagree.join(" || "));
+            let at_in = body.find(&needle).unwrap_or_else(|| {
+                panic!("{}: OpenAndFill does not require the inputs to be the history's length", func.name)
+            });
+            // S3 first, in whichever shape this tier spells it: the merged tiers
+            // take their rejection from `<N>_Lookback(..)?`, the two exempt ones
+            // validate each parameter inline. Either way a parameter fault is
+            // answered before a length one.
+            assert!(
+                body[..at_in].contains(&lb)
+                    || body[..at_in].contains("return Err(RetCode::BadParam);"),
+                "{}: the input half is checked before the parameters",
+                func.name
+            );
+            assert!(at_in < at_width, "{}: the input half follows the output width", func.name);
+            let tail = &body[at_in + needle.len()..];
+            assert!(
+                tail.trim_start().starts_with("return Err(RetCode::BadParam);"),
+                "{}: the input half does not reject",
+                func.name
+            );
+        }
+        for out in &func.outputs {
+            // A `nullable` output is `Option<&mut [T]>` and is bounded only when
+            // it was supplied (rule B6a); every other output is bounded flat.
+            let needle = if out.is_nullable() {
+                format!("if {}.as_deref().is_some_and(|o| o.len() < _guardOutLen) {{", out.name)
+            } else {
+                format!("if {}.len() < _guardOutLen {{", out.name)
+            };
+            let at_out = body.find(&needle).unwrap_or_else(|| {
+                panic!("{}: OpenAndFill does not bound `{}`", func.name, out.name)
+            });
+            assert!(at_out > at_width, "{}: `{}` is bounded before the width exists", func.name, out.name);
+            // …and the bound REJECTS. Pinning the condition alone passes against
+            // an `if` with an empty body, which is the mutation this gate exists
+            // to catch.
+            let tail = &body[at_out + needle.len()..];
+            assert!(
+                tail.trim_start().starts_with("return Err(RetCode::BadParam);"),
+                "{}: `{}`'s bound does not reject",
+                func.name,
+                out.name
+            );
+            if let Some(at_alias) = body.find(&format!("{}_p.as_ptr() ==", out.name)) {
+                assert!(at_out < at_alias, "{}: S5 is specified ahead of S6", func.name);
+            }
+        }
+        checked += 1;
+    }
+    assert!(checked >= 176, "only {checked} public fills inspected");
+}
+
 /// Rule S1 on EVERY C# public opener — corpus-wide, for the same reason as the
 /// Java gate below.
 ///
@@ -11590,6 +11863,57 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
                     func.name
                 );
             }
+            if verb == "openAndFill" {
+                // Rule S5, and the width it is derived from. An opener's
+                // `startIdx` is the constant 0, so B5's produced count collapses
+                // to `historyLen - lookback` — read from the function's OWN
+                // lookback, never from the history's width.
+                let width = format!(
+                    "int guardOutLen = OpenFillCount(\"{base}\", \"openAndFill\", {history}.Length, {base}_Lookback("
+                );
+                let at_width = body.find(&width).unwrap_or_else(|| {
+                    panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
+                });
+                // S5's input half, after S3 (the width's own rejection) and
+                // before the output capacity — the order B5 states.
+                for extra in &inputs[1..] {
+                    let needle = format!(
+                        "RequireHistoryLength(\"{base}\", \"openAndFill\", \"{extra}\", {extra}.Length, {history}.Length);"
+                    );
+                    let at_in = body.find(&needle).unwrap_or_else(|| {
+                        panic!("{}: openAndFill does not require `{extra}` to be the history's length", func.name)
+                    });
+                    assert!(at_in > at_width, "{}: `{extra}`'s length is checked before the parameters", func.name);
+                }
+                for out in &func.outputs {
+                    // A `nullable` output is bounded only when it was supplied
+                    // (rule B6a); the guard is part of the needle, so a
+                    // regression to an unconditional bound — or to none — is a
+                    // failure rather than a substring that still matches.
+                    let _ = at_width;
+                    let bound = format!(
+                        "RequireFillLength(\"{base}\", \"openAndFill\", \"{0}\", {0}.Length, guardOutLen);",
+                        out.name
+                    );
+                    let needle = if out.is_nullable() {
+                        format!("if( !{}.IsEmpty ) {bound}", out.name)
+                    } else {
+                        bound.clone()
+                    };
+                    let at_out = body.find(&needle).unwrap_or_else(|| {
+                        panic!("{}: openAndFill does not bound `{}`", func.name, out.name)
+                    });
+                    if !out.is_nullable() {
+                        assert!(
+                            !body.contains(&format!("if( !{}.IsEmpty ) {bound}", out.name)),
+                            "{}: `{}` is not nullable and must be bounded unconditionally",
+                            func.name,
+                            out.name
+                        );
+                    }
+                    assert!(at_out > at_s1, "{}: `{}` is bounded before the history is checked", func.name, out.name);
+                }
+            }
             checked += 1;
         }
     }
@@ -11605,6 +11929,11 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
 /// legs as much as the outputs. A one-sided version that only pinned the outputs
 /// would pass against a frame that checks every leg up front, which reports the
 /// leg where C reports the empty history.
+///
+/// An output is checked with `requireLength`, not `requireArgument`: one call
+/// carries S4 and S5, exactly as the batch wrapper's does. Requiring the
+/// capacity form here is what stops a fill's presence check from silently
+/// reverting to presence alone.
 #[test]
 fn java_public_openers_check_arguments_then_the_index_pair() {
     let registry = make_registry();
@@ -11632,12 +11961,19 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                 .find(&format!("requireHistory(\"{base} {verb}\", {history}.length);"))
                 .unwrap_or_else(|| panic!("{}: {verb} does not check the index pair", func.name));
 
-            let mut names: Vec<String> = streaming::input_array_names(&func);
+            let mut names: Vec<(String, bool)> = streaming::input_array_names(&func)
+                .into_iter()
+                .map(|i| (i, false))
+                .collect();
             if with_outputs {
-                names.extend(func.outputs.iter().map(|o| o.name.clone()));
+                names.extend(func.outputs.iter().map(|o| (o.name.clone(), true)));
             }
-            for arg in &names {
-                let needle = format!("requireArgument(\"{base} {verb}\", \"{arg}\", {arg});");
+            for (arg, is_output) in &names {
+                let needle = if *is_output {
+                    format!("requireLength(\"{base} {verb}\", \"{arg}\", {arg}, guardOutLen);")
+                } else {
+                    format!("requireArgument(\"{base} {verb}\", \"{arg}\", {arg});")
+                };
                 let at_arg = body.find(&needle).unwrap_or_else(|| {
                     panic!("{}: {verb} does not check `{arg}`", func.name)
                 });
@@ -11649,6 +11985,62 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                     "{}: {verb}'s check of `{arg}` is on the wrong side of the index pair",
                     func.name
                 );
+            }
+            if with_outputs {
+                // S5's width, derived from the lookback rather than from the
+                // requested range: an opener's `startIdx` is the constant 0, so
+                // B5's produced count collapses to `historyLen - lookback`.
+                let width = format!(
+                    "int guardOutLen = openFillCount(\"{base} {verb}\", {history}.length, {base}_Lookback("
+                );
+                let at_width = body.find(&width).unwrap_or_else(|| {
+                    panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
+                });
+                // S5's input half, after S3 (the width's own rejection) and
+                // before the output capacity — the order B5 states.
+                for extra in streaming::input_array_names(&func).iter().skip(1) {
+                    let needle = format!(
+                        "requireHistoryLength(\"{base} {verb}\", \"{extra}\", {extra}.length, {history}.length);"
+                    );
+                    let at_in = body.find(&needle).unwrap_or_else(|| {
+                        panic!("{}: openAndFill does not require `{extra}` to be the history's length", func.name)
+                    });
+                    assert!(
+                        at_in > at_width,
+                        "{}: `{extra}`'s length is checked before the parameters",
+                        func.name
+                    );
+                }
+                for out in &func.outputs {
+                    // A `nullable` output is bounded only when it was supplied
+                    // (rule B6a). The guard is part of the needle: without it
+                    // the bare call is a SUBSTRING of the guarded line, so the
+                    // gate would keep passing while going blind on exactly the
+                    // output the rule is about.
+                    let bound = format!(
+                        "requireLength(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
+                        out.name
+                    );
+                    let needle = if out.is_nullable() {
+                        format!("if( {} != null ) {bound}", out.name)
+                    } else {
+                        bound.clone()
+                    };
+                    assert!(
+                        body.contains(&needle),
+                        "{}: openAndFill does not bound `{}`",
+                        func.name,
+                        out.name
+                    );
+                    if !out.is_nullable() {
+                        assert!(
+                            !body.contains(&format!("if( {} != null ) {bound}", out.name)),
+                            "{}: `{}` is not nullable and must be bounded unconditionally",
+                            func.name,
+                            out.name
+                        );
+                    }
+                }
             }
             checked += 1;
         }

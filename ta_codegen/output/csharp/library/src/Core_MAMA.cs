@@ -1543,6 +1543,7 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double lastCur_outFAMA = 0;
       int outIdx = 0;
       int i = 0;
       int lookbackTotal = 0;
@@ -1899,7 +1900,9 @@ public partial class Core
             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
              */
-            outFAMA[outIdx * outStride] = fama;
+            lastCur_outFAMA = fama;
+            if( !outFAMA.IsEmpty )
+               outFAMA[outIdx * outStride] = fama;
             outMAMA[outIdx++ * outStride] = mama;
          }
          /* Adjust the period for next price bar */
@@ -1988,7 +1991,7 @@ public partial class Core
       sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement - 1) * outStride];
-      sp.cur_outFAMA = outFAMA[(outNBElement - 1) * outStride];
+      sp.cur_outFAMA = lastCur_outFAMA;
       return RetCode.Success;
    }
 
@@ -2038,10 +2041,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null.</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
+   /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MAMA_Stream MAMA_Open( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
@@ -2053,7 +2058,9 @@ public partial class Core
    /// <para>Output arrays must hold <c>historyLen - MAMA_Lookback(...)</c> values and
    /// must not alias the inputs or each other — this path writes the outputs and
    /// then reads the input tail to seed its rings, so the batch tier's in-place
-   /// allowance does not carry over here.</para>
+   /// allowance does not carry over here. Both are checked before anything is
+   /// written, so an undersized span is an <c>ArgumentException</c> naming it
+   /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
    /// <see cref="MAMA_Stream.OutRange"/>.</para>
    /// </remarks>
@@ -2064,18 +2071,25 @@ public partial class Core
    /// range (<c>-4e37</c> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>historyLen -
    /// MAMA_Lookback(...)</c> values.</param>
-   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
-   /// hold at least <c>historyLen - MAMA_Lookback(...)</c> values.</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
+   /// an empty span to decline it: the value is still computed — the handle's
+   /// <c>Value</c> reports it — and nothing is written out. Must hold at least
+   /// <c>historyLen - MAMA_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAMA_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
-   /// have different lengths, or an output array aliases an input or another
-   /// output.</exception>
+   /// have different lengths, an output is shorter than the values the fill
+   /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null.</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
+   /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      int guardOutLen = OpenFillCount("MAMA", "openAndFill", inReal.Length, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      RequireFillLength("MAMA", "openAndFill", "outMAMA", outMAMA.Length, guardOutLen);
+      if( !outFAMA.IsEmpty ) RequireFillLength("MAMA", "openAndFill", "outFAMA", outFAMA.Length, guardOutLen);
       if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) {
          throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       }

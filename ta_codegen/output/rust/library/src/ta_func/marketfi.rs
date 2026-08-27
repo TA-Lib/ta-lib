@@ -442,14 +442,32 @@ impl Core {
 
     /// [`Core::MARKETFI_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::MARKETFI`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::MARKETFI_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_MARKETFI_OpenAndFill")]
     pub fn MARKETFI_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], outReal: &mut [f64],
     ) -> Result<(MARKETFI_Stream, OutRange), RetCode> {
+        if inHigh.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inHigh.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.MARKETFI_Lookback()?;
+        if inLow.len() != inHigh.len() || inVolume.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        let _guardOutLen = inHigh.len().saturating_sub(_guardLb);
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;

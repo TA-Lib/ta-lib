@@ -1698,7 +1698,9 @@
     * to {@link Core#HT_DCPERIOD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_DCPERIOD_Stream#outRange()}.
     */
@@ -1706,7 +1708,8 @@
    {
       requireArgument("HT_DCPERIOD openAndFill", "inReal", inReal);
       requireHistory("HT_DCPERIOD openAndFill", inReal.length);
-      requireArgument("HT_DCPERIOD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("HT_DCPERIOD openAndFill", inReal.length, HT_DCPERIOD_Lookback());
+      requireLength("HT_DCPERIOD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

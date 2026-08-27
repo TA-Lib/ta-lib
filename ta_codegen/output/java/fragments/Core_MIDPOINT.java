@@ -912,7 +912,9 @@
     * to {@link Core#MIDPOINT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MIDPOINT_Stream#outRange()}.
     */
@@ -920,7 +922,8 @@
    {
       requireArgument("MIDPOINT openAndFill", "inReal", inReal);
       requireHistory("MIDPOINT openAndFill", inReal.length);
-      requireArgument("MIDPOINT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, MIDPOINT_Lookback(optInTimePeriod));
+      requireLength("MIDPOINT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -412,7 +412,9 @@
     * to {@link Core#ADD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADD_Stream#outRange()}.
     */
@@ -421,7 +423,9 @@
       requireArgument("ADD openAndFill", "inReal0", inReal0);
       requireHistory("ADD openAndFill", inReal0.length);
       requireArgument("ADD openAndFill", "inReal1", inReal1);
-      requireArgument("ADD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADD openAndFill", inReal0.length, ADD_Lookback());
+      requireHistoryLength("ADD openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("ADD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("ADD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

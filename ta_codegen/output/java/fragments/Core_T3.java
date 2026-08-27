@@ -960,7 +960,9 @@
     * to {@link Core#T3} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link T3_Stream#outRange()}.
     */
@@ -968,7 +970,8 @@
    {
       requireArgument("T3 openAndFill", "inReal", inReal);
       requireHistory("T3 openAndFill", inReal.length);
-      requireArgument("T3 openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("T3 openAndFill", inReal.length, T3_Lookback(optInTimePeriod, optInVFactor));
+      requireLength("T3 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

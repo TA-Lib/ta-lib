@@ -290,6 +290,49 @@ public final class Core {
    }
 
    /**
+    * Rule S5's bound: how many values an {@code OpenAndFill} writes.
+    *
+    * <p>An opener is a batch call over {@code [0, historyLen - 1]}, so
+    * {@link Core#clampedStart}'s produced count — {@code endIdx -
+    * max(startIdx, lookback) + 1} — collapses to {@code historyLen - lookback}.
+    * Unlike the batch tier's it has no legitimate zero case: rule S7 refuses a
+    * history shorter than {@code lookback + 1}, so a fill that runs writes at
+    * least one value.
+    *
+    * <p>A short history is still floored to 0 rather than answered here: S7 has
+    * not run yet where this is used, and that rejection is S7's to make. A
+    * lookback of {@code -1} is not floored — it is the parameter contract's
+    * rejection signal, and swallowing it reported an absent output (S4) for a
+    * call whose fault was its parameter (S3). Raising it here is what puts S3
+    * ahead of the buffer rules, exactly as {@link Core#clampedStart} does one
+    * tier over.
+    */
+   static int openFillCount(String funcName, int historyLen, int lookback) {
+      if (lookback < 0) {
+         throw failure(funcName, RetCode.BadParam);
+      }
+      return historyLen <= lookback ? 0 : historyLen - lookback;
+   }
+
+   /**
+    * Rule S5's input half: every declared input carries the history, so every
+    * one of them is the history's length.
+    *
+    * <p>B5 states the two halves as one rule, inputs first, and this is B5 over
+    * {@code [0, historyLen - 1]}. The difference from B5's wording is that
+    * there is no separate {@code endIdx} to reach here: the history's own
+    * length IS the range, so a longer series is a disagreement rather than a
+    * tail to ignore, which is also what the generated docs have always
+    * promised.
+    */
+   static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {
+      if (actual != historyLen) {
+         throw new TaLibArgumentException(funcName + ": " + argName + " has length " + actual
+               + ", needs " + historyLen, RetCode.BadParam);
+      }
+   }
+
+   /**
     * Rules S1 and S2 at a streaming opener, ahead of every presence check.
     *
     * <p>An opener is a batch call over {@code [0, historyLen - 1]}: the implied
@@ -1523,7 +1566,9 @@ public final class Core {
     * to {@link Core#AC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AC_Stream#outRange()}.
     */
@@ -1532,7 +1577,9 @@ public final class Core {
       requireArgument("AC openAndFill", "inHigh", inHigh);
       requireHistory("AC openAndFill", inHigh.length);
       requireArgument("AC openAndFill", "inLow", inLow);
-      requireArgument("AC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AC openAndFill", inHigh.length, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      requireHistoryLength("AC openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("AC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -2463,7 +2510,9 @@ public final class Core {
     * to {@link Core#ACCBANDS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ACCBANDS_Stream#outRange()}.
     */
@@ -2473,9 +2522,12 @@ public final class Core {
       requireHistory("ACCBANDS openAndFill", inHigh.length);
       requireArgument("ACCBANDS openAndFill", "inLow", inLow);
       requireArgument("ACCBANDS openAndFill", "inClose", inClose);
-      requireArgument("ACCBANDS openAndFill", "outRealUpperBand", outRealUpperBand);
-      requireArgument("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand);
-      requireArgument("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand);
+      int guardOutLen = openFillCount("ACCBANDS openAndFill", inHigh.length, ACCBANDS_Lookback(optInTimePeriod));
+      requireHistoryLength("ACCBANDS openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ACCBANDS openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ACCBANDS openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
+      requireLength("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+      requireLength("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          throw new TaLibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -2893,7 +2945,9 @@ public final class Core {
     * to {@link Core#ACOS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ACOS_Stream#outRange()}.
     */
@@ -2901,7 +2955,8 @@ public final class Core {
    {
       requireArgument("ACOS openAndFill", "inReal", inReal);
       requireHistory("ACOS openAndFill", inReal.length);
-      requireArgument("ACOS openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ACOS openAndFill", inReal.length, ACOS_Lookback());
+      requireLength("ACOS openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ACOS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -3451,7 +3506,9 @@ public final class Core {
     * to {@link Core#AD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AD_Stream#outRange()}.
     */
@@ -3462,7 +3519,11 @@ public final class Core {
       requireArgument("AD openAndFill", "inLow", inLow);
       requireArgument("AD openAndFill", "inClose", inClose);
       requireArgument("AD openAndFill", "inVolume", inVolume);
-      requireArgument("AD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AD openAndFill", inHigh.length, AD_Lookback());
+      requireHistoryLength("AD openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("AD openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("AD openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("AD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -3884,7 +3945,9 @@ public final class Core {
     * to {@link Core#ADD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADD_Stream#outRange()}.
     */
@@ -3893,7 +3956,9 @@ public final class Core {
       requireArgument("ADD openAndFill", "inReal0", inReal0);
       requireHistory("ADD openAndFill", inReal0.length);
       requireArgument("ADD openAndFill", "inReal1", inReal1);
-      requireArgument("ADD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADD openAndFill", inReal0.length, ADD_Lookback());
+      requireHistoryLength("ADD openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("ADD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("ADD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -4742,7 +4807,9 @@ public final class Core {
     * to {@link Core#ADOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADOSC_Stream#outRange()}.
     */
@@ -4753,7 +4820,11 @@ public final class Core {
       requireArgument("ADOSC openAndFill", "inLow", inLow);
       requireArgument("ADOSC openAndFill", "inClose", inClose);
       requireArgument("ADOSC openAndFill", "inVolume", inVolume);
-      requireArgument("ADOSC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADOSC openAndFill", inHigh.length, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+      requireHistoryLength("ADOSC openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADOSC openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("ADOSC openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("ADOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -6214,7 +6285,9 @@ public final class Core {
     * to {@link Core#ADX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADX_Stream#outRange()}.
     */
@@ -6224,7 +6297,10 @@ public final class Core {
       requireHistory("ADX openAndFill", inHigh.length);
       requireArgument("ADX openAndFill", "inLow", inLow);
       requireArgument("ADX openAndFill", "inClose", inClose);
-      requireArgument("ADX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADX openAndFill", inHigh.length, ADX_Lookback(optInTimePeriod));
+      requireHistoryLength("ADX openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADX openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ADX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -6875,7 +6951,9 @@ public final class Core {
     * to {@link Core#ADXR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADXR_Stream#outRange()}.
     */
@@ -6885,7 +6963,10 @@ public final class Core {
       requireHistory("ADXR openAndFill", inHigh.length);
       requireArgument("ADXR openAndFill", "inLow", inLow);
       requireArgument("ADXR openAndFill", "inClose", inClose);
-      requireArgument("ADXR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADXR openAndFill", inHigh.length, ADXR_Lookback(optInTimePeriod));
+      requireHistoryLength("ADXR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADXR openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ADXR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ADXR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -7752,7 +7833,9 @@ public final class Core {
     * to {@link Core#AO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AO_Stream#outRange()}.
     */
@@ -7761,7 +7844,9 @@ public final class Core {
       requireArgument("AO openAndFill", "inHigh", inHigh);
       requireHistory("AO openAndFill", inHigh.length);
       requireArgument("AO openAndFill", "inLow", inLow);
-      requireArgument("AO openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AO openAndFill", inHigh.length, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+      requireHistoryLength("AO openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("AO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -8471,6 +8556,7 @@ public final class Core {
    {
       requireArgument("APO open", "inReal", inReal);
       requireHistory("APO open", inReal.length);
+      requireArgument("APO open", "optInMAType", optInMAType);
       return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -8478,7 +8564,9 @@ public final class Core {
     * to {@link Core#APO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link APO_Stream#outRange()}.
     */
@@ -8486,7 +8574,9 @@ public final class Core {
    {
       requireArgument("APO openAndFill", "inReal", inReal);
       requireHistory("APO openAndFill", inReal.length);
-      requireArgument("APO openAndFill", "outReal", outReal);
+      requireArgument("APO openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("APO openAndFill", inReal.length, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      requireLength("APO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -9357,7 +9447,9 @@ public final class Core {
     * to {@link Core#AROON} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AROON_Stream#outRange()}.
     */
@@ -9366,8 +9458,10 @@ public final class Core {
       requireArgument("AROON openAndFill", "inHigh", inHigh);
       requireHistory("AROON openAndFill", inHigh.length);
       requireArgument("AROON openAndFill", "inLow", inLow);
-      requireArgument("AROON openAndFill", "outAroonDown", outAroonDown);
-      requireArgument("AROON openAndFill", "outAroonUp", outAroonUp);
+      int guardOutLen = openFillCount("AROON openAndFill", inHigh.length, AROON_Lookback(optInTimePeriod));
+      requireHistoryLength("AROON openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("AROON openAndFill", "outAroonDown", outAroonDown, guardOutLen);
+      requireLength("AROON openAndFill", "outAroonUp", outAroonUp, guardOutLen);
       if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
          throw new TaLibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -10234,7 +10328,9 @@ public final class Core {
     * to {@link Core#AROONOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AROONOSC_Stream#outRange()}.
     */
@@ -10243,7 +10339,9 @@ public final class Core {
       requireArgument("AROONOSC openAndFill", "inHigh", inHigh);
       requireHistory("AROONOSC openAndFill", inHigh.length);
       requireArgument("AROONOSC openAndFill", "inLow", inLow);
-      requireArgument("AROONOSC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AROONOSC openAndFill", inHigh.length, AROONOSC_Lookback(optInTimePeriod));
+      requireHistoryLength("AROONOSC openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("AROONOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("AROONOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -10663,7 +10761,9 @@ public final class Core {
     * to {@link Core#ASIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ASIN_Stream#outRange()}.
     */
@@ -10671,7 +10771,8 @@ public final class Core {
    {
       requireArgument("ASIN openAndFill", "inReal", inReal);
       requireHistory("ASIN openAndFill", inReal.length);
-      requireArgument("ASIN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ASIN openAndFill", inReal.length, ASIN_Lookback());
+      requireLength("ASIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -11083,7 +11184,9 @@ public final class Core {
     * to {@link Core#ATAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ATAN_Stream#outRange()}.
     */
@@ -11091,7 +11194,8 @@ public final class Core {
    {
       requireArgument("ATAN openAndFill", "inReal", inReal);
       requireHistory("ATAN openAndFill", inReal.length);
-      requireArgument("ATAN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ATAN openAndFill", inReal.length, ATAN_Lookback());
+      requireLength("ATAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -11963,7 +12067,9 @@ public final class Core {
     * to {@link Core#ATR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ATR_Stream#outRange()}.
     */
@@ -11973,7 +12079,10 @@ public final class Core {
       requireHistory("ATR openAndFill", inHigh.length);
       requireArgument("ATR openAndFill", "inLow", inLow);
       requireArgument("ATR openAndFill", "inClose", inClose);
-      requireArgument("ATR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ATR openAndFill", inHigh.length, ATR_Lookback(optInTimePeriod));
+      requireHistoryLength("ATR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ATR openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -12540,7 +12649,9 @@ public final class Core {
     * to {@link Core#AVGDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AVGDEV_Stream#outRange()}.
     */
@@ -12548,7 +12659,8 @@ public final class Core {
    {
       requireArgument("AVGDEV openAndFill", "inReal", inReal);
       requireHistory("AVGDEV openAndFill", inReal.length);
-      requireArgument("AVGDEV openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, AVGDEV_Lookback(optInTimePeriod));
+      requireLength("AVGDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -13001,7 +13113,9 @@ public final class Core {
     * to {@link Core#AVGPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AVGPRICE_Stream#outRange()}.
     */
@@ -13012,7 +13126,11 @@ public final class Core {
       requireArgument("AVGPRICE openAndFill", "inHigh", inHigh);
       requireArgument("AVGPRICE openAndFill", "inLow", inLow);
       requireArgument("AVGPRICE openAndFill", "inClose", inClose);
-      requireArgument("AVGPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("AVGPRICE openAndFill", inOpen.length, AVGPRICE_Lookback());
+      requireHistoryLength("AVGPRICE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("AVGPRICE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("AVGPRICE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("AVGPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -14236,6 +14354,7 @@ public final class Core {
    {
       requireArgument("BBANDS open", "inReal", inReal);
       requireHistory("BBANDS open", inReal.length);
+      requireArgument("BBANDS open", "optInMAType", optInMAType);
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
    /**
@@ -14243,7 +14362,9 @@ public final class Core {
     * to {@link Core#BBANDS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link BBANDS_Stream#outRange()}.
     */
@@ -14251,9 +14372,11 @@ public final class Core {
    {
       requireArgument("BBANDS openAndFill", "inReal", inReal);
       requireHistory("BBANDS openAndFill", inReal.length);
-      requireArgument("BBANDS openAndFill", "outRealUpperBand", outRealUpperBand);
-      requireArgument("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand);
-      requireArgument("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand);
+      requireArgument("BBANDS openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("BBANDS openAndFill", inReal.length, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      requireLength("BBANDS openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
+      requireLength("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+      requireLength("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          throw new TaLibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -15873,7 +15996,9 @@ public final class Core {
     * to {@link Core#BETA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link BETA_Stream#outRange()}.
     */
@@ -15882,7 +16007,9 @@ public final class Core {
       requireArgument("BETA openAndFill", "inReal0", inReal0);
       requireHistory("BETA openAndFill", inReal0.length);
       requireArgument("BETA openAndFill", "inReal1", inReal1);
-      requireArgument("BETA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("BETA openAndFill", inReal0.length, BETA_Lookback(optInTimePeriod));
+      requireHistoryLength("BETA openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("BETA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -16371,7 +16498,9 @@ public final class Core {
     * to {@link Core#BOP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link BOP_Stream#outRange()}.
     */
@@ -16382,7 +16511,11 @@ public final class Core {
       requireArgument("BOP openAndFill", "inHigh", inHigh);
       requireArgument("BOP openAndFill", "inLow", inLow);
       requireArgument("BOP openAndFill", "inClose", inClose);
-      requireArgument("BOP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("BOP openAndFill", inOpen.length, BOP_Lookback());
+      requireHistoryLength("BOP openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("BOP openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("BOP openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("BOP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("BOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -17179,7 +17312,9 @@ public final class Core {
     * to {@link Core#CCI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CCI_Stream#outRange()}.
     */
@@ -17189,7 +17324,10 @@ public final class Core {
       requireHistory("CCI openAndFill", inHigh.length);
       requireArgument("CCI openAndFill", "inLow", inLow);
       requireArgument("CCI openAndFill", "inClose", inClose);
-      requireArgument("CCI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CCI openAndFill", inHigh.length, CCI_Lookback(optInTimePeriod));
+      requireHistoryLength("CCI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CCI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("CCI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -17911,7 +18049,9 @@ public final class Core {
     * to {@link Core#CDL2CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL2CROWS_Stream#outRange()}.
     */
@@ -17922,7 +18062,11 @@ public final class Core {
       requireArgument("CDL2CROWS openAndFill", "inHigh", inHigh);
       requireArgument("CDL2CROWS openAndFill", "inLow", inLow);
       requireArgument("CDL2CROWS openAndFill", "inClose", inClose);
-      requireArgument("CDL2CROWS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL2CROWS openAndFill", inOpen.length, CDL2CROWS_Lookback());
+      requireHistoryLength("CDL2CROWS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL2CROWS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL2CROWS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL2CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -18711,7 +18855,9 @@ public final class Core {
     * to {@link Core#CDL3BLACKCROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3BLACKCROWS_Stream#outRange()}.
     */
@@ -18722,7 +18868,11 @@ public final class Core {
       requireArgument("CDL3BLACKCROWS openAndFill", "inHigh", inHigh);
       requireArgument("CDL3BLACKCROWS openAndFill", "inLow", inLow);
       requireArgument("CDL3BLACKCROWS openAndFill", "inClose", inClose);
-      requireArgument("CDL3BLACKCROWS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3BLACKCROWS openAndFill", inOpen.length, CDL3BLACKCROWS_Lookback());
+      requireHistoryLength("CDL3BLACKCROWS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3BLACKCROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -19543,7 +19693,9 @@ public final class Core {
     * to {@link Core#CDL3INSIDE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3INSIDE_Stream#outRange()}.
     */
@@ -19554,7 +19706,11 @@ public final class Core {
       requireArgument("CDL3INSIDE openAndFill", "inHigh", inHigh);
       requireArgument("CDL3INSIDE openAndFill", "inLow", inLow);
       requireArgument("CDL3INSIDE openAndFill", "inClose", inClose);
-      requireArgument("CDL3INSIDE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3INSIDE openAndFill", inOpen.length, CDL3INSIDE_Lookback());
+      requireHistoryLength("CDL3INSIDE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3INSIDE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3INSIDE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3INSIDE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3INSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -20332,7 +20488,9 @@ public final class Core {
     * to {@link Core#CDL3LINESTRIKE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3LINESTRIKE_Stream#outRange()}.
     */
@@ -20343,7 +20501,11 @@ public final class Core {
       requireArgument("CDL3LINESTRIKE openAndFill", "inHigh", inHigh);
       requireArgument("CDL3LINESTRIKE openAndFill", "inLow", inLow);
       requireArgument("CDL3LINESTRIKE openAndFill", "inClose", inClose);
-      requireArgument("CDL3LINESTRIKE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3LINESTRIKE openAndFill", inOpen.length, CDL3LINESTRIKE_Lookback());
+      requireHistoryLength("CDL3LINESTRIKE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3LINESTRIKE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3LINESTRIKE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3LINESTRIKE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3LINESTRIKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -20921,7 +21083,9 @@ public final class Core {
     * to {@link Core#CDL3OUTSIDE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3OUTSIDE_Stream#outRange()}.
     */
@@ -20932,7 +21096,11 @@ public final class Core {
       requireArgument("CDL3OUTSIDE openAndFill", "inHigh", inHigh);
       requireArgument("CDL3OUTSIDE openAndFill", "inLow", inLow);
       requireArgument("CDL3OUTSIDE openAndFill", "inClose", inClose);
-      requireArgument("CDL3OUTSIDE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3OUTSIDE openAndFill", inOpen.length, CDL3OUTSIDE_Lookback());
+      requireHistoryLength("CDL3OUTSIDE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3OUTSIDE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3OUTSIDE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3OUTSIDE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -22012,7 +22180,9 @@ public final class Core {
     * to {@link Core#CDL3STARSINSOUTH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3STARSINSOUTH_Stream#outRange()}.
     */
@@ -22023,7 +22193,11 @@ public final class Core {
       requireArgument("CDL3STARSINSOUTH openAndFill", "inHigh", inHigh);
       requireArgument("CDL3STARSINSOUTH openAndFill", "inLow", inLow);
       requireArgument("CDL3STARSINSOUTH openAndFill", "inClose", inClose);
-      requireArgument("CDL3STARSINSOUTH openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3STARSINSOUTH openAndFill", inOpen.length, CDL3STARSINSOUTH_Lookback());
+      requireHistoryLength("CDL3STARSINSOUTH openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3STARSINSOUTH openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3STARSINSOUTH openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3STARSINSOUTH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3STARSINSOUTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -23140,7 +23314,9 @@ public final class Core {
     * to {@link Core#CDL3WHITESOLDIERS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3WHITESOLDIERS_Stream#outRange()}.
     */
@@ -23151,7 +23327,11 @@ public final class Core {
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inHigh", inHigh);
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inLow", inLow);
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inClose", inClose);
-      requireArgument("CDL3WHITESOLDIERS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3WHITESOLDIERS openAndFill", inOpen.length, CDL3WHITESOLDIERS_Lookback());
+      requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3WHITESOLDIERS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -24112,7 +24292,9 @@ public final class Core {
     * to {@link Core#CDLABANDONEDBABY} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLABANDONEDBABY_Stream#outRange()}.
     */
@@ -24123,7 +24305,11 @@ public final class Core {
       requireArgument("CDLABANDONEDBABY openAndFill", "inHigh", inHigh);
       requireArgument("CDLABANDONEDBABY openAndFill", "inLow", inLow);
       requireArgument("CDLABANDONEDBABY openAndFill", "inClose", inClose);
-      requireArgument("CDLABANDONEDBABY openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLABANDONEDBABY openAndFill", inOpen.length, CDLABANDONEDBABY_Lookback(optInPenetration));
+      requireHistoryLength("CDLABANDONEDBABY openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLABANDONEDBABY openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLABANDONEDBABY openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLABANDONEDBABY openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -25349,7 +25535,9 @@ public final class Core {
     * to {@link Core#CDLADVANCEBLOCK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLADVANCEBLOCK_Stream#outRange()}.
     */
@@ -25360,7 +25548,11 @@ public final class Core {
       requireArgument("CDLADVANCEBLOCK openAndFill", "inHigh", inHigh);
       requireArgument("CDLADVANCEBLOCK openAndFill", "inLow", inLow);
       requireArgument("CDLADVANCEBLOCK openAndFill", "inClose", inClose);
-      requireArgument("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLADVANCEBLOCK openAndFill", inOpen.length, CDLADVANCEBLOCK_Lookback());
+      requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -26129,7 +26321,9 @@ public final class Core {
     * to {@link Core#CDLBELTHOLD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLBELTHOLD_Stream#outRange()}.
     */
@@ -26140,7 +26334,11 @@ public final class Core {
       requireArgument("CDLBELTHOLD openAndFill", "inHigh", inHigh);
       requireArgument("CDLBELTHOLD openAndFill", "inLow", inLow);
       requireArgument("CDLBELTHOLD openAndFill", "inClose", inClose);
-      requireArgument("CDLBELTHOLD openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLBELTHOLD openAndFill", inOpen.length, CDLBELTHOLD_Lookback());
+      requireHistoryLength("CDLBELTHOLD openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLBELTHOLD openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLBELTHOLD openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLBELTHOLD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLBELTHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -26896,7 +27094,9 @@ public final class Core {
     * to {@link Core#CDLBREAKAWAY} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLBREAKAWAY_Stream#outRange()}.
     */
@@ -26907,7 +27107,11 @@ public final class Core {
       requireArgument("CDLBREAKAWAY openAndFill", "inHigh", inHigh);
       requireArgument("CDLBREAKAWAY openAndFill", "inLow", inLow);
       requireArgument("CDLBREAKAWAY openAndFill", "inClose", inClose);
-      requireArgument("CDLBREAKAWAY openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLBREAKAWAY openAndFill", inOpen.length, CDLBREAKAWAY_Lookback());
+      requireHistoryLength("CDLBREAKAWAY openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLBREAKAWAY openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLBREAKAWAY openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLBREAKAWAY openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLBREAKAWAY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -27672,7 +27876,9 @@ public final class Core {
     * to {@link Core#CDLCLOSINGMARUBOZU} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLCLOSINGMARUBOZU_Stream#outRange()}.
     */
@@ -27683,7 +27889,11 @@ public final class Core {
       requireArgument("CDLCLOSINGMARUBOZU openAndFill", "inHigh", inHigh);
       requireArgument("CDLCLOSINGMARUBOZU openAndFill", "inLow", inLow);
       requireArgument("CDLCLOSINGMARUBOZU openAndFill", "inClose", inClose);
-      requireArgument("CDLCLOSINGMARUBOZU openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLCLOSINGMARUBOZU openAndFill", inOpen.length, CDLCLOSINGMARUBOZU_Lookback());
+      requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLCLOSINGMARUBOZU openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -28474,7 +28684,9 @@ public final class Core {
     * to {@link Core#CDLCONCEALBABYSWALL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLCONCEALBABYSWALL_Stream#outRange()}.
     */
@@ -28485,7 +28697,11 @@ public final class Core {
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inHigh", inHigh);
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inLow", inLow);
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inClose", inClose);
-      requireArgument("CDLCONCEALBABYSWALL openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLCONCEALBABYSWALL openAndFill", inOpen.length, CDLCONCEALBABYSWALL_Lookback());
+      requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLCONCEALBABYSWALL openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -29304,7 +29520,9 @@ public final class Core {
     * to {@link Core#CDLCOUNTERATTACK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLCOUNTERATTACK_Stream#outRange()}.
     */
@@ -29315,7 +29533,11 @@ public final class Core {
       requireArgument("CDLCOUNTERATTACK openAndFill", "inHigh", inHigh);
       requireArgument("CDLCOUNTERATTACK openAndFill", "inLow", inLow);
       requireArgument("CDLCOUNTERATTACK openAndFill", "inClose", inClose);
-      requireArgument("CDLCOUNTERATTACK openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLCOUNTERATTACK openAndFill", inOpen.length, CDLCOUNTERATTACK_Lookback());
+      requireHistoryLength("CDLCOUNTERATTACK openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCOUNTERATTACK openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCOUNTERATTACK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLCOUNTERATTACK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -30045,7 +30267,9 @@ public final class Core {
     * to {@link Core#CDLDARKCLOUDCOVER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLDARKCLOUDCOVER_Stream#outRange()}.
     */
@@ -30056,7 +30280,11 @@ public final class Core {
       requireArgument("CDLDARKCLOUDCOVER openAndFill", "inHigh", inHigh);
       requireArgument("CDLDARKCLOUDCOVER openAndFill", "inLow", inLow);
       requireArgument("CDLDARKCLOUDCOVER openAndFill", "inClose", inClose);
-      requireArgument("CDLDARKCLOUDCOVER openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLDARKCLOUDCOVER openAndFill", inOpen.length, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
+      requireHistoryLength("CDLDARKCLOUDCOVER openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDARKCLOUDCOVER openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDARKCLOUDCOVER openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLDARKCLOUDCOVER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -30698,7 +30926,9 @@ public final class Core {
     * to {@link Core#CDLDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLDOJI_Stream#outRange()}.
     */
@@ -30709,7 +30939,11 @@ public final class Core {
       requireArgument("CDLDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLDOJI openAndFill", "inClose", inClose);
-      requireArgument("CDLDOJI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLDOJI openAndFill", inOpen.length, CDLDOJI_Lookback());
+      requireHistoryLength("CDLDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDOJI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDOJI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -31517,7 +31751,9 @@ public final class Core {
     * to {@link Core#CDLDOJISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLDOJISTAR_Stream#outRange()}.
     */
@@ -31528,7 +31764,11 @@ public final class Core {
       requireArgument("CDLDOJISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLDOJISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLDOJISTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLDOJISTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLDOJISTAR openAndFill", inOpen.length, CDLDOJISTAR_Lookback());
+      requireHistoryLength("CDLDOJISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDOJISTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -32301,7 +32541,9 @@ public final class Core {
     * to {@link Core#CDLDRAGONFLYDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLDRAGONFLYDOJI_Stream#outRange()}.
     */
@@ -32312,7 +32554,11 @@ public final class Core {
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inClose", inClose);
-      requireArgument("CDLDRAGONFLYDOJI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLDRAGONFLYDOJI openAndFill", inOpen.length, CDLDRAGONFLYDOJI_Lookback());
+      requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLDRAGONFLYDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -32898,7 +33144,9 @@ public final class Core {
     * to {@link Core#CDLENGULFING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLENGULFING_Stream#outRange()}.
     */
@@ -32909,7 +33157,11 @@ public final class Core {
       requireArgument("CDLENGULFING openAndFill", "inHigh", inHigh);
       requireArgument("CDLENGULFING openAndFill", "inLow", inLow);
       requireArgument("CDLENGULFING openAndFill", "inClose", inClose);
-      requireArgument("CDLENGULFING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLENGULFING openAndFill", inOpen.length, CDLENGULFING_Lookback());
+      requireHistoryLength("CDLENGULFING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLENGULFING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -33873,7 +34125,9 @@ public final class Core {
     * to {@link Core#CDLEVENINGDOJISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLEVENINGDOJISTAR_Stream#outRange()}.
     */
@@ -33884,7 +34138,11 @@ public final class Core {
       requireArgument("CDLEVENINGDOJISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLEVENINGDOJISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLEVENINGDOJISTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLEVENINGDOJISTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLEVENINGDOJISTAR openAndFill", inOpen.length, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
+      requireHistoryLength("CDLEVENINGDOJISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGDOJISTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLEVENINGDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -34767,7 +35025,9 @@ public final class Core {
     * to {@link Core#CDLEVENINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLEVENINGSTAR_Stream#outRange()}.
     */
@@ -34778,7 +35038,11 @@ public final class Core {
       requireArgument("CDLEVENINGSTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLEVENINGSTAR openAndFill", "inLow", inLow);
       requireArgument("CDLEVENINGSTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLEVENINGSTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLEVENINGSTAR openAndFill", inOpen.length, CDLEVENINGSTAR_Lookback(optInPenetration));
+      requireHistoryLength("CDLEVENINGSTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGSTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLEVENINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -35601,7 +35865,9 @@ public final class Core {
     * to {@link Core#CDLGAPSIDESIDEWHITE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLGAPSIDESIDEWHITE_Stream#outRange()}.
     */
@@ -35612,7 +35878,11 @@ public final class Core {
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inHigh", inHigh);
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inLow", inLow);
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inClose", inClose);
-      requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLGAPSIDESIDEWHITE openAndFill", inOpen.length, CDLGAPSIDESIDEWHITE_Lookback());
+      requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLGAPSIDESIDEWHITE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -36385,7 +36655,9 @@ public final class Core {
     * to {@link Core#CDLGRAVESTONEDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLGRAVESTONEDOJI_Stream#outRange()}.
     */
@@ -36396,7 +36668,11 @@ public final class Core {
       requireArgument("CDLGRAVESTONEDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLGRAVESTONEDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLGRAVESTONEDOJI openAndFill", "inClose", inClose);
-      requireArgument("CDLGRAVESTONEDOJI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLGRAVESTONEDOJI openAndFill", inOpen.length, CDLGRAVESTONEDOJI_Lookback());
+      requireHistoryLength("CDLGRAVESTONEDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGRAVESTONEDOJI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGRAVESTONEDOJI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLGRAVESTONEDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -37384,7 +37660,9 @@ public final class Core {
     * to {@link Core#CDLHAMMER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHAMMER_Stream#outRange()}.
     */
@@ -37395,7 +37673,11 @@ public final class Core {
       requireArgument("CDLHAMMER openAndFill", "inHigh", inHigh);
       requireArgument("CDLHAMMER openAndFill", "inLow", inLow);
       requireArgument("CDLHAMMER openAndFill", "inClose", inClose);
-      requireArgument("CDLHAMMER openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHAMMER openAndFill", inOpen.length, CDLHAMMER_Lookback());
+      requireHistoryLength("CDLHAMMER openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHAMMER openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHAMMER openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHAMMER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -38385,7 +38667,9 @@ public final class Core {
     * to {@link Core#CDLHANGINGMAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHANGINGMAN_Stream#outRange()}.
     */
@@ -38396,7 +38680,11 @@ public final class Core {
       requireArgument("CDLHANGINGMAN openAndFill", "inHigh", inHigh);
       requireArgument("CDLHANGINGMAN openAndFill", "inLow", inLow);
       requireArgument("CDLHANGINGMAN openAndFill", "inClose", inClose);
-      requireArgument("CDLHANGINGMAN openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHANGINGMAN openAndFill", inOpen.length, CDLHANGINGMAN_Lookback());
+      requireHistoryLength("CDLHANGINGMAN openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHANGINGMAN openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHANGINGMAN openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHANGINGMAN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHANGINGMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -39243,7 +39531,9 @@ public final class Core {
     * to {@link Core#CDLHARAMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHARAMI_Stream#outRange()}.
     */
@@ -39254,7 +39544,11 @@ public final class Core {
       requireArgument("CDLHARAMI openAndFill", "inHigh", inHigh);
       requireArgument("CDLHARAMI openAndFill", "inLow", inLow);
       requireArgument("CDLHARAMI openAndFill", "inClose", inClose);
-      requireArgument("CDLHARAMI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHARAMI openAndFill", inOpen.length, CDLHARAMI_Lookback());
+      requireHistoryLength("CDLHARAMI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHARAMI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHARAMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -40097,7 +40391,9 @@ public final class Core {
     * to {@link Core#CDLHARAMICROSS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHARAMICROSS_Stream#outRange()}.
     */
@@ -40108,7 +40404,11 @@ public final class Core {
       requireArgument("CDLHARAMICROSS openAndFill", "inHigh", inHigh);
       requireArgument("CDLHARAMICROSS openAndFill", "inLow", inLow);
       requireArgument("CDLHARAMICROSS openAndFill", "inClose", inClose);
-      requireArgument("CDLHARAMICROSS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHARAMICROSS openAndFill", inOpen.length, CDLHARAMICROSS_Lookback());
+      requireHistoryLength("CDLHARAMICROSS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMICROSS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMICROSS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHARAMICROSS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -40875,7 +41175,9 @@ public final class Core {
     * to {@link Core#CDLHIGHWAVE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHIGHWAVE_Stream#outRange()}.
     */
@@ -40886,7 +41188,11 @@ public final class Core {
       requireArgument("CDLHIGHWAVE openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIGHWAVE openAndFill", "inLow", inLow);
       requireArgument("CDLHIGHWAVE openAndFill", "inClose", inClose);
-      requireArgument("CDLHIGHWAVE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHIGHWAVE openAndFill", inOpen.length, CDLHIGHWAVE_Lookback());
+      requireHistoryLength("CDLHIGHWAVE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHIGHWAVE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -41610,7 +41916,9 @@ public final class Core {
     * to {@link Core#CDLHIKKAKE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHIKKAKE_Stream#outRange()}.
     */
@@ -41621,7 +41929,11 @@ public final class Core {
       requireArgument("CDLHIKKAKE openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIKKAKE openAndFill", "inLow", inLow);
       requireArgument("CDLHIKKAKE openAndFill", "inClose", inClose);
-      requireArgument("CDLHIKKAKE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHIKKAKE openAndFill", inOpen.length, CDLHIKKAKE_Lookback());
+      requireHistoryLength("CDLHIKKAKE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHIKKAKE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -42507,7 +42819,9 @@ public final class Core {
     * to {@link Core#CDLHIKKAKEMOD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHIKKAKEMOD_Stream#outRange()}.
     */
@@ -42518,7 +42832,11 @@ public final class Core {
       requireArgument("CDLHIKKAKEMOD openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIKKAKEMOD openAndFill", "inLow", inLow);
       requireArgument("CDLHIKKAKEMOD openAndFill", "inClose", inClose);
-      requireArgument("CDLHIKKAKEMOD openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHIKKAKEMOD openAndFill", inOpen.length, CDLHIKKAKEMOD_Lookback());
+      requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHIKKAKEMOD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -43322,7 +43640,9 @@ public final class Core {
     * to {@link Core#CDLHOMINGPIGEON} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHOMINGPIGEON_Stream#outRange()}.
     */
@@ -43333,7 +43653,11 @@ public final class Core {
       requireArgument("CDLHOMINGPIGEON openAndFill", "inHigh", inHigh);
       requireArgument("CDLHOMINGPIGEON openAndFill", "inLow", inLow);
       requireArgument("CDLHOMINGPIGEON openAndFill", "inClose", inClose);
-      requireArgument("CDLHOMINGPIGEON openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHOMINGPIGEON openAndFill", inOpen.length, CDLHOMINGPIGEON_Lookback());
+      requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHOMINGPIGEON openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHOMINGPIGEON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -44224,7 +44548,9 @@ public final class Core {
     * to {@link Core#CDLIDENTICAL3CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLIDENTICAL3CROWS_Stream#outRange()}.
     */
@@ -44235,7 +44561,11 @@ public final class Core {
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inHigh", inHigh);
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inLow", inLow);
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inClose", inClose);
-      requireArgument("CDLIDENTICAL3CROWS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLIDENTICAL3CROWS openAndFill", inOpen.length, CDLIDENTICAL3CROWS_Lookback());
+      requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLIDENTICAL3CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -45045,7 +45375,9 @@ public final class Core {
     * to {@link Core#CDLINNECK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLINNECK_Stream#outRange()}.
     */
@@ -45056,7 +45388,11 @@ public final class Core {
       requireArgument("CDLINNECK openAndFill", "inHigh", inHigh);
       requireArgument("CDLINNECK openAndFill", "inLow", inLow);
       requireArgument("CDLINNECK openAndFill", "inClose", inClose);
-      requireArgument("CDLINNECK openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLINNECK openAndFill", inOpen.length, CDLINNECK_Lookback());
+      requireHistoryLength("CDLINNECK openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLINNECK openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLINNECK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLINNECK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLINNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -45936,7 +46272,9 @@ public final class Core {
     * to {@link Core#CDLINVERTEDHAMMER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLINVERTEDHAMMER_Stream#outRange()}.
     */
@@ -45947,7 +46285,11 @@ public final class Core {
       requireArgument("CDLINVERTEDHAMMER openAndFill", "inHigh", inHigh);
       requireArgument("CDLINVERTEDHAMMER openAndFill", "inLow", inLow);
       requireArgument("CDLINVERTEDHAMMER openAndFill", "inClose", inClose);
-      requireArgument("CDLINVERTEDHAMMER openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLINVERTEDHAMMER openAndFill", inOpen.length, CDLINVERTEDHAMMER_Lookback());
+      requireHistoryLength("CDLINVERTEDHAMMER openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLINVERTEDHAMMER openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLINVERTEDHAMMER openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLINVERTEDHAMMER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -46781,7 +47123,9 @@ public final class Core {
     * to {@link Core#CDLKICKING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLKICKING_Stream#outRange()}.
     */
@@ -46792,7 +47136,11 @@ public final class Core {
       requireArgument("CDLKICKING openAndFill", "inHigh", inHigh);
       requireArgument("CDLKICKING openAndFill", "inLow", inLow);
       requireArgument("CDLKICKING openAndFill", "inClose", inClose);
-      requireArgument("CDLKICKING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLKICKING openAndFill", inOpen.length, CDLKICKING_Lookback());
+      requireHistoryLength("CDLKICKING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLKICKING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLKICKING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLKICKING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -47622,7 +47970,9 @@ public final class Core {
     * to {@link Core#CDLKICKINGBYLENGTH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLKICKINGBYLENGTH_Stream#outRange()}.
     */
@@ -47633,7 +47983,11 @@ public final class Core {
       requireArgument("CDLKICKINGBYLENGTH openAndFill", "inHigh", inHigh);
       requireArgument("CDLKICKINGBYLENGTH openAndFill", "inLow", inLow);
       requireArgument("CDLKICKINGBYLENGTH openAndFill", "inClose", inClose);
-      requireArgument("CDLKICKINGBYLENGTH openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLKICKINGBYLENGTH openAndFill", inOpen.length, CDLKICKINGBYLENGTH_Lookback());
+      requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLKICKINGBYLENGTH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -48377,7 +48731,9 @@ public final class Core {
     * to {@link Core#CDLLADDERBOTTOM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLLADDERBOTTOM_Stream#outRange()}.
     */
@@ -48388,7 +48744,11 @@ public final class Core {
       requireArgument("CDLLADDERBOTTOM openAndFill", "inHigh", inHigh);
       requireArgument("CDLLADDERBOTTOM openAndFill", "inLow", inLow);
       requireArgument("CDLLADDERBOTTOM openAndFill", "inClose", inClose);
-      requireArgument("CDLLADDERBOTTOM openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLLADDERBOTTOM openAndFill", inOpen.length, CDLLADDERBOTTOM_Lookback());
+      requireHistoryLength("CDLLADDERBOTTOM openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLADDERBOTTOM openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLADDERBOTTOM openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLLADDERBOTTOM openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -49151,7 +49511,9 @@ public final class Core {
     * to {@link Core#CDLLONGLEGGEDDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLLONGLEGGEDDOJI_Stream#outRange()}.
     */
@@ -49162,7 +49524,11 @@ public final class Core {
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose);
-      requireArgument("CDLLONGLEGGEDDOJI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLLONGLEGGEDDOJI openAndFill", inOpen.length, CDLLONGLEGGEDDOJI_Lookback());
+      requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLLONGLEGGEDDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -49907,7 +50273,9 @@ public final class Core {
     * to {@link Core#CDLLONGLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLLONGLINE_Stream#outRange()}.
     */
@@ -49918,7 +50286,11 @@ public final class Core {
       requireArgument("CDLLONGLINE openAndFill", "inHigh", inHigh);
       requireArgument("CDLLONGLINE openAndFill", "inLow", inLow);
       requireArgument("CDLLONGLINE openAndFill", "inClose", inClose);
-      requireArgument("CDLLONGLINE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLLONGLINE openAndFill", inOpen.length, CDLLONGLINE_Lookback());
+      requireHistoryLength("CDLLONGLINE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLINE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLINE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLLONGLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -50675,7 +51047,9 @@ public final class Core {
     * to {@link Core#CDLMARUBOZU} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLMARUBOZU_Stream#outRange()}.
     */
@@ -50686,7 +51060,11 @@ public final class Core {
       requireArgument("CDLMARUBOZU openAndFill", "inHigh", inHigh);
       requireArgument("CDLMARUBOZU openAndFill", "inLow", inLow);
       requireArgument("CDLMARUBOZU openAndFill", "inClose", inClose);
-      requireArgument("CDLMARUBOZU openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLMARUBOZU openAndFill", inOpen.length, CDLMARUBOZU_Lookback());
+      requireHistoryLength("CDLMARUBOZU openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMARUBOZU openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLMARUBOZU openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -51371,7 +51749,9 @@ public final class Core {
     * to {@link Core#CDLMATCHINGLOW} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLMATCHINGLOW_Stream#outRange()}.
     */
@@ -51382,7 +51762,11 @@ public final class Core {
       requireArgument("CDLMATCHINGLOW openAndFill", "inHigh", inHigh);
       requireArgument("CDLMATCHINGLOW openAndFill", "inLow", inLow);
       requireArgument("CDLMATCHINGLOW openAndFill", "inClose", inClose);
-      requireArgument("CDLMATCHINGLOW openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLMATCHINGLOW openAndFill", inOpen.length, CDLMATCHINGLOW_Lookback());
+      requireHistoryLength("CDLMATCHINGLOW openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMATCHINGLOW openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMATCHINGLOW openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLMATCHINGLOW openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -52347,7 +52731,9 @@ public final class Core {
     * to {@link Core#CDLMATHOLD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLMATHOLD_Stream#outRange()}.
     */
@@ -52358,7 +52744,11 @@ public final class Core {
       requireArgument("CDLMATHOLD openAndFill", "inHigh", inHigh);
       requireArgument("CDLMATHOLD openAndFill", "inLow", inLow);
       requireArgument("CDLMATHOLD openAndFill", "inClose", inClose);
-      requireArgument("CDLMATHOLD openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLMATHOLD openAndFill", inOpen.length, CDLMATHOLD_Lookback(optInPenetration));
+      requireHistoryLength("CDLMATHOLD openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMATHOLD openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMATHOLD openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLMATHOLD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -53329,7 +53719,9 @@ public final class Core {
     * to {@link Core#CDLMORNINGDOJISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLMORNINGDOJISTAR_Stream#outRange()}.
     */
@@ -53340,7 +53732,11 @@ public final class Core {
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLMORNINGDOJISTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLMORNINGDOJISTAR openAndFill", inOpen.length, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLMORNINGDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -54231,7 +54627,9 @@ public final class Core {
     * to {@link Core#CDLMORNINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLMORNINGSTAR_Stream#outRange()}.
     */
@@ -54242,7 +54640,11 @@ public final class Core {
       requireArgument("CDLMORNINGSTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLMORNINGSTAR openAndFill", "inLow", inLow);
       requireArgument("CDLMORNINGSTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLMORNINGSTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLMORNINGSTAR openAndFill", inOpen.length, CDLMORNINGSTAR_Lookback(optInPenetration));
+      requireHistoryLength("CDLMORNINGSTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGSTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLMORNINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -55050,7 +55452,9 @@ public final class Core {
     * to {@link Core#CDLONNECK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLONNECK_Stream#outRange()}.
     */
@@ -55061,7 +55465,11 @@ public final class Core {
       requireArgument("CDLONNECK openAndFill", "inHigh", inHigh);
       requireArgument("CDLONNECK openAndFill", "inLow", inLow);
       requireArgument("CDLONNECK openAndFill", "inClose", inClose);
-      requireArgument("CDLONNECK openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLONNECK openAndFill", inOpen.length, CDLONNECK_Lookback());
+      requireHistoryLength("CDLONNECK openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLONNECK openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLONNECK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLONNECK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLONNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -55788,7 +56196,9 @@ public final class Core {
     * to {@link Core#CDLPIERCING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLPIERCING_Stream#outRange()}.
     */
@@ -55799,7 +56209,11 @@ public final class Core {
       requireArgument("CDLPIERCING openAndFill", "inHigh", inHigh);
       requireArgument("CDLPIERCING openAndFill", "inLow", inLow);
       requireArgument("CDLPIERCING openAndFill", "inClose", inClose);
-      requireArgument("CDLPIERCING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLPIERCING openAndFill", inOpen.length, CDLPIERCING_Lookback());
+      requireHistoryLength("CDLPIERCING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLPIERCING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLPIERCING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -56664,7 +57078,9 @@ public final class Core {
     * to {@link Core#CDLRICKSHAWMAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLRICKSHAWMAN_Stream#outRange()}.
     */
@@ -56675,7 +57091,11 @@ public final class Core {
       requireArgument("CDLRICKSHAWMAN openAndFill", "inHigh", inHigh);
       requireArgument("CDLRICKSHAWMAN openAndFill", "inLow", inLow);
       requireArgument("CDLRICKSHAWMAN openAndFill", "inClose", inClose);
-      requireArgument("CDLRICKSHAWMAN openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLRICKSHAWMAN openAndFill", inOpen.length, CDLRICKSHAWMAN_Lookback());
+      requireHistoryLength("CDLRICKSHAWMAN openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRICKSHAWMAN openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRICKSHAWMAN openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLRICKSHAWMAN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLRICKSHAWMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -57617,7 +58037,9 @@ public final class Core {
     * to {@link Core#CDLRISEFALL3METHODS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLRISEFALL3METHODS_Stream#outRange()}.
     */
@@ -57628,7 +58050,11 @@ public final class Core {
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inHigh", inHigh);
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inLow", inLow);
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inClose", inClose);
-      requireArgument("CDLRISEFALL3METHODS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLRISEFALL3METHODS openAndFill", inOpen.length, CDLRISEFALL3METHODS_Lookback());
+      requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLRISEFALL3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -58525,7 +58951,9 @@ public final class Core {
     * to {@link Core#CDLSEPARATINGLINES} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSEPARATINGLINES_Stream#outRange()}.
     */
@@ -58536,7 +58964,11 @@ public final class Core {
       requireArgument("CDLSEPARATINGLINES openAndFill", "inHigh", inHigh);
       requireArgument("CDLSEPARATINGLINES openAndFill", "inLow", inLow);
       requireArgument("CDLSEPARATINGLINES openAndFill", "inClose", inClose);
-      requireArgument("CDLSEPARATINGLINES openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSEPARATINGLINES openAndFill", inOpen.length, CDLSEPARATINGLINES_Lookback());
+      requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSEPARATINGLINES openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -59420,7 +59852,9 @@ public final class Core {
     * to {@link Core#CDLSHOOTINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSHOOTINGSTAR_Stream#outRange()}.
     */
@@ -59431,7 +59865,11 @@ public final class Core {
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inLow", inLow);
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLSHOOTINGSTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSHOOTINGSTAR openAndFill", inOpen.length, CDLSHOOTINGSTAR_Lookback());
+      requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSHOOTINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -60192,7 +60630,9 @@ public final class Core {
     * to {@link Core#CDLSHORTLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSHORTLINE_Stream#outRange()}.
     */
@@ -60203,7 +60643,11 @@ public final class Core {
       requireArgument("CDLSHORTLINE openAndFill", "inHigh", inHigh);
       requireArgument("CDLSHORTLINE openAndFill", "inLow", inLow);
       requireArgument("CDLSHORTLINE openAndFill", "inClose", inClose);
-      requireArgument("CDLSHORTLINE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSHORTLINE openAndFill", inOpen.length, CDLSHORTLINE_Lookback());
+      requireHistoryLength("CDLSHORTLINE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSHORTLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -60845,7 +61289,9 @@ public final class Core {
     * to {@link Core#CDLSPINNINGTOP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSPINNINGTOP_Stream#outRange()}.
     */
@@ -60856,7 +61302,11 @@ public final class Core {
       requireArgument("CDLSPINNINGTOP openAndFill", "inHigh", inHigh);
       requireArgument("CDLSPINNINGTOP openAndFill", "inLow", inLow);
       requireArgument("CDLSPINNINGTOP openAndFill", "inClose", inClose);
-      requireArgument("CDLSPINNINGTOP openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSPINNINGTOP openAndFill", inOpen.length, CDLSPINNINGTOP_Lookback());
+      requireHistoryLength("CDLSPINNINGTOP openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSPINNINGTOP openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSPINNINGTOP openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSPINNINGTOP openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -61940,7 +62390,9 @@ public final class Core {
     * to {@link Core#CDLSTALLEDPATTERN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSTALLEDPATTERN_Stream#outRange()}.
     */
@@ -61951,7 +62403,11 @@ public final class Core {
       requireArgument("CDLSTALLEDPATTERN openAndFill", "inHigh", inHigh);
       requireArgument("CDLSTALLEDPATTERN openAndFill", "inLow", inLow);
       requireArgument("CDLSTALLEDPATTERN openAndFill", "inClose", inClose);
-      requireArgument("CDLSTALLEDPATTERN openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSTALLEDPATTERN openAndFill", inOpen.length, CDLSTALLEDPATTERN_Lookback());
+      requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSTALLEDPATTERN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -62662,7 +63118,9 @@ public final class Core {
     * to {@link Core#CDLSTICKSANDWICH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSTICKSANDWICH_Stream#outRange()}.
     */
@@ -62673,7 +63131,11 @@ public final class Core {
       requireArgument("CDLSTICKSANDWICH openAndFill", "inHigh", inHigh);
       requireArgument("CDLSTICKSANDWICH openAndFill", "inLow", inLow);
       requireArgument("CDLSTICKSANDWICH openAndFill", "inClose", inClose);
-      requireArgument("CDLSTICKSANDWICH openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSTICKSANDWICH openAndFill", inOpen.length, CDLSTICKSANDWICH_Lookback());
+      requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSTICKSANDWICH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -63532,7 +63994,9 @@ public final class Core {
     * to {@link Core#CDLTAKURI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLTAKURI_Stream#outRange()}.
     */
@@ -63543,7 +64007,11 @@ public final class Core {
       requireArgument("CDLTAKURI openAndFill", "inHigh", inHigh);
       requireArgument("CDLTAKURI openAndFill", "inLow", inLow);
       requireArgument("CDLTAKURI openAndFill", "inClose", inClose);
-      requireArgument("CDLTAKURI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLTAKURI openAndFill", inOpen.length, CDLTAKURI_Lookback());
+      requireHistoryLength("CDLTAKURI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTAKURI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTAKURI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLTAKURI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTAKURI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -64274,7 +64742,9 @@ public final class Core {
     * to {@link Core#CDLTASUKIGAP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLTASUKIGAP_Stream#outRange()}.
     */
@@ -64285,7 +64755,11 @@ public final class Core {
       requireArgument("CDLTASUKIGAP openAndFill", "inHigh", inHigh);
       requireArgument("CDLTASUKIGAP openAndFill", "inLow", inLow);
       requireArgument("CDLTASUKIGAP openAndFill", "inClose", inClose);
-      requireArgument("CDLTASUKIGAP openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLTASUKIGAP openAndFill", inOpen.length, CDLTASUKIGAP_Lookback());
+      requireHistoryLength("CDLTASUKIGAP openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTASUKIGAP openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTASUKIGAP openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLTASUKIGAP openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -65095,7 +65569,9 @@ public final class Core {
     * to {@link Core#CDLTHRUSTING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLTHRUSTING_Stream#outRange()}.
     */
@@ -65106,7 +65582,11 @@ public final class Core {
       requireArgument("CDLTHRUSTING openAndFill", "inHigh", inHigh);
       requireArgument("CDLTHRUSTING openAndFill", "inLow", inLow);
       requireArgument("CDLTHRUSTING openAndFill", "inClose", inClose);
-      requireArgument("CDLTHRUSTING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLTHRUSTING openAndFill", inOpen.length, CDLTHRUSTING_Lookback());
+      requireHistoryLength("CDLTHRUSTING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLTHRUSTING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -65845,7 +66325,9 @@ public final class Core {
     * to {@link Core#CDLTRISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLTRISTAR_Stream#outRange()}.
     */
@@ -65856,7 +66338,11 @@ public final class Core {
       requireArgument("CDLTRISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLTRISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLTRISTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLTRISTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLTRISTAR openAndFill", inOpen.length, CDLTRISTAR_Lookback());
+      requireHistoryLength("CDLTRISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLTRISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -66685,7 +67171,9 @@ public final class Core {
     * to {@link Core#CDLUNIQUE3RIVER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLUNIQUE3RIVER_Stream#outRange()}.
     */
@@ -66696,7 +67184,11 @@ public final class Core {
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inHigh", inHigh);
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inLow", inLow);
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inClose", inClose);
-      requireArgument("CDLUNIQUE3RIVER openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLUNIQUE3RIVER openAndFill", inOpen.length, CDLUNIQUE3RIVER_Lookback());
+      requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLUNIQUE3RIVER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -67529,7 +68021,9 @@ public final class Core {
     * to {@link Core#CDLUPSIDEGAP2CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLUPSIDEGAP2CROWS_Stream#outRange()}.
     */
@@ -67540,7 +68034,11 @@ public final class Core {
       requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inHigh", inHigh);
       requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inLow", inLow);
       requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inClose", inClose);
-      requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLUPSIDEGAP2CROWS openAndFill", inOpen.length, CDLUPSIDEGAP2CROWS_Lookback());
+      requireHistoryLength("CDLUPSIDEGAP2CROWS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLUPSIDEGAP2CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -68138,7 +68636,9 @@ public final class Core {
     * to {@link Core#CDLXSIDEGAP3METHODS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLXSIDEGAP3METHODS_Stream#outRange()}.
     */
@@ -68149,7 +68649,11 @@ public final class Core {
       requireArgument("CDLXSIDEGAP3METHODS openAndFill", "inHigh", inHigh);
       requireArgument("CDLXSIDEGAP3METHODS openAndFill", "inLow", inLow);
       requireArgument("CDLXSIDEGAP3METHODS openAndFill", "inClose", inClose);
-      requireArgument("CDLXSIDEGAP3METHODS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLXSIDEGAP3METHODS openAndFill", inOpen.length, CDLXSIDEGAP3METHODS_Lookback());
+      requireHistoryLength("CDLXSIDEGAP3METHODS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLXSIDEGAP3METHODS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLXSIDEGAP3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLXSIDEGAP3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -68557,7 +69061,9 @@ public final class Core {
     * to {@link Core#CEIL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CEIL_Stream#outRange()}.
     */
@@ -68565,7 +69071,8 @@ public final class Core {
    {
       requireArgument("CEIL openAndFill", "inReal", inReal);
       requireHistory("CEIL openAndFill", inReal.length);
-      requireArgument("CEIL openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CEIL openAndFill", inReal.length, CEIL_Lookback());
+      requireLength("CEIL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -69455,7 +69962,9 @@ public final class Core {
     * to {@link Core#CMF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CMF_Stream#outRange()}.
     */
@@ -69466,7 +69975,11 @@ public final class Core {
       requireArgument("CMF openAndFill", "inLow", inLow);
       requireArgument("CMF openAndFill", "inClose", inClose);
       requireArgument("CMF openAndFill", "inVolume", inVolume);
-      requireArgument("CMF openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CMF openAndFill", inHigh.length, CMF_Lookback(optInTimePeriod));
+      requireHistoryLength("CMF openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CMF openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("CMF openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("CMF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("CMF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -70350,7 +70863,9 @@ public final class Core {
     * to {@link Core#CMO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CMO_Stream#outRange()}.
     */
@@ -70358,7 +70873,8 @@ public final class Core {
    {
       requireArgument("CMO openAndFill", "inReal", inReal);
       requireHistory("CMO openAndFill", inReal.length);
-      requireArgument("CMO openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CMO openAndFill", inReal.length, CMO_Lookback(optInTimePeriod));
+      requireLength("CMO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("CMO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -71265,7 +71781,9 @@ public final class Core {
     * to {@link Core#CMOU} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CMOU_Stream#outRange()}.
     */
@@ -71273,7 +71791,8 @@ public final class Core {
    {
       requireArgument("CMOU openAndFill", "inReal", inReal);
       requireHistory("CMOU openAndFill", inReal.length);
-      requireArgument("CMOU openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CMOU openAndFill", inReal.length, CMOU_Lookback(optInTimePeriod));
+      requireLength("CMOU openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("CMOU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -72583,7 +73102,9 @@ public final class Core {
     * to {@link Core#CORREL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CORREL_Stream#outRange()}.
     */
@@ -72592,7 +73113,9 @@ public final class Core {
       requireArgument("CORREL openAndFill", "inReal0", inReal0);
       requireHistory("CORREL openAndFill", inReal0.length);
       requireArgument("CORREL openAndFill", "inReal1", inReal1);
-      requireArgument("CORREL openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CORREL openAndFill", inReal0.length, CORREL_Lookback(optInTimePeriod));
+      requireHistoryLength("CORREL openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("CORREL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -73004,7 +73527,9 @@ public final class Core {
     * to {@link Core#COS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link COS_Stream#outRange()}.
     */
@@ -73012,7 +73537,8 @@ public final class Core {
    {
       requireArgument("COS openAndFill", "inReal", inReal);
       requireHistory("COS openAndFill", inReal.length);
-      requireArgument("COS openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("COS openAndFill", inReal.length, COS_Lookback());
+      requireLength("COS openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -73422,7 +73948,9 @@ public final class Core {
     * to {@link Core#COSH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link COSH_Stream#outRange()}.
     */
@@ -73430,7 +73958,8 @@ public final class Core {
    {
       requireArgument("COSH openAndFill", "inReal", inReal);
       requireHistory("COSH openAndFill", inReal.length);
-      requireArgument("COSH openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("COSH openAndFill", inReal.length, COSH_Lookback());
+      requireLength("COSH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -74220,7 +74749,9 @@ public final class Core {
     * to {@link Core#DEMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link DEMA_Stream#outRange()}.
     */
@@ -74228,7 +74759,8 @@ public final class Core {
    {
       requireArgument("DEMA openAndFill", "inReal", inReal);
       requireHistory("DEMA openAndFill", inReal.length);
-      requireArgument("DEMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("DEMA openAndFill", inReal.length, DEMA_Lookback(optInTimePeriod));
+      requireLength("DEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -74658,7 +75190,9 @@ public final class Core {
     * to {@link Core#DIV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link DIV_Stream#outRange()}.
     */
@@ -74667,7 +75201,9 @@ public final class Core {
       requireArgument("DIV openAndFill", "inReal0", inReal0);
       requireHistory("DIV openAndFill", inReal0.length);
       requireArgument("DIV openAndFill", "inReal1", inReal1);
-      requireArgument("DIV openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("DIV openAndFill", inReal0.length, DIV_Lookback());
+      requireHistoryLength("DIV openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("DIV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -75973,7 +76509,9 @@ public final class Core {
     * to {@link Core#DX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link DX_Stream#outRange()}.
     */
@@ -75983,7 +76521,10 @@ public final class Core {
       requireHistory("DX openAndFill", inHigh.length);
       requireArgument("DX openAndFill", "inLow", inLow);
       requireArgument("DX openAndFill", "inClose", inClose);
-      requireArgument("DX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("DX openAndFill", inHigh.length, DX_Lookback(optInTimePeriod));
+      requireHistoryLength("DX openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("DX openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("DX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -76830,7 +77371,9 @@ public final class Core {
     * to {@link Core#EFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link EFI_Stream#outRange()}.
     */
@@ -76839,7 +77382,9 @@ public final class Core {
       requireArgument("EFI openAndFill", "inClose", inClose);
       requireHistory("EFI openAndFill", inClose.length);
       requireArgument("EFI openAndFill", "inVolume", inVolume);
-      requireArgument("EFI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("EFI openAndFill", inClose.length, EFI_Lookback(optInTimePeriod));
+      requireHistoryLength("EFI openAndFill", "inVolume", inVolume.length, inClose.length);
+      requireLength("EFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -77515,7 +78060,9 @@ public final class Core {
     * to {@link Core#EMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link EMA_Stream#outRange()}.
     */
@@ -77523,7 +78070,8 @@ public final class Core {
    {
       requireArgument("EMA openAndFill", "inReal", inReal);
       requireHistory("EMA openAndFill", inReal.length);
-      requireArgument("EMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("EMA openAndFill", inReal.length, EMA_Lookback(optInTimePeriod));
+      requireLength("EMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -77931,7 +78479,9 @@ public final class Core {
     * to {@link Core#EXP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link EXP_Stream#outRange()}.
     */
@@ -77939,7 +78489,8 @@ public final class Core {
    {
       requireArgument("EXP openAndFill", "inReal", inReal);
       requireHistory("EXP openAndFill", inReal.length);
-      requireArgument("EXP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("EXP openAndFill", inReal.length, EXP_Lookback());
+      requireLength("EXP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -78347,7 +78898,9 @@ public final class Core {
     * to {@link Core#FLOOR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link FLOOR_Stream#outRange()}.
     */
@@ -78355,7 +78908,8 @@ public final class Core {
    {
       requireArgument("FLOOR openAndFill", "inReal", inReal);
       requireHistory("FLOOR openAndFill", inReal.length);
-      requireArgument("FLOOR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("FLOOR openAndFill", inReal.length, FLOOR_Lookback());
+      requireLength("FLOOR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -80298,7 +80852,9 @@ public final class Core {
     * to {@link Core#HMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HMA_Stream#outRange()}.
     */
@@ -80306,7 +80862,8 @@ public final class Core {
    {
       requireArgument("HMA openAndFill", "inReal", inReal);
       requireHistory("HMA openAndFill", inReal.length);
-      requireArgument("HMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("HMA openAndFill", inReal.length, HMA_Lookback(optInTimePeriod));
+      requireLength("HMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("HMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -82014,7 +82571,9 @@ public final class Core {
     * to {@link Core#HT_DCPERIOD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_DCPERIOD_Stream#outRange()}.
     */
@@ -82022,7 +82581,8 @@ public final class Core {
    {
       requireArgument("HT_DCPERIOD openAndFill", "inReal", inReal);
       requireHistory("HT_DCPERIOD openAndFill", inReal.length);
-      requireArgument("HT_DCPERIOD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("HT_DCPERIOD openAndFill", inReal.length, HT_DCPERIOD_Lookback());
+      requireLength("HT_DCPERIOD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -84016,7 +84576,9 @@ public final class Core {
     * to {@link Core#HT_DCPHASE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_DCPHASE_Stream#outRange()}.
     */
@@ -84024,7 +84586,8 @@ public final class Core {
    {
       requireArgument("HT_DCPHASE openAndFill", "inReal", inReal);
       requireHistory("HT_DCPHASE openAndFill", inReal.length);
-      requireArgument("HT_DCPHASE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("HT_DCPHASE openAndFill", inReal.length, HT_DCPHASE_Lookback());
+      requireLength("HT_DCPHASE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -85796,7 +86359,9 @@ public final class Core {
     * to {@link Core#HT_PHASOR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_PHASOR_Stream#outRange()}.
     */
@@ -85804,8 +86369,9 @@ public final class Core {
    {
       requireArgument("HT_PHASOR openAndFill", "inReal", inReal);
       requireHistory("HT_PHASOR openAndFill", inReal.length);
-      requireArgument("HT_PHASOR openAndFill", "outInPhase", outInPhase);
-      requireArgument("HT_PHASOR openAndFill", "outQuadrature", outQuadrature);
+      int guardOutLen = openFillCount("HT_PHASOR openAndFill", inReal.length, HT_PHASOR_Lookback());
+      requireLength("HT_PHASOR openAndFill", "outInPhase", outInPhase, guardOutLen);
+      requireLength("HT_PHASOR openAndFill", "outQuadrature", outQuadrature, guardOutLen);
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
          throw new TaLibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -87855,7 +88421,9 @@ public final class Core {
     * to {@link Core#HT_SINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_SINE_Stream#outRange()}.
     */
@@ -87863,8 +88431,9 @@ public final class Core {
    {
       requireArgument("HT_SINE openAndFill", "inReal", inReal);
       requireHistory("HT_SINE openAndFill", inReal.length);
-      requireArgument("HT_SINE openAndFill", "outSine", outSine);
-      requireArgument("HT_SINE openAndFill", "outLeadSine", outLeadSine);
+      int guardOutLen = openFillCount("HT_SINE openAndFill", inReal.length, HT_SINE_Lookback());
+      requireLength("HT_SINE openAndFill", "outSine", outSine, guardOutLen);
+      requireLength("HT_SINE openAndFill", "outLeadSine", outLeadSine, guardOutLen);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
          throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -89760,7 +90329,9 @@ public final class Core {
     * to {@link Core#HT_TRENDLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_TRENDLINE_Stream#outRange()}.
     */
@@ -89768,7 +90339,8 @@ public final class Core {
    {
       requireArgument("HT_TRENDLINE openAndFill", "inReal", inReal);
       requireHistory("HT_TRENDLINE openAndFill", inReal.length);
-      requireArgument("HT_TRENDLINE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("HT_TRENDLINE openAndFill", inReal.length, HT_TRENDLINE_Lookback());
+      requireLength("HT_TRENDLINE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -92099,7 +92671,9 @@ public final class Core {
     * to {@link Core#HT_TRENDMODE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_TRENDMODE_Stream#outRange()}.
     */
@@ -92107,7 +92681,8 @@ public final class Core {
    {
       requireArgument("HT_TRENDMODE openAndFill", "inReal", inReal);
       requireHistory("HT_TRENDMODE openAndFill", inReal.length);
-      requireArgument("HT_TRENDMODE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("HT_TRENDMODE openAndFill", inReal.length, HT_TRENDMODE_Lookback());
+      requireLength("HT_TRENDMODE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -92727,7 +93302,9 @@ public final class Core {
     * to {@link Core#IMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link IMI_Stream#outRange()}.
     */
@@ -92736,7 +93313,9 @@ public final class Core {
       requireArgument("IMI openAndFill", "inOpen", inOpen);
       requireHistory("IMI openAndFill", inOpen.length);
       requireArgument("IMI openAndFill", "inClose", inClose);
-      requireArgument("IMI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("IMI openAndFill", inOpen.length, IMI_Lookback(optInTimePeriod));
+      requireHistoryLength("IMI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("IMI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -93872,7 +94451,9 @@ public final class Core {
     * to {@link Core#KAMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link KAMA_Stream#outRange()}.
     */
@@ -93880,7 +94461,8 @@ public final class Core {
    {
       requireArgument("KAMA openAndFill", "inReal", inReal);
       requireHistory("KAMA openAndFill", inReal.length);
-      requireArgument("KAMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, KAMA_Lookback(optInTimePeriod));
+      requireLength("KAMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -94900,7 +95482,9 @@ public final class Core {
     * to {@link Core#LINEARREG} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LINEARREG_Stream#outRange()}.
     */
@@ -94908,7 +95492,8 @@ public final class Core {
    {
       requireArgument("LINEARREG openAndFill", "inReal", inReal);
       requireHistory("LINEARREG openAndFill", inReal.length);
-      requireArgument("LINEARREG openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LINEARREG openAndFill", inReal.length, LINEARREG_Lookback(optInTimePeriod));
+      requireLength("LINEARREG openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -95930,7 +96515,9 @@ public final class Core {
     * to {@link Core#LINEARREG_ANGLE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LINEARREG_ANGLE_Stream#outRange()}.
     */
@@ -95938,7 +96525,8 @@ public final class Core {
    {
       requireArgument("LINEARREG_ANGLE openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_ANGLE openAndFill", inReal.length);
-      requireArgument("LINEARREG_ANGLE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LINEARREG_ANGLE openAndFill", inReal.length, LINEARREG_ANGLE_Lookback(optInTimePeriod));
+      requireLength("LINEARREG_ANGLE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -96959,7 +97547,9 @@ public final class Core {
     * to {@link Core#LINEARREG_INTERCEPT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LINEARREG_INTERCEPT_Stream#outRange()}.
     */
@@ -96967,7 +97557,8 @@ public final class Core {
    {
       requireArgument("LINEARREG_INTERCEPT openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_INTERCEPT openAndFill", inReal.length);
-      requireArgument("LINEARREG_INTERCEPT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LINEARREG_INTERCEPT openAndFill", inReal.length, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
+      requireLength("LINEARREG_INTERCEPT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -97979,7 +98570,9 @@ public final class Core {
     * to {@link Core#LINEARREG_SLOPE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LINEARREG_SLOPE_Stream#outRange()}.
     */
@@ -97987,7 +98580,8 @@ public final class Core {
    {
       requireArgument("LINEARREG_SLOPE openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_SLOPE openAndFill", inReal.length);
-      requireArgument("LINEARREG_SLOPE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LINEARREG_SLOPE openAndFill", inReal.length, LINEARREG_SLOPE_Lookback(optInTimePeriod));
+      requireLength("LINEARREG_SLOPE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -98405,7 +98999,9 @@ public final class Core {
     * to {@link Core#LN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LN_Stream#outRange()}.
     */
@@ -98413,7 +99009,8 @@ public final class Core {
    {
       requireArgument("LN openAndFill", "inReal", inReal);
       requireHistory("LN openAndFill", inReal.length);
-      requireArgument("LN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LN openAndFill", inReal.length, LN_Lookback());
+      requireLength("LN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -98829,7 +99426,9 @@ public final class Core {
     * to {@link Core#LOG10} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LOG10_Stream#outRange()}.
     */
@@ -98837,7 +99436,8 @@ public final class Core {
    {
       requireArgument("LOG10 openAndFill", "inReal", inReal);
       requireHistory("LOG10 openAndFill", inReal.length);
-      requireArgument("LOG10 openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, LOG10_Lookback());
+      requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -99884,7 +100484,7 @@ public final class Core {
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
+         MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -99999,7 +100599,7 @@ public final class Core {
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[historyLen]);
+         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
@@ -100056,6 +100656,7 @@ public final class Core {
    {
       requireArgument("MA open", "inReal", inReal);
       requireHistory("MA open", inReal.length);
+      requireArgument("MA open", "optInMAType", optInMAType);
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
    /**
@@ -100063,7 +100664,9 @@ public final class Core {
     * to {@link Core#MA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MA_Stream#outRange()}.
     */
@@ -100071,7 +100674,9 @@ public final class Core {
    {
       requireArgument("MA openAndFill", "inReal", inReal);
       requireHistory("MA openAndFill", inReal.length);
-      requireArgument("MA openAndFill", "outReal", outReal);
+      requireArgument("MA openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("MA openAndFill", inReal.length, MA_Lookback(optInTimePeriod, optInMAType));
+      requireLength("MA openAndFill", "outReal", outReal, guardOutLen);
       MA_Stream sp = new MA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -101173,7 +101778,9 @@ public final class Core {
     * to {@link Core#MACD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MACD_Stream#outRange()}.
     */
@@ -101181,9 +101788,10 @@ public final class Core {
    {
       requireArgument("MACD openAndFill", "inReal", inReal);
       requireHistory("MACD openAndFill", inReal.length);
-      requireArgument("MACD openAndFill", "outMACD", outMACD);
-      requireArgument("MACD openAndFill", "outMACDSignal", outMACDSignal);
-      requireArgument("MACD openAndFill", "outMACDHist", outMACDHist);
+      int guardOutLen = openFillCount("MACD openAndFill", inReal.length, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      requireLength("MACD openAndFill", "outMACD", outMACD, guardOutLen);
+      requireLength("MACD openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
+      requireLength("MACD openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          throw new TaLibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -102252,6 +102860,9 @@ public final class Core {
    {
       requireArgument("MACDEXT open", "inReal", inReal);
       requireHistory("MACDEXT open", inReal.length);
+      requireArgument("MACDEXT open", "optInFastMAType", optInFastMAType);
+      requireArgument("MACDEXT open", "optInSlowMAType", optInSlowMAType);
+      requireArgument("MACDEXT open", "optInSignalMAType", optInSignalMAType);
       return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
    /**
@@ -102259,7 +102870,9 @@ public final class Core {
     * to {@link Core#MACDEXT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MACDEXT_Stream#outRange()}.
     */
@@ -102267,9 +102880,13 @@ public final class Core {
    {
       requireArgument("MACDEXT openAndFill", "inReal", inReal);
       requireHistory("MACDEXT openAndFill", inReal.length);
-      requireArgument("MACDEXT openAndFill", "outMACD", outMACD);
-      requireArgument("MACDEXT openAndFill", "outMACDSignal", outMACDSignal);
-      requireArgument("MACDEXT openAndFill", "outMACDHist", outMACDHist);
+      requireArgument("MACDEXT openAndFill", "optInFastMAType", optInFastMAType);
+      requireArgument("MACDEXT openAndFill", "optInSlowMAType", optInSlowMAType);
+      requireArgument("MACDEXT openAndFill", "optInSignalMAType", optInSignalMAType);
+      int guardOutLen = openFillCount("MACDEXT openAndFill", inReal.length, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      requireLength("MACDEXT openAndFill", "outMACD", outMACD, guardOutLen);
+      requireLength("MACDEXT openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
+      requireLength("MACDEXT openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          throw new TaLibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -103224,7 +103841,9 @@ public final class Core {
     * to {@link Core#MACDFIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MACDFIX_Stream#outRange()}.
     */
@@ -103232,9 +103851,10 @@ public final class Core {
    {
       requireArgument("MACDFIX openAndFill", "inReal", inReal);
       requireHistory("MACDFIX openAndFill", inReal.length);
-      requireArgument("MACDFIX openAndFill", "outMACD", outMACD);
-      requireArgument("MACDFIX openAndFill", "outMACDSignal", outMACDSignal);
-      requireArgument("MACDFIX openAndFill", "outMACDHist", outMACDHist);
+      int guardOutLen = openFillCount("MACDFIX openAndFill", inReal.length, MACDFIX_Lookback(optInSignalPeriod));
+      requireLength("MACDFIX openAndFill", "outMACD", outMACD, guardOutLen);
+      requireLength("MACDFIX openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
+      requireLength("MACDFIX openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          throw new TaLibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -104477,7 +105097,7 @@ public final class Core {
        */
       public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] ) {
          final int barCount = inReal.length;
-         if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA )
+         if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
             throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
          int done = 0;
          try {
@@ -104729,6 +105349,7 @@ public final class Core {
    }
    private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
    {
+      double lastCur_outFAMA = 0;
       int outIdx = 0;
       int i = 0;
       int lookbackTotal = 0;
@@ -105085,7 +105706,9 @@ public final class Core {
             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
              */
-            outFAMA[outIdx * outStride] = fama;
+            lastCur_outFAMA = fama;
+            if( outFAMA != null )
+               outFAMA[outIdx * outStride] = fama;
             outMAMA[outIdx++ * outStride] = mama;
          }
          /* Adjust the period for next price bar */
@@ -105174,7 +105797,7 @@ public final class Core {
       sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
-      sp.cur_outFAMA = outFAMA[(outNBElement.value - 1) * outStride];
+      sp.cur_outFAMA = lastCur_outFAMA;
       sp.cachedValue = new MAMA_Stream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
@@ -105242,7 +105865,11 @@ public final class Core {
     * to {@link Core#MAMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>{@code outFAMA} may be declined with {@code null}: the value is still
+    * computed — {@link MAMA_Stream#value()} reports it — and nothing is written out.
     * <p>The range written is on the returned handle:
     * {@link MAMA_Stream#outRange()}.
     */
@@ -105250,9 +105877,10 @@ public final class Core {
    {
       requireArgument("MAMA openAndFill", "inReal", inReal);
       requireHistory("MAMA openAndFill", inReal.length);
-      requireArgument("MAMA openAndFill", "outMAMA", outMAMA);
-      requireArgument("MAMA openAndFill", "outFAMA", outFAMA);
-      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
+      int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+      if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
          throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
@@ -105788,7 +106416,9 @@ public final class Core {
     * to {@link Core#MARKETFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MARKETFI_Stream#outRange()}.
     */
@@ -105798,7 +106428,10 @@ public final class Core {
       requireHistory("MARKETFI openAndFill", inHigh.length);
       requireArgument("MARKETFI openAndFill", "inLow", inLow);
       requireArgument("MARKETFI openAndFill", "inVolume", inVolume);
-      requireArgument("MARKETFI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MARKETFI openAndFill", inHigh.length, MARKETFI_Lookback());
+      requireHistoryLength("MARKETFI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MARKETFI openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("MARKETFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -106852,6 +107485,7 @@ public final class Core {
    {
       requireArgument("MAVP open", "inReal", inReal);
       requireHistory("MAVP open", inReal.length);
+      requireArgument("MAVP open", "optInMAType", optInMAType);
       requireArgument("MAVP open", "inPeriods", inPeriods);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
@@ -106860,7 +107494,9 @@ public final class Core {
     * to {@link Core#MAVP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MAVP_Stream#outRange()}.
     */
@@ -106868,8 +107504,11 @@ public final class Core {
    {
       requireArgument("MAVP openAndFill", "inReal", inReal);
       requireHistory("MAVP openAndFill", inReal.length);
+      requireArgument("MAVP openAndFill", "optInMAType", optInMAType);
       requireArgument("MAVP openAndFill", "inPeriods", inPeriods);
-      requireArgument("MAVP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MAVP openAndFill", inReal.length, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+      requireHistoryLength("MAVP openAndFill", "inPeriods", inPeriods.length, inReal.length);
+      requireLength("MAVP openAndFill", "outReal", outReal, guardOutLen);
       MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -107665,7 +108304,9 @@ public final class Core {
     * to {@link Core#MAX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MAX_Stream#outRange()}.
     */
@@ -107673,7 +108314,8 @@ public final class Core {
    {
       requireArgument("MAX openAndFill", "inReal", inReal);
       requireHistory("MAX openAndFill", inReal.length);
-      requireArgument("MAX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MAX openAndFill", inReal.length, MAX_Lookback(optInTimePeriod));
+      requireLength("MAX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -108349,7 +108991,9 @@ public final class Core {
     * to {@link Core#MAXINDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MAXINDEX_Stream#outRange()}.
     */
@@ -108357,7 +109001,8 @@ public final class Core {
    {
       requireArgument("MAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MAXINDEX openAndFill", inReal.length);
-      requireArgument("MAXINDEX openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, MAXINDEX_Lookback(optInTimePeriod));
+      requireLength("MAXINDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -108802,7 +109447,9 @@ public final class Core {
     * to {@link Core#MEDPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MEDPRICE_Stream#outRange()}.
     */
@@ -108811,7 +109458,9 @@ public final class Core {
       requireArgument("MEDPRICE openAndFill", "inHigh", inHigh);
       requireHistory("MEDPRICE openAndFill", inHigh.length);
       requireArgument("MEDPRICE openAndFill", "inLow", inLow);
-      requireArgument("MEDPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MEDPRICE openAndFill", inHigh.length, MEDPRICE_Lookback());
+      requireHistoryLength("MEDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("MEDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -109817,7 +110466,9 @@ public final class Core {
     * to {@link Core#MFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MFI_Stream#outRange()}.
     */
@@ -109828,7 +110479,11 @@ public final class Core {
       requireArgument("MFI openAndFill", "inLow", inLow);
       requireArgument("MFI openAndFill", "inClose", inClose);
       requireArgument("MFI openAndFill", "inVolume", inVolume);
-      requireArgument("MFI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MFI openAndFill", inHigh.length, MFI_Lookback(optInTimePeriod));
+      requireHistoryLength("MFI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MFI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("MFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -110750,7 +111405,9 @@ public final class Core {
     * to {@link Core#MIDPOINT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MIDPOINT_Stream#outRange()}.
     */
@@ -110758,7 +111415,8 @@ public final class Core {
    {
       requireArgument("MIDPOINT openAndFill", "inReal", inReal);
       requireHistory("MIDPOINT openAndFill", inReal.length);
-      requireArgument("MIDPOINT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, MIDPOINT_Lookback(optInTimePeriod));
+      requireLength("MIDPOINT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -111720,7 +112378,9 @@ public final class Core {
     * to {@link Core#MIDPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MIDPRICE_Stream#outRange()}.
     */
@@ -111729,7 +112389,9 @@ public final class Core {
       requireArgument("MIDPRICE openAndFill", "inHigh", inHigh);
       requireHistory("MIDPRICE openAndFill", inHigh.length);
       requireArgument("MIDPRICE openAndFill", "inLow", inLow);
-      requireArgument("MIDPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MIDPRICE openAndFill", inHigh.length, MIDPRICE_Lookback(optInTimePeriod));
+      requireHistoryLength("MIDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("MIDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("MIDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -112510,7 +113172,9 @@ public final class Core {
     * to {@link Core#MIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MIN_Stream#outRange()}.
     */
@@ -112518,7 +113182,8 @@ public final class Core {
    {
       requireArgument("MIN openAndFill", "inReal", inReal);
       requireHistory("MIN openAndFill", inReal.length);
-      requireArgument("MIN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MIN openAndFill", inReal.length, MIN_Lookback(optInTimePeriod));
+      requireLength("MIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -113194,7 +113859,9 @@ public final class Core {
     * to {@link Core#MININDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MININDEX_Stream#outRange()}.
     */
@@ -113202,7 +113869,8 @@ public final class Core {
    {
       requireArgument("MININDEX openAndFill", "inReal", inReal);
       requireHistory("MININDEX openAndFill", inReal.length);
-      requireArgument("MININDEX openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("MININDEX openAndFill", inReal.length, MININDEX_Lookback(optInTimePeriod));
+      requireLength("MININDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -114168,7 +114836,9 @@ public final class Core {
     * to {@link Core#MINMAX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MINMAX_Stream#outRange()}.
     */
@@ -114176,8 +114846,9 @@ public final class Core {
    {
       requireArgument("MINMAX openAndFill", "inReal", inReal);
       requireHistory("MINMAX openAndFill", inReal.length);
-      requireArgument("MINMAX openAndFill", "outMin", outMin);
-      requireArgument("MINMAX openAndFill", "outMax", outMax);
+      int guardOutLen = openFillCount("MINMAX openAndFill", inReal.length, MINMAX_Lookback(optInTimePeriod));
+      requireLength("MINMAX openAndFill", "outMin", outMin, guardOutLen);
+      requireLength("MINMAX openAndFill", "outMax", outMax, guardOutLen);
       if( (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax ) {
          throw new TaLibArgumentException("MINMAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -114994,7 +115665,9 @@ public final class Core {
     * to {@link Core#MINMAXINDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MINMAXINDEX_Stream#outRange()}.
     */
@@ -115002,8 +115675,9 @@ public final class Core {
    {
       requireArgument("MINMAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MINMAXINDEX openAndFill", inReal.length);
-      requireArgument("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx);
-      requireArgument("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx);
+      int guardOutLen = openFillCount("MINMAXINDEX openAndFill", inReal.length, MINMAXINDEX_Lookback(optInTimePeriod));
+      requireLength("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx, guardOutLen);
+      requireLength("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx, guardOutLen);
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
          throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -116499,7 +117173,9 @@ public final class Core {
     * to {@link Core#MINUS_DI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MINUS_DI_Stream#outRange()}.
     */
@@ -116509,7 +117185,10 @@ public final class Core {
       requireHistory("MINUS_DI openAndFill", inHigh.length);
       requireArgument("MINUS_DI openAndFill", "inLow", inLow);
       requireArgument("MINUS_DI openAndFill", "inClose", inClose);
-      requireArgument("MINUS_DI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MINUS_DI openAndFill", inHigh.length, MINUS_DI_Lookback(optInTimePeriod));
+      requireHistoryLength("MINUS_DI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MINUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("MINUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("MINUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -117597,7 +118276,9 @@ public final class Core {
     * to {@link Core#MINUS_DM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MINUS_DM_Stream#outRange()}.
     */
@@ -117606,7 +118287,9 @@ public final class Core {
       requireArgument("MINUS_DM openAndFill", "inHigh", inHigh);
       requireHistory("MINUS_DM openAndFill", inHigh.length);
       requireArgument("MINUS_DM openAndFill", "inLow", inLow);
-      requireArgument("MINUS_DM openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MINUS_DM openAndFill", inHigh.length, MINUS_DM_Lookback(optInTimePeriod));
+      requireHistoryLength("MINUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("MINUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -118205,7 +118888,9 @@ public final class Core {
     * to {@link Core#MOM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MOM_Stream#outRange()}.
     */
@@ -118213,7 +118898,8 @@ public final class Core {
    {
       requireArgument("MOM openAndFill", "inReal", inReal);
       requireHistory("MOM openAndFill", inReal.length);
-      requireArgument("MOM openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MOM openAndFill", inReal.length, MOM_Lookback(optInTimePeriod));
+      requireLength("MOM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -118647,7 +119333,9 @@ public final class Core {
     * to {@link Core#MULT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MULT_Stream#outRange()}.
     */
@@ -118656,7 +119344,9 @@ public final class Core {
       requireArgument("MULT openAndFill", "inReal0", inReal0);
       requireHistory("MULT openAndFill", inReal0.length);
       requireArgument("MULT openAndFill", "inReal1", inReal1);
-      requireArgument("MULT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MULT openAndFill", inReal0.length, MULT_Lookback());
+      requireHistoryLength("MULT openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("MULT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -119658,7 +120348,9 @@ public final class Core {
     * to {@link Core#NATR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link NATR_Stream#outRange()}.
     */
@@ -119668,7 +120360,10 @@ public final class Core {
       requireHistory("NATR openAndFill", inHigh.length);
       requireArgument("NATR openAndFill", "inLow", inLow);
       requireArgument("NATR openAndFill", "inClose", inClose);
-      requireArgument("NATR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("NATR openAndFill", inHigh.length, NATR_Lookback(optInTimePeriod));
+      requireHistoryLength("NATR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("NATR openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("NATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -120253,7 +120948,9 @@ public final class Core {
     * to {@link Core#NVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link NVI_Stream#outRange()}.
     */
@@ -120262,7 +120959,9 @@ public final class Core {
       requireArgument("NVI openAndFill", "inClose", inClose);
       requireHistory("NVI openAndFill", inClose.length);
       requireArgument("NVI openAndFill", "inVolume", inVolume);
-      requireArgument("NVI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("NVI openAndFill", inClose.length, NVI_Lookback());
+      requireHistoryLength("NVI openAndFill", "inVolume", inVolume.length, inClose.length);
+      requireLength("NVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -120740,7 +121439,9 @@ public final class Core {
     * to {@link Core#OBV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link OBV_Stream#outRange()}.
     */
@@ -120749,7 +121450,9 @@ public final class Core {
       requireArgument("OBV openAndFill", "inReal", inReal);
       requireHistory("OBV openAndFill", inReal.length);
       requireArgument("OBV openAndFill", "inVolume", inVolume);
-      requireArgument("OBV openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("OBV openAndFill", inReal.length, OBV_Lookback());
+      requireHistoryLength("OBV openAndFill", "inVolume", inVolume.length, inReal.length);
+      requireLength("OBV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -122253,7 +122956,9 @@ public final class Core {
     * to {@link Core#PLUS_DI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PLUS_DI_Stream#outRange()}.
     */
@@ -122263,7 +122968,10 @@ public final class Core {
       requireHistory("PLUS_DI openAndFill", inHigh.length);
       requireArgument("PLUS_DI openAndFill", "inLow", inLow);
       requireArgument("PLUS_DI openAndFill", "inClose", inClose);
-      requireArgument("PLUS_DI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("PLUS_DI openAndFill", inHigh.length, PLUS_DI_Lookback(optInTimePeriod));
+      requireHistoryLength("PLUS_DI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("PLUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("PLUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -123350,7 +124058,9 @@ public final class Core {
     * to {@link Core#PLUS_DM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PLUS_DM_Stream#outRange()}.
     */
@@ -123359,7 +124069,9 @@ public final class Core {
       requireArgument("PLUS_DM openAndFill", "inHigh", inHigh);
       requireHistory("PLUS_DM openAndFill", inHigh.length);
       requireArgument("PLUS_DM openAndFill", "inLow", inLow);
-      requireArgument("PLUS_DM openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("PLUS_DM openAndFill", inHigh.length, PLUS_DM_Lookback(optInTimePeriod));
+      requireHistoryLength("PLUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("PLUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -124090,6 +124802,7 @@ public final class Core {
    {
       requireArgument("PPO open", "inReal", inReal);
       requireHistory("PPO open", inReal.length);
+      requireArgument("PPO open", "optInMAType", optInMAType);
       return PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -124097,7 +124810,9 @@ public final class Core {
     * to {@link Core#PPO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PPO_Stream#outRange()}.
     */
@@ -124105,7 +124820,9 @@ public final class Core {
    {
       requireArgument("PPO openAndFill", "inReal", inReal);
       requireHistory("PPO openAndFill", inReal.length);
-      requireArgument("PPO openAndFill", "outReal", outReal);
+      requireArgument("PPO openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("PPO openAndFill", inReal.length, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      requireLength("PPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("PPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -124690,7 +125407,9 @@ public final class Core {
     * to {@link Core#PVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PVI_Stream#outRange()}.
     */
@@ -124699,7 +125418,9 @@ public final class Core {
       requireArgument("PVI openAndFill", "inClose", inClose);
       requireHistory("PVI openAndFill", inClose.length);
       requireArgument("PVI openAndFill", "inVolume", inVolume);
-      requireArgument("PVI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("PVI openAndFill", inClose.length, PVI_Lookback());
+      requireHistoryLength("PVI openAndFill", "inVolume", inVolume.length, inClose.length);
+      requireLength("PVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -125428,6 +126149,7 @@ public final class Core {
    {
       requireArgument("PVO open", "inVolume", inVolume);
       requireHistory("PVO open", inVolume.length);
+      requireArgument("PVO open", "optInMAType", optInMAType);
       return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -125435,7 +126157,9 @@ public final class Core {
     * to {@link Core#PVO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PVO_Stream#outRange()}.
     */
@@ -125443,7 +126167,9 @@ public final class Core {
    {
       requireArgument("PVO openAndFill", "inVolume", inVolume);
       requireHistory("PVO openAndFill", inVolume.length);
-      requireArgument("PVO openAndFill", "outReal", outReal);
+      requireArgument("PVO openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("PVO openAndFill", inVolume.length, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      requireLength("PVO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -126109,7 +126835,9 @@ public final class Core {
     * to {@link Core#QSTICK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link QSTICK_Stream#outRange()}.
     */
@@ -126118,7 +126846,9 @@ public final class Core {
       requireArgument("QSTICK openAndFill", "inOpen", inOpen);
       requireHistory("QSTICK openAndFill", inOpen.length);
       requireArgument("QSTICK openAndFill", "inClose", inClose);
-      requireArgument("QSTICK openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("QSTICK openAndFill", inOpen.length, QSTICK_Lookback(optInTimePeriod));
+      requireHistoryLength("QSTICK openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("QSTICK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -126740,7 +127470,9 @@ public final class Core {
     * to {@link Core#ROC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ROC_Stream#outRange()}.
     */
@@ -126748,7 +127480,8 @@ public final class Core {
    {
       requireArgument("ROC openAndFill", "inReal", inReal);
       requireHistory("ROC openAndFill", inReal.length);
-      requireArgument("ROC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ROC openAndFill", inReal.length, ROC_Lookback(optInTimePeriod));
+      requireLength("ROC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ROC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -127368,7 +128101,9 @@ public final class Core {
     * to {@link Core#ROCP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ROCP_Stream#outRange()}.
     */
@@ -127376,7 +128111,8 @@ public final class Core {
    {
       requireArgument("ROCP openAndFill", "inReal", inReal);
       requireHistory("ROCP openAndFill", inReal.length);
-      requireArgument("ROCP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ROCP openAndFill", inReal.length, ROCP_Lookback(optInTimePeriod));
+      requireLength("ROCP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ROCP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -127999,7 +128735,9 @@ public final class Core {
     * to {@link Core#ROCR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ROCR_Stream#outRange()}.
     */
@@ -128007,7 +128745,8 @@ public final class Core {
    {
       requireArgument("ROCR openAndFill", "inReal", inReal);
       requireHistory("ROCR openAndFill", inReal.length);
-      requireArgument("ROCR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ROCR openAndFill", inReal.length, ROCR_Lookback(optInTimePeriod));
+      requireLength("ROCR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ROCR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -128632,7 +129371,9 @@ public final class Core {
     * to {@link Core#ROCR100} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ROCR100_Stream#outRange()}.
     */
@@ -128640,7 +129381,8 @@ public final class Core {
    {
       requireArgument("ROCR100 openAndFill", "inReal", inReal);
       requireHistory("ROCR100 openAndFill", inReal.length);
-      requireArgument("ROCR100 openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ROCR100 openAndFill", inReal.length, ROCR100_Lookback(optInTimePeriod));
+      requireLength("ROCR100 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ROCR100 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -129566,7 +130308,9 @@ public final class Core {
     * to {@link Core#RSI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link RSI_Stream#outRange()}.
     */
@@ -129574,7 +130318,8 @@ public final class Core {
    {
       requireArgument("RSI openAndFill", "inReal", inReal);
       requireHistory("RSI openAndFill", inReal.length);
-      requireArgument("RSI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("RSI openAndFill", inReal.length, RSI_Lookback(optInTimePeriod));
+      requireLength("RSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -130795,7 +131540,9 @@ public final class Core {
     * to {@link Core#SAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SAR_Stream#outRange()}.
     */
@@ -130804,7 +131551,9 @@ public final class Core {
       requireArgument("SAR openAndFill", "inHigh", inHigh);
       requireHistory("SAR openAndFill", inHigh.length);
       requireArgument("SAR openAndFill", "inLow", inLow);
-      requireArgument("SAR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SAR openAndFill", inHigh.length, SAR_Lookback(optInAcceleration, optInMaximum));
+      requireHistoryLength("SAR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("SAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -132386,7 +133135,9 @@ public final class Core {
     * to {@link Core#SAREXT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SAREXT_Stream#outRange()}.
     */
@@ -132395,7 +133146,9 @@ public final class Core {
       requireArgument("SAREXT openAndFill", "inHigh", inHigh);
       requireHistory("SAREXT openAndFill", inHigh.length);
       requireArgument("SAREXT openAndFill", "inLow", inLow);
-      requireArgument("SAREXT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SAREXT openAndFill", inHigh.length, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -132805,7 +133558,9 @@ public final class Core {
     * to {@link Core#SIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SIN_Stream#outRange()}.
     */
@@ -132813,7 +133568,8 @@ public final class Core {
    {
       requireArgument("SIN openAndFill", "inReal", inReal);
       requireHistory("SIN openAndFill", inReal.length);
-      requireArgument("SIN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SIN openAndFill", inReal.length, SIN_Lookback());
+      requireLength("SIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -133221,7 +133977,9 @@ public final class Core {
     * to {@link Core#SINH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SINH_Stream#outRange()}.
     */
@@ -133229,7 +133987,8 @@ public final class Core {
    {
       requireArgument("SINH openAndFill", "inReal", inReal);
       requireHistory("SINH openAndFill", inReal.length);
-      requireArgument("SINH openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SINH openAndFill", inReal.length, SINH_Lookback());
+      requireLength("SINH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -133843,7 +134602,9 @@ public final class Core {
     * to {@link Core#SMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SMA_Stream#outRange()}.
     */
@@ -133851,7 +134612,8 @@ public final class Core {
    {
       requireArgument("SMA openAndFill", "inReal", inReal);
       requireHistory("SMA openAndFill", inReal.length);
-      requireArgument("SMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SMA openAndFill", inReal.length, SMA_Lookback(optInTimePeriod));
+      requireLength("SMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("SMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -135403,7 +136165,9 @@ public final class Core {
     * to {@link Core#SMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SMI_Stream#outRange()}.
     */
@@ -135413,8 +136177,11 @@ public final class Core {
       requireHistory("SMI openAndFill", inHigh.length);
       requireArgument("SMI openAndFill", "inLow", inLow);
       requireArgument("SMI openAndFill", "inClose", inClose);
-      requireArgument("SMI openAndFill", "outSMI", outSMI);
-      requireArgument("SMI openAndFill", "outSMISignal", outSMISignal);
+      int guardOutLen = openFillCount("SMI openAndFill", inHigh.length, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      requireHistoryLength("SMI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("SMI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("SMI openAndFill", "outSMI", outSMI, guardOutLen);
+      requireLength("SMI openAndFill", "outSMISignal", outSMISignal, guardOutLen);
       if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
          throw new TaLibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -135824,7 +136591,9 @@ public final class Core {
     * to {@link Core#SQRT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SQRT_Stream#outRange()}.
     */
@@ -135832,7 +136601,8 @@ public final class Core {
    {
       requireArgument("SQRT openAndFill", "inReal", inReal);
       requireHistory("SQRT openAndFill", inReal.length);
-      requireArgument("SQRT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SQRT openAndFill", inReal.length, SQRT_Lookback());
+      requireLength("SQRT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("SQRT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -136448,7 +137218,9 @@ public final class Core {
     * to {@link Core#STDDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STDDEV_Stream#outRange()}.
     */
@@ -136456,7 +137228,8 @@ public final class Core {
    {
       requireArgument("STDDEV openAndFill", "inReal", inReal);
       requireHistory("STDDEV openAndFill", inReal.length);
-      requireArgument("STDDEV openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("STDDEV openAndFill", inReal.length, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+      requireLength("STDDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -137832,6 +138605,8 @@ public final class Core {
    {
       requireArgument("STOCH open", "inHigh", inHigh);
       requireHistory("STOCH open", inHigh.length);
+      requireArgument("STOCH open", "optInSlowK_MAType", optInSlowK_MAType);
+      requireArgument("STOCH open", "optInSlowD_MAType", optInSlowD_MAType);
       requireArgument("STOCH open", "inLow", inLow);
       requireArgument("STOCH open", "inClose", inClose);
       return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -137841,7 +138616,9 @@ public final class Core {
     * to {@link Core#STOCH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STOCH_Stream#outRange()}.
     */
@@ -137849,10 +138626,15 @@ public final class Core {
    {
       requireArgument("STOCH openAndFill", "inHigh", inHigh);
       requireHistory("STOCH openAndFill", inHigh.length);
+      requireArgument("STOCH openAndFill", "optInSlowK_MAType", optInSlowK_MAType);
+      requireArgument("STOCH openAndFill", "optInSlowD_MAType", optInSlowD_MAType);
       requireArgument("STOCH openAndFill", "inLow", inLow);
       requireArgument("STOCH openAndFill", "inClose", inClose);
-      requireArgument("STOCH openAndFill", "outSlowK", outSlowK);
-      requireArgument("STOCH openAndFill", "outSlowD", outSlowD);
+      int guardOutLen = openFillCount("STOCH openAndFill", inHigh.length, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      requireHistoryLength("STOCH openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCH openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("STOCH openAndFill", "outSlowK", outSlowK, guardOutLen);
+      requireLength("STOCH openAndFill", "outSlowD", outSlowD, guardOutLen);
       if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
          throw new TaLibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -139112,6 +139894,7 @@ public final class Core {
    {
       requireArgument("STOCHF open", "inHigh", inHigh);
       requireHistory("STOCHF open", inHigh.length);
+      requireArgument("STOCHF open", "optInFastD_MAType", optInFastD_MAType);
       requireArgument("STOCHF open", "inLow", inLow);
       requireArgument("STOCHF open", "inClose", inClose);
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -139121,7 +139904,9 @@ public final class Core {
     * to {@link Core#STOCHF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STOCHF_Stream#outRange()}.
     */
@@ -139129,10 +139914,14 @@ public final class Core {
    {
       requireArgument("STOCHF openAndFill", "inHigh", inHigh);
       requireHistory("STOCHF openAndFill", inHigh.length);
+      requireArgument("STOCHF openAndFill", "optInFastD_MAType", optInFastD_MAType);
       requireArgument("STOCHF openAndFill", "inLow", inLow);
       requireArgument("STOCHF openAndFill", "inClose", inClose);
-      requireArgument("STOCHF openAndFill", "outFastK", outFastK);
-      requireArgument("STOCHF openAndFill", "outFastD", outFastD);
+      int guardOutLen = openFillCount("STOCHF openAndFill", inHigh.length, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      requireHistoryLength("STOCHF openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCHF openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("STOCHF openAndFill", "outFastK", outFastK, guardOutLen);
+      requireLength("STOCHF openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
          throw new TaLibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -139949,6 +140738,7 @@ public final class Core {
    {
       requireArgument("STOCHRSI open", "inReal", inReal);
       requireHistory("STOCHRSI open", inReal.length);
+      requireArgument("STOCHRSI open", "optInFastD_MAType", optInFastD_MAType);
       return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
@@ -139956,7 +140746,9 @@ public final class Core {
     * to {@link Core#STOCHRSI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STOCHRSI_Stream#outRange()}.
     */
@@ -139964,8 +140756,10 @@ public final class Core {
    {
       requireArgument("STOCHRSI openAndFill", "inReal", inReal);
       requireHistory("STOCHRSI openAndFill", inReal.length);
-      requireArgument("STOCHRSI openAndFill", "outFastK", outFastK);
-      requireArgument("STOCHRSI openAndFill", "outFastD", outFastD);
+      requireArgument("STOCHRSI openAndFill", "optInFastD_MAType", optInFastD_MAType);
+      int guardOutLen = openFillCount("STOCHRSI openAndFill", inReal.length, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      requireLength("STOCHRSI openAndFill", "outFastK", outFastK, guardOutLen);
+      requireLength("STOCHRSI openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
          throw new TaLibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -140389,7 +141183,9 @@ public final class Core {
     * to {@link Core#SUB} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SUB_Stream#outRange()}.
     */
@@ -140398,7 +141194,9 @@ public final class Core {
       requireArgument("SUB openAndFill", "inReal0", inReal0);
       requireHistory("SUB openAndFill", inReal0.length);
       requireArgument("SUB openAndFill", "inReal1", inReal1);
-      requireArgument("SUB openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SUB openAndFill", inReal0.length, SUB_Lookback());
+      requireHistoryLength("SUB openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("SUB openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -140983,7 +141781,9 @@ public final class Core {
     * to {@link Core#SUM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SUM_Stream#outRange()}.
     */
@@ -140991,7 +141791,8 @@ public final class Core {
    {
       requireArgument("SUM openAndFill", "inReal", inReal);
       requireHistory("SUM openAndFill", inReal.length);
-      requireArgument("SUM openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("SUM openAndFill", inReal.length, SUM_Lookback(optInTimePeriod));
+      requireLength("SUM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("SUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -141961,7 +142762,9 @@ public final class Core {
     * to {@link Core#T3} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link T3_Stream#outRange()}.
     */
@@ -141969,7 +142772,8 @@ public final class Core {
    {
       requireArgument("T3 openAndFill", "inReal", inReal);
       requireHistory("T3 openAndFill", inReal.length);
-      requireArgument("T3 openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("T3 openAndFill", inReal.length, T3_Lookback(optInTimePeriod, optInVFactor));
+      requireLength("T3 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -142381,7 +143185,9 @@ public final class Core {
     * to {@link Core#TAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TAN_Stream#outRange()}.
     */
@@ -142389,7 +143195,8 @@ public final class Core {
    {
       requireArgument("TAN openAndFill", "inReal", inReal);
       requireHistory("TAN openAndFill", inReal.length);
-      requireArgument("TAN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TAN openAndFill", inReal.length, TAN_Lookback());
+      requireLength("TAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -142799,7 +143606,9 @@ public final class Core {
     * to {@link Core#TANH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TANH_Stream#outRange()}.
     */
@@ -142807,7 +143616,8 @@ public final class Core {
    {
       requireArgument("TANH openAndFill", "inReal", inReal);
       requireHistory("TANH openAndFill", inReal.length);
-      requireArgument("TANH openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TANH openAndFill", inReal.length, TANH_Lookback());
+      requireLength("TANH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TANH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -143668,7 +144478,9 @@ public final class Core {
     * to {@link Core#TEMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TEMA_Stream#outRange()}.
     */
@@ -143676,7 +144488,8 @@ public final class Core {
    {
       requireArgument("TEMA openAndFill", "inReal", inReal);
       requireHistory("TEMA openAndFill", inReal.length);
-      requireArgument("TEMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TEMA openAndFill", inReal.length, TEMA_Lookback(optInTimePeriod));
+      requireLength("TEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -144271,7 +145084,9 @@ public final class Core {
     * to {@link Core#TRANGE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TRANGE_Stream#outRange()}.
     */
@@ -144281,7 +145096,10 @@ public final class Core {
       requireHistory("TRANGE openAndFill", inHigh.length);
       requireArgument("TRANGE openAndFill", "inLow", inLow);
       requireArgument("TRANGE openAndFill", "inClose", inClose);
-      requireArgument("TRANGE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TRANGE openAndFill", inHigh.length, TRANGE_Lookback());
+      requireHistoryLength("TRANGE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TRANGE openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("TRANGE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -145629,7 +146447,9 @@ public final class Core {
     * to {@link Core#TRIMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TRIMA_Stream#outRange()}.
     */
@@ -145637,7 +146457,8 @@ public final class Core {
    {
       requireArgument("TRIMA openAndFill", "inReal", inReal);
       requireHistory("TRIMA openAndFill", inReal.length);
-      requireArgument("TRIMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TRIMA openAndFill", inReal.length, TRIMA_Lookback(optInTimePeriod));
+      requireLength("TRIMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TRIMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -146398,7 +147219,9 @@ public final class Core {
     * to {@link Core#TRIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TRIX_Stream#outRange()}.
     */
@@ -146406,7 +147229,8 @@ public final class Core {
    {
       requireArgument("TRIX openAndFill", "inReal", inReal);
       requireHistory("TRIX openAndFill", inReal.length);
-      requireArgument("TRIX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, TRIX_Lookback(optInTimePeriod));
+      requireLength("TRIX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -147434,7 +148258,9 @@ public final class Core {
     * to {@link Core#TSF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TSF_Stream#outRange()}.
     */
@@ -147442,7 +148268,8 @@ public final class Core {
    {
       requireArgument("TSF openAndFill", "inReal", inReal);
       requireHistory("TSF openAndFill", inReal.length);
-      requireArgument("TSF openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TSF openAndFill", inReal.length, TSF_Lookback(optInTimePeriod));
+      requireLength("TSF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -147884,7 +148711,9 @@ public final class Core {
     * to {@link Core#TYPPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TYPPRICE_Stream#outRange()}.
     */
@@ -147894,7 +148723,10 @@ public final class Core {
       requireHistory("TYPPRICE openAndFill", inHigh.length);
       requireArgument("TYPPRICE openAndFill", "inLow", inLow);
       requireArgument("TYPPRICE openAndFill", "inClose", inClose);
-      requireArgument("TYPPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TYPPRICE openAndFill", inHigh.length, TYPPRICE_Lookback());
+      requireHistoryLength("TYPPRICE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TYPPRICE openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("TYPPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -149318,7 +150150,9 @@ public final class Core {
     * to {@link Core#ULTOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ULTOSC_Stream#outRange()}.
     */
@@ -149328,7 +150162,10 @@ public final class Core {
       requireHistory("ULTOSC openAndFill", inHigh.length);
       requireArgument("ULTOSC openAndFill", "inLow", inLow);
       requireArgument("ULTOSC openAndFill", "inClose", inClose);
-      requireArgument("ULTOSC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ULTOSC openAndFill", inHigh.length, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+      requireHistoryLength("ULTOSC openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ULTOSC openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ULTOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -150389,7 +151226,9 @@ public final class Core {
     * to {@link Core#VAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link VAR_Stream#outRange()}.
     */
@@ -150397,7 +151236,8 @@ public final class Core {
    {
       requireArgument("VAR openAndFill", "inReal", inReal);
       requireHistory("VAR openAndFill", inReal.length);
-      requireArgument("VAR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("VAR openAndFill", inReal.length, VAR_Lookback(optInTimePeriod, optInNbDev));
+      requireLength("VAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("VAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -151209,7 +152049,9 @@ public final class Core {
     * to {@link Core#VWAP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link VWAP_Stream#outRange()}.
     */
@@ -151220,7 +152062,11 @@ public final class Core {
       requireArgument("VWAP openAndFill", "inLow", inLow);
       requireArgument("VWAP openAndFill", "inClose", inClose);
       requireArgument("VWAP openAndFill", "inVolume", inVolume);
-      requireArgument("VWAP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("VWAP openAndFill", inHigh.length, VWAP_Lookback());
+      requireHistoryLength("VWAP openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("VWAP openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("VWAP openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("VWAP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -152015,7 +152861,9 @@ public final class Core {
     * to {@link Core#VWMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link VWMA_Stream#outRange()}.
     */
@@ -152024,7 +152872,9 @@ public final class Core {
       requireArgument("VWMA openAndFill", "inReal", inReal);
       requireHistory("VWMA openAndFill", inReal.length);
       requireArgument("VWMA openAndFill", "inVolume", inVolume);
-      requireArgument("VWMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("VWMA openAndFill", inReal.length, VWMA_Lookback(optInTimePeriod));
+      requireHistoryLength("VWMA openAndFill", "inVolume", inVolume.length, inReal.length);
+      requireLength("VWMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -152677,7 +153527,9 @@ public final class Core {
     * to {@link Core#WAD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WAD_Stream#outRange()}.
     */
@@ -152687,7 +153539,10 @@ public final class Core {
       requireHistory("WAD openAndFill", inHigh.length);
       requireArgument("WAD openAndFill", "inLow", inLow);
       requireArgument("WAD openAndFill", "inClose", inClose);
-      requireArgument("WAD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WAD openAndFill", inHigh.length, WAD_Lookback());
+      requireHistoryLength("WAD openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WAD openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("WAD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -153129,7 +153984,9 @@ public final class Core {
     * to {@link Core#WCLPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WCLPRICE_Stream#outRange()}.
     */
@@ -153139,7 +153996,10 @@ public final class Core {
       requireHistory("WCLPRICE openAndFill", inHigh.length);
       requireArgument("WCLPRICE openAndFill", "inLow", inLow);
       requireArgument("WCLPRICE openAndFill", "inClose", inClose);
-      requireArgument("WCLPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WCLPRICE openAndFill", inHigh.length, WCLPRICE_Lookback());
+      requireHistoryLength("WCLPRICE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WCLPRICE openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("WCLPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -154161,7 +155021,9 @@ public final class Core {
     * to {@link Core#WILLR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WILLR_Stream#outRange()}.
     */
@@ -154171,7 +155033,10 @@ public final class Core {
       requireHistory("WILLR openAndFill", inHigh.length);
       requireArgument("WILLR openAndFill", "inLow", inLow);
       requireArgument("WILLR openAndFill", "inClose", inClose);
-      requireArgument("WILLR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WILLR openAndFill", inHigh.length, WILLR_Lookback(optInTimePeriod));
+      requireHistoryLength("WILLR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WILLR openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("WILLR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
@@ -155222,7 +156087,9 @@ public final class Core {
     * to {@link Core#WMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WMA_Stream#outRange()}.
     */
@@ -155230,7 +156097,8 @@ public final class Core {
    {
       requireArgument("WMA openAndFill", "inReal", inReal);
       requireHistory("WMA openAndFill", inReal.length);
-      requireArgument("WMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WMA openAndFill", inReal.length, WMA_Lookback(optInTimePeriod));
+      requireLength("WMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

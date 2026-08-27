@@ -779,7 +779,9 @@
     * to {@link Core#CDL3BLACKCROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDL3BLACKCROWS_Stream#outRange()}.
     */
@@ -790,7 +792,11 @@
       requireArgument("CDL3BLACKCROWS openAndFill", "inHigh", inHigh);
       requireArgument("CDL3BLACKCROWS openAndFill", "inLow", inLow);
       requireArgument("CDL3BLACKCROWS openAndFill", "inClose", inClose);
-      requireArgument("CDL3BLACKCROWS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDL3BLACKCROWS openAndFill", inOpen.length, CDL3BLACKCROWS_Lookback());
+      requireHistoryLength("CDL3BLACKCROWS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDL3BLACKCROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

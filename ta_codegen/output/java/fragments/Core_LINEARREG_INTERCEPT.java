@@ -1011,7 +1011,9 @@
     * to {@link Core#LINEARREG_INTERCEPT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LINEARREG_INTERCEPT_Stream#outRange()}.
     */
@@ -1019,7 +1021,8 @@
    {
       requireArgument("LINEARREG_INTERCEPT openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_INTERCEPT openAndFill", inReal.length);
-      requireArgument("LINEARREG_INTERCEPT openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LINEARREG_INTERCEPT openAndFill", inReal.length, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
+      requireLength("LINEARREG_INTERCEPT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

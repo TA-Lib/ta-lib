@@ -757,7 +757,9 @@
     * to {@link Core#CDLHIGHWAVE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHIGHWAVE_Stream#outRange()}.
     */
@@ -768,7 +770,11 @@
       requireArgument("CDLHIGHWAVE openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIGHWAVE openAndFill", "inLow", inLow);
       requireArgument("CDLHIGHWAVE openAndFill", "inClose", inClose);
-      requireArgument("CDLHIGHWAVE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHIGHWAVE openAndFill", inOpen.length, CDLHIGHWAVE_Lookback());
+      requireHistoryLength("CDLHIGHWAVE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHIGHWAVE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

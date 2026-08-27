@@ -14029,7 +14029,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if bench_mode == 1 {
                 rc = match core.MAMA_Open(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MAMA_OpenAndFill(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.MAMA_OpenAndFill(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, &mut outBuf0, Some(&mut outBuf1)) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -35962,7 +35962,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MAMA_OpenAndFill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, &mut f1) {
+        match c2.MAMA_OpenAndFill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;

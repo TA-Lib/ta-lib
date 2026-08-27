@@ -410,7 +410,9 @@
     * to {@link Core#ASIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ASIN_Stream#outRange()}.
     */
@@ -418,7 +420,8 @@
    {
       requireArgument("ASIN openAndFill", "inReal", inReal);
       requireHistory("ASIN openAndFill", inReal.length);
-      requireArgument("ASIN openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ASIN openAndFill", inReal.length, ASIN_Lookback());
+      requireLength("ASIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

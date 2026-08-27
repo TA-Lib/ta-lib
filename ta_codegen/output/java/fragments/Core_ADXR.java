@@ -641,7 +641,9 @@
     * to {@link Core#ADXR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ADXR_Stream#outRange()}.
     */
@@ -651,7 +653,10 @@
       requireHistory("ADXR openAndFill", inHigh.length);
       requireArgument("ADXR openAndFill", "inLow", inLow);
       requireArgument("ADXR openAndFill", "inClose", inClose);
-      requireArgument("ADXR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ADXR openAndFill", inHigh.length, ADXR_Lookback(optInTimePeriod));
+      requireHistoryLength("ADXR openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADXR openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ADXR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ADXR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

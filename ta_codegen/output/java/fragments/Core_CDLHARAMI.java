@@ -837,7 +837,9 @@
     * to {@link Core#CDLHARAMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHARAMI_Stream#outRange()}.
     */
@@ -848,7 +850,11 @@
       requireArgument("CDLHARAMI openAndFill", "inHigh", inHigh);
       requireArgument("CDLHARAMI openAndFill", "inLow", inLow);
       requireArgument("CDLHARAMI openAndFill", "inClose", inClose);
-      requireArgument("CDLHARAMI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHARAMI openAndFill", inOpen.length, CDLHARAMI_Lookback());
+      requireHistoryLength("CDLHARAMI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHARAMI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHARAMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -589,7 +589,9 @@
     * to {@link Core#MOM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MOM_Stream#outRange()}.
     */
@@ -597,7 +599,8 @@
    {
       requireArgument("MOM openAndFill", "inReal", inReal);
       requireHistory("MOM openAndFill", inReal.length);
-      requireArgument("MOM openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MOM openAndFill", inReal.length, MOM_Lookback(optInTimePeriod));
+      requireLength("MOM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

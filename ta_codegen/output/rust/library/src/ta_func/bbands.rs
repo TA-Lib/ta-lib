@@ -943,14 +943,35 @@ impl Core {
 
     /// [`Core::BBANDS_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::BBANDS`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::BBANDS_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_BBANDS_OpenAndFill")]
     pub fn BBANDS_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<(BBANDS_Stream, OutRange), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inReal.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outRealUpperBand.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outRealMiddleBand.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outRealLowerBand.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         if !outRealUpperBand.is_empty() && !outRealMiddleBand.is_empty() && outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
             return Err(RetCode::BadParam);
         }

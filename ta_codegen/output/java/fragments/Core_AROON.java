@@ -861,7 +861,9 @@
     * to {@link Core#AROON} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link AROON_Stream#outRange()}.
     */
@@ -870,8 +872,10 @@
       requireArgument("AROON openAndFill", "inHigh", inHigh);
       requireHistory("AROON openAndFill", inHigh.length);
       requireArgument("AROON openAndFill", "inLow", inLow);
-      requireArgument("AROON openAndFill", "outAroonDown", outAroonDown);
-      requireArgument("AROON openAndFill", "outAroonUp", outAroonUp);
+      int guardOutLen = openFillCount("AROON openAndFill", inHigh.length, AROON_Lookback(optInTimePeriod));
+      requireHistoryLength("AROON openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("AROON openAndFill", "outAroonDown", outAroonDown, guardOutLen);
+      requireLength("AROON openAndFill", "outAroonUp", outAroonUp, guardOutLen);
       if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
          throw new TaLibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

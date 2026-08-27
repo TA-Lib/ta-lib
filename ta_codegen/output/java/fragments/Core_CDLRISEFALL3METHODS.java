@@ -932,7 +932,9 @@
     * to {@link Core#CDLRISEFALL3METHODS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLRISEFALL3METHODS_Stream#outRange()}.
     */
@@ -943,7 +945,11 @@
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inHigh", inHigh);
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inLow", inLow);
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inClose", inClose);
-      requireArgument("CDLRISEFALL3METHODS openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLRISEFALL3METHODS openAndFill", inOpen.length, CDLRISEFALL3METHODS_Lookback());
+      requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLRISEFALL3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

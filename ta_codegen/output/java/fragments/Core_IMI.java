@@ -610,7 +610,9 @@
     * to {@link Core#IMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link IMI_Stream#outRange()}.
     */
@@ -619,7 +621,9 @@
       requireArgument("IMI openAndFill", "inOpen", inOpen);
       requireHistory("IMI openAndFill", inOpen.length);
       requireArgument("IMI openAndFill", "inClose", inClose);
-      requireArgument("IMI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("IMI openAndFill", inOpen.length, IMI_Lookback(optInTimePeriod));
+      requireHistoryLength("IMI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("IMI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

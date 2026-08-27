@@ -1127,10 +1127,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null.</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
+   /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MINUS_DM_Stream MINUS_DM_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MINUS_DM open: inLow is empty", nameof(inLow), RetCode.BadParam);
       return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -1143,7 +1145,9 @@ public partial class Core
    /// <para>Output arrays must hold <c>historyLen - MINUS_DM_Lookback(...)</c> values
    /// and must not alias the inputs or each other — this path writes the outputs
    /// and then reads the input tail to seed its rings, so the batch tier's
-   /// in-place allowance does not carry over here.</para>
+   /// in-place allowance does not carry over here. Both are checked before
+   /// anything is written, so an undersized span is an <c>ArgumentException</c>
+   /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
    /// <see cref="MINUS_DM_Stream.OutRange"/>.</para>
    /// </remarks>
@@ -1156,14 +1160,19 @@ public partial class Core
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MINUS_DM_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
-   /// have different lengths, or an output array aliases an input or another
-   /// output.</exception>
+   /// have different lengths, an output is shorter than the values the fill
+   /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null.</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
+   /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MINUS_DM_Stream MINUS_DM_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MINUS_DM openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      int guardOutLen = OpenFillCount("MINUS_DM", "openAndFill", inHigh.Length, MINUS_DM_Lookback(optInTimePeriod));
+      RequireHistoryLength("MINUS_DM", "openAndFill", "inLow", inLow.Length, inHigh.Length);
+      RequireFillLength("MINUS_DM", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("MINUS_DM", "openAndFill", RetCode.BadParam);
       }

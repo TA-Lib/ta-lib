@@ -231,6 +231,65 @@ public partial class Core
         }
     }
 
+    /* Rule S5's bound: how many values an OpenAndFill writes.
+     *
+     * An opener is a batch call over [0, historyLen - 1], so ClampedStart's
+     * produced count -- endIdx - max(startIdx, lookback) + 1 -- collapses to
+     * historyLen - lookback. Unlike the batch tier's it has no legitimate zero
+     * case: rule S7 refuses a history shorter than lookback + 1, so a fill that
+     * runs writes at least one value.
+     *
+     * A short history is still floored to 0 rather than answered here: S7 has not
+     * run yet, and that rejection is S7's to make. A lookback of -1 is NOT
+     * floored -- it is the parameter contract's rejection signal, and swallowing
+     * it reported an absent output (S4) for a call whose fault was its parameter
+     * (S3). Raising it here is what puts S3 ahead of the buffer rules, exactly as
+     * ClampedStart does one tier over. */
+    internal static int OpenFillCount(string funcName, string verb, int historyLen, int lookback)
+    {
+        if (lookback < 0)
+        {
+            throw StreamFailure(funcName, verb, RetCode.BadParam);
+        }
+        return historyLen <= lookback ? 0 : historyLen - lookback;
+    }
+
+    /* Rule S5's input half: every declared input carries the history, so every
+     * one of them is the history's length.
+     *
+     * B5 states the two halves as one rule, inputs first, and this is B5 over
+     * [0, historyLen - 1]. The difference from B5's wording is that there is no
+     * separate endIdx to reach here: the history's own length IS the range, so a
+     * longer series is a disagreement rather than a tail to ignore -- which is
+     * what the generated docs have always promised. */
+    internal static void RequireHistoryLength(string funcName, string verb, string argName,
+                                              int actual, int historyLen)
+    {
+        if (actual != historyLen)
+        {
+            throw new TaLibArgumentException(
+                funcName + " " + verb + ": " + argName + " has length " + actual
+                    + ", needs " + historyLen,
+                argName, RetCode.BadParam);
+        }
+    }
+
+    /* RequireLength for the STREAMING tier, which spells the prefix
+     * "<NAME> <verb>: " where the batch tier spells it "TA_<NAME>: ". Same
+     * reason StreamFailure is not a reuse of Failure(): the prefix is a
+     * cross-language contract the stream gate greps for. */
+    internal static void RequireFillLength(string funcName, string verb, string argName,
+                                           int actual, int required)
+    {
+        if (actual < required)
+        {
+            throw new TaLibArgumentException(
+                funcName + " " + verb + ": " + argName + " has length " + actual
+                    + ", needs " + required,
+                argName, RetCode.BadParam);
+        }
+    }
+
     /* The RetCode -> exception mapping for the STREAMING tier. Deliberately not
      * a reuse of Failure(): the two tiers spell the same code differently. A
      * stream CAN still report OutOfRangeEndIndex (a history longer than

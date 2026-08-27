@@ -2321,7 +2321,9 @@
     * to {@link Core#HT_TRENDMODE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_TRENDMODE_Stream#outRange()}.
     */
@@ -2329,7 +2331,8 @@
    {
       requireArgument("HT_TRENDMODE openAndFill", "inReal", inReal);
       requireHistory("HT_TRENDMODE openAndFill", inReal.length);
-      requireArgument("HT_TRENDMODE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("HT_TRENDMODE openAndFill", inReal.length, HT_TRENDMODE_Lookback());
+      requireLength("HT_TRENDMODE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

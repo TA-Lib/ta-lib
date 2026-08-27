@@ -439,6 +439,22 @@ fn required_args(func: &FuncDef, frame: Frame) -> Vec<String> {
 /// NULL on the copy-out. `OpenAndFill` does pass the caller's arrays straight
 /// down, so there the repeat is real, and cheaper than teaching the frame which
 /// of its arguments the callee will see.
+/// One alias comparison, with the NULL guard a declinable operand needs.
+///
+/// A declined output aliases nothing, and two of them would otherwise compare
+/// equal — `NULL == NULL` — rejecting a legal call. The batch emitter guards the
+/// nullable operand for exactly this reason (rule B6a).
+fn alias_term(func: &FuncDef, a: &str, b: &str) -> String {
+    let nullable = super::common::nullable_output_names(func);
+    let term = format!("(const void *){a} == (const void *){b}");
+    match (nullable.contains(a), nullable.contains(b)) {
+        (false, false) => term,
+        (true, false) => format!("({a} != NULL && {term})"),
+        (false, true) => format!("({b} != NULL && {term})"),
+        (true, true) => format!("({a} != NULL && {b} != NULL && {term})"),
+    }
+}
+
 fn presence_guard(func: &FuncDef, frame: Frame) -> String {
     let nulls: Vec<String> = required_args(func, frame)
         .into_iter()
@@ -549,12 +565,12 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     let mut alias: Vec<String> = Vec::new();
     for out in &outs {
         for inp in &inputs {
-            alias.push(format!("(const void *){out} == (const void *){inp}"));
+            alias.push(alias_term(func, out, inp));
         }
     }
     for (i, a) in outs.iter().enumerate() {
         for b in &outs[i + 1..] {
-            alias.push(format!("(const void *){a} == (const void *){b}"));
+            alias.push(alias_term(func, a, b));
         }
     }
     if !alias.is_empty() {
@@ -653,12 +669,12 @@ fn update_and_fill_guards(func: &FuncDef) -> String {
     let mut alias: Vec<String> = Vec::new();
     for out in &outs {
         for inp in &inputs {
-            alias.push(format!("(const void *){out} == (const void *){inp}"));
+            alias.push(alias_term(func, out, inp));
         }
     }
     for (i, a) in outs.iter().enumerate() {
         for b in &outs[i + 1..] {
-            alias.push(format!("(const void *){a} == (const void *){b}"));
+            alias.push(alias_term(func, a, b));
         }
     }
     if !alias.is_empty() {
@@ -2153,12 +2169,12 @@ fn emit_dispatch_open(
         let mut alias: Vec<String> = Vec::new();
         for outp in &outputs {
             for inp in &inputs {
-                alias.push(format!("(const void *){outp} == (const void *){inp}"));
+                alias.push(alias_term(func, outp, inp));
             }
         }
         for (i, a) in outputs.iter().enumerate() {
             for b in &outputs[i + 1..] {
-                alias.push(format!("(const void *){a} == (const void *){b}"));
+                alias.push(alias_term(func, a, b));
             }
         }
         if !alias.is_empty() {
@@ -3777,7 +3793,7 @@ fn emit_period_bank(
     o.push_str(&presence_guard(func, Frame::OpenAndFill));
     let mut alias: Vec<String> = Vec::new();
     for inp in &inputs {
-        alias.push(format!("(const void *){out} == (const void *){inp}"));
+        alias.push(alias_term(func, out, inp));
     }
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));

@@ -432,7 +432,9 @@
     * to {@link Core#WCLPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WCLPRICE_Stream#outRange()}.
     */
@@ -442,7 +444,10 @@
       requireHistory("WCLPRICE openAndFill", inHigh.length);
       requireArgument("WCLPRICE openAndFill", "inLow", inLow);
       requireArgument("WCLPRICE openAndFill", "inClose", inClose);
-      requireArgument("WCLPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WCLPRICE openAndFill", inHigh.length, WCLPRICE_Lookback());
+      requireHistoryLength("WCLPRICE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WCLPRICE openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("WCLPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -1077,7 +1077,9 @@
     * to {@link Core#PLUS_DM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PLUS_DM_Stream#outRange()}.
     */
@@ -1086,7 +1088,9 @@
       requireArgument("PLUS_DM openAndFill", "inHigh", inHigh);
       requireHistory("PLUS_DM openAndFill", inHigh.length);
       requireArgument("PLUS_DM openAndFill", "inLow", inLow);
-      requireArgument("PLUS_DM openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("PLUS_DM openAndFill", inHigh.length, PLUS_DM_Lookback(optInTimePeriod));
+      requireHistoryLength("PLUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
+      requireLength("PLUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

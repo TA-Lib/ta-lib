@@ -398,7 +398,9 @@
     * to {@link Core#FLOOR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link FLOOR_Stream#outRange()}.
     */
@@ -406,7 +408,8 @@
    {
       requireArgument("FLOOR openAndFill", "inReal", inReal);
       requireHistory("FLOOR openAndFill", inReal.length);
-      requireArgument("FLOOR openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("FLOOR openAndFill", inReal.length, FLOOR_Lookback());
+      requireLength("FLOOR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

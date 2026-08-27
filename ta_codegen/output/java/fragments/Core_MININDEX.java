@@ -666,7 +666,9 @@
     * to {@link Core#MININDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MININDEX_Stream#outRange()}.
     */
@@ -674,7 +676,8 @@
    {
       requireArgument("MININDEX openAndFill", "inReal", inReal);
       requireHistory("MININDEX openAndFill", inReal.length);
-      requireArgument("MININDEX openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("MININDEX openAndFill", inReal.length, MININDEX_Lookback(optInTimePeriod));
+      requireLength("MININDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

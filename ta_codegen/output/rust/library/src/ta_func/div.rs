@@ -356,14 +356,32 @@ impl Core {
 
     /// [`Core::DIV_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::DIV`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::DIV_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_DIV_OpenAndFill")]
     pub fn DIV_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outReal: &mut [f64],
     ) -> Result<(DIV_Stream, OutRange), RetCode> {
+        if inReal0.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inReal0.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.DIV_Lookback()?;
+        if inReal1.len() != inReal0.len() {
+            return Err(RetCode::BadParam);
+        }
+        let _guardOutLen = inReal0.len().saturating_sub(_guardLb);
+        if outReal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.DIV_OpenAndFillInternal(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal)?;

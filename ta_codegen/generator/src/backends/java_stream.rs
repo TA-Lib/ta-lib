@@ -464,15 +464,28 @@ pub fn generate(
 fn alias_condition(func: &FuncDef) -> Option<String> {
     let inputs = streaming::input_array_names(func);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
+    let nullable = super::common::nullable_output_names(func);
+    // A declined output aliases nothing — and two of them would otherwise
+    // compare equal, `null == null`, rejecting a legal call. The batch emitter
+    // guards the nullable operand for exactly this reason (rule B6a).
+    let guarded = |a: &str, b: &str| {
+        let term = format!("(Object){a} == (Object){b}");
+        match (nullable.contains(a), nullable.contains(b)) {
+            (false, false) => term,
+            (true, false) => format!("({a} != null && {term})"),
+            (false, true) => format!("({b} != null && {term})"),
+            (true, true) => format!("({a} != null && {b} != null && {term})"),
+        }
+    };
     let mut pairs: Vec<String> = Vec::new();
     for out in &outs {
         for input in &inputs {
-            pairs.push(format!("(Object){out} == (Object){input}"));
+            pairs.push(guarded(out, input));
         }
     }
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
-            pairs.push(format!("(Object){} == (Object){b}", outs[i]));
+            pairs.push(guarded(outs[i], b));
         }
     }
     if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }
@@ -1140,6 +1153,7 @@ fn stream_ctx<'a>(
         fma: Some(fma_sets),
         // The streaming tier keeps every output required, so no store is guarded.
         nullable_outputs: empty,
+        nullable_shadow: false,
         // Stream bodies dispatch MA-type structurally, never via `== TA_MAType_*`.
         matype_map: HashMap::new(),
     }
@@ -1446,6 +1460,11 @@ fn emit_anchor_guard(o: &mut String) {
 /// The transcribed body's VarDecls (address-of / MAType aware, mirroring the
 /// batch renderer's decl pass), including CIRCBUF prologs.
 fn emit_body_decls(o: &mut String, func: &FuncDef, open_body: &[Statement]) {
+    // The handle caches every output's last value, and a declined output leaves
+    // no array to read it back from — so the guarded store writes it here too.
+    for name in super::common::nullable_output_list(func) {
+        let _ = writeln!(o, "      {} lastCur_{name} = 0;", out_java_type(func, &name));
+    }
     let mut address_of_vars = collect_address_of_vars(open_body);
     let matype_params: HashSet<String> = func
         .optional_inputs
@@ -1603,9 +1622,11 @@ fn emit_open_region(
         address_of_vars.remove(name);
     }
     let empty = HashSet::new();
+    let nullable = super::common::nullable_output_names(func);
     let ctx = JavaRenderCtx {
         single_precision: false,
-        nullable_outputs: &empty,
+        nullable_outputs: &nullable,
+        nullable_shadow: true,
         address_of_vars: &address_of_vars,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &empty,
@@ -1971,10 +1992,21 @@ enum CurSource {
 
 /// Seed `sp.cur_*` (+ the cached Value) at the end of an open body.
 fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: CurSource) {
+    let nullable = super::common::nullable_output_names(func);
+    assert!(
+        !(matches!(source, CurSource::Scratch) && outputs.iter().any(|o| nullable.contains(o))),
+        "{}: a composed open would cache 0 for a declined output — the shadow is written \
+         beside a transcribed store, and this path has none",
+        func.name
+    );
     for out in outputs {
-        let expr = match source {
-            CurSource::StridedArray => format!("{out}[(outNBElement.value - 1) * outStride]"),
-            CurSource::Scratch => format!("sc_{out}[outNBElement.value - 1]"),
+        let expr = if nullable.contains(out) {
+            format!("lastCur_{out}")
+        } else {
+            match source {
+                CurSource::StridedArray => format!("{out}[(outNBElement.value - 1) * outStride]"),
+                CurSource::Scratch => format!("sc_{out}[outNBElement.value - 1]"),
+            }
         };
         let _ = writeln!(o, "      sp.cur_{out} = {expr};");
     }
@@ -2093,22 +2125,80 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
     let history = &inputs[0];
     let _ = writeln!(o, "      requireArgument(\"{n} {verb}\", \"{history}\", {history});");
     let _ = writeln!(o, "      requireHistory(\"{n} {verb}\", {history}.length);");
+    // An enum parameter's domain excludes null, and Java is the only backend
+    // where that is expressible (rule S3). It precedes the remaining presence
+    // checks because S3 precedes S4 — the order the batch wrapper was given in
+    // Appendix D items 2 and 3 — and it must in any case precede the
+    // `_Lookback` call below, which is where a null one is first switched on.
+    for p in &func.optional_inputs {
+        if matches!(p.param_type, ParamType::Enum(_)) {
+            let _ = writeln!(
+                o,
+                "      requireArgument(\"{n} {verb}\", \"{0}\", {0});",
+                p.name
+            );
+        }
+    }
     for input in &inputs[1..] {
         let _ = writeln!(o, "      requireArgument(\"{n} {verb}\", \"{input}\", {input});");
     }
     if with_outputs {
-        // EVERY output, the ones marked `nullable` included: unlike C's, this
-        // fill guards no output write, so a null one faults inside the loop
-        // whatever the flag says. Naming it is the whole change — the call was
-        // already rejected, by `NullPointerException`.
-        for out in &func.outputs {
+        // Rule S3 first, in the shape the buffer rules need it: `<N>_Lookback`
+        // answers `-1` for an out-of-domain parameter and `openFillCount` raises
+        // on it, so a bad parameter is reported as a bad parameter rather than
+        // as whatever the buffer rules would have said about a call it made no
+        // sense to size. Same thing `clampedStart` does one tier over.
+        let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+        let _ = writeln!(
+            o,
+            "      int guardOutLen = openFillCount(\"{n} {verb}\", {}.length, {n}_Lookback({}));",
+            history,
+            lb_args.join(", ")
+        );
+        // Rule S5, input half before output half — B5 states the two as one
+        // rule, in that order, and this is B5 over `[0, historyLen - 1]`. The
+        // core tests the inputs too, but only after the capacity bound below
+        // would have answered, so a short input series was reported as an
+        // output-capacity fault. The history's own length IS the range here, so
+        // the inputs must agree with it rather than merely reach it.
+        for input in &inputs[1..] {
             let _ = writeln!(
                 o,
-                "      requireArgument(\"{n} {verb}\", \"{0}\", {0});",
+                "      requireHistoryLength(\"{n} {verb}\", \"{input}\", {input}.length, {history}.length);"
+            );
+        }
+        // …then the outputs. `requireLength` carries S4 and S5 in one call,
+        // exactly as the batch wrapper's does, and an output marked `nullable`
+        // is bounded only where it was supplied (rule B6a).
+        let nullable = super::common::nullable_output_names(func);
+        for out in &func.outputs {
+            let guard = if nullable.contains(&out.name) {
+                format!("if( {0} != null ) ", out.name)
+            } else {
+                String::new()
+            };
+            let _ = writeln!(
+                o,
+                "      {guard}requireLength(\"{n} {verb}\", \"{0}\", {0}, guardOutLen);",
                 out.name
             );
         }
     }
+}
+
+/// The javadoc sentence naming the outputs a caller may decline, or nothing when
+/// the function has none. Rule B6a reads the same at both tiers, and a caller of
+/// the opener needs telling in the same place a caller of the batch call is told.
+fn declinable_note(func: &FuncDef, class: &str) -> String {
+    let names = super::common::nullable_output_list(func);
+    if names.is_empty() {
+        return String::new();
+    }
+    let list = names.iter().map(|n| format!("{{@code {n}}}")).collect::<Vec<_>>().join(", ");
+    format!(
+        "\n\x20   * <p>{list} may be declined with {{@code null}}: the value is still\n\
+         \x20   * computed — {{@link {class}#value()}} reports it — and nothing is written out."
+    )
 }
 
 /// `openInternal` (the anchored plain open), the public `<base>_Open`, and the
@@ -2194,6 +2284,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         fill_sig.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
         fill_fwd.push(out.name.clone());
     }
+    let declinable = declinable_note(func, &class);
     let _ = writeln!(
         o,
         "   /**\n\
@@ -2201,7 +2292,9 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
          \x20   * to {{@link Core#{base}}} over the whole history in the same single pass\n\
          \x20   * (no separate batch call needed for the warm-up plot). Output arrays must\n\
          \x20   * not alias the inputs or each other, and must hold\n\
-         \x20   * {{@code historyLen - lookback}} values.\n\
+         \x20   * {{@code historyLen - lookback}} values — both checked before anything is\n\
+         \x20   * written, so an undersized array is an {{@link IllegalArgumentException}}\n\
+         \x20   * naming it rather than a fault from inside the fill.{declinable}\n\
          \x20   * <p>The range written is on the returned handle:\n\
          \x20   * {{@link {class}#outRange()}}.\n\
          \x20   */"
@@ -2721,17 +2814,17 @@ fn emit_dispatch(
                     }
                     OutMode::Fill | OutMode::FillInternal => {
                         // OutSlot-mapped fill tail: Forward(k) passes the
-                        // dispatch func's own array, Discard materializes a
-                        // throwaway buffer (Java's rendering of C's NULL for a
-                        // nullable output — the batch discard-buffer idiom, #125).
+                        // dispatch func's own array, Discard declines the
+                        // callee's nullable output outright — which is what C
+                        // has always passed there, and what a `historyLen`-sized
+                        // throwaway buffer per open was standing in for until
+                        // the openers learned rule B6a.
                         let fill_outs: String = arm
                             .out_map
                             .iter()
                             .map(|slot| match slot {
                                 streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                                streaming::OutSlot::Discard => {
-                                    "new double[historyLen]".to_string()
-                                }
+                                streaming::OutSlot::Discard => "null".to_string(),
                             })
                             .collect::<Vec<_>>()
                             .join(", ");
@@ -3425,6 +3518,7 @@ fn emit_composed_open(
     let ins_ctx = JavaRenderCtx {
         single_precision: false,
         nullable_outputs: &empty,
+        nullable_shadow: false,
         address_of_vars: &ins_address_of,
         double_address_of_vars: &ins_double_address_of,
         float_input_params: &empty,

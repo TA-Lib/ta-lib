@@ -815,14 +815,35 @@ impl Core {
 
     /// [`Core::MACDEXT_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::MACDEXT`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::MACDEXT_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_MACDEXT_OpenAndFill")]
     pub fn MACDEXT_OpenAndFill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<(MACDEXT_Stream, OutRange), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inReal.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType)?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outMACD.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outMACDSignal.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outMACDHist.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         if !outMACD.is_empty() && !outMACDSignal.is_empty() && outMACD.as_ptr() == outMACDSignal.as_ptr() {
             return Err(RetCode::BadParam);
         }

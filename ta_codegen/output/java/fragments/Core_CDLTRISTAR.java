@@ -729,7 +729,9 @@
     * to {@link Core#CDLTRISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLTRISTAR_Stream#outRange()}.
     */
@@ -740,7 +742,11 @@
       requireArgument("CDLTRISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLTRISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLTRISTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLTRISTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLTRISTAR openAndFill", inOpen.length, CDLTRISTAR_Lookback());
+      requireHistoryLength("CDLTRISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLTRISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

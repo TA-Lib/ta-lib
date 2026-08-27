@@ -1542,7 +1542,9 @@
     * to {@link Core#SMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link SMI_Stream#outRange()}.
     */
@@ -1552,8 +1554,11 @@
       requireHistory("SMI openAndFill", inHigh.length);
       requireArgument("SMI openAndFill", "inLow", inLow);
       requireArgument("SMI openAndFill", "inClose", inClose);
-      requireArgument("SMI openAndFill", "outSMI", outSMI);
-      requireArgument("SMI openAndFill", "outSMISignal", outSMISignal);
+      int guardOutLen = openFillCount("SMI openAndFill", inHigh.length, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      requireHistoryLength("SMI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("SMI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("SMI openAndFill", "outSMI", outSMI, guardOutLen);
+      requireLength("SMI openAndFill", "outSMISignal", outSMISignal, guardOutLen);
       if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
          throw new TaLibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

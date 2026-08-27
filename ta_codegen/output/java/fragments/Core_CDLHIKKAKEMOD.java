@@ -876,7 +876,9 @@
     * to {@link Core#CDLHIKKAKEMOD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLHIKKAKEMOD_Stream#outRange()}.
     */
@@ -887,7 +889,11 @@
       requireArgument("CDLHIKKAKEMOD openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIKKAKEMOD openAndFill", "inLow", inLow);
       requireArgument("CDLHIKKAKEMOD openAndFill", "inClose", inClose);
-      requireArgument("CDLHIKKAKEMOD openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLHIKKAKEMOD openAndFill", inOpen.length, CDLHIKKAKEMOD_Lookback());
+      requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLHIKKAKEMOD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

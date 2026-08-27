@@ -2504,11 +2504,14 @@ fn emit_rust_warmup_arms(
     let mut fill_outs = String::new();
     let (mut real_idx, mut int_idx) = (0usize, 0usize);
     for out in outputs {
+        // A nullable output takes `Option<&mut [T]>` (rule B6a); this arm
+        // compares values, so it always supplies one.
+        let (op, cl) = if out.is_nullable() { ("Some(", ")") } else { ("", "") };
         if out.param_type == ParamType::Integer {
-            let _ = write!(fill_outs, ", &mut outIntBuf{int_idx}");
+            let _ = write!(fill_outs, ", {op}&mut outIntBuf{int_idx}{cl}");
             int_idx += 1;
         } else {
-            let _ = write!(fill_outs, ", &mut outBuf{real_idx}");
+            let _ = write!(fill_outs, ", {op}&mut outBuf{real_idx}{cl}");
             real_idx += 1;
         }
     }
@@ -3295,6 +3298,18 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        }\n");
     s.push_str("        if (endIdx < 0 || endIdx > MAX_INDEX || endIdx < startIdx) {\n");
     s.push_str("            throw failure(funcName, RetCode.OutOfRangeEndIndex);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static int openFillCount(String funcName, int historyLen, int lookback) {\n");
+    s.push_str("        if (lookback < 0) {\n");
+    s.push_str("            throw failure(funcName, RetCode.BadParam);\n");
+    s.push_str("        }\n");
+    s.push_str("        return historyLen <= lookback ? 0 : historyLen - lookback;\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {\n");
+    s.push_str("        if (actual != historyLen) {\n");
+    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" has length \" + actual\n");
+    s.push_str("                  + \", needs \" + historyLen, RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireHistory(String funcName, int historyLen) {\n");
@@ -6398,7 +6413,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         // past `nb` fails instead of landing in unread space.
         let canary = if *is_int { "-987654321i32" } else { "-1.2345678901234e300f64" };
         let _ = writeln!(fdecls, "        let mut f{i}: Vec<{ty}> = vec![{canary}; svN];");
-        let _ = write!(fargs, ", &mut f{i}");
+        let _ = write!(fargs, ", {op}&mut f{i}{cl}");
     }
     s.push_str(&bdecls);
 

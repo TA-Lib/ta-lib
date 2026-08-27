@@ -613,14 +613,32 @@ impl Core {
 
     /// [`Core::MINMAXINDEX_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::MINMAXINDEX`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::MINMAXINDEX_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_MINMAXINDEX_OpenAndFill")]
     pub fn MINMAXINDEX_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
     ) -> Result<(MINMAXINDEX_Stream, OutRange), RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inReal.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.MINMAXINDEX_Lookback(optInTimePeriod)?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outMinIdx.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outMaxIdx.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
         if !outMinIdx.is_empty() && !outMaxIdx.is_empty() && outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
             return Err(RetCode::BadParam);
         }

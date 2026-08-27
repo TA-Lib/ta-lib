@@ -1414,7 +1414,9 @@
     * to {@link Core#ULTOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ULTOSC_Stream#outRange()}.
     */
@@ -1424,7 +1426,10 @@
       requireHistory("ULTOSC openAndFill", inHigh.length);
       requireArgument("ULTOSC openAndFill", "inLow", inLow);
       requireArgument("ULTOSC openAndFill", "inClose", inClose);
-      requireArgument("ULTOSC openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ULTOSC openAndFill", inHigh.length, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+      requireHistoryLength("ULTOSC openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ULTOSC openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ULTOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -837,7 +837,9 @@
     * to {@link Core#EFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link EFI_Stream#outRange()}.
     */
@@ -846,7 +848,9 @@
       requireArgument("EFI openAndFill", "inClose", inClose);
       requireHistory("EFI openAndFill", inClose.length);
       requireArgument("EFI openAndFill", "inVolume", inVolume);
-      requireArgument("EFI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("EFI openAndFill", inClose.length, EFI_Lookback(optInTimePeriod));
+      requireHistoryLength("EFI openAndFill", "inVolume", inVolume.length, inClose.length);
+      requireLength("EFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

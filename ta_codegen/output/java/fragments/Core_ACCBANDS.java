@@ -921,7 +921,9 @@
     * to {@link Core#ACCBANDS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ACCBANDS_Stream#outRange()}.
     */
@@ -931,9 +933,12 @@
       requireHistory("ACCBANDS openAndFill", inHigh.length);
       requireArgument("ACCBANDS openAndFill", "inLow", inLow);
       requireArgument("ACCBANDS openAndFill", "inClose", inClose);
-      requireArgument("ACCBANDS openAndFill", "outRealUpperBand", outRealUpperBand);
-      requireArgument("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand);
-      requireArgument("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand);
+      int guardOutLen = openFillCount("ACCBANDS openAndFill", inHigh.length, ACCBANDS_Lookback(optInTimePeriod));
+      requireHistoryLength("ACCBANDS openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ACCBANDS openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ACCBANDS openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
+      requireLength("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+      requireLength("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          throw new TaLibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

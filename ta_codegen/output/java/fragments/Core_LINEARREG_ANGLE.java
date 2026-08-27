@@ -1012,7 +1012,9 @@
     * to {@link Core#LINEARREG_ANGLE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LINEARREG_ANGLE_Stream#outRange()}.
     */
@@ -1020,7 +1022,8 @@
    {
       requireArgument("LINEARREG_ANGLE openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_ANGLE openAndFill", inReal.length);
-      requireArgument("LINEARREG_ANGLE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LINEARREG_ANGLE openAndFill", inReal.length, LINEARREG_ANGLE_Lookback(optInTimePeriod));
+      requireLength("LINEARREG_ANGLE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -610,7 +610,9 @@
     * to {@link Core#ROCP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link ROCP_Stream#outRange()}.
     */
@@ -618,7 +620,8 @@
    {
       requireArgument("ROCP openAndFill", "inReal", inReal);
       requireHistory("ROCP openAndFill", inReal.length);
-      requireArgument("ROCP openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("ROCP openAndFill", inReal.length, ROCP_Lookback(optInTimePeriod));
+      requireLength("ROCP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("ROCP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

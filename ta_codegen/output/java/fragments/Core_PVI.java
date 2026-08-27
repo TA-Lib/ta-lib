@@ -575,7 +575,9 @@
     * to {@link Core#PVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link PVI_Stream#outRange()}.
     */
@@ -584,7 +586,9 @@
       requireArgument("PVI openAndFill", "inClose", inClose);
       requireHistory("PVI openAndFill", inClose.length);
       requireArgument("PVI openAndFill", "inVolume", inVolume);
-      requireArgument("PVI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("PVI openAndFill", inClose.length, PVI_Lookback());
+      requireHistoryLength("PVI openAndFill", "inVolume", inVolume.length, inClose.length);
+      requireLength("PVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

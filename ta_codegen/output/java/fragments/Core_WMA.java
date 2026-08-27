@@ -1041,7 +1041,9 @@
     * to {@link Core#WMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WMA_Stream#outRange()}.
     */
@@ -1049,7 +1051,8 @@
    {
       requireArgument("WMA openAndFill", "inReal", inReal);
       requireHistory("WMA openAndFill", inReal.length);
-      requireArgument("WMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WMA openAndFill", inReal.length, WMA_Lookback(optInTimePeriod));
+      requireLength("WMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

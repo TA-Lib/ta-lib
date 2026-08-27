@@ -887,7 +887,9 @@
     * to {@link Core#CDLSEPARATINGLINES} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSEPARATINGLINES_Stream#outRange()}.
     */
@@ -898,7 +900,11 @@
       requireArgument("CDLSEPARATINGLINES openAndFill", "inHigh", inHigh);
       requireArgument("CDLSEPARATINGLINES openAndFill", "inLow", inLow);
       requireArgument("CDLSEPARATINGLINES openAndFill", "inClose", inClose);
-      requireArgument("CDLSEPARATINGLINES openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSEPARATINGLINES openAndFill", inOpen.length, CDLSEPARATINGLINES_Lookback());
+      requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSEPARATINGLINES openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -1296,7 +1296,9 @@
     * to {@link Core#DX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link DX_Stream#outRange()}.
     */
@@ -1306,7 +1308,10 @@
       requireHistory("DX openAndFill", inHigh.length);
       requireArgument("DX openAndFill", "inLow", inLow);
       requireArgument("DX openAndFill", "inClose", inClose);
-      requireArgument("DX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("DX openAndFill", inHigh.length, DX_Lookback(optInTimePeriod));
+      requireHistoryLength("DX openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("DX openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("DX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -576,7 +576,9 @@
     * to {@link Core#CDLENGULFING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLENGULFING_Stream#outRange()}.
     */
@@ -587,7 +589,11 @@
       requireArgument("CDLENGULFING openAndFill", "inHigh", inHigh);
       requireArgument("CDLENGULFING openAndFill", "inLow", inLow);
       requireArgument("CDLENGULFING openAndFill", "inClose", inClose);
-      requireArgument("CDLENGULFING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLENGULFING openAndFill", inOpen.length, CDLENGULFING_Lookback());
+      requireHistoryLength("CDLENGULFING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLENGULFING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

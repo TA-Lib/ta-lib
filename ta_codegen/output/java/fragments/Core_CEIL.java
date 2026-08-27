@@ -398,7 +398,9 @@
     * to {@link Core#CEIL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CEIL_Stream#outRange()}.
     */
@@ -406,7 +408,8 @@
    {
       requireArgument("CEIL openAndFill", "inReal", inReal);
       requireHistory("CEIL openAndFill", inReal.length);
-      requireArgument("CEIL openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CEIL openAndFill", inReal.length, CEIL_Lookback());
+      requireLength("CEIL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

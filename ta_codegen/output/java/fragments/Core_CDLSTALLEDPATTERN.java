@@ -1074,7 +1074,9 @@
     * to {@link Core#CDLSTALLEDPATTERN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSTALLEDPATTERN_Stream#outRange()}.
     */
@@ -1085,7 +1087,11 @@
       requireArgument("CDLSTALLEDPATTERN openAndFill", "inHigh", inHigh);
       requireArgument("CDLSTALLEDPATTERN openAndFill", "inLow", inLow);
       requireArgument("CDLSTALLEDPATTERN openAndFill", "inClose", inClose);
-      requireArgument("CDLSTALLEDPATTERN openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSTALLEDPATTERN openAndFill", inOpen.length, CDLSTALLEDPATTERN_Lookback());
+      requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSTALLEDPATTERN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

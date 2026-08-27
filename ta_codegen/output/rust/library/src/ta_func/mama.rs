@@ -1008,7 +1008,7 @@ impl Core {
     /// The single whole-history transcription behind [`Core::MAMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MAMA_OpenAndFill`] (stride 1, caller slices).
     pub(crate) fn MAMA_OpenImpl(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64], outStride: usize,
+        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,
     ) -> Result<MAMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -1360,7 +1360,9 @@ impl Core {
             if today >= startIdx {
                 // FAMA is nullable (issue #125): its write carries no outIdx advance so
                 // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-                outFAMA[(outIdx * outStride) as usize] = fama;
+                if let Some(outFAMA) = outFAMA.as_deref_mut() {
+                    outFAMA[(outIdx * outStride) as usize] = fama;
+                }
                 outMAMA[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = mama;
             }
             // Adjust the period for next price bar
@@ -1463,7 +1465,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMAMA = [0.0_f64; 1];
         let mut sink_outFAMA = [0.0_f64; 1];
-        let handle = self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, &mut sink_outFAMA, 0)?;
+        let handle = self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, Some(&mut sink_outFAMA), 0)?;
         Ok((handle, (sink_outMAMA[0], sink_outFAMA[0])))
     }
 
@@ -1500,16 +1502,36 @@ impl Core {
 
     /// [`Core::MAMA_Open`] that also fills the output array(s) bit-identically to
     /// [`Core::MAMA`] over `0..len` in the same single pass, and reports the range it
-    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
-    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier
-    /// this one does not check it: an undersized slice panics inside the fill, with the
-    /// buffer already partly written (rule S5).
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::MAMA_Open`] rejects
+    /// is rejected here too.
     #[doc(alias = "TA_MAMA_OpenAndFill")]
     pub fn MAMA_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
+        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,
     ) -> Result<(MAMA_Stream, OutRange), RetCode> {
-        if !outMAMA.is_empty() && !outFAMA.is_empty() && outMAMA.as_ptr() == outFAMA.as_ptr() {
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inReal.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit)?;
+        let _guardOutLen = inReal.len().saturating_sub(_guardLb);
+        if outMAMA.len() < _guardOutLen {
             return Err(RetCode::BadParam);
+        }
+        if outFAMA.as_deref().is_some_and(|o| o.len() < _guardOutLen) {
+            return Err(RetCode::BadParam);
+        }
+        if let (Some(outMAMA_p), Some(outFAMA_p)) = (Some(&outMAMA[..]), outFAMA.as_deref()) {
+            if !outMAMA_p.is_empty() && !outFAMA_p.is_empty() && outMAMA_p.as_ptr() == outFAMA_p.as_ptr() {
+                return Err(RetCode::BadParam);
+            }
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
@@ -1520,7 +1542,7 @@ impl Core {
     /// [`Core::MAMA_OpenAndFill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn MAMA_OpenAndFillInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
+        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,
     ) -> Result<MAMA_Stream, RetCode> {
         self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }

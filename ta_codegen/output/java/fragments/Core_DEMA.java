@@ -780,7 +780,9 @@
     * to {@link Core#DEMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link DEMA_Stream#outRange()}.
     */
@@ -788,7 +790,8 @@
    {
       requireArgument("DEMA openAndFill", "inReal", inReal);
       requireHistory("DEMA openAndFill", inReal.length);
-      requireArgument("DEMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("DEMA openAndFill", inReal.length, DEMA_Lookback(optInTimePeriod));
+      requireLength("DEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

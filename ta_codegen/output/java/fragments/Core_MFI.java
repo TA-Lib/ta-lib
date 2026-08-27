@@ -996,7 +996,9 @@
     * to {@link Core#MFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MFI_Stream#outRange()}.
     */
@@ -1007,7 +1009,11 @@
       requireArgument("MFI openAndFill", "inLow", inLow);
       requireArgument("MFI openAndFill", "inClose", inClose);
       requireArgument("MFI openAndFill", "inVolume", inVolume);
-      requireArgument("MFI openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MFI openAndFill", inHigh.length, MFI_Lookback(optInTimePeriod));
+      requireHistoryLength("MFI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MFI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);
+      requireLength("MFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

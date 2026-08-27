@@ -800,7 +800,9 @@
     * to {@link Core#CDLTHRUSTING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLTHRUSTING_Stream#outRange()}.
     */
@@ -811,7 +813,11 @@
       requireArgument("CDLTHRUSTING openAndFill", "inHigh", inHigh);
       requireArgument("CDLTHRUSTING openAndFill", "inLow", inLow);
       requireArgument("CDLTHRUSTING openAndFill", "inClose", inClose);
-      requireArgument("CDLTHRUSTING openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLTHRUSTING openAndFill", inOpen.length, CDLTHRUSTING_Lookback());
+      requireHistoryLength("CDLTHRUSTING openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLTHRUSTING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

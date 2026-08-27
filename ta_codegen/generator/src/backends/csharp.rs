@@ -133,9 +133,14 @@ pub(crate) struct CsRenderCtx<'a> {
     pub(crate) matype_map: HashMap<String, String>,
     /// Output parameters the caller may decline with an empty span because their
     /// .yaml marks them `nullable` (rule B6a). Every store into one is wrapped
-    /// in an `if( !outX.IsEmpty )`. Populated for the batch bodies; the stream
-    /// tier keeps its outputs required and leaves this empty.
+    /// in an `if( !outX.IsEmpty )`. Populated for the batch bodies AND for the
+    /// stream open body, since rule B6a reads the same at both tiers.
     pub(crate) nullable_outputs: &'a HashSet<String>,
+    /// Emit `lastCur_<out> = <value>;` beside every guarded store into a
+    /// nullable output — the streaming open body only, whose handle caches each
+    /// output's last value and has no array to read it back from when the
+    /// caller declines one.
+    pub(crate) nullable_shadow: bool,
 }
 
 /// Words this backend cannot render as an identifier (see [`crate::naming`]):
@@ -1005,6 +1010,7 @@ fn gen_func_inner(
     let ctx = CsRenderCtx {
         single_precision,
         nullable_outputs: &nullable_outputs,
+        nullable_shadow: false,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
@@ -1337,6 +1343,9 @@ impl StatementEmitter for CsStmt<'_> {
         // is skipped (rule B6a). The `outIdx` advance rides the non-nullable
         // partner's write (see mama.c), so guarding this store is complete.
         if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
+            if self.ctx.nullable_shadow {
+                out.push_str(&format!("{pad}lastCur_{base} = {value_str};\n"));
+            }
             out.push_str(&format!(
                 "{pad}if( !{base}.IsEmpty )\n{pad}   {target_str} = {value_str};\n"
             ));
@@ -1989,6 +1998,7 @@ impl ExprEmitter for CsExpr<'_> {
                 let inner_ctx = CsRenderCtx {
                     single_precision: self.ctx.single_precision,
                     nullable_outputs: self.ctx.nullable_outputs,
+                    nullable_shadow: false,
                     double_address_of_vars: &empty,
                     float_input_params: self.ctx.float_input_params,
                     inline_counter: self.ctx.inline_counter,
@@ -2380,6 +2390,7 @@ fn render_lookback_code(
     let ctx = CsRenderCtx {
         single_precision: false,
         nullable_outputs: &no_nullable,
+        nullable_shadow: false,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,

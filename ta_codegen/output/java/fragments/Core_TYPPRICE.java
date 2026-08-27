@@ -432,7 +432,9 @@
     * to {@link Core#TYPPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link TYPPRICE_Stream#outRange()}.
     */
@@ -442,7 +444,10 @@
       requireHistory("TYPPRICE openAndFill", inHigh.length);
       requireArgument("TYPPRICE openAndFill", "inLow", inLow);
       requireArgument("TYPPRICE openAndFill", "inClose", inClose);
-      requireArgument("TYPPRICE openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("TYPPRICE openAndFill", inHigh.length, TYPPRICE_Lookback());
+      requireHistoryLength("TYPPRICE openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TYPPRICE openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("TYPPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

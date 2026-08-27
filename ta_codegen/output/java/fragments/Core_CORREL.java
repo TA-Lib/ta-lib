@@ -1300,7 +1300,9 @@
     * to {@link Core#CORREL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CORREL_Stream#outRange()}.
     */
@@ -1309,7 +1311,9 @@
       requireArgument("CORREL openAndFill", "inReal0", inReal0);
       requireHistory("CORREL openAndFill", inReal0.length);
       requireArgument("CORREL openAndFill", "inReal1", inReal1);
-      requireArgument("CORREL openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("CORREL openAndFill", inReal0.length, CORREL_Lookback(optInTimePeriod));
+      requireHistoryLength("CORREL openAndFill", "inReal1", inReal1.length, inReal0.length);
+      requireLength("CORREL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -606,7 +606,9 @@
     * to {@link Core#STDDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STDDEV_Stream#outRange()}.
     */
@@ -614,7 +616,8 @@
    {
       requireArgument("STDDEV openAndFill", "inReal", inReal);
       requireHistory("STDDEV openAndFill", inReal.length);
-      requireArgument("STDDEV openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("STDDEV openAndFill", inReal.length, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+      requireLength("STDDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

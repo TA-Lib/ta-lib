@@ -400,7 +400,9 @@
     * to {@link Core#COSH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link COSH_Stream#outRange()}.
     */
@@ -408,7 +410,8 @@
    {
       requireArgument("COSH openAndFill", "inReal", inReal);
       requireHistory("COSH openAndFill", inReal.length);
-      requireArgument("COSH openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("COSH openAndFill", inReal.length, COSH_Lookback());
+      requireLength("COSH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

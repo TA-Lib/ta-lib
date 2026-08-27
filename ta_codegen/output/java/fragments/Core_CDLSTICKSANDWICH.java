@@ -701,7 +701,9 @@
     * to {@link Core#CDLSTICKSANDWICH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSTICKSANDWICH_Stream#outRange()}.
     */
@@ -712,7 +714,11 @@
       requireArgument("CDLSTICKSANDWICH openAndFill", "inHigh", inHigh);
       requireArgument("CDLSTICKSANDWICH openAndFill", "inLow", inLow);
       requireArgument("CDLSTICKSANDWICH openAndFill", "inClose", inClose);
-      requireArgument("CDLSTICKSANDWICH openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSTICKSANDWICH openAndFill", inOpen.length, CDLSTICKSANDWICH_Lookback());
+      requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSTICKSANDWICH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

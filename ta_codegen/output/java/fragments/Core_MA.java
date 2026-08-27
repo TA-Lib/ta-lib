@@ -1037,7 +1037,7 @@
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
+         MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1152,7 +1152,7 @@
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[historyLen]);
+         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
@@ -1209,6 +1209,7 @@
    {
       requireArgument("MA open", "inReal", inReal);
       requireHistory("MA open", inReal.length);
+      requireArgument("MA open", "optInMAType", optInMAType);
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
    /**
@@ -1216,7 +1217,9 @@
     * to {@link Core#MA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MA_Stream#outRange()}.
     */
@@ -1224,7 +1227,9 @@
    {
       requireArgument("MA openAndFill", "inReal", inReal);
       requireHistory("MA openAndFill", inReal.length);
-      requireArgument("MA openAndFill", "outReal", outReal);
+      requireArgument("MA openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("MA openAndFill", inReal.length, MA_Lookback(optInTimePeriod, optInMAType));
+      requireLength("MA openAndFill", "outReal", outReal, guardOutLen);
       MA_Stream sp = new MA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

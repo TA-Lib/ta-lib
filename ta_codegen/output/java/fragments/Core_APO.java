@@ -700,6 +700,7 @@
    {
       requireArgument("APO open", "inReal", inReal);
       requireHistory("APO open", inReal.length);
+      requireArgument("APO open", "optInMAType", optInMAType);
       return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -707,7 +708,9 @@
     * to {@link Core#APO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link APO_Stream#outRange()}.
     */
@@ -715,7 +718,9 @@
    {
       requireArgument("APO openAndFill", "inReal", inReal);
       requireHistory("APO openAndFill", inReal.length);
-      requireArgument("APO openAndFill", "outReal", outReal);
+      requireArgument("APO openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("APO openAndFill", inReal.length, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      requireLength("APO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

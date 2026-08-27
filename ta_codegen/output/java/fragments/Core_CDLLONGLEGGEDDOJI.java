@@ -753,7 +753,9 @@
     * to {@link Core#CDLLONGLEGGEDDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLLONGLEGGEDDOJI_Stream#outRange()}.
     */
@@ -764,7 +766,11 @@
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose);
-      requireArgument("CDLLONGLEGGEDDOJI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLLONGLEGGEDDOJI openAndFill", inOpen.length, CDLLONGLEGGEDDOJI_Lookback());
+      requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLLONGLEGGEDDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -933,10 +933,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null.</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
+   /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: inClose is empty", nameof(inClose), RetCode.BadParam);
@@ -953,7 +955,9 @@ public partial class Core
    /// CDLIDENTICAL3CROWS_Lookback(...)</c> values and must not alias the inputs
    /// or each other — this path writes the outputs and then reads the input tail
    /// to seed its rings, so the batch tier's in-place allowance does not carry
-   /// over here.</para>
+   /// over here. Both are checked before anything is written, so an undersized
+   /// span is an <c>ArgumentException</c> naming it rather than a fault from
+   /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
    /// <see cref="CDLIDENTICAL3CROWS_Stream.OutRange"/>.</para>
    /// </remarks>
@@ -968,16 +972,23 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLIDENTICAL3CROWS_Lookback(...) + 1</c>
    /// bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
-   /// have different lengths, or an output array aliases an input or another
-   /// output.</exception>
+   /// have different lengths, an output is shorter than the values the fill
+   /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null.</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
+   /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      int guardOutLen = OpenFillCount("CDLIDENTICAL3CROWS", "openAndFill", inOpen.Length, CDLIDENTICAL3CROWS_Lookback());
+      RequireHistoryLength("CDLIDENTICAL3CROWS", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLIDENTICAL3CROWS", "openAndFill", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLIDENTICAL3CROWS", "openAndFill", "inClose", inClose.Length, inOpen.Length);
+      RequireFillLength("CDLIDENTICAL3CROWS", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
       return CDLIDENTICAL3CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

@@ -763,7 +763,9 @@
     * to {@link Core#CDLDRAGONFLYDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLDRAGONFLYDOJI_Stream#outRange()}.
     */
@@ -774,7 +776,11 @@
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inClose", inClose);
-      requireArgument("CDLDRAGONFLYDOJI openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLDRAGONFLYDOJI openAndFill", inOpen.length, CDLDRAGONFLYDOJI_Lookback());
+      requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLDRAGONFLYDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

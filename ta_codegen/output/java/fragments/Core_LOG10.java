@@ -406,7 +406,9 @@
     * to {@link Core#LOG10} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link LOG10_Stream#outRange()}.
     */
@@ -414,7 +416,8 @@
    {
       requireArgument("LOG10 openAndFill", "inReal", inReal);
       requireHistory("LOG10 openAndFill", inReal.length);
-      requireArgument("LOG10 openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, LOG10_Lookback());
+      requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

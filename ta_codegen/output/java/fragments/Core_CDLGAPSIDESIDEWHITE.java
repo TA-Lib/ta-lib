@@ -813,7 +813,9 @@
     * to {@link Core#CDLGAPSIDESIDEWHITE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLGAPSIDESIDEWHITE_Stream#outRange()}.
     */
@@ -824,7 +826,11 @@
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inHigh", inHigh);
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inLow", inLow);
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inClose", inClose);
-      requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLGAPSIDESIDEWHITE openAndFill", inOpen.length, CDLGAPSIDESIDEWHITE_Lookback());
+      requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLGAPSIDESIDEWHITE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

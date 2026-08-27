@@ -776,7 +776,9 @@
     * to {@link Core#MAX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MAX_Stream#outRange()}.
     */
@@ -784,7 +786,8 @@
    {
       requireArgument("MAX openAndFill", "inReal", inReal);
       requireHistory("MAX openAndFill", inReal.length);
-      requireArgument("MAX openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("MAX openAndFill", inReal.length, MAX_Lookback(optInTimePeriod));
+      requireLength("MAX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

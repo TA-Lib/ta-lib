@@ -1126,7 +1126,9 @@
     * to {@link Core#KAMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link KAMA_Stream#outRange()}.
     */
@@ -1134,7 +1136,8 @@
    {
       requireArgument("KAMA openAndFill", "inReal", inReal);
       requireHistory("KAMA openAndFill", inReal.length);
-      requireArgument("KAMA openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, KAMA_Lookback(optInTimePeriod));
+      requireLength("KAMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

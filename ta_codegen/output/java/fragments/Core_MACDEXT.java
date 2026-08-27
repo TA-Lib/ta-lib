@@ -1059,6 +1059,9 @@
    {
       requireArgument("MACDEXT open", "inReal", inReal);
       requireHistory("MACDEXT open", inReal.length);
+      requireArgument("MACDEXT open", "optInFastMAType", optInFastMAType);
+      requireArgument("MACDEXT open", "optInSlowMAType", optInSlowMAType);
+      requireArgument("MACDEXT open", "optInSignalMAType", optInSignalMAType);
       return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
    /**
@@ -1066,7 +1069,9 @@
     * to {@link Core#MACDEXT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link MACDEXT_Stream#outRange()}.
     */
@@ -1074,9 +1079,13 @@
    {
       requireArgument("MACDEXT openAndFill", "inReal", inReal);
       requireHistory("MACDEXT openAndFill", inReal.length);
-      requireArgument("MACDEXT openAndFill", "outMACD", outMACD);
-      requireArgument("MACDEXT openAndFill", "outMACDSignal", outMACDSignal);
-      requireArgument("MACDEXT openAndFill", "outMACDHist", outMACDHist);
+      requireArgument("MACDEXT openAndFill", "optInFastMAType", optInFastMAType);
+      requireArgument("MACDEXT openAndFill", "optInSlowMAType", optInSlowMAType);
+      requireArgument("MACDEXT openAndFill", "optInSignalMAType", optInSignalMAType);
+      int guardOutLen = openFillCount("MACDEXT openAndFill", inReal.length, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      requireLength("MACDEXT openAndFill", "outMACD", outMACD, guardOutLen);
+      requireLength("MACDEXT openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
+      requireLength("MACDEXT openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          throw new TaLibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

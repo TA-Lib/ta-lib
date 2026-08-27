@@ -643,7 +643,9 @@
     * to {@link Core#WAD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link WAD_Stream#outRange()}.
     */
@@ -653,7 +655,10 @@
       requireHistory("WAD openAndFill", inHigh.length);
       requireArgument("WAD openAndFill", "inLow", inLow);
       requireArgument("WAD openAndFill", "inClose", inClose);
-      requireArgument("WAD openAndFill", "outReal", outReal);
+      int guardOutLen = openFillCount("WAD openAndFill", inHigh.length, WAD_Lookback());
+      requireHistoryLength("WAD openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WAD openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("WAD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

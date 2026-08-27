@@ -1233,7 +1233,7 @@
        */
       public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] ) {
          final int barCount = inReal.length;
-         if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA )
+         if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
             throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
          int done = 0;
          try {
@@ -1485,6 +1485,7 @@
    }
    private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
    {
+      double lastCur_outFAMA = 0;
       int outIdx = 0;
       int i = 0;
       int lookbackTotal = 0;
@@ -1841,7 +1842,9 @@
             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
              */
-            outFAMA[outIdx * outStride] = fama;
+            lastCur_outFAMA = fama;
+            if( outFAMA != null )
+               outFAMA[outIdx * outStride] = fama;
             outMAMA[outIdx++ * outStride] = mama;
          }
          /* Adjust the period for next price bar */
@@ -1930,7 +1933,7 @@
       sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
-      sp.cur_outFAMA = outFAMA[(outNBElement.value - 1) * outStride];
+      sp.cur_outFAMA = lastCur_outFAMA;
       sp.cachedValue = new MAMA_Stream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
@@ -1998,7 +2001,11 @@
     * to {@link Core#MAMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>{@code outFAMA} may be declined with {@code null}: the value is still
+    * computed — {@link MAMA_Stream#value()} reports it — and nothing is written out.
     * <p>The range written is on the returned handle:
     * {@link MAMA_Stream#outRange()}.
     */
@@ -2006,9 +2013,10 @@
    {
       requireArgument("MAMA openAndFill", "inReal", inReal);
       requireHistory("MAMA openAndFill", inReal.length);
-      requireArgument("MAMA openAndFill", "outMAMA", outMAMA);
-      requireArgument("MAMA openAndFill", "outFAMA", outFAMA);
-      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
+      int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+      requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
+      if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+      if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
          throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();

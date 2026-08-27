@@ -561,7 +561,19 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
     }
     let ins: Vec<String> = streaming::input_array_names(func);
     let opts: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let sinks: Vec<String> = outputs.iter().map(|o2| format!("&mut sink_{o2}")).collect();
+    let nullable_sinks = super::common::nullable_output_names(func);
+    let sinks: Vec<String> = outputs
+        .iter()
+        .map(|o2| {
+            if nullable_sinks.contains(o2) {
+                // The plain open reports every output's first value, so this
+                // path never declines one — `Some`, not `None`.
+                format!("Some(&mut sink_{o2})")
+            } else {
+                format!("&mut sink_{o2}")
+            }
+        })
+        .collect();
     let mut args = ins.join(", ");
     let _ = write!(args, ", startIdx");
     for opt in &opts {
@@ -578,9 +590,80 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
     let _ = writeln!(o, "    }}\n");
 }
 
-/// `OpenAndFill`: the fill wrapper onto `<N>_OpenImpl`. It owns the output
-/// mutual-distinctness guard (#108) — the capture epilogue reads the input tail
-/// after writing the outputs, and only this path writes caller-owned slices.
+/// Rule S5 — the output capacity — at a PUBLIC `OpenAndFill`, with the index
+/// pair it has to be read after.
+///
+/// An opener is a batch call over `[0, historyLen - 1]`, so B5's produced count,
+/// `endIdx - max(startIdx, lookback) + 1`, collapses to `historyLen - lookback`.
+/// It has no zero case the way B5 does: S7 refuses a history shorter than
+/// `lookback + 1`, so a fill that runs always writes at least one value. The
+/// `saturating_sub` is for the frame's own sake, not the caller's — S7 has not
+/// run yet here, and a short history must reach it rather than be answered as a
+/// capacity fault.
+///
+/// **The PUBLIC frame, never `<N>_OpenAndFillInternal`.** That seam takes an
+/// anchor and writes `historyLen - max(lookback, startIdx)` — fewer — so the
+/// same bound there would reject the composed sub-calls that pass a non-zero
+/// `startIdx`, and would be redundant anyway: `SubCallStep::is_fusable` already
+/// proved those destinations.
+///
+/// `<N>_Lookback` does its own default substitution and range validation, so the
+/// one call buys S3 and the width together — the same trick the batch entry
+/// point plays.
+///
+/// **S5's input half comes first**, for the same reason the whole guard is at
+/// this frame: the core makes the test too, but only after this one would have
+/// answered, so an input series shorter than the history was being reported as
+/// an output-capacity fault. B5 reads the two halves in one rule, inputs first,
+/// and this is that rule over `[0, historyLen - 1]` — where the history's own
+/// length IS the range, so the inputs must agree with it rather than merely
+/// reach it.
+fn open_fill_capacity_guards(func: &FuncDef, sn: &str, with_pair: bool) -> String {
+    let inputs = streaming::input_array_names(func);
+    let first = &inputs[0];
+    let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let mut s = String::new();
+    if with_pair {
+        let _ = writeln!(
+            s,
+            "        if {first}.is_empty() {{\n            return Err(RetCode::OutOfRangeStartIndex);\n        }}"
+        );
+        let _ = writeln!(
+            s,
+            "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
+        );
+    }
+    let _ = writeln!(s, "        let _guardLb = self.{sn}_Lookback({})?;", lb_args.join(", "));
+    if with_pair && inputs.len() > 1 {
+        let disagree: Vec<String> =
+            inputs[1..].iter().map(|extra| format!("{extra}.len() != {first}.len()")).collect();
+        let _ = writeln!(
+            s,
+            "        if {} {{\n            return Err(RetCode::BadParam);\n        }}",
+            disagree.join(" || ")
+        );
+    }
+    let _ = writeln!(s, "        let _guardOutLen = {first}.len().saturating_sub(_guardLb);");
+    let nullable = super::common::nullable_output_names(func);
+    for out in &func.outputs {
+        // A declined output has no capacity to check (rule B6a on this tier).
+        let cond = if nullable.contains(&out.name) {
+            format!("{}.as_deref().is_some_and(|o| o.len() < _guardOutLen)", out.name)
+        } else {
+            format!("{}.len() < _guardOutLen", out.name)
+        };
+        let _ = writeln!(
+            s,
+            "        if {cond} {{\n            return Err(RetCode::BadParam);\n        }}"
+        );
+    }
+    s
+}
+
+/// `OpenAndFill`: the fill wrapper onto `<N>_OpenImpl`. It owns the argument
+/// contract for the only path that writes caller-owned slices: the output
+/// capacity (S5) and the output mutual-distinctness guard (#108, S6) — the
+/// capture epilogue reads the input tail after writing the outputs.
 fn emit_open_and_fill_wrapper(
     o: &mut String,
     func: &FuncDef,
@@ -588,14 +671,10 @@ fn emit_open_and_fill_wrapper(
 ) {
     let sn = snake(func);
     emit_open_sig(o, func, OutMode::Fill);
-    // Distinctness only; the range/empty checks belong to the core, which runs
-    // them on the very next line.
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
+    o.push_str(&open_fill_capacity_guards(func, &sn, true));
     for (a, b) in distinct_output_pairs(func) {
-        let _ = writeln!(
-            o,
-            "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}"
-        );
+        let _ = writeln!(o, "{}", distinct_pair_guard(func, &a, &b));
     }
     let _ = enums;
     let ins: Vec<String> = streaming::input_array_names(func);
@@ -1362,10 +1441,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         // is a parameter (OpenInternal needs it for sub-stream composition) and
         // `outStride` selects where the per-bar writes land.
         OutMode::Core => {
-            let mut outs = String::new();
-            for out in &func.outputs {
-                let _ = write!(outs, ", {}: &mut [{}]", out.name, out_rust_type(func, &out.name));
-            }
+            let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
                 "    /// The single whole-history transcription behind [`Core::{sn}_OpenInternal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_OpenAndFill`] (stride 1, caller slices)."
@@ -1382,13 +1458,10 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         // no out-parameters (#179 C15). Only `OpenAndFillInternal`, an internal
         // composition seam, still takes the pair.
         OutMode::Fill => {
-            let mut outs = String::new();
-            for out in &func.outputs {
-                let _ = write!(outs, ", {}: &mut [{}]", out.name, out_rust_type(func, &out.name));
-            }
+            let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_Open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle. Output slices must hold\n    /// `len - lookback` values — the batch tier's sizing rule. Unlike the batch tier\n    /// this one does not check it: an undersized slice panics inside the fill, with the\n    /// buffer already partly written (rule S5)."
+                "    /// [`Core::{sn}_Open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —\n    /// or when two of them are the same slice. Everything [`Core::{sn}_Open`] rejects\n    /// is rejected here too."
             );
             let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_OpenAndFill\")]");
             let opts_head = sig_opts.trim_start_matches(", ");
@@ -1408,10 +1481,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         // destinations alias neither its sources nor each other, so the check
         // could never fire. See `SubCallStep::is_fusable`.
         OutMode::FillInternal => {
-            let mut outs = String::new();
-            for out in &func.outputs {
-                let _ = write!(outs, ", {}: &mut [{}]", out.name, out_rust_type(func, &out.name));
-            }
+            let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
                 "    /// [`Core::{sn}_OpenAndFill`] anchored at `startIdx` — the composed-open\n    /// fusion seam (issue #192), not a public entry point."
@@ -1422,6 +1492,54 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             );
         }
     }
+}
+
+/// The output-distinctness rejection for one pair (#108, rule S6), written so a
+/// declinable operand is compared only when it was supplied — the shape
+/// `rust_lang` already emits for the batch tier. Two declined outputs are not
+/// each other: `None` aliases nothing.
+fn distinct_pair_guard(func: &FuncDef, a: &str, b: &str) -> String {
+    let nullable = super::common::nullable_output_names(func);
+    let declinable = nullable.contains(a) || nullable.contains(b);
+    if !declinable {
+        // The common shape, unchanged: neither operand can be absent.
+        return format!(
+            "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}"
+        );
+    }
+    let bind = |name: &str| {
+        if nullable.contains(name) {
+            format!("{name}.as_deref()")
+        } else {
+            format!("Some(&{name}[..])")
+        }
+    };
+    format!(
+        "        if let (Some({a}_p), Some({b}_p)) = ({}, {}) {{\n            if !{a}_p.is_empty() && !{b}_p.is_empty() && {a}_p.as_ptr() == {b}_p.as_ptr() {{\n                return Err(RetCode::BadParam);\n            }}\n        }}",
+        bind(a),
+        bind(b)
+    )
+}
+
+/// One output parameter per declared output, in declaration order.
+///
+/// A `nullable` output is `Option<&mut [T]>`, the spelling the batch tier took
+/// in #262 and the one Appendix F pins: Rust can say "declined" distinctly from
+/// "empty", so it does. The `mut` binding rides the Core tier alone — the one
+/// that renders a body and re-borrows with `as_deref_mut()`.
+fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
+    let nullable = super::common::nullable_output_names(func);
+    let mut outs = String::new();
+    for out in &func.outputs {
+        let elem = out_rust_type(func, &out.name);
+        if nullable.contains(&out.name) {
+            let bind = if matches!(mode, OutMode::Core) { "mut " } else { "" };
+            let _ = write!(outs, ", {bind}{}: Option<&mut [{elem}]>", out.name);
+        } else {
+            let _ = write!(outs, ", {}: &mut [{elem}]", out.name);
+        }
+    }
+    outs
 }
 
 /// The open validation head: the implied index pair, the equal-length input
@@ -1453,6 +1571,17 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         o,
         "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
+    // Rule S3 before the buffer rules: an out-of-domain parameter is its own
+    // fault, not a length one, and B5/S5 are specified after B3/S3.
+    for p in &func.optional_inputs {
+        o.push_str(&gen_opt_param_validation_with(
+            p,
+            "        ",
+            "return Err(RetCode::BadParam);",
+            enums,
+        ));
+    }
+
     let mismatches: Vec<String> = inputs[1..]
         .iter()
         .map(|extra| format!("{extra}.len() != {first}.len()"))
@@ -1465,22 +1594,15 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         );
     }
     if mode == OutMode::Fill {
+        // This IS the public frame for the two exempt tiers, so it owns the
+        // output capacity (S5) as well — the merged tiers get theirs from
+        // `emit_open_and_fill_wrapper`, which is their public frame.
+        o.push_str(&open_fill_capacity_guards(func, &snake(func), false));
         // Output mutual-distinctness (#108) — same guard the batch emits. FILL
         // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
         for (a, b) in distinct_output_pairs(func) {
-            let _ = writeln!(
-                o,
-                "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}"
-            );
+            let _ = writeln!(o, "{}", distinct_pair_guard(func, &a, &b));
         }
-    }
-    for p in &func.optional_inputs {
-        o.push_str(&gen_opt_param_validation_with(
-            p,
-            "        ",
-            "return Err(RetCode::BadParam);",
-            enums,
-        ));
     }
 }
 
@@ -1582,7 +1704,13 @@ fn emit_open_region(
     counter: &Cell<usize>,
     inserts: &[(usize, String)],
 ) {
-    let ctx = &typing.ctx;
+    // Scoped to the open body: a declined output's store is wrapped in
+    // `if let Some(..) = ..as_deref_mut()`, rule B6a read on this tier. The step
+    // body keeps the empty set — a `<N>_StepImpl` writes `&mut f64` scalars, and
+    // nothing there is declinable.
+    let mut open_ctx = typing.ctx.clone();
+    open_ctx.nullable_outputs = super::common::nullable_output_names(func);
+    let ctx = &open_ctx;
     let for_loop_vars = collect_for_loop_vars(body);
     let output_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let opt_real_params: Vec<String> = func
@@ -3082,10 +3210,7 @@ fn emit_dispatch(
                             .iter()
                             .map(|slot| match slot {
                                 streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                                streaming::OutSlot::Discard => format!(
-                                    "&mut vec![0.0_f64; {}.len()][..]",
-                                    inputs[0]
-                                ),
+                                streaming::OutSlot::Discard => "None".to_string(),
                             })
                             .collect::<Vec<_>>()
                             .join(", ");

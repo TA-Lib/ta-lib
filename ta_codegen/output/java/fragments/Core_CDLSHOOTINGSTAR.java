@@ -874,7 +874,9 @@
     * to {@link Core#CDLSHOOTINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link CDLSHOOTINGSTAR_Stream#outRange()}.
     */
@@ -885,7 +887,11 @@
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inLow", inLow);
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inClose", inClose);
-      requireArgument("CDLSHOOTINGSTAR openAndFill", "outInteger", outInteger);
+      int guardOutLen = openFillCount("CDLSHOOTINGSTAR openAndFill", inOpen.length, CDLSHOOTINGSTAR_Lookback());
+      requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
+      requireLength("CDLSHOOTINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

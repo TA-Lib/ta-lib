@@ -325,7 +325,10 @@ fn rust_open_family_is_one_core_with_three_entries() {
         ("pub fn CDLHAMMER_OpenAndFill(", "CDLHAMMER_OpenAndFillInternal("),
     ] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
-        let body = &s[at..at + 900.min(s.len() - at)];
+        // To the frame's end, not to a byte budget: a frame grows when a rule
+        // is added to it, and a budget turns that into a false failure.
+        let end = s[at..].find("\n    }\n").map_or(s.len() - at, |e| e + 6);
+        let body = &s[at..at + end];
         assert!(body.contains(callee), "{w} delegates to {callee}");
         assert!(
             !body.contains("BodyPeriodTotal"),
@@ -360,11 +363,16 @@ fn rust_fill_wrapper_keeps_the_output_distinctness_guard() {
     // output-vs-input, but not output-vs-output.
     let s = rust_stream_section("minmax");
     let at = s.find("pub fn MINMAX_OpenAndFill(").expect("fill wrapper");
-    let body = &s[at..at + 700.min(s.len() - at)];
+    let end = s[at..].find("\n    }\n").map_or(s.len() - at, |e| e + 6);
+    let body = &s[at..at + end];
     assert!(
         body.contains("outMin.as_ptr() == outMax.as_ptr()"),
         "output distinctness survives on the fill wrapper:\n{body}"
     );
+    // ...and after the capacity check, which the specified order puts first.
+    let cap = body.find("if outMax.len() < _guardOutLen").expect("S5 on the fill wrapper");
+    let alias = body.find("outMin.as_ptr() == outMax.as_ptr()").unwrap();
+    assert!(cap < alias, "S5 is specified ahead of S6:\n{body}");
     // The scalar wrapper's sinks are its own locals — it must not pay for it.
     let sat = s.find("fn MINMAX_OpenInternal(").expect("scalar wrapper");
     let sbody = &s[sat..sat + 700.min(s.len() - sat)];

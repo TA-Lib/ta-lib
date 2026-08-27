@@ -2040,7 +2040,9 @@
     * to {@link Core#HT_SINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link HT_SINE_Stream#outRange()}.
     */
@@ -2048,8 +2050,9 @@
    {
       requireArgument("HT_SINE openAndFill", "inReal", inReal);
       requireHistory("HT_SINE openAndFill", inReal.length);
-      requireArgument("HT_SINE openAndFill", "outSine", outSine);
-      requireArgument("HT_SINE openAndFill", "outLeadSine", outLeadSine);
+      int guardOutLen = openFillCount("HT_SINE openAndFill", inReal.length, HT_SINE_Lookback());
+      requireLength("HT_SINE openAndFill", "outSine", outSine, guardOutLen);
+      requireLength("HT_SINE openAndFill", "outLeadSine", outLeadSine, guardOutLen);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
          throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

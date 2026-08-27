@@ -1366,6 +1366,8 @@
    {
       requireArgument("STOCH open", "inHigh", inHigh);
       requireHistory("STOCH open", inHigh.length);
+      requireArgument("STOCH open", "optInSlowK_MAType", optInSlowK_MAType);
+      requireArgument("STOCH open", "optInSlowD_MAType", optInSlowD_MAType);
       requireArgument("STOCH open", "inLow", inLow);
       requireArgument("STOCH open", "inClose", inClose);
       return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -1375,7 +1377,9 @@
     * to {@link Core#STOCH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
-    * {@code historyLen - lookback} values.
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
     * {@link STOCH_Stream#outRange()}.
     */
@@ -1383,10 +1387,15 @@
    {
       requireArgument("STOCH openAndFill", "inHigh", inHigh);
       requireHistory("STOCH openAndFill", inHigh.length);
+      requireArgument("STOCH openAndFill", "optInSlowK_MAType", optInSlowK_MAType);
+      requireArgument("STOCH openAndFill", "optInSlowD_MAType", optInSlowD_MAType);
       requireArgument("STOCH openAndFill", "inLow", inLow);
       requireArgument("STOCH openAndFill", "inClose", inClose);
-      requireArgument("STOCH openAndFill", "outSlowK", outSlowK);
-      requireArgument("STOCH openAndFill", "outSlowD", outSlowD);
+      int guardOutLen = openFillCount("STOCH openAndFill", inHigh.length, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      requireHistoryLength("STOCH openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCH openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("STOCH openAndFill", "outSlowK", outSlowK, guardOutLen);
+      requireLength("STOCH openAndFill", "outSlowD", outSlowD, guardOutLen);
       if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
          throw new TaLibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
