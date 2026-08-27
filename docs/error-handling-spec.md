@@ -174,6 +174,7 @@ has what happens instead.
 | S4 | A required argument was not supplied — the handle, any declared input, any output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[6] | —<br>[2] |
 | S5 | A buffer is too short: every declared input must be the history's length, and an `OpenAndFill` output must hold `historyLen - lookback`, the count the fill writes | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>[7] | ✅<br>[7] | ✅<br>[7] |
 | S6 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| S6a | (`OpenAndFill`) an output is **declined** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | S7 | The history holds fewer than `lookback + 1` bars | `TA_INSUFFICIENT_HISTORY` | ✅<br>[8] | ✅<br>[8] | ✅<br>[8] | ✅<br>[8] |
 | S8 | *(withdrawn — the warm-up history is an input array; see "Non-finite input")* [9] | — | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
 
@@ -186,9 +187,14 @@ no analogue for: a *history* shorter than the lookback cannot open a
 stream at all (`TA_INSUFFICIENT_HISTORY`).
 
 Unlike the batch tier, `OpenAndFill` outputs may **not** be the same buffer as
-the inputs (no in-place execution).
+the inputs (no in-place execution). Not because it would compute the wrong
+answer — measured, it does not: the fill's writes stop where the handle's
+warm-up seeds begin, or overlap them by the single slot the next `Update`
+rewrites first. The ban is there because that margin is an accident of every
+body's arithmetic that nothing states or asserts, and supporting in-place would
+promise it for 176 functions in four backends, permanently.
 
-**Test Coverage** (S1, S2, S4, S5 and S7; the rest of this tier is not yet mapped):
+**Test Coverage** (S1, S2, S4, S5, S6a and S7; the rest of this tier is not yet mapped):
 `testStreamShortHistory` drives S1, S2's rejecting side and S7 in C — 9, 3 and 8
 rejections, with S7's 16 controls. Three of S1's cases are *also* an absent
 argument, which is what makes them about the order and not only the code.
@@ -218,7 +224,7 @@ from the function's own lookback rather than from the history's length, that the
 bound REJECT rather than merely exist, and that a `nullable` output be bounded
 conditionally while every other output is not.
 
-**A declined output** (rule B6a here, Appendix F) has its own probe in each of
+**A declined output** (rule S6a, Appendix F) has its own probe in each of
 the three, beside S5's: `MAMA_OpenAndFill` with `outFAMA` declined must be
 accepted, must leave the other output and the reported range bit-identical to
 the supplied run, and must still report FAMA through the handle — the check that

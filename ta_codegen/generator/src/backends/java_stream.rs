@@ -457,10 +457,12 @@ pub fn generate(
 /// The output-aliasing pairs (#108/#130) as a Java boolean expression, or
 /// `None` when a function has nothing to compare. Java is the one managed
 /// backend where `out == in` compiles, and only a filling open writes
-/// caller-owned arrays: it writes the outputs and THEN reads the input tail to
-/// seed its rings, so the batch tier's in-place allowance is exactly what a
-/// one-pass fill must revoke. Reference equality is complete here (arrays are
-/// identical or disjoint).
+/// caller-owned arrays. The batch tier's in-place allowance is revoked here not
+/// because the fill would compute the wrong answer — measured, it does not — but
+/// because the margin between its writes and the capture's seed reads is an
+/// accident nothing asserts (rule S6). Reference equality is complete for two
+/// SUPPLIED arrays: they are identical or disjoint. A declined output is null,
+/// which aliases nothing, so the pairs guard it.
 fn alias_condition(func: &FuncDef) -> Option<String> {
     let inputs = streaming::input_array_names(func);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();

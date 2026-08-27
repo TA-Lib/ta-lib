@@ -546,10 +546,12 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
 
 /// `OpenAndFill`: the fill wrapper. Carries the validation the scalar path has
 /// no need of — the out-meta pointers, and the aliasing rejections (#108/#130).
-/// Those are NOT stylistic: the capture epilogue reads the input tail AFTER
-/// writing the outputs, so an output aliasing an input or another output would
-/// corrupt the handle. `Open` writes only to its own stack slots and never has
-/// that hazard, so making it pay the check would be pure cost.
+/// Those are NOT stylistic, but the reason is not the obvious one: the fill's
+/// writes stop where the capture's warm-up seeds begin, or overlap them by the
+/// single slot the next `Update` rewrites first, so in-place computes the right
+/// answer today. It is forbidden because that margin is an accident of each
+/// body's arithmetic that nothing asserts. `Open` writes only to its own stack
+/// slots and never has the hazard, so making it pay the check would be pure cost.
 fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     let n = uname(func);
     let inputs = streaming::input_array_names(func);
@@ -4429,10 +4431,11 @@ fn emit_identity_fast_path(
 
 /// Open's argument validation: NULL checks, minimum history, and the same
 /// optional-parameter default-substitution/range checks the batch uses.
-/// Fill mode additionally requires the batch output triplet non-NULL and, since
-/// its state-capture epilogue reads the input tail AFTER writing the output
-/// arrays, forbids any output aliasing an input or another output (a hazard the
-/// scalar path — which writes only to caller scalars — never has; cf. #108).
+/// Fill mode additionally requires the batch output triplet non-NULL and forbids
+/// any output aliasing an input or another output — not because it would compute
+/// the wrong answer (measured: it does not), but because the margin between the
+/// fill's writes and the capture's seed reads is unasserted (rule S6; #108). The
+/// scalar path writes only caller scalars and never has the question.
 fn emit_open_validation(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");

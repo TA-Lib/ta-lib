@@ -122,9 +122,10 @@ inside `open`. `OpenAndFill` keeps the discarded output:
 It is a **separate** entry point; `open` is byte-for-byte unchanged. The signature is
 `open`'s input head followed by `batch`'s output tail — one array per output plus
 `outBegIdx`/`outNBElement` (both required). There is no `startIdx`: pinning bar 0 is
-exactly what makes the fill bit-exact (see *Semantic definition*). Because the fill
-writes the outputs and *then* reads the input tail to seed the ring, the output arrays
-must not alias the input or each other (the batch-tier aliasing rule, #108).
+exactly what makes the fill bit-exact (see *Semantic definition*). The output arrays must not alias the input or each other
+(rule S6) — not because the fill would compute the wrong answer, which it does not,
+but because the margin between its writes and the ring seeds' reads of the input tail
+is an accident of each body's arithmetic that nothing asserts.
 
 Rejection is `open`'s, not `batch`'s: too-short history returns
 `TA_INSUFFICIENT_HISTORY` and produces no handle (a handle needs a defined value, so

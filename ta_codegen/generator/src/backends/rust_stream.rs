@@ -662,8 +662,9 @@ fn open_fill_capacity_guards(func: &FuncDef, sn: &str, with_pair: bool) -> Strin
 
 /// `OpenAndFill`: the fill wrapper onto `<N>_OpenImpl`. It owns the argument
 /// contract for the only path that writes caller-owned slices: the output
-/// capacity (S5) and the output mutual-distinctness guard (#108, S6) — the
-/// capture epilogue reads the input tail after writing the outputs.
+/// capacity (S5) and the output mutual-distinctness guard (#108, S6). In-place
+/// is forbidden not because the fill would compute the wrong answer, but because
+/// the margin between its writes and the capture's seed reads is unasserted.
 fn emit_open_and_fill_wrapper(
     o: &mut String,
     func: &FuncDef,
