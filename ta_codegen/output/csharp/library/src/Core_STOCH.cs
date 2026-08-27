@@ -1277,7 +1277,7 @@ public partial class Core
          /* Something wrong happen? No further data? */
          outBegIdx = 0;
          outNBElement = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.

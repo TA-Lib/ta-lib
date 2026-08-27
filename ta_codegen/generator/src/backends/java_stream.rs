@@ -1656,9 +1656,15 @@ fn emit_extras_and_candle(
 /// only address-of use sits inside a folded guard is declared wrapped and used
 /// plain (issue #271 item 5). Every pass is length-preserving, so the callers'
 /// `inserts` / `replaced` statement indices survive it.
+///
+/// `InsufficientHistory` is what the surviving `count == 0` half of a folded
+/// guard answers — an opener that produced nothing is rule S7, not a success.
+/// Spelled as the RetCode member, the same name `map_open_return` hands the
+/// renderer for the body's own early-success returns.
 fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> {
     let admits = |f: &str, a: &[Expr]| super::java::cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded =
+        super::ir_cleanup::drop_answered_cross_call_guards(body, &admits, Some("InsufficientHistory"));
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     super::ir_cleanup::drop_inert_guards(&folded)
 }

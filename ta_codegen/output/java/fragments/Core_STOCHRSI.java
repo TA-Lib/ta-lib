@@ -727,7 +727,7 @@
       if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -736,7 +736,7 @@
       if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {

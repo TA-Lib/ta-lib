@@ -1955,11 +1955,13 @@ fn emit_extras_and_candle(
 
 /// This backend's IR cleanup sequence — `java_stream::cleanup_open_body`'s twin,
 /// with this backend's own admission test. See it for why the sequence runs
-/// where the body is BUILT; the C# stake in that is CS0219 on an orphaned
-/// local, which `TreatWarningsAsErrors` makes a build failure.
+/// where the body is BUILT and what `InsufficientHistory` answers; the C#
+/// stake in the first is CS0219 on an orphaned local, which
+/// `TreatWarningsAsErrors` makes a build failure.
 fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> {
     let admits = |f: &str, a: &[Expr]| super::csharp::cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded =
+        super::ir_cleanup::drop_answered_cross_call_guards(body, &admits, Some("InsufficientHistory"));
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     super::ir_cleanup::drop_inert_guards(&folded)
 }

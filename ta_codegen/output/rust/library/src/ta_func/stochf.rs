@@ -855,7 +855,7 @@ impl Core {
             // Something wrong happen? No further data?
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(retCode);
+            return Err(RetCode::InsufficientHistory);
         }
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the

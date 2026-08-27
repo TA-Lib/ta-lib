@@ -1218,7 +1218,7 @@
          /* Something wrong happen? No further data? */
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.

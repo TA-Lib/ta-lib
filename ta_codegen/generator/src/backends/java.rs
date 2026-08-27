@@ -1031,7 +1031,7 @@ fn gen_func_inner(
     // This backend's cleanup sequence, explicit so a pass can be made
     // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;

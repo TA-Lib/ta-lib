@@ -1093,7 +1093,7 @@
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx.value;

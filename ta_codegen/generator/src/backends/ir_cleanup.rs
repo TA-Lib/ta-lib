@@ -11,10 +11,15 @@
 //! So each backend states its own sequence, explicitly, at its entry point:
 //!
 //! ```text
-//! let body = ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+//! let body = ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
 //! let body = ir_cleanup::drop_deallocation(&body);
 //! let body = ir_cleanup::drop_inert_guards(&body);   // always last
 //! ```
+//!
+//! The third argument is the code the surviving arm of a folded guard answers:
+//! `None` in the batch tiers, where "success with nothing produced" is a legal
+//! answer, and the insufficient-history code — in that backend's own spelling —
+//! in the stream tiers, where it is not.
 //!
 //! A sequence rather than a list of transform values, so a pass can be made
 //! conditional later without encoding the condition as data. C states no
@@ -68,8 +73,12 @@ use crate::ir::{BinOp, CircBuf, Expr, Statement};
 pub(crate) fn drop_answered_cross_call_guards(
     body: &[Statement],
     admits: &dyn Fn(&str, &[Expr]) -> bool,
+    answered_return: Option<&str>,
 ) -> Vec<Statement> {
-    let mut out: Vec<Statement> = body.iter().map(|s| recurse(s, &|b| drop_answered_cross_call_guards(b, admits))).collect();
+    let mut out: Vec<Statement> = body
+        .iter()
+        .map(|s| recurse(s, &|b| drop_answered_cross_call_guards(b, admits, answered_return)))
+        .collect();
 
     // Collected before any rewrite: folding while scanning would let a rewritten
     // guard become the stopping statement of a later scan.
@@ -82,7 +91,7 @@ pub(crate) fn drop_answered_cross_call_guards(
         }
     }
     for (j, var) in targets {
-        if let Some(folded) = fold_guard(&out[j], &var) {
+        if let Some(folded) = fold_guard(&out[j], &var, answered_return) {
             out[j] = folded;
         }
     }
@@ -165,7 +174,7 @@ fn stmt_mentions(s: &Statement, var: &str) -> bool {
 }
 
 /// The rewritten guard, or `None` to leave it exactly as it was.
-fn fold_guard(s: &Statement, var: &str) -> Option<Statement> {
+fn fold_guard(s: &Statement, var: &str, answered_return: Option<&str>) -> Option<Statement> {
     let Statement::If { condition, then_body, else_body, .. } = s else {
         return None;
     };
@@ -177,7 +186,8 @@ fn fold_guard(s: &Statement, var: &str) -> Option<Statement> {
         CondFold::Known(false) => Some(Statement::Block { body: else_body.clone() }),
         CondFold::Open { expr, changed: true } => Some(Statement::If {
             condition: expr,
-            then_body: then_body.clone(),
+            then_body: answered_return
+                .map_or_else(|| then_body.clone(), |code| substitute_return(then_body, var, code)),
             else_body: else_body.clone(),
             // A shortened chain mis-attaches these against the operand-count
             // check the backends make before rendering them inline.
@@ -189,6 +199,44 @@ fn fold_guard(s: &Statement, var: &str) -> Option<Statement> {
         // Both leave the statement exactly as it was.
         CondFold::Known(true) | CondFold::Open { .. } => None,
     }
+}
+
+/// Replace `return <var>` with `return <code>` in a surviving guard arm.
+///
+/// The arm is only reached with `var` holding `SUCCESS` -- the `!= SUCCESS` half
+/// is what was just folded away -- so what the C body returns there is "success
+/// with nothing produced". A batch call may answer that (an empty `OutRange`);
+/// an OPENER may not, and the rule it falls under is S7: a history that cannot
+/// produce a value is `TA_INSUFFICIENT_HISTORY`. Without the substitution Rust
+/// answered `Err(RetCode::Success)` and Java/C# minted a handle over an empty
+/// range (issue #271 item 4).
+///
+/// So the batch tiers pass `None` here and the stream openers name their code.
+/// One level only: a `return` nested inside a loop or a branch of the arm is not
+/// the guard's answer, and nothing in the corpus has one.
+fn substitute_return(then_body: &[Statement], var: &str, code: &str) -> Vec<Statement> {
+    then_body
+        .iter()
+        .map(|s| match s {
+            Statement::Return { value: Some(Expr::Var(v)) } if returns_code_var(v, var) => {
+                Statement::Return { value: Some(Expr::Var(code.to_string())) }
+            }
+            other => other.clone(),
+        })
+        .collect()
+}
+
+/// Is this returned name the guard's code variable?
+///
+/// Two spellings reach here, because a backend may map its return codes BEFORE
+/// running this sequence: the bare variable, and that variable already wrapped
+/// in the backend's own return form (Rust's `Err(retCode)`). So the code each
+/// backend passes is likewise ITS spelling of the answer, not a C one.
+fn returns_code_var(v: &str, var: &str) -> bool {
+    v == var
+        || v.strip_suffix(')')
+            .and_then(|t| t.split_once('('))
+            .is_some_and(|(_, inner)| inner == var)
 }
 
 fn is_not_success(e: &Expr, var: &str) -> bool {
@@ -381,8 +429,13 @@ mod cross_call_guard_tests {
         }
     }
     fn run(body: &[Statement]) -> Vec<Statement> {
-        drop_answered_cross_call_guards(body, &|f: &str, a: &[Expr]| f == "ma" && a.len() >= 6)
+        drop_answered_cross_call_guards(body, &ADMITS_MA, None)
     }
+    /// The stream tiers' call: the surviving arm answers the opener's code.
+    fn run_open(body: &[Statement]) -> Vec<Statement> {
+        drop_answered_cross_call_guards(body, &ADMITS_MA, Some("InsufficientHistory"))
+    }
+    const ADMITS_MA: fn(&str, &[Expr]) -> bool = |f, a| f == "ma" && a.len() >= 6;
     fn is_gone(s: &Statement) -> bool {
         matches!(s, Statement::Block { body } if body.is_empty())
     }
@@ -407,6 +460,62 @@ mod cross_call_guard_tests {
         match &out[1] {
             Statement::If { condition, .. } => assert_eq!(*condition, count_is_zero()),
             other => panic!("the guard was dropped whole, not shortened: {other:?}"),
+        }
+    }
+
+    /// The surviving arm is reached only with the code holding `SUCCESS`, so what
+    /// it returns is "success with nothing produced". An OPENER may not answer
+    /// that (issue #271 item 4): the stream tiers name their own code, the batch
+    /// tiers pass `None` and keep the variable.
+    #[test]
+    fn the_surviving_arm_answers_the_openers_code() {
+        let cond = Expr::BinOp(
+            Box::new(ne_success("retCode")),
+            BinOp::Or,
+            Box::new(count_is_zero()),
+        );
+        let body = [call(8), guard(cond)];
+        let batch = run(&body);
+        let open = run_open(&body);
+        let returned = |out: &[Statement]| match &out[1] {
+            Statement::If { then_body, .. } => match &then_body[0] {
+                Statement::Return { value: Some(Expr::Var(v)) } => v.clone(),
+                other => panic!("not a bare return: {other:?}"),
+            },
+            other => panic!("the guard was dropped whole: {other:?}"),
+        };
+        assert_eq!(returned(&batch), "retCode");
+        assert_eq!(returned(&open), "InsufficientHistory");
+    }
+
+    /// A backend that maps its return codes BEFORE running the sequence hands
+    /// the pass its own spelling of the same return — Rust's `Err(retCode)`.
+    #[test]
+    fn an_already_wrapped_return_is_still_the_codes() {
+        let cond = Expr::BinOp(
+            Box::new(ne_success("retCode")),
+            BinOp::Or,
+            Box::new(count_is_zero()),
+        );
+        let wrapped = Statement::If {
+            condition: cond,
+            then_body: vec![Statement::Return { value: Some(Expr::Var("Err(retCode)".into())) }],
+            else_body: Vec::new(),
+            cond_comments: Vec::new(),
+        };
+        let out = drop_answered_cross_call_guards(
+            &[call(8), wrapped],
+            &ADMITS_MA,
+            Some("Err(RetCode::InsufficientHistory)"),
+        );
+        match &out[1] {
+            Statement::If { then_body, .. } => match &then_body[0] {
+                Statement::Return { value: Some(Expr::Var(v)) } => {
+                    assert_eq!(v, "Err(RetCode::InsufficientHistory)");
+                }
+                other => panic!("not a bare return: {other:?}"),
+            },
+            other => panic!("the guard was dropped whole: {other:?}"),
         }
     }
 

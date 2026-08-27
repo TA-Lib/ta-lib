@@ -12677,6 +12677,148 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
     assert!(checked >= 352, "only {checked} public openers inspected");
 }
 
+/// No opener answers the code its sub-call handed back.
+///
+/// The composed openers guard a sub-call on `retCode != SUCCESS || count == 0`.
+/// Since #267 the error half is answered at the call site and folded away, so
+/// the surviving half is the count test — reached with `retCode` holding
+/// `Success`, and the arm returned it. Rust said `Err(RetCode::Success)`, a
+/// contradiction that reached the public `<N>_Open` through `?`; Java and C#
+/// minted a handle over an empty range. Rule S7 is what that shape is: a
+/// history that cannot produce a value (issue #271 item 4).
+///
+/// Corpus-wide over the three ported backends, because the five sites are in
+/// four functions and the next composed indicator would get the same body. C is
+/// deliberately absent: it runs no cleanup sequence, so its guard still carries
+/// the error half and `return retCode` there is the error propagation.
+///
+/// This is the absence half. That the arm answers the opener's code — rather
+/// than losing the return altogether — is asserted directly on the pass, in
+/// `ir_cleanup`'s own tests.
+#[test]
+fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let enums = load_enums();
+
+    // The definition keyword that tells a definition from a call site, and the
+    // bare-code return this tier may not contain.
+    let specs: [(&str, &str, &str); 3] = [
+        ("Rust", "pub(crate) fn", "return Err(retCode)"),
+        ("Java", "private RetCode", "return retCode ;"),
+        ("C#", "private RetCode", "return retCode ;"),
+    ];
+
+    let mut per_backend = [0usize; 3];
+    for name in discover_indicators() {
+        let Some((func, _)) = try_load_indicator(&name) else { continue };
+        if !func.streaming {
+            continue;
+        }
+        let sources = [
+            backends::rust_lang::generate(&func, &enums, &registry, &helpers),
+            backends::java::generate(&func, &enums, &registry, &helpers),
+            backends::csharp::generate(&func, &enums, &registry, &helpers),
+        ];
+        for (b, src) in sources.iter().enumerate() {
+            let (lang, def_kw, bare) = specs[b];
+            let mut at = 0;
+            while let Some(i) = src[at..].find("_Open") {
+                let abs = at + i;
+                at = abs + "_Open".len();
+                let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
+                if !src[line_start..abs].contains(def_kw) {
+                    continue;
+                }
+                let body = strip_comments(body_after(src, abs));
+                if body.is_empty() {
+                    continue;
+                }
+                assert!(
+                    !body.contains(bare),
+                    "{lang} {}: an opener returns the sub-call's own code, which is `Success` \
+                     wherever the fold answered the error half",
+                    func.name
+                );
+                per_backend[b] += 1;
+            }
+        }
+    }
+    // Non-vacuity, per backend: a def-keyword that stopped matching would make
+    // the whole sweep skip in silence.
+    for (b, n) in per_backend.iter().enumerate() {
+        assert!(*n >= 170, "{}: only {n} opener bodies inspected", specs[b].0);
+    }
+}
+
+/// The `{`-matched body that follows `from`.
+fn body_after(s: &str, from: usize) -> &str {
+    let b = match s[from..].find('{') {
+        Some(i) => from + i,
+        None => return "",
+    };
+    let bytes = s.as_bytes();
+    let (mut depth, mut j) = (0usize, b);
+    while j < bytes.len() {
+        match bytes[j] {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return &s[b..=j];
+                }
+            }
+            _ => {}
+        }
+        j += 1;
+    }
+    &s[b..]
+}
+
+/// Comments removed, line by line so every slice stays on a char boundary
+/// (these bodies carry em dashes). Prose is not code: "Trading for a
+/// Living" in EFI's provenance note otherwise reads as a loop.
+fn strip_comments(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut in_block = false;
+    for line in s.lines() {
+        let mut rest = line;
+        loop {
+            if in_block {
+                match rest.find("*/") {
+                    Some(e) => {
+                        rest = &rest[e + 2..];
+                        in_block = false;
+                    }
+                    None => break,
+                }
+            } else {
+                match (rest.find("/*"), rest.find("//")) {
+                    (Some(a), Some(b)) if b < a => {
+                        out.push_str(&rest[..b]);
+                        break;
+                    }
+                    (Some(a), _) => {
+                        out.push_str(&rest[..a]);
+                        rest = &rest[a + 2..];
+                        in_block = true;
+                    }
+                    (None, Some(b)) => {
+                        out.push_str(&rest[..b]);
+                        break;
+                    }
+                    (None, None) => {
+                        out.push_str(rest);
+                        break;
+                    }
+                }
+            }
+        }
+        out.push('\n');
+    }
+    out
+}
+
 /// Every transcribed `_OpenImpl` rejects an anchor that lands past the history,
 /// in all four backends, and does it before any loop can run.
 ///
@@ -12700,74 +12842,6 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
 ///     past protects nothing.
 #[test]
 fn every_open_pass_rejects_an_anchor_past_the_history() {
-    /// The `{`-matched body that follows `from`.
-    fn body_after(s: &str, from: usize) -> &str {
-        let b = match s[from..].find('{') {
-            Some(i) => from + i,
-            None => return "",
-        };
-        let bytes = s.as_bytes();
-        let (mut depth, mut j) = (0usize, b);
-        while j < bytes.len() {
-            match bytes[j] {
-                b'{' => depth += 1,
-                b'}' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        return &s[b..=j];
-                    }
-                }
-                _ => {}
-            }
-            j += 1;
-        }
-        &s[b..]
-    }
-
-    /// Comments removed, line by line so every slice stays on a char boundary
-    /// (these bodies carry em dashes). Prose is not code: "Trading for a
-    /// Living" in EFI's provenance note otherwise reads as a loop.
-    fn strip_comments(s: &str) -> String {
-        let mut out = String::with_capacity(s.len());
-        let mut in_block = false;
-        for line in s.lines() {
-            let mut rest = line;
-            loop {
-                if in_block {
-                    match rest.find("*/") {
-                        Some(e) => {
-                            rest = &rest[e + 2..];
-                            in_block = false;
-                        }
-                        None => break,
-                    }
-                } else {
-                    match (rest.find("/*"), rest.find("//")) {
-                        (Some(a), Some(b)) if b < a => {
-                            out.push_str(&rest[..b]);
-                            break;
-                        }
-                        (Some(a), _) => {
-                            out.push_str(&rest[..a]);
-                            rest = &rest[a + 2..];
-                            in_block = true;
-                        }
-                        (None, Some(b)) => {
-                            out.push_str(&rest[..b]);
-                            break;
-                        }
-                        (None, None) => {
-                            out.push_str(rest);
-                            break;
-                        }
-                    }
-                }
-            }
-            out.push('\n');
-        }
-        out
-    }
-
     /// Every TRANSCRIBED `_OpenImpl` DEFINITION body in `src`. Two filters, and
     /// both are load-bearing. `_OpenImpl(` alone also matches the call sites
     /// every function has, and a body sliced from a call site is whatever block

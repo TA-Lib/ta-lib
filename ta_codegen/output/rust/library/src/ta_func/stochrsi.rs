@@ -542,7 +542,7 @@ impl Core {
         if outNbElement1 == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(retCode);
+            return Err(RetCode::InsufficientHistory);
         }
         // Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
@@ -551,7 +551,7 @@ impl Core {
         if ((*outNBElement) as usize) == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(retCode);
+            return Err(RetCode::InsufficientHistory);
         }
 
         // Capture the live producer state + sub handles.

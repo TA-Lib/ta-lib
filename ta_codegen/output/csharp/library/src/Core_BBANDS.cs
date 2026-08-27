@@ -1138,7 +1138,7 @@ public partial class Core
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          outNBElement = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx;

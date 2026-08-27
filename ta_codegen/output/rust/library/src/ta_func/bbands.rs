@@ -811,7 +811,7 @@ impl Core {
         retCode = RetCode::Success;
         if ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
-            return Err(retCode);
+            return Err(RetCode::InsufficientHistory);
         }
         // Remember where the moving average begins, to realign it below.
         maBegIdx = ((*outBegIdx) as usize) as usize;

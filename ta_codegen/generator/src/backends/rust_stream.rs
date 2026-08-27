@@ -1293,13 +1293,11 @@ fn map_return_code(v: &str) -> String {
         "OUT_OF_RANGE_END_INDEX" | "TA_OUT_OF_RANGE_END_INDEX" => {
             "Err(RetCode::OutOfRangeEndIndex)".to_string()
         }
-        // A RetCode-typed local returned from a surviving guard — wrap it. The
-        // pure `!= SUCCESS` guards are folded away before this runs; what
-        // reaches here is the `|| count == 0` half of a composed open's guard
-        // (STOCH, STOCHF, BBANDS, STOCHRSI). So the wrapped value CAN be
-        // `Success` — an opener answering `Err(Success)` when a sub-call yields
-        // nothing. That is a #268-family contract question, not this mapper's:
-        // do not paper over it here.
+        // A RetCode-typed local returned from a surviving guard — wrap it. This
+        // mapping runs BEFORE the cleanup sequence, so the wrapped form is what
+        // `ir_cleanup` then rewrites at a folded guard: the surviving
+        // `|| count == 0` half used to answer `Err(RetCode::Success)`, and an
+        // opener that produced nothing is rule S7 (issue #271 item 4).
         local if local.starts_with("retCode") => format!("Err({local})"),
         other => panic!("stream open: unmapped return code `{other}`"),
     }
@@ -1711,7 +1709,11 @@ fn emit_open_region(
     // This backend's cleanup sequence, explicit so a pass can be made
     // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(
+        body,
+        &admits,
+        Some("Err(RetCode::InsufficientHistory)"),
+    );
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;
@@ -4229,7 +4231,11 @@ fn emit_composed_region(
     // This backend's cleanup sequence, explicit so a pass can be made
     // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(
+        body,
+        &admits,
+        Some("Err(RetCode::InsufficientHistory)"),
+    );
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;

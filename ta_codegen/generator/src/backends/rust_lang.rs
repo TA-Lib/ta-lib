@@ -565,7 +565,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // shared with Java and C#.
     let admits = |f: &str, args: &[Expr]| cross_call_split(f, args, registry).is_some();
     for body in [&mut elected.body, &mut elected.private_body] {
-        *body = ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+        *body = ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
         *body = ir_cleanup::drop_deallocation(body);
         *body = ir_cleanup::drop_inert_guards(body);
     }

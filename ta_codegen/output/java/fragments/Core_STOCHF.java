@@ -1112,7 +1112,7 @@
          /* Something wrong happen? No further data? */
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the

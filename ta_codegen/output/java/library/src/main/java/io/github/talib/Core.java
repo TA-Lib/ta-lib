@@ -14265,7 +14265,7 @@ public final class Core {
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx.value;
@@ -138838,7 +138838,7 @@ public final class Core {
          /* Something wrong happen? No further data? */
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.
@@ -140113,7 +140113,7 @@ public final class Core {
          /* Something wrong happen? No further data? */
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
@@ -140991,7 +140991,7 @@ public final class Core {
       if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -141000,7 +141000,7 @@ public final class Core {
       if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {

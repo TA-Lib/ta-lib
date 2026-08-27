@@ -781,7 +781,7 @@ public partial class Core
       if( outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -793,7 +793,7 @@ public partial class Core
       if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return retCode ;
+         return RetCode.InsufficientHistory ;
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {

@@ -186,6 +186,16 @@ the same fault.
 no analogue for: a *history* shorter than the lookback cannot open a
 stream at all (`TA_INSUFFICIENT_HISTORY`).
 
+S7 is also what a **composed** opener answers when a sub-call succeeds with zero
+elements: the batch tier may report that as an empty `OutRange`, but an opener
+has no handle to mint over a range holding nothing, so the sub-call's own
+`TA_SUCCESS` is not the answer.
+`an_opener_never_answers_the_code_its_sub_call_handed_back` pins it in the three
+ported backends. **C is the exception**, and it is a known one: the guard there
+still carries the `retCode != TA_SUCCESS` half — that backend answers a
+cross-call rejection by propagating the code rather than at the call site — so
+the arm cannot be rewritten without splitting the guard, and C mints the handle.
+
 Unlike the batch tier, `OpenAndFill` outputs may **not** be the same buffer as
 the inputs (no in-place execution). Not because it would compute the wrong
 answer — measured, it does not: the fill's writes stop where the handle's
