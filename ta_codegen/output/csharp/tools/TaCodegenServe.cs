@@ -1135,9 +1135,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.AC_OpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AC_OpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AC_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -1363,25 +1365,28 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN), f1, f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, fz_h.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, f0, ovIn.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
-                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ACCBANDS_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -1596,9 +1601,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ACOS_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ACOS_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ACOS_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -1790,9 +1797,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AD_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -1980,9 +1989,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.ADD_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ADD_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ADD_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -2177,9 +2188,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ADOSC_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -2378,9 +2391,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ADX_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -2579,9 +2594,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ADXR_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -2778,9 +2795,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.AO_OpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AO_OpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AO_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInFastPeriod, optInSlowPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -2993,9 +3012,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.APO_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -3202,15 +3223,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inLow */ }
                 try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.AROON_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AROON_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -3417,9 +3441,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AROONOSC_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -3612,9 +3638,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ASIN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ASIN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ASIN_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -3800,9 +3828,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ATAN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ATAN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ATAN_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -3994,9 +4024,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ATR_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -4190,9 +4222,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AVGDEV_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -4391,9 +4425,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_o, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.AVGPRICE_OpenAndFill(ovIn.AsSpan(0, svN), fz_h, fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -4624,25 +4660,28 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ovD.AsSpan(0, svN), f1, ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ovD.AsSpan(0, svN), f1, ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ovIn.AsSpan(1, svN), f1, f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, ovIn.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
-                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.BBANDS_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -4860,9 +4899,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.BETA_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -5061,9 +5102,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_o, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.BOP_OpenAndFill(ovIn.AsSpan(0, svN), fz_h, fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -5254,9 +5297,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.CCI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -18693,9 +18738,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.CEIL_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.CEIL_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.CEIL_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -18888,9 +18935,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.CMF_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -19085,9 +19134,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.CMO_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.CMO_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.CMO_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = (svCompat == 1) ? 1 : 0;
@@ -19281,9 +19332,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.CMOU_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -19479,9 +19532,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.CORREL_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -19674,9 +19729,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.COS_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.COS_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.COS_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -19862,9 +19919,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.COSH_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.COSH_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.COSH_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -20052,9 +20111,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.DEMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -20249,9 +20310,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.DIV_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.DIV_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.DIV_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -20443,9 +20506,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.DX_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -20641,9 +20706,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.EFI_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -20838,9 +20905,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.EMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.EMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.EMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -21033,9 +21102,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.EXP_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.EXP_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.EXP_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -21221,9 +21292,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.FLOOR_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.FLOOR_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.FLOOR_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -21410,9 +21483,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.HMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -21606,9 +21681,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HT_DCPERIOD_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.HT_DCPERIOD_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_DCPERIOD_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -21795,9 +21872,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HT_DCPHASE_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.HT_DCPHASE_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_DCPHASE_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -21993,15 +22072,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.HT_PHASOR_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_PHASOR_OpenAndFill(ovIn.AsSpan(0, svN), f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -22207,15 +22289,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_SINE_OpenAndFill(fz_c, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.HT_SINE_OpenAndFill(fz_c, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.HT_SINE_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.HT_SINE_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_SINE_OpenAndFill(ovIn.AsSpan(0, svN), f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -22412,9 +22497,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HT_TRENDLINE_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.HT_TRENDLINE_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.HT_TRENDLINE_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -22787,9 +22874,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inOpen */ }
                 try { _ = c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_o, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.IMI_OpenAndFill(ovIn.AsSpan(0, svN), fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -22984,9 +23073,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.KAMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -23180,9 +23271,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.LINEARREG_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -23376,9 +23469,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.LINEARREG_ANGLE_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -23572,9 +23667,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.LINEARREG_INTERCEPT_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -23768,9 +23865,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.LINEARREG_SLOPE_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -23963,9 +24062,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.LN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.LN_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -24151,9 +24252,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LOG10_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.LOG10_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.LOG10_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -24358,9 +24461,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -24577,25 +24682,28 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovIn.AsSpan(1, svN), f1, f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, ovIn.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
-                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACD_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -24859,25 +24967,28 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ovD.AsSpan(0, svN), f1, ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ovD.AsSpan(0, svN), f1, ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ovIn.AsSpan(1, svN), f1, f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, ovIn.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
-                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACDEXT_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -25114,25 +25225,28 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(ovIn.AsSpan(0, svN), optInSignalPeriod, ovIn.AsSpan(1, svN), f1, f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(ovIn.AsSpan(0, svN), optInSignalPeriod, f0, ovIn.AsSpan(1, svN), f2); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
-                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MACDFIX_OpenAndFill(ovIn.AsSpan(0, svN), optInSignalPeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -25359,15 +25473,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.MAMA_OpenAndFill(ovIn.AsSpan(0, svN), optInFastLimit, optInSlowLimit, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MAMA_OpenAndFill(ovIn.AsSpan(0, svN), optInFastLimit, optInSlowLimit, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -25567,9 +25684,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MARKETFI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -25778,9 +25897,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
                 try { _ = c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inPeriods */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MAVP_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -25974,9 +26095,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MAX_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MAX_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MAX_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -26362,9 +26485,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.MEDPRICE_OpenAndFill(fz_h, fz_l, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MEDPRICE_OpenAndFill(fz_h, fz_l, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MEDPRICE_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -26557,9 +26682,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MFI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -26753,9 +26880,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MIDPOINT_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -26951,9 +27080,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MIDPRICE_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -27147,9 +27278,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MIN_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MIN_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MIN_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -27543,15 +27676,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.MINMAX_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MINMAX_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -27761,11 +27897,12 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                int[] ovI = new int[svN + 1];
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, ovI.AsSpan(0, svN), ovI.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, ovI.AsSpan(0, svN), ovI.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -27974,9 +28111,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MINUS_DI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -28173,9 +28312,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MINUS_DM_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -28369,9 +28510,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MOM_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MOM_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MOM_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -28566,9 +28709,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.MULT_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.MULT_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.MULT_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -28760,9 +28905,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.NATR_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -28957,9 +29104,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.NVI_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.NVI_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.NVI_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -29147,9 +29296,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
                 try { _ = c2.OBV_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.OBV_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.OBV_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -29341,9 +29492,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.PLUS_DI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -29540,9 +29693,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.PLUS_DM_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -29755,9 +29910,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.PPO_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -29952,9 +30109,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.PVI_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.PVI_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.PVI_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -30160,9 +30319,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_v, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fz_v.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.PVO_OpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -30358,9 +30519,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inOpen */ }
                 try { _ = c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_o, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.QSTICK_OpenAndFill(ovIn.AsSpan(0, svN), fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -30554,9 +30717,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROC_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ROC_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ROC_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -30750,9 +30915,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ROCP_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -30946,9 +31113,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ROCR_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -31142,9 +31311,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ROCR100_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -31339,9 +31510,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.RSI_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.RSI_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.RSI_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = (svCompat == 1) ? 1 : 0;
@@ -31538,9 +31711,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SAR_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInAcceleration, optInMaximum, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -31736,9 +31911,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SAREXT_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -31924,9 +32101,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SIN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SIN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SIN_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -32112,9 +32291,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SINH_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SINH_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SINH_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -32301,9 +32482,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -32518,15 +32701,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inClose */ }
                 try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.SMI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SMI_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -32730,9 +32916,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SQRT_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SQRT_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SQRT_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -32920,9 +33108,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STDDEV_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDev, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -33157,15 +33347,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inClose */ }
                 try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.STOCH_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STOCH_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -33408,15 +33601,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inClose */ }
                 try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.STOCHF_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STOCHF_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -33653,15 +33849,18 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
-                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
-                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                try { _ = c2.STOCHRSI_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.STOCHRSI_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = (svCompat == 1) ? 1 : 0;
@@ -33867,9 +34066,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.SUB_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SUB_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SUB_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -34056,9 +34257,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SUM_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.SUM_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.SUM_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -34254,9 +34457,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.T3_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInVFactor, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -34449,9 +34654,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TAN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TAN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TAN_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -34637,9 +34844,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TANH_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TANH_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TANH_OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -34827,9 +35036,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TEMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -35026,9 +35237,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TRANGE_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -35215,9 +35428,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TRIMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -35412,9 +35627,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TRIX_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -35608,9 +35825,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TSF_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TSF_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TSF_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -35807,9 +36026,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.TYPPRICE_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -36002,9 +36223,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.ULTOSC_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -36199,9 +36422,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.VAR_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDev, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -36400,9 +36625,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.VWAP_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.VWAP_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.VWAP_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -36591,9 +36818,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
                 try { _ = c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.VWMA_OpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -36790,9 +37019,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.WAD_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -36982,9 +37213,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.WCLPRICE_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -37175,9 +37408,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.WILLR_OpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
@@ -37371,9 +37606,11 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.WMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
-                try { _ = c2.WMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                try { _ = c2.WMA_OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;

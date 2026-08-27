@@ -8409,10 +8409,39 @@ fn emit_csharp_sv_func(
     // overlap guard a checked property rather than a claim.
     //
     // Two shapes per pair, because they fail differently:
-    //   - offset:  f{i} and a slice of it starting one element in
+    //   - offset:  a window and the same window shifted one element in
     //   - same start, different length: identical memory and start, which span
     //     `==` reads as NOT equal, so an `==`-based guard waves it through
+    //
+    // EVERY window is `svN` long or longer, cut from a buffer one element wider
+    // than the series. Slicing `f{i}` itself cannot do that: the widest window
+    // inside it that still leaves room to shift is `svN - 1`, which rule S5
+    // rejects for capacity the moment the lookback is 0 — so for the 28
+    // unconditional-zero-lookback functions, and every period-taking one at
+    // `period = 1`, the probe caught a capacity fault and never reached the
+    // overlap guard it is named for (issue #271 item 2).
     if n_out >= 1 {
+        let pair = |ints: bool| {
+            out_is_int.iter().enumerate().any(|(i, a)| {
+                *a == ints
+                    && out_is_int.iter().skip(i + 1).any(|b| *b == ints)
+            })
+        };
+        if pair(false) {
+            s.push_str("                double[] ovD = new double[svN + 1];\n");
+        }
+        if pair(true) {
+            s.push_str("                int[] ovI = new int[svN + 1];\n");
+        }
+        if out_is_int.iter().any(|b| !*b) {
+            if let Some(arr) = arrays.first() {
+                // The input leg needs the OUTPUT to overlap an INPUT, so the
+                // input has to come out of the wide buffer too — same values,
+                // one element of headroom.
+                let _ = writeln!(s, "                double[] ovIn = new double[svN + 1];");
+                let _ = writeln!(s, "                Array.Copy({arr}, ovIn, svN);");
+            }
+        }
         s.push_str("                /* R2b: PARTIAL overlap -- only spans can express it, and it is
 ");
         s.push_str("                   the only shape that separates Overlaps from identity. */
@@ -8422,16 +8451,17 @@ fn emit_csharp_sv_func(
                 if i_is_int != j_is_int {
                     continue;
                 }
+                let ov = if *i_is_int { "ovI" } else { "ovD" };
                 for (shape, expr) in [
-                    ("offset", format!("f{i}.AsSpan(1, svN - 1)")),
-                    ("same start, longer", format!("f{i}.AsSpan(0, svN)")),
+                    ("offset", format!("{ov}.AsSpan(1, svN)")),
+                    ("same start, longer", format!("{ov}.AsSpan(0, svN + 1)")),
                 ] {
                     let mut aargs = String::new();
                     for k in 0..n_out {
                         if k == j {
                             let _ = write!(aargs, ", {expr}");
                         } else if k == i {
-                            let _ = write!(aargs, ", f{i}.AsSpan(0, svN - 1)");
+                            let _ = write!(aargs, ", {ov}.AsSpan(0, svN)");
                         } else {
                             let _ = write!(aargs, ", f{k}");
                         }
@@ -8454,18 +8484,29 @@ fn emit_csharp_sv_func(
             if *i_is_int {
                 continue;
             }
-            if let Some(arr) = arrays.first() {
+            if !arrays.is_empty() {
                 let mut aargs = String::new();
                 for k in 0..n_out {
                     if k == i {
-                        let _ = write!(aargs, ", {arr}.AsSpan(1, svN - 1)");
+                        let _ = write!(aargs, ", ovIn.AsSpan(1, svN)");
                     } else {
                         let _ = write!(aargs, ", f{k}");
                     }
                 }
+                // The history comes out of `ovIn` so the output window above
+                // overlaps it; every other input stays the fuzz array, and the
+                // two agree in length (rule S5's input half).
+                let ov_ins = arrays
+                    .iter()
+                    .enumerate()
+                    .map(|(k, a)| {
+                        if k == 0 { "ovIn.AsSpan(0, svN)".to_string() } else { (*a).to_string() }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
                 let _ = writeln!(
                     s,
-                    "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                    "                try {{ _ = c2.{base}_OpenAndFill({ov_ins}{opts_tail}{aargs}); fillOk = false; }}"
                 );
                 let _ = writeln!(
                     s,
