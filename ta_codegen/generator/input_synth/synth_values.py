@@ -88,6 +88,18 @@ GOLDEN = {
                              16187400, 12779533, 12779828, 12780228, 12779540, 16187488,
                              12781028, 12779573, 12649455, 12779748]}),
 
+    # SYNTH13's four legs all recompute the same SMA, so the value is 4x it.
+    # Derived from IN_REAL here rather than read back from the library: a golden
+    # row transcribed from the implementation it checks proves only that the
+    # implementation did not change. The running-window accumulation order is
+    # TA_SMA's own -- a naive sum over each slice differs in the last bits.
+    "TA_SYNTH13": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
+        outs={"outReal": [2000320.5, 2000220.5, 2000020.25, 2000050.249,
+                          55.74900000006892, 355.7490000000689, 1005.4990000000689,
+                          1017.5000000000689, 1100.000000000069, 2300.000000000069,
+                          1645.0000000000691, 2632.900000000069, 2764.900000000069]}),
+
     "TA_SYNTH4": dict(
         params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
         outs={"outInteger": [357, 214, 289, 173, 121, 9, 811, 730, 310, 480, 432, 182, 813]}),
