@@ -630,11 +630,14 @@ impl Core {
     pub(crate) fn MAVP_OpenInternal(
         &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType,
     ) -> Result<(MAVP_Stream, f64), RetCode> {
-        if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
-            return Err(RetCode::BadParam);
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
         }
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if inPeriods.len() != inReal.len() {
+            return Err(RetCode::BadParam);
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
@@ -691,8 +694,9 @@ impl Core {
     ///
     /// [`RetCode::InsufficientHistory`] when the history holds fewer than
     /// `lookback + 1` bars — the one failure here worth retrying, since another
-    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
-    /// input is empty, or input lengths differ.
+    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
+    /// [`RetCode::BadParam`] when a parameter is out of range or the input
+    /// lengths differ.
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
@@ -724,11 +728,14 @@ impl Core {
     pub fn MAVP_OpenAndFill(
         &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(MAVP_Stream, OutRange), RetCode> {
-        if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
-            return Err(RetCode::BadParam);
+        if inReal.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
         }
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if inPeriods.len() != inReal.len() {
+            return Err(RetCode::BadParam);
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;

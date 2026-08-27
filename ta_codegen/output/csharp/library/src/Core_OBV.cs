@@ -448,11 +448,14 @@ public partial class Core
       double prevOBV = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.Length != inReal.Length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.Length != inReal.Length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx = 0;
@@ -522,12 +525,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>OBV_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public OBV_Stream OBV_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("OBV open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
 
@@ -552,12 +555,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
-   /// output.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public OBV_Stream OBV_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("OBV openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("OBV", "openAndFill", RetCode.BadParam);
       }

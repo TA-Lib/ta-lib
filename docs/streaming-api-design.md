@@ -380,16 +380,11 @@ TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,
                                          int        *outNBElement );
 ```
 
-**Error model.** `Open` returns `TA_INSUFFICIENT_HISTORY` (`historyLen <
-min_history`, so no value exists yet), `TA_BAD_PARAM` (param out of range) or
-`TA_ALLOC_ERR`; `*stream` is NULL on any failure. The history itself is an input array and is not
-scanned — see the non-finite bullet above.
-`Update`/`Peek` return `TA_BAD_PARAM` on NULL arguments and on a non-finite bar
-value, leaving the handle untouched in the latter case. `UpdateAndFill` adds a
-negative `barCount` and an output aliasing an input or another output to that
-list, all three checked before any bar is committed; a non-finite bar `k` is
-rejected mid-run and commits `[0, k)`. `barCount == 0` is a success that does
-nothing. `Close(NULL)` is a no-op returning `TA_SUCCESS`.
+**Error model.** `docs/error-handling-spec.md` §2.3–2.5 specifies it, rule by
+rule and backend by backend. Two properties belong here instead, being shapes of
+this API rather than rules about a fault: `*stream` is NULL on every `Open`
+failure, and the warm-up history is an input array, so it is never scanned — see
+the non-finite bullet above.
 
 **Shapes.** Multi-input functions take the price scalars in batch order
 (`TA_CDLDOJI_Update(s, open, high, low, close, &outInteger)`).

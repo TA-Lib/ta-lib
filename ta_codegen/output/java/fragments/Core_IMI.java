@@ -476,11 +476,14 @@
       int outIdx = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -590,10 +593,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public IMI_Stream IMI_Open( double inOpen[], double inClose[], int optInTimePeriod )
    {
+      requireArgument("IMI open", "inOpen", inOpen);
+      requireHistory("IMI open", inOpen.length);
+      requireArgument("IMI open", "inClose", inClose);
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
@@ -607,6 +616,10 @@
     */
    public IMI_Stream IMI_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("IMI openAndFill", "inOpen", inOpen);
+      requireHistory("IMI openAndFill", inOpen.length);
+      requireArgument("IMI openAndFill", "inClose", inClose);
+      requireArgument("IMI openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

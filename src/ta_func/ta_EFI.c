@@ -369,9 +369,9 @@ static TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **stream, const double i
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 13;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
@@ -620,9 +620,9 @@ TA_LIB_API TA_RetCode TA_EFI_Open( TA_EFI_Stream **stream, const double inClose[
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
    return TA_EFI_OpenInternal( stream, inClose, inVolume, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -630,10 +630,9 @@ TA_LIB_API TA_RetCode TA_EFI_OpenAndFill( TA_EFI_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inClose || !inVolume || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    return TA_EFI_OpenAndFillInternal( stream, inClose, inVolume, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
 }

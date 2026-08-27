@@ -489,11 +489,14 @@
       RetCode retCode;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -620,10 +623,17 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public ADXR_Stream ADXR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
+      requireArgument("ADXR open", "inHigh", inHigh);
+      requireHistory("ADXR open", inHigh.length);
+      requireArgument("ADXR open", "inLow", inLow);
+      requireArgument("ADXR open", "inClose", inClose);
       return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -637,6 +647,11 @@
     */
    public ADXR_Stream ADXR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("ADXR openAndFill", "inHigh", inHigh);
+      requireHistory("ADXR openAndFill", inHigh.length);
+      requireArgument("ADXR openAndFill", "inLow", inLow);
+      requireArgument("ADXR openAndFill", "inClose", inClose);
+      requireArgument("ADXR openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ADXR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

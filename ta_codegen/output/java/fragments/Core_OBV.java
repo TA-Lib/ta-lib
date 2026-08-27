@@ -369,11 +369,14 @@
       double prevOBV = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.length != inReal.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.length != inReal.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -448,10 +451,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public OBV_Stream OBV_Open( double inReal[], double inVolume[] )
    {
+      requireArgument("OBV open", "inReal", inReal);
+      requireHistory("OBV open", inReal.length);
+      requireArgument("OBV open", "inVolume", inVolume);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
    /**
@@ -465,6 +474,10 @@
     */
    public OBV_Stream OBV_OpenAndFill( double inReal[], double inVolume[], double outReal[] )
    {
+      requireArgument("OBV openAndFill", "inReal", inReal);
+      requireHistory("OBV openAndFill", inReal.length);
+      requireArgument("OBV openAndFill", "inVolume", inVolume);
+      requireArgument("OBV openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

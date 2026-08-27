@@ -951,9 +951,14 @@ public class NoPhantomIoTest {
                 // lookback + 1 must be refused, and refused BEFORE anything is
                 // written -- so with zero-length outputs the refusal must still be
                 // the documented exception and never an out-of-bounds. (At a
-                // lookback of 0 the short history is empty, which the core rejects
-                // one line earlier as a bad parameter; either refusal proves the
-                // same thing.)
+                // lookback of 0 the short history is empty, which the opener
+                // rejects one line earlier under rule S1; either refusal proves
+                // the same thing.)
+                //
+                // S1's refusal is ITSELF an IndexOutOfBoundsException, so the
+                // discriminator is the carried code, not the type: what the
+                // library raises implements TaLibFailure, and a write past the
+                // end of a zero-length array does not.
                 Object[] shortArgs = args.clone();
                 for (int k = 0; k < nLegs; k++) {
                     shortArgs[k] = series(pt[k], sig.legName[k], v.lookback);
@@ -969,7 +974,8 @@ public class NoPhantomIoTest {
                     violations++;
                 } catch (InvocationTargetException ite) {
                     Throwable t = ite.getCause();
-                    if (t instanceof IndexOutOfBoundsException) {
+                    if (t instanceof IndexOutOfBoundsException
+                            && !(t instanceof TaLibFailure)) {
                         violation(sig.name + "_OpenAndFill[" + v.label + "] wrote to a "
                             + "zero-length output before refusing a " + v.lookback
                             + "-bar history: " + t);

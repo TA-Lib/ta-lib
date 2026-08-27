@@ -82,6 +82,13 @@ public class BatchApiTest {
     private static int failures = 0;
     private static int checks = 0;
 
+    /* The streaming-opener cases below are counted apart from the batch ones:
+     * sharing a counter would let a deleted streaming case hide behind a batch
+     * one, and the floors in main() are what make a deletion loud. */
+    private static int s1Reject = 0;
+    private static int s4Reject = 0;
+    private static int s4Accept = 0;
+
     private static void check(boolean condition, String what) {
         checks++;
         if (!condition) {
@@ -696,9 +703,9 @@ public class BatchApiTest {
         // ...and the REST of the streaming tier, which is a separate reject
         // ladder from the batch one. Totality is a property of every failure the
         // library raises, not of the tier someone happened to convert first.
-        checkCode(RetCode.BadParam,
+        checkCode(RetCode.OutOfRangeStartIndex,
             () -> Core.DEFAULT.SMA_Open(new double[0], 30),
-            "an empty history carries BadParam");
+            "an empty history carries OutOfRangeStartIndex");
         checkCode(RetCode.BadParam,
             () -> Core.DEFAULT.SMA_Open(in, 0),
             "an out-of-range period on a stream open carries BadParam");
@@ -928,6 +935,161 @@ public class BatchApiTest {
             "two outputs that are one array are still rejected", "ACCBANDS");
     }
 
+    /**
+     * Rule S4 is B4 plus the handle, over the same argument shapes, so the
+     * streaming openers are driven from here rather than from a suite of their
+     * own — as C's own S4 block rides along inside its batch-argument test.
+     *
+     * <p>Java expresses fewer of the shapes than C does: the handle is the
+     * RETURN value and the range out-parameters live on it, so what is left is
+     * the declared inputs and, for {@code openAndFill}, the outputs. Until #268
+     * none of them was checked — {@code inReal.length} was read straight off a
+     * null array and a null output faulted inside the fill loop, both with a raw
+     * JVM exception naming neither the function nor the argument.
+     *
+     * <p>{@code outFAMA} is here rather than among the controls even though it
+     * is declared {@code nullable}: unlike C's, this fill guards no output write,
+     * so declining one has never worked in the streaming tier. Naming it is the
+     * whole change — the call was already rejected.
+     */
+    static void streamingOpenersCheckTheirArguments() {
+        final double[] in = closes(252);
+        final double[] out = new double[252];
+        final double[] out2 = new double[252];
+        final int[] outI = new int[252];
+        final double[] periods = new double[252];
+        Arrays.fill(periods, 5.0);
+
+        // B4's shapes, through the openers.
+        streamRejects(() -> Core.DEFAULT.SMA_Open(null, 30),
+            "SMA_Open(inReal=null)", "SMA open", "inReal");
+        streamRejects(() -> Core.DEFAULT.SMA_OpenAndFill(null, 30, out),
+            "SMA_OpenAndFill(inReal=null)", "SMA openAndFill", "inReal");
+        streamRejects(() -> Core.DEFAULT.SMA_OpenAndFill(in, 30, null),
+            "SMA_OpenAndFill(outReal=null)", "SMA openAndFill", "outReal");
+        // A candlestick leg the body never indexes is still a declared input (#260).
+        streamRejects(() -> Core.DEFAULT.CDL3OUTSIDE_Open(in, null, in, in),
+            "CDL3OUTSIDE_Open(inHigh=null)", "CDL3OUTSIDE open", "inHigh");
+        streamRejects(() -> Core.DEFAULT.CDL3OUTSIDE_OpenAndFill(in, in, null, in, outI),
+            "CDL3OUTSIDE_OpenAndFill(inLow=null)", "CDL3OUTSIDE openAndFill", "inLow");
+        streamRejects(() -> Core.DEFAULT.CDLDOJI_Open(in, in, in, null),
+            "CDLDOJI_Open(inClose=null)", "CDLDOJI open", "inClose");
+        // Multi-input, multi-output.
+        streamRejects(() -> Core.DEFAULT.STOCH_Open(in, in, null, 5, 3, MAType.SMA, 3, MAType.SMA),
+            "STOCH_Open(inClose=null)", "STOCH open", "inClose");
+        streamRejects(() -> Core.DEFAULT.STOCH_OpenAndFill(in, in, in, 5, 3, MAType.SMA, 3,
+                MAType.SMA, out, null),
+            "STOCH_OpenAndFill(outSlowD=null)", "STOCH openAndFill", "outSlowD");
+        // The two hand-rolled tiers: the dispatch and the period bank.
+        streamRejects(() -> Core.DEFAULT.MA_Open(null, 30, MAType.EMA),
+            "MA_Open(inReal=null)", "MA open", "inReal");
+        streamRejects(() -> Core.DEFAULT.MAVP_Open(in, null, 2, 30, MAType.SMA),
+            "MAVP_Open(inPeriods=null)", "MAVP open", "inPeriods");
+        streamRejects(() -> Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA, null),
+            "MAVP_OpenAndFill(outReal=null)", "MAVP openAndFill", "outReal");
+        // A nullable output the streaming fill writes unguarded.
+        streamRejects(() -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, out, null),
+            "MAMA_OpenAndFill(outFAMA=null)", "MAMA openAndFill", "outFAMA");
+
+        // Controls: the same calls with every argument supplied still open.
+        streamAccepts(() -> Core.DEFAULT.SMA_Open(in, 30), "SMA_Open");
+        streamAccepts(() -> Core.DEFAULT.SMA_OpenAndFill(in, 30, out), "SMA_OpenAndFill");
+        streamAccepts(() -> Core.DEFAULT.CDL3OUTSIDE_Open(in, in, in, in), "CDL3OUTSIDE_Open");
+        streamAccepts(() -> Core.DEFAULT.STOCH_OpenAndFill(in, in, in, 5, 3, MAType.SMA, 3,
+                MAType.SMA, out, out2), "STOCH_OpenAndFill");
+        streamAccepts(() -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, out, out2),
+            "MAMA_OpenAndFill");
+    }
+
+    /**
+     * Rule S1, and its order. An opener is a batch call over
+     * {@code [0, historyLen - 1]}, so an empty history is B1's condition read on
+     * that range — the implied {@code startIdx} of 0 names no bar — and answers
+     * B1's code.
+     *
+     * <p>The order is the part worth a case of its own: the third call below is
+     * BOTH an empty history and an absent output, and the empty history is what
+     * it has to report. A null HISTORY is the one thing that cannot outrank —
+     * a length is not readable from an array that is not there — which is the
+     * last case, and the reason this rule is stated as "ahead of every presence
+     * check" rather than "first".
+     */
+    static void anEmptyHistoryOutranksAnAbsentArgument() {
+        final double[] empty = new double[0];
+        final double[] out = new double[252];
+
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.SMA_Open(empty, 30),
+            "an empty history is an index fault", "SMA open");
+        s1Reject++;
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.SMA_OpenAndFill(empty, 30, out),
+            "an empty history is an index fault on the fill too", "SMA openAndFill");
+        s1Reject++;
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.SMA_OpenAndFill(empty, 30, null),
+            "an empty history outranks a null output", "SMA openAndFill");
+        s1Reject++;
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.CDLDOJI_Open(empty, empty, empty, empty),
+            "a candlestick reaches it through four legs", "CDLDOJI open");
+        s1Reject++;
+        // The leg that is NOT the history is an ordinary argument, so it is
+        // checked after the pair — the same call reports the empty history in C.
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.CDLDOJI_Open(empty, null, empty, empty),
+            "an empty history outranks a null leg", "CDLDOJI open");
+        s1Reject++;
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.MA_Open(empty, 30, MAType.EMA),
+            "the dispatch tier answers it too", "MA open");
+        s1Reject++;
+
+        // The code, not just the type: one IndexOutOfBoundsException serves both
+        // index rules, so the type alone cannot say which fired.
+        check(codeOf(() -> Core.DEFAULT.SMA_Open(empty, 30)) == RetCode.OutOfRangeStartIndex,
+            "an empty history carries OutOfRangeStartIndex");
+
+        // A history of exactly one bar is inside the domain: that is S7's
+        // business, and this is what keeps the cases above about EMPTY.
+        checkThrows(InsufficientHistoryException.class,
+            () -> Core.DEFAULT.SMA_Open(new double[1], 30),
+            "a one-bar history reaches the warm-up check");
+
+        // The exception: a null history is an absent argument, because its
+        // length is what the rule above is about.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.DEFAULT.SMA_Open(null, 30),
+            "a null history is an absent argument, not an empty one",
+            "SMA open", "inReal");
+    }
+
+    /** The code an opener's rejection carries, or null if it did not reject. */
+    private static RetCode codeOf(Runnable body) {
+        try {
+            body.run();
+            return null;
+        } catch (RuntimeException e) {
+            return (e instanceof TaLibFailure) ? ((TaLibFailure) e).retCode() : null;
+        }
+    }
+
+    private static void streamRejects(Runnable body, String what, String... needles) {
+        s4Reject++;
+        checkThrows(IllegalArgumentException.class, body, what, needles);
+    }
+
+    private static void streamAccepts(Runnable body, String what) {
+        s4Accept++;
+        checks++;
+        try {
+            body.run();
+        } catch (RuntimeException e) {
+            failures++;
+            System.out.println("  FAIL: " + what + " was rejected (" + e + ")");
+        }
+    }
+
     public static void main(String[] args) {
         maxWithKnownOutputs();
         begIdxEqualsLookback();
@@ -957,6 +1119,16 @@ public class BatchApiTest {
         aNullEnumIsNamed();
         aNullableOutputMayBeDeclined();
         distinctEmptyOutputsAreNotAliases();
+        streamingOpenersCheckTheirArguments();
+        anEmptyHistoryOutranksAnAbsentArgument();
+
+        // Literal floors, not derived from the calls above: a count computed
+        // from the cases would move with a deleted one and still "pass".
+        if (s4Reject < 12 || s4Accept < 5 || s1Reject < 6) {
+            failures++;
+            System.out.println("  FAIL: the streaming-opener gate ran fewer checks"
+                + " than it was written with");
+        }
 
         if (failures == 0) {
             System.out.println("BatchApiTest: ALL PASS (" + checks + " checks)");

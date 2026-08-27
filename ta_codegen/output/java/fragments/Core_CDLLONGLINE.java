@@ -555,11 +555,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -713,10 +716,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLLONGLINE_Stream CDLLONGLINE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLLONGLINE open", "inOpen", inOpen);
+      requireHistory("CDLLONGLINE open", inOpen.length);
+      requireArgument("CDLLONGLINE open", "inHigh", inHigh);
+      requireArgument("CDLLONGLINE open", "inLow", inLow);
+      requireArgument("CDLLONGLINE open", "inClose", inClose);
       return CDLLONGLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -730,6 +741,12 @@
     */
    public CDLLONGLINE_Stream CDLLONGLINE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLLONGLINE openAndFill", "inOpen", inOpen);
+      requireHistory("CDLLONGLINE openAndFill", inOpen.length);
+      requireArgument("CDLLONGLINE openAndFill", "inHigh", inHigh);
+      requireArgument("CDLLONGLINE openAndFill", "inLow", inLow);
+      requireArgument("CDLLONGLINE openAndFill", "inClose", inClose);
+      requireArgument("CDLLONGLINE openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

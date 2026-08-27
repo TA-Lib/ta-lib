@@ -938,11 +938,14 @@
       int bufferIsAllocated = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInFastK_Period == Integer.MIN_VALUE ) {
          optInFastK_Period = 5;
@@ -1238,10 +1241,17 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public STOCHF_Stream STOCHF_Open( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
+      requireArgument("STOCHF open", "inHigh", inHigh);
+      requireHistory("STOCHF open", inHigh.length);
+      requireArgument("STOCHF open", "inLow", inLow);
+      requireArgument("STOCHF open", "inClose", inClose);
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
@@ -1255,6 +1265,12 @@
     */
    public STOCHF_Stream STOCHF_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
+      requireArgument("STOCHF openAndFill", "inHigh", inHigh);
+      requireHistory("STOCHF openAndFill", inHigh.length);
+      requireArgument("STOCHF openAndFill", "inLow", inLow);
+      requireArgument("STOCHF openAndFill", "inClose", inClose);
+      requireArgument("STOCHF openAndFill", "outFastK", outFastK);
+      requireArgument("STOCHF openAndFill", "outFastD", outFastD);
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
          throw new TaLibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

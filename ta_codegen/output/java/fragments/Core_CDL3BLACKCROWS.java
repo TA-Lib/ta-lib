@@ -589,11 +589,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -757,10 +760,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDL3BLACKCROWS_Stream CDL3BLACKCROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDL3BLACKCROWS open", "inOpen", inOpen);
+      requireHistory("CDL3BLACKCROWS open", inOpen.length);
+      requireArgument("CDL3BLACKCROWS open", "inHigh", inHigh);
+      requireArgument("CDL3BLACKCROWS open", "inLow", inLow);
+      requireArgument("CDL3BLACKCROWS open", "inClose", inClose);
       return CDL3BLACKCROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -774,6 +785,12 @@
     */
    public CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDL3BLACKCROWS openAndFill", "inOpen", inOpen);
+      requireHistory("CDL3BLACKCROWS openAndFill", inOpen.length);
+      requireArgument("CDL3BLACKCROWS openAndFill", "inHigh", inHigh);
+      requireArgument("CDL3BLACKCROWS openAndFill", "inLow", inLow);
+      requireArgument("CDL3BLACKCROWS openAndFill", "inClose", inClose);
+      requireArgument("CDL3BLACKCROWS openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

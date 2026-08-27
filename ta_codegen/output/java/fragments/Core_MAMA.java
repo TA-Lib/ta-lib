@@ -1548,7 +1548,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1982,10 +1982,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MAMA_Stream MAMA_Open( double inReal[], double optInFastLimit, double optInSlowLimit )
    {
+      requireArgument("MAMA open", "inReal", inReal);
+      requireHistory("MAMA open", inReal.length);
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
    /**
@@ -1999,6 +2004,10 @@
     */
    public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
+      requireArgument("MAMA openAndFill", "inReal", inReal);
+      requireHistory("MAMA openAndFill", inReal.length);
+      requireArgument("MAMA openAndFill", "outMAMA", outMAMA);
+      requireArgument("MAMA openAndFill", "outFAMA", outFAMA);
       if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
          throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

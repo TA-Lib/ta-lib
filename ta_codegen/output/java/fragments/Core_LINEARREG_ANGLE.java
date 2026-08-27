@@ -753,7 +753,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -996,10 +996,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_Open( double inReal[], int optInTimePeriod )
    {
+      requireArgument("LINEARREG_ANGLE open", "inReal", inReal);
+      requireHistory("LINEARREG_ANGLE open", inReal.length);
       return LINEARREG_ANGLE_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -1013,6 +1018,9 @@
     */
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("LINEARREG_ANGLE openAndFill", "inReal", inReal);
+      requireHistory("LINEARREG_ANGLE openAndFill", inReal.length);
+      requireArgument("LINEARREG_ANGLE openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

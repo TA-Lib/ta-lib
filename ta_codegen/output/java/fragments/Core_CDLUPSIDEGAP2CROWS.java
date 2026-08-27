@@ -620,11 +620,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -801,10 +804,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLUPSIDEGAP2CROWS open", "inOpen", inOpen);
+      requireHistory("CDLUPSIDEGAP2CROWS open", inOpen.length);
+      requireArgument("CDLUPSIDEGAP2CROWS open", "inHigh", inHigh);
+      requireArgument("CDLUPSIDEGAP2CROWS open", "inLow", inLow);
+      requireArgument("CDLUPSIDEGAP2CROWS open", "inClose", inClose);
       return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -818,6 +829,12 @@
     */
    public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inOpen", inOpen);
+      requireHistory("CDLUPSIDEGAP2CROWS openAndFill", inOpen.length);
+      requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inHigh", inHigh);
+      requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inLow", inLow);
+      requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inClose", inClose);
+      requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

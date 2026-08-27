@@ -708,11 +708,14 @@
       int lookbackTotal = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -900,10 +903,17 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public ACCBANDS_Stream ACCBANDS_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
+      requireArgument("ACCBANDS open", "inHigh", inHigh);
+      requireHistory("ACCBANDS open", inHigh.length);
+      requireArgument("ACCBANDS open", "inLow", inLow);
+      requireArgument("ACCBANDS open", "inClose", inClose);
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -917,6 +927,13 @@
     */
    public ACCBANDS_Stream ACCBANDS_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
+      requireArgument("ACCBANDS openAndFill", "inHigh", inHigh);
+      requireHistory("ACCBANDS openAndFill", inHigh.length);
+      requireArgument("ACCBANDS openAndFill", "inLow", inLow);
+      requireArgument("ACCBANDS openAndFill", "inClose", inClose);
+      requireArgument("ACCBANDS openAndFill", "outRealUpperBand", outRealUpperBand);
+      requireArgument("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand);
+      requireArgument("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          throw new TaLibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

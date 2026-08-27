@@ -807,11 +807,14 @@
       int maxIdx_oscBuffer = (32)-1;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
@@ -1061,10 +1064,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public AC_Stream AC_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
+      requireArgument("AC open", "inHigh", inHigh);
+      requireHistory("AC open", inHigh.length);
+      requireArgument("AC open", "inLow", inLow);
       return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**
@@ -1078,6 +1087,10 @@
     */
    public AC_Stream AC_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outReal[] )
    {
+      requireArgument("AC openAndFill", "inHigh", inHigh);
+      requireHistory("AC openAndFill", inHigh.length);
+      requireArgument("AC openAndFill", "inLow", inLow);
+      requireArgument("AC openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

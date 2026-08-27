@@ -422,11 +422,14 @@
       double ad = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -518,10 +521,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public AD_Stream AD_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
    {
+      requireArgument("AD open", "inHigh", inHigh);
+      requireHistory("AD open", inHigh.length);
+      requireArgument("AD open", "inLow", inLow);
+      requireArgument("AD open", "inClose", inClose);
+      requireArgument("AD open", "inVolume", inVolume);
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
@@ -535,6 +546,12 @@
     */
    public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
+      requireArgument("AD openAndFill", "inHigh", inHigh);
+      requireHistory("AD openAndFill", inHigh.length);
+      requireArgument("AD openAndFill", "inLow", inLow);
+      requireArgument("AD openAndFill", "inClose", inClose);
+      requireArgument("AD openAndFill", "inVolume", inVolume);
+      requireArgument("AD openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -3297,6 +3297,14 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            throw failure(funcName, RetCode.OutOfRangeEndIndex);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
+    s.push_str("    static void requireHistory(String funcName, int historyLen) {\n");
+    s.push_str("        if (historyLen < 1) {\n");
+    s.push_str("            throw failure(funcName, RetCode.OutOfRangeStartIndex);\n");
+    s.push_str("        }\n");
+    s.push_str("        if (historyLen > MAX_INDEX + 1) {\n");
+    s.push_str("            throw failure(funcName, RetCode.OutOfRangeEndIndex);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
     s.push_str("    static void requireArgument(String funcName, String argName, Object argument) {\n");
     s.push_str("        if (argument == null) {\n");
     s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");

@@ -894,11 +894,14 @@
       double[] ep_temp = new double[1];
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
@@ -1191,10 +1194,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public SAR_Stream SAR_Open( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
    {
+      requireArgument("SAR open", "inHigh", inHigh);
+      requireHistory("SAR open", inHigh.length);
+      requireArgument("SAR open", "inLow", inLow);
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
    /**
@@ -1208,6 +1217,10 @@
     */
    public SAR_Stream SAR_OpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
    {
+      requireArgument("SAR openAndFill", "inHigh", inHigh);
+      requireHistory("SAR openAndFill", inHigh.length);
+      requireArgument("SAR openAndFill", "inLow", inLow);
+      requireArgument("SAR openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

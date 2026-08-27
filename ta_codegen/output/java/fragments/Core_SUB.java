@@ -326,11 +326,14 @@
       int i = 0;
       int historyLen = inReal0.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inReal1.length != inReal0.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inReal1.length != inReal0.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -394,10 +397,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public SUB_Stream SUB_Open( double inReal0[], double inReal1[] )
    {
+      requireArgument("SUB open", "inReal0", inReal0);
+      requireHistory("SUB open", inReal0.length);
+      requireArgument("SUB open", "inReal1", inReal1);
       return SUB_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -411,6 +420,10 @@
     */
    public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
+      requireArgument("SUB openAndFill", "inReal0", inReal0);
+      requireHistory("SUB openAndFill", inReal0.length);
+      requireArgument("SUB openAndFill", "inReal1", inReal1);
+      requireArgument("SUB openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

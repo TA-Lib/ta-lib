@@ -718,11 +718,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
@@ -933,10 +936,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLMATHOLD_Stream CDLMATHOLD_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
+      requireArgument("CDLMATHOLD open", "inOpen", inOpen);
+      requireHistory("CDLMATHOLD open", inOpen.length);
+      requireArgument("CDLMATHOLD open", "inHigh", inHigh);
+      requireArgument("CDLMATHOLD open", "inLow", inLow);
+      requireArgument("CDLMATHOLD open", "inClose", inClose);
       return CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -950,6 +961,12 @@
     */
    public CDLMATHOLD_Stream CDLMATHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
+      requireArgument("CDLMATHOLD openAndFill", "inOpen", inOpen);
+      requireHistory("CDLMATHOLD openAndFill", inOpen.length);
+      requireArgument("CDLMATHOLD openAndFill", "inHigh", inHigh);
+      requireArgument("CDLMATHOLD openAndFill", "inLow", inLow);
+      requireArgument("CDLMATHOLD openAndFill", "inClose", inClose);
+      requireArgument("CDLMATHOLD openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

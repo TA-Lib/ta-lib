@@ -396,11 +396,14 @@ public partial class Core
       int i = 0;
       int historyLen = inReal0.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inReal1.Length != inReal0.Length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inReal1.Length != inReal0.Length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx = 0;
@@ -458,12 +461,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ADD_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public ADD_Stream ADD_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "ADD open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("ADD open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       return ADD_OpenInternal(inReal0, inReal1, 0);
    }
 
@@ -488,12 +491,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
-   /// output.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public ADD_Stream ADD_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "ADD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("ADD openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          throw StreamFailure("ADD", "openAndFill", RetCode.BadParam);
       }

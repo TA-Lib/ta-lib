@@ -424,19 +424,30 @@ public static class StreamApiTest
         double[] closes = Closes(120);
         var outReal = new double[closes.Length];
 
-        CheckThrows<ArgumentException>(
+        // A span cannot be null, so a null array arrives as an empty one and
+        // there is one condition here, not two: the history is empty, which is
+        // rule S1 -- the implied startIdx of 0 names no bar. It answers B1's
+        // code, because an opener is a batch call over [0, historyLen - 1].
+        CheckThrows<ArgumentOutOfRangeException>(
             () => core.SMA_Open(null!, 14),
-            "SMA_Open(null) throws ArgumentException");
-        CheckThrows<ArgumentException>(
+            "SMA_Open(null) throws ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
             () => core.SMA_Open(Array.Empty<double>(), 14),
-            "SMA_Open(empty) throws ArgumentException");
-        CheckThrows<ArgumentException>(
+            "SMA_Open(empty) throws ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
             () => core.SMA_OpenAndFill(null!, 14, outReal),
-            "SMA_OpenAndFill with a null input throws ArgumentException");
+            "SMA_OpenAndFill with a null input throws ArgumentOutOfRangeException");
 
-        // It names the offending parameter. Without the check the empty input
-        // and the empty output would compare as overlapping and be rejected as
-        // aliasing instead, which names the wrong problem.
+        // The type is coarser than the code -- it serves both index rules -- so
+        // the code is what pins WHICH one fired.
+        CheckRetCode(() => core.SMA_Open(Array.Empty<double>(), 14),
+                     RetCode.OutOfRangeStartIndex,
+                     "SMA_Open(empty) carries OutOfRangeStartIndex");
+
+        // It names the offending parameter — the core's own rejection travels
+        // through a shared ladder that has no argument to name — and the index
+        // pair is evaluated first: this call is also an absent output, and the
+        // empty history is still what it reports.
         _checks++;
         try
         {
@@ -450,6 +461,33 @@ public static class StreamApiTest
             {
                 _failures++;
                 Console.WriteLine($"  FAIL: reported \"{e.ParamName}\", expected \"inReal\"");
+            }
+            if ((e as ITaLibFailure)?.RetCode != RetCode.OutOfRangeStartIndex)
+            {
+                _failures++;
+                Console.WriteLine("  FAIL: a null output pre-empted the empty history");
+            }
+        }
+    }
+
+    /// <summary>The thrown object carries the code; the type alone cannot say
+    /// which of two index rules fired.</summary>
+    private static void CheckRetCode(Action body, RetCode expected, string what)
+    {
+        _checks++;
+        try
+        {
+            body();
+            _failures++;
+            Console.WriteLine("  FAIL: " + what + " (no exception thrown)");
+        }
+        catch (Exception e)
+        {
+            RetCode? got = (e as ITaLibFailure)?.RetCode;
+            if (got != expected)
+            {
+                _failures++;
+                Console.WriteLine("  FAIL: " + what + " (carried " + got + ")");
             }
         }
     }

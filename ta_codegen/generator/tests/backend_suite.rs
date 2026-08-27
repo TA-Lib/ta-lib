@@ -11534,6 +11534,128 @@ fn test_composed_open_fuses_every_sub_call() {
     );
 }
 
+/// Rule S1 on EVERY C# public opener — corpus-wide, for the same reason as the
+/// Java gate below.
+///
+/// C# is the backend where the probe/corpus gap is widest. Its live S1 is the
+/// public frame's `IsEmpty` throw, not the core's `historyLen < 1` return, which
+/// the frame makes unreachable from the public API — so
+/// `scripts/check_stream_retcodes.py`, which reads the core, is not evidence
+/// about the surface a caller touches. `StreamApiTest` probes it on `SMA`; this
+/// is what covers the other 175.
+///
+/// Two clauses, because the first input means something the others do not: it
+/// carries the history, so empty THERE is S1; a later one is a length
+/// disagreement, which is the catch-all like every other argument fault.
+#[test]
+fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let enums = load_enums();
+    let mut checked = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, _)) = try_load_indicator(&name) else { continue };
+        if !func.streaming {
+            continue;
+        }
+        let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let base = func.name.to_uppercase();
+        let inputs = streaming::input_array_names(&func);
+        for (verb, entry) in [
+            ("open", format!("public {base}_Stream {base}_Open( ")),
+            ("openAndFill", format!("public {base}_Stream {base}_OpenAndFill( ")),
+        ] {
+            let at = src
+                .find(&entry)
+                .unwrap_or_else(|| panic!("{}: no public {verb}", func.name));
+            let body = &src[at..];
+            let history = &inputs[0];
+            let s1 = format!(
+                "if( {history}.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof({history}), \"{base} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
+            );
+            let at_s1 = body.find(&s1).unwrap_or_else(|| {
+                panic!("{}: {verb} does not answer S1 on the history", func.name)
+            });
+            for extra in &inputs[1..] {
+                let other = format!(
+                    "if( {extra}.IsEmpty ) throw new TaLibArgumentException(\"{base} {verb}: {extra} is empty\", nameof({extra}), RetCode.BadParam);"
+                );
+                let at_other = body.find(&other).unwrap_or_else(|| {
+                    panic!("{}: {verb} does not check `{extra}`", func.name)
+                });
+                assert!(
+                    at_other > at_s1,
+                    "{}: {verb} checks `{extra}` before the history",
+                    func.name
+                );
+            }
+            checked += 1;
+        }
+    }
+    assert!(checked >= 352, "only {checked} public openers inspected");
+}
+
+/// Rule S4, then S1/S2, on EVERY Java public opener — corpus-wide, because a
+/// probe on SMA says nothing about the other 175.
+///
+/// The order is the point, and the assertion is two-sided: the FIRST input's
+/// null test precedes the index pair (a length is not readable from an array
+/// that is not there), and **everything else** follows it — the remaining price
+/// legs as much as the outputs. A one-sided version that only pinned the outputs
+/// would pass against a frame that checks every leg up front, which reports the
+/// leg where C reports the empty history.
+#[test]
+fn java_public_openers_check_arguments_then_the_index_pair() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let enums = load_enums();
+    let mut checked = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, _)) = try_load_indicator(&name) else { continue };
+        if !func.streaming {
+            continue;
+        }
+        let src = backends::java::generate(&func, &enums, &registry, &helpers);
+        let base = func.name.to_uppercase();
+        for (verb, entry, with_outputs) in [
+            ("open", format!("public {base}_Stream {base}_Open( "), false),
+            ("openAndFill", format!("public {base}_Stream {base}_OpenAndFill( "), true),
+        ] {
+            let at = src
+                .find(&entry)
+                .unwrap_or_else(|| panic!("{}: no public {verb}", func.name));
+            let body = &src[at..];
+            let history = &streaming::input_array_names(&func)[0];
+            let pair = body
+                .find(&format!("requireHistory(\"{base} {verb}\", {history}.length);"))
+                .unwrap_or_else(|| panic!("{}: {verb} does not check the index pair", func.name));
+
+            let mut names: Vec<String> = streaming::input_array_names(&func);
+            if with_outputs {
+                names.extend(func.outputs.iter().map(|o| o.name.clone()));
+            }
+            for arg in &names {
+                let needle = format!("requireArgument(\"{base} {verb}\", \"{arg}\", {arg});");
+                let at_arg = body.find(&needle).unwrap_or_else(|| {
+                    panic!("{}: {verb} does not check `{arg}`", func.name)
+                });
+                // Only the history is allowed in front of the pair.
+                let expect_after = arg != history;
+                assert_eq!(
+                    at_arg > pair,
+                    expect_after,
+                    "{}: {verb}'s check of `{arg}` is on the wrong side of the index pair",
+                    func.name
+                );
+            }
+            checked += 1;
+        }
+    }
+    assert!(checked >= 352, "only {checked} public openers inspected");
+}
+
 /// Every transcribed `_OpenImpl` rejects an anchor that lands past the history,
 /// in all four backends, and does it before any loop can run.
 ///
@@ -11653,7 +11775,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 
     // guard text, the emptiness check it must follow, and the signature marker
     let specs: [(&str, &str, &str); 4] = [
-        ("C", "if( startIdx > historyLen - 1 )", "if( historyLen < 1 ) return TA_BAD_PARAM;"),
+        ("C", "if( startIdx > historyLen - 1 )", "if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;"),
         ("Rust", "if startIdx > endIdx {", ".is_empty()"),
         ("Java", "if( startIdx > endIdx ) {", "historyLen < 1"),
         ("C#", "if( startIdx > endIdx ) {", "historyLen < 1"),

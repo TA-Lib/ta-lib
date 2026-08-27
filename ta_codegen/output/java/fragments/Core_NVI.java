@@ -452,11 +452,14 @@
       double tempNVI = 0;
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.length != inClose.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.length != inClose.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -555,10 +558,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public NVI_Stream NVI_Open( double inClose[], double inVolume[] )
    {
+      requireArgument("NVI open", "inClose", inClose);
+      requireHistory("NVI open", inClose.length);
+      requireArgument("NVI open", "inVolume", inVolume);
       return NVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
@@ -572,6 +581,10 @@
     */
    public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
+      requireArgument("NVI openAndFill", "inClose", inClose);
+      requireHistory("NVI openAndFill", inClose.length);
+      requireArgument("NVI openAndFill", "inVolume", inVolume);
+      requireArgument("NVI openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

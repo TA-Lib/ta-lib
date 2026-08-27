@@ -817,7 +817,7 @@
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -943,7 +943,7 @@
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1071,7 +1071,7 @@
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1200,10 +1200,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MA_Stream MA_Open( double inReal[], int optInTimePeriod, MAType optInMAType )
    {
+      requireArgument("MA open", "inReal", inReal);
+      requireHistory("MA open", inReal.length);
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
    /**
@@ -1217,6 +1222,9 @@
     */
    public MA_Stream MA_OpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
    {
+      requireArgument("MA openAndFill", "inReal", inReal);
+      requireHistory("MA openAndFill", inReal.length);
+      requireArgument("MA openAndFill", "outReal", outReal);
       MA_Stream sp = new MA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

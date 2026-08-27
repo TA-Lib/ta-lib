@@ -1520,7 +1520,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1968,10 +1968,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public HT_DCPHASE_Stream HT_DCPHASE_Open( double inReal[] )
    {
+      requireArgument("HT_DCPHASE open", "inReal", inReal);
+      requireHistory("HT_DCPHASE open", inReal.length);
       return HT_DCPHASE_OpenInternal(inReal, 0);
    }
    /**
@@ -1985,6 +1990,9 @@
     */
    public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( double inReal[], double outReal[] )
    {
+      requireArgument("HT_DCPHASE openAndFill", "inReal", inReal);
+      requireHistory("HT_DCPHASE openAndFill", inReal.length);
+      requireArgument("HT_DCPHASE openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

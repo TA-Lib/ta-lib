@@ -658,11 +658,14 @@ public partial class Core
       int lookbackTotal = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.Length != inReal.Length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.Length != inReal.Length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -828,12 +831,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>VWMA_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public VWMA_Stream VWMA_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("VWMA open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
 
@@ -861,12 +864,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
-   /// output.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public VWMA_Stream VWMA_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("VWMA openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
       }

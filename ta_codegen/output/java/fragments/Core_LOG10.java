@@ -324,7 +324,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -390,10 +390,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public LOG10_Stream LOG10_Open( double inReal[] )
    {
+      requireArgument("LOG10 open", "inReal", inReal);
+      requireHistory("LOG10 open", inReal.length);
       return LOG10_OpenInternal(inReal, 0);
    }
    /**
@@ -407,6 +412,9 @@
     */
    public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
    {
+      requireArgument("LOG10 openAndFill", "inReal", inReal);
+      requireHistory("LOG10 openAndFill", inReal.length);
+      requireArgument("LOG10 openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

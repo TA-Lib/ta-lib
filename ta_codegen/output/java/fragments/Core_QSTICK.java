@@ -493,11 +493,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
@@ -636,10 +639,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public QSTICK_Stream QSTICK_Open( double inOpen[], double inClose[], int optInTimePeriod )
    {
+      requireArgument("QSTICK open", "inOpen", inOpen);
+      requireHistory("QSTICK open", inOpen.length);
+      requireArgument("QSTICK open", "inClose", inClose);
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
@@ -653,6 +662,10 @@
     */
    public QSTICK_Stream QSTICK_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("QSTICK openAndFill", "inOpen", inOpen);
+      requireHistory("QSTICK openAndFill", inOpen.length);
+      requireArgument("QSTICK openAndFill", "inClose", inClose);
+      requireArgument("QSTICK openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

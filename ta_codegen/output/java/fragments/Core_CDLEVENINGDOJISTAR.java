@@ -718,11 +718,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
@@ -932,10 +935,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
+      requireArgument("CDLEVENINGDOJISTAR open", "inOpen", inOpen);
+      requireHistory("CDLEVENINGDOJISTAR open", inOpen.length);
+      requireArgument("CDLEVENINGDOJISTAR open", "inHigh", inHigh);
+      requireArgument("CDLEVENINGDOJISTAR open", "inLow", inLow);
+      requireArgument("CDLEVENINGDOJISTAR open", "inClose", inClose);
       return CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -949,6 +960,12 @@
     */
    public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
+      requireArgument("CDLEVENINGDOJISTAR openAndFill", "inOpen", inOpen);
+      requireHistory("CDLEVENINGDOJISTAR openAndFill", inOpen.length);
+      requireArgument("CDLEVENINGDOJISTAR openAndFill", "inHigh", inHigh);
+      requireArgument("CDLEVENINGDOJISTAR openAndFill", "inLow", inLow);
+      requireArgument("CDLEVENINGDOJISTAR openAndFill", "inClose", inClose);
+      requireArgument("CDLEVENINGDOJISTAR openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

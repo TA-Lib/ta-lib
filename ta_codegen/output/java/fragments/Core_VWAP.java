@@ -610,11 +610,14 @@
       int i = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -780,10 +783,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public VWAP_Stream VWAP_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
    {
+      requireArgument("VWAP open", "inHigh", inHigh);
+      requireHistory("VWAP open", inHigh.length);
+      requireArgument("VWAP open", "inLow", inLow);
+      requireArgument("VWAP open", "inClose", inClose);
+      requireArgument("VWAP open", "inVolume", inVolume);
       return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
@@ -797,6 +808,12 @@
     */
    public VWAP_Stream VWAP_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
+      requireArgument("VWAP openAndFill", "inHigh", inHigh);
+      requireHistory("VWAP openAndFill", inHigh.length);
+      requireArgument("VWAP openAndFill", "inLow", inLow);
+      requireArgument("VWAP openAndFill", "inClose", inClose);
+      requireArgument("VWAP openAndFill", "inVolume", inVolume);
+      requireArgument("VWAP openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

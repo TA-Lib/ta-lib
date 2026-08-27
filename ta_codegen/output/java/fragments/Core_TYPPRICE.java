@@ -342,11 +342,14 @@
       int i = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -411,10 +414,17 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public TYPPRICE_Stream TYPPRICE_Open( double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("TYPPRICE open", "inHigh", inHigh);
+      requireHistory("TYPPRICE open", inHigh.length);
+      requireArgument("TYPPRICE open", "inLow", inLow);
+      requireArgument("TYPPRICE open", "inClose", inClose);
       return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
@@ -428,6 +438,11 @@
     */
    public TYPPRICE_Stream TYPPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
+      requireArgument("TYPPRICE openAndFill", "inHigh", inHigh);
+      requireHistory("TYPPRICE openAndFill", inHigh.length);
+      requireArgument("TYPPRICE openAndFill", "inLow", inLow);
+      requireArgument("TYPPRICE openAndFill", "inClose", inClose);
+      requireArgument("TYPPRICE openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

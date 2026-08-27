@@ -1073,11 +1073,14 @@
       int maxIdx_term = (32)-1;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod1 == Integer.MIN_VALUE ) {
          optInTimePeriod1 = 7;
@@ -1393,10 +1396,17 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public ULTOSC_Stream ULTOSC_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
+      requireArgument("ULTOSC open", "inHigh", inHigh);
+      requireHistory("ULTOSC open", inHigh.length);
+      requireArgument("ULTOSC open", "inLow", inLow);
+      requireArgument("ULTOSC open", "inClose", inClose);
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
    /**
@@ -1410,6 +1420,11 @@
     */
    public ULTOSC_Stream ULTOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
    {
+      requireArgument("ULTOSC openAndFill", "inHigh", inHigh);
+      requireHistory("ULTOSC openAndFill", inHigh.length);
+      requireArgument("ULTOSC openAndFill", "inLow", inLow);
+      requireArgument("ULTOSC openAndFill", "inClose", inClose);
+      requireArgument("ULTOSC openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

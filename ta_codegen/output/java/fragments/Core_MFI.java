@@ -751,11 +751,14 @@
       int maxIdx_mflow = (50)-1;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -974,10 +977,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MFI_Stream MFI_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
    {
+      requireArgument("MFI open", "inHigh", inHigh);
+      requireHistory("MFI open", inHigh.length);
+      requireArgument("MFI open", "inLow", inLow);
+      requireArgument("MFI open", "inClose", inClose);
+      requireArgument("MFI open", "inVolume", inVolume);
       return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -991,6 +1002,12 @@
     */
    public MFI_Stream MFI_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("MFI openAndFill", "inHigh", inHigh);
+      requireHistory("MFI openAndFill", inHigh.length);
+      requireArgument("MFI openAndFill", "inLow", inLow);
+      requireArgument("MFI openAndFill", "inClose", inClose);
+      requireArgument("MFI openAndFill", "inVolume", inVolume);
+      requireArgument("MFI openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

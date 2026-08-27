@@ -943,11 +943,14 @@ public partial class Core
    private RetCode MAVP_OpenImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
-      if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inPeriods.Length != inReal.Length ) {
+         return RetCode.BadParam;
       }
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
@@ -1007,11 +1010,14 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       int historyLen = inReal.Length;
-      if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inPeriods.Length != inReal.Length ) {
+         return RetCode.BadParam;
       }
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
@@ -1111,12 +1117,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAVP_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public MAVP_Stream MAVP_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      if( inPeriods.IsEmpty ) throw new TaLibArgumentException("inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inPeriods.IsEmpty ) throw new TaLibArgumentException("MAVP open: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
@@ -1147,12 +1153,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
-   /// output.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public MAVP_Stream MAVP_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      if( inPeriods.IsEmpty ) throw new TaLibArgumentException("inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inPeriods.IsEmpty ) throw new TaLibArgumentException("MAVP openAndFill: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx;

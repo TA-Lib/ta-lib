@@ -529,11 +529,14 @@ public partial class Core
       double tempPVI = 0;
       int historyLen = inClose.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.Length != inClose.Length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.Length != inClose.Length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx = 0;
@@ -627,12 +630,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PVI_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public PVI_Stream PVI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("PVI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
 
@@ -657,12 +660,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
-   /// output.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public PVI_Stream PVI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("PVI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("PVI", "openAndFill", RetCode.BadParam);
       }

@@ -472,7 +472,9 @@ fn java_open_family_is_one_core_with_three_entries() {
         ("public CDLHAMMER_Stream CDLHAMMER_Open(", "CDLHAMMER_OpenInternal("),
     ] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
-        let body = &s[at..at + 800.min(s.len() - at)];
+        // Wide enough for the four price legs' presence checks to precede the
+        // delegating call on a candlestick's public fill.
+        let body = &s[at..at + 1600.min(s.len() - at)];
         assert!(body.contains(callee), "{w} delegates to {callee}:\n{body}");
         assert!(
             !body.contains("BodyPeriodTotal"),

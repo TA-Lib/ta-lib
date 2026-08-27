@@ -776,7 +776,7 @@ public partial class Core
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1005,11 +1005,11 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public T3_Stream T3_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "T3 open: history is empty", RetCode.OutOfRangeStartIndex);
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
 
@@ -1037,11 +1037,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
-   /// output.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    public T3_Stream T3_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "T3 openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("T3", "openAndFill", RetCode.BadParam);
       }

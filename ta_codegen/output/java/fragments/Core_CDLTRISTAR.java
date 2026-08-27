@@ -553,11 +553,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -707,10 +710,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLTRISTAR_Stream CDLTRISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLTRISTAR open", "inOpen", inOpen);
+      requireHistory("CDLTRISTAR open", inOpen.length);
+      requireArgument("CDLTRISTAR open", "inHigh", inHigh);
+      requireArgument("CDLTRISTAR open", "inLow", inLow);
+      requireArgument("CDLTRISTAR open", "inClose", inClose);
       return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -724,6 +735,12 @@
     */
    public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLTRISTAR openAndFill", "inOpen", inOpen);
+      requireHistory("CDLTRISTAR openAndFill", inOpen.length);
+      requireArgument("CDLTRISTAR openAndFill", "inHigh", inHigh);
+      requireArgument("CDLTRISTAR openAndFill", "inLow", inLow);
+      requireArgument("CDLTRISTAR openAndFill", "inClose", inClose);
+      requireArgument("CDLTRISTAR openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

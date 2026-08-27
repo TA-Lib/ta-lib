@@ -352,11 +352,14 @@
       int i = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -421,10 +424,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public AVGPRICE_Stream AVGPRICE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("AVGPRICE open", "inOpen", inOpen);
+      requireHistory("AVGPRICE open", inOpen.length);
+      requireArgument("AVGPRICE open", "inHigh", inHigh);
+      requireArgument("AVGPRICE open", "inLow", inLow);
+      requireArgument("AVGPRICE open", "inClose", inClose);
       return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -438,6 +449,12 @@
     */
    public AVGPRICE_Stream AVGPRICE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
+      requireArgument("AVGPRICE openAndFill", "inOpen", inOpen);
+      requireHistory("AVGPRICE openAndFill", inOpen.length);
+      requireArgument("AVGPRICE openAndFill", "inHigh", inHigh);
+      requireArgument("AVGPRICE openAndFill", "inLow", inLow);
+      requireArgument("AVGPRICE openAndFill", "inClose", inClose);
+      requireArgument("AVGPRICE openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          throw new TaLibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

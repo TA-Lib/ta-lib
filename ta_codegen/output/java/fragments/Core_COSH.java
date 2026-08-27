@@ -318,7 +318,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -384,10 +384,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public COSH_Stream COSH_Open( double inReal[] )
    {
+      requireArgument("COSH open", "inReal", inReal);
+      requireHistory("COSH open", inReal.length);
       return COSH_OpenInternal(inReal, 0);
    }
    /**
@@ -401,6 +406,9 @@
     */
    public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
    {
+      requireArgument("COSH openAndFill", "inReal", inReal);
+      requireHistory("COSH openAndFill", inReal.length);
+      requireArgument("COSH openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

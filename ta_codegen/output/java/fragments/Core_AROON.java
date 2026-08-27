@@ -666,11 +666,14 @@
       int i = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -841,10 +844,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public AROON_Stream AROON_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
+      requireArgument("AROON open", "inHigh", inHigh);
+      requireHistory("AROON open", inHigh.length);
+      requireArgument("AROON open", "inLow", inLow);
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -858,6 +867,11 @@
     */
    public AROON_Stream AROON_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
    {
+      requireArgument("AROON openAndFill", "inHigh", inHigh);
+      requireHistory("AROON openAndFill", inHigh.length);
+      requireArgument("AROON openAndFill", "inLow", inLow);
+      requireArgument("AROON openAndFill", "outAroonDown", outAroonDown);
+      requireArgument("AROON openAndFill", "outAroonUp", outAroonUp);
       if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
          throw new TaLibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

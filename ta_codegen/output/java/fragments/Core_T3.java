@@ -713,7 +713,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -944,10 +944,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public T3_Stream T3_Open( double inReal[], int optInTimePeriod, double optInVFactor )
    {
+      requireArgument("T3 open", "inReal", inReal);
+      requireHistory("T3 open", inReal.length);
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
    /**
@@ -961,6 +966,9 @@
     */
    public T3_Stream T3_OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
    {
+      requireArgument("T3 openAndFill", "inReal", inReal);
+      requireHistory("T3 openAndFill", inReal.length);
+      requireArgument("T3 openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

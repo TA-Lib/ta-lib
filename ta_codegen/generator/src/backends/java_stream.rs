@@ -1506,12 +1506,13 @@ fn emit_open_head(o: &mut String, func: &FuncDef, _outputs: &[String]) {
 fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    let mut checks: Vec<String> = vec![format!("historyLen < 1")];
-    for extra in &inputs[1..] {
-        checks.push(format!("{extra}.length != {first}.length"));
-    }
-    let _ = writeln!(o, "      if( {} ) {{", checks.join(" || "));
-    let _ = writeln!(o, "         return RetCode.BadParam;");
+    // The implied index pair first: an opener is a batch call over
+    // `[0, historyLen - 1]`, so S1 and S2 are B1 and B2 read on that range and
+    // answer the same two codes (docs/error-handling-spec.md 2.3). `historyLen`
+    // is the FIRST input's length, so a later input of a different length is an
+    // argument disagreement, not an empty history.
+    let _ = writeln!(o, "      if( historyLen < 1 ) {{");
+    let _ = writeln!(o, "         return RetCode.OutOfRangeStartIndex;");
     let _ = writeln!(o, "      }}");
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
     // other and MAX_INDEX bounds it too (#180). Without this the streaming
@@ -1520,6 +1521,15 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &H
     let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
+    let mismatches: Vec<String> = inputs[1..]
+        .iter()
+        .map(|extra| format!("{extra}.length != {first}.length"))
+        .collect();
+    if !mismatches.is_empty() {
+        let _ = writeln!(o, "      if( {} ) {{", mismatches.join(" || "));
+        let _ = writeln!(o, "         return RetCode.BadParam;");
+        let _ = writeln!(o, "      }}");
+    }
     o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
     if mode == OutMode::Fill {
         // FILL ONLY, and exempt tiers only: a merged tier carries this guard in
@@ -2062,6 +2072,45 @@ fn emit_open_internal_seam(
 
 }
 
+/// Rule S4 at the PUBLIC opener, with the implied index pair (S1/S2) in the
+/// middle of it.
+///
+/// **Exactly one presence check precedes the pair**: the FIRST input's, because
+/// that is the array `historyLen` is read from and a length cannot be taken from
+/// an array that is not there. Every other argument — the remaining price legs
+/// included — is checked after, which is the specified order
+/// (`docs/error-handling-spec.md` §2.3, footnote [4]). Checking them all up
+/// front reads as tidier and is wrong: a candlestick opened on an empty history
+/// with one null leg would report the leg, where C reports the empty history.
+///
+/// `<N>_OpenImpl` answers the pair too; this runs first only to fix the ORDER,
+/// exactly as `Core.requireIndexRange` does in the batch tier. Without it a
+/// null output pre-empted the empty history, and a null input reached
+/// `inReal.length` and surfaced as a bare `NullPointerException` naming nothing.
+fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outputs: bool) {
+    let n = func.name.to_uppercase();
+    let inputs = streaming::input_array_names(func);
+    let history = &inputs[0];
+    let _ = writeln!(o, "      requireArgument(\"{n} {verb}\", \"{history}\", {history});");
+    let _ = writeln!(o, "      requireHistory(\"{n} {verb}\", {history}.length);");
+    for input in &inputs[1..] {
+        let _ = writeln!(o, "      requireArgument(\"{n} {verb}\", \"{input}\", {input});");
+    }
+    if with_outputs {
+        // EVERY output, the ones marked `nullable` included: unlike C's, this
+        // fill guards no output write, so a null one faults inside the loop
+        // whatever the flag says. Naming it is the whole change — the call was
+        // already rejected, by `NullPointerException`.
+        for out in &func.outputs {
+            let _ = writeln!(
+                o,
+                "      requireArgument(\"{n} {verb}\", \"{0}\", {0});",
+                out.name
+            );
+        }
+    }
+}
+
 /// `openInternal` (the anchored plain open), the public `<base>_Open`, and the
 /// public `<base>_OpenAndFill`.
 ///
@@ -2110,7 +2159,10 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
          \x20   * (unstable-period aware), or {{@link InsufficientHistoryException}} is\n\
          \x20   * thrown. Out-of-range parameters throw {{@link IllegalArgumentException}}\n\
          \x20   * ({{@code Integer.MIN_VALUE}} selects an integer parameter's documented\n\
-         \x20   * default, as in the batch API).\n\
+         \x20   * default, as in the batch API). An EMPTY history throws\n\
+         \x20   * {{@link IndexOutOfBoundsException}} — its implied {{@code startIdx}} of 0\n\
+         \x20   * names no bar — and a null argument {{@link IllegalArgumentException}},\n\
+         \x20   * both ahead of everything above.\n\
          \x20   */"
     );
     let _ = writeln!(
@@ -2118,6 +2170,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         "   public {class} {base}_Open( {}{opt_sig_str} )\n   {{",
         in_sig.join(", ")
     );
+    emit_public_open_guards(o, func, "open", false);
     let _ = writeln!(
         o,
         "      return {base}_OpenInternal({}, 0{opt_fwd_str});",
@@ -2158,6 +2211,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         "   public {class} {base}_OpenAndFill( {} )\n   {{",
         fill_sig.join(", ")
     );
+    emit_public_open_guards(o, func, "openAndFill", true);
     if merged {
         // The guard the anchored seam deliberately omits: every composed
         // sub-call passes a destination that aliases neither its sources nor

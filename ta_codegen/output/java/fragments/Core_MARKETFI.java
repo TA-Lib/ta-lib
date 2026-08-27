@@ -410,11 +410,14 @@
       int i = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inVolume.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -506,10 +509,17 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MARKETFI_Stream MARKETFI_Open( double inHigh[], double inLow[], double inVolume[] )
    {
+      requireArgument("MARKETFI open", "inHigh", inHigh);
+      requireHistory("MARKETFI open", inHigh.length);
+      requireArgument("MARKETFI open", "inLow", inLow);
+      requireArgument("MARKETFI open", "inVolume", inVolume);
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
    /**
@@ -523,6 +533,11 @@
     */
    public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
    {
+      requireArgument("MARKETFI openAndFill", "inHigh", inHigh);
+      requireHistory("MARKETFI openAndFill", inHigh.length);
+      requireArgument("MARKETFI openAndFill", "inLow", inLow);
+      requireArgument("MARKETFI openAndFill", "inVolume", inVolume);
+      requireArgument("MARKETFI openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

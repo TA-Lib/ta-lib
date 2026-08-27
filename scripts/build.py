@@ -124,9 +124,11 @@ def show_help():
                         Only drift this run introduces fails it, so it is
                         usable on a dirty working tree.
     check-stream-retcodes
-                        Verify every short-history arm, in all four backends,
-                        answers TA_INSUFFICIENT_HISTORY (rule S7). Pure text;
-                        also run as part of regen-check.
+                        Verify every history-length arm, in all four backends,
+                        answers its own code: TA_INSUFFICIENT_HISTORY for a
+                        short history (S7), TA_OUT_OF_RANGE_START_INDEX for an
+                        empty one (S1). Pure text; also run as part of
+                        regen-check.
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
     check-mcdc          Verify each MC/DC builder's pb_conditions(N) matches the
@@ -457,7 +459,7 @@ def _surviving_probes(root_dir: str, was_dirty: set) -> list:
     return survivors
 
 def check_stream_retcodes(root_dir: str) -> bool:
-    """Rule S6 answers the same code in all four backends (#236).
+    """The two history-length rules answer the same code in all four backends.
 
     A separate script because it reads the GENERATED output rather than the
     input, and because it is the only check here that is cross-backend by
@@ -479,7 +481,7 @@ def regen_check(root_dir: str) -> int:
     if not check_regtest_source_lists(root_dir):
         return 1
 
-    print("\n=== Short-history return code (rule S7) ===")
+    print("\n=== History-length return codes (rules S1 and S7) ===")
     if not check_stream_retcodes(root_dir):
         return 1
 

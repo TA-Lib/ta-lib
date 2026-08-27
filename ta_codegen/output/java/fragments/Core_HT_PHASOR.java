@@ -1360,7 +1360,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1746,10 +1746,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public HT_PHASOR_Stream HT_PHASOR_Open( double inReal[] )
    {
+      requireArgument("HT_PHASOR open", "inReal", inReal);
+      requireHistory("HT_PHASOR open", inReal.length);
       return HT_PHASOR_OpenInternal(inReal, 0);
    }
    /**
@@ -1763,6 +1768,10 @@
     */
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
+      requireArgument("HT_PHASOR openAndFill", "inReal", inReal);
+      requireHistory("HT_PHASOR openAndFill", inReal.length);
+      requireArgument("HT_PHASOR openAndFill", "outInPhase", outInPhase);
+      requireArgument("HT_PHASOR openAndFill", "outQuadrature", outQuadrature);
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
          throw new TaLibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

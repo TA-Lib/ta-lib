@@ -1775,7 +1775,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -2305,10 +2305,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_Open( double inReal[] )
    {
+      requireArgument("HT_TRENDMODE open", "inReal", inReal);
+      requireHistory("HT_TRENDMODE open", inReal.length);
       return HT_TRENDMODE_OpenInternal(inReal, 0);
    }
    /**
@@ -2322,6 +2327,9 @@
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
    {
+      requireArgument("HT_TRENDMODE openAndFill", "inReal", inReal);
+      requireHistory("HT_TRENDMODE openAndFill", inReal.length);
+      requireArgument("HT_TRENDMODE openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

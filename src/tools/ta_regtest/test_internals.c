@@ -184,14 +184,16 @@ ErrorNumber test_internals( void )
  *
  * Every case carries two controls, because the assertion alone would pass
  * against a stream that answered TA_INSUFFICIENT_HISTORY for everything:
- * ONE MORE BAR must succeed (so the rejection is about the length), and a bad
- * parameter at sufficient history must still answer TA_BAD_PARAM (so the new
- * code did not simply replace the catch-all).
+ * ONE MORE BAR must succeed (so the rejection is about the length), and a
+ * rejection that is NOT about the length must keep its OWN code -- TA_BAD_PARAM
+ * for a spoiled parameter, and for CDLDOJI, which has none to spoil, S1's
+ * TA_OUT_OF_RANGE_START_INDEX. Either way the point is that S7's code did not
+ * simply swallow every other rejection this tier owns.
  */
 static int shShort, shControl;
-static int shUpper;
+static int shUpper, shEmpty;
 
-#define SH_CHECK( name, lookbackExpr, shortOpen, enoughOpen, badParamOpen, closeCall ) \
+#define SH_CHECK( name, lookbackExpr, shortOpen, enoughOpen, otherOpen, otherCode, closeCall ) \
    do {                                                                        \
       int lb__ = (lookbackExpr);                                               \
       TA_RetCode rc__;                                                         \
@@ -225,12 +227,12 @@ static int shUpper;
       }                                                                        \
       (closeCall);                                                             \
       shControl++;                                                             \
-      rc__ = (badParamOpen);                                                   \
-      if( rc__ != TA_BAD_PARAM )                                               \
+      rc__ = (otherOpen);                                                      \
+      if( rc__ != (otherCode) )                                                \
       {                                                                        \
          printf( "\nFailed: %s bad argument returned %d, expected "             \
-                 "TA_BAD_PARAM (%d) -- the catch-all must survive\n",          \
-                 name, (int)rc__, (int)TA_BAD_PARAM );                         \
+                 "%d -- S7's code must not swallow the others\n",              \
+                 name, (int)rc__, (int)(otherCode) );                          \
          return TA_STREAM_SHORT_HISTORY_CONTROL;                               \
       }                                                                        \
       shControl++;                                                             \
@@ -256,7 +258,7 @@ static ErrorNumber testStreamShortHistory( void )
    }
 
    shShort = shControl = 0;
-   shUpper = 0;
+   shUpper = shEmpty = 0;
 
    for( i = 0; i < 512; i++ )
    {
@@ -271,7 +273,7 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_SMA_Open", TA_SMA_Lookback( 30 ),
                 TA_SMA_Open( &st, bars, TA_SMA_Lookback( 30 ), 30, &v ),
                 TA_SMA_Open( &st, bars, TA_SMA_Lookback( 30 ) + 1, 30, &v ),
-                TA_SMA_Open( &st, bars, 200, 0, &v ),
+                TA_SMA_Open( &st, bars, 200, 0, &v ), TA_BAD_PARAM,
                 TA_SMA_Close( st ) );
    }
 
@@ -283,7 +285,7 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_BBANDS_Open", lb,
                 TA_BBANDS_Open( &st, bars, lb, 20, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ),
                 TA_BBANDS_Open( &st, bars, lb + 1, 20, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ),
-                TA_BBANDS_Open( &st, bars, 200, 0, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ),
+                TA_BBANDS_Open( &st, bars, 200, 0, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ), TA_BAD_PARAM,
                 TA_BBANDS_Close( st ) );
    }
 
@@ -295,7 +297,7 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_MA_Open", lb,
                 TA_MA_Open( &st, bars, lb, 30, TA_MAType_EMA, &v ),
                 TA_MA_Open( &st, bars, lb + 1, 30, TA_MAType_EMA, &v ),
-                TA_MA_Open( &st, bars, 200, 0, TA_MAType_EMA, &v ),
+                TA_MA_Open( &st, bars, 200, 0, TA_MAType_EMA, &v ), TA_BAD_PARAM,
                 TA_MA_Close( st ) );
    }
 
@@ -307,7 +309,7 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_MAVP_Open", lb,
                 TA_MAVP_Open( &st, bars, periods, lb, 2, 30, TA_MAType_SMA, &v ),
                 TA_MAVP_Open( &st, bars, periods, lb + 1, 2, 30, TA_MAType_SMA, &v ),
-                TA_MAVP_Open( &st, bars, periods, 200, 2, 0, TA_MAType_SMA, &v ),
+                TA_MAVP_Open( &st, bars, periods, 200, 2, 0, TA_MAType_SMA, &v ), TA_BAD_PARAM,
                 TA_MAVP_Close( st ) );
    }
 
@@ -320,11 +322,9 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb, &v ),
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, &v ),
                 /* No optional parameter to spoil: an empty history is the
-                 * other rejection this tier owns (rule S1). It still answers
-                 * the catch-all, which is the deviation Appendix D item 13
-                 * records -- this leg moves to TA_OUT_OF_RANGE_START_INDEX
-                 * when that is fixed. */
+                 * other rejection this tier owns (rule S1). */
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, 0, &v ),
+                TA_OUT_OF_RANGE_START_INDEX,
                 TA_CDLDOJI_Close( st ) );
    }
 
@@ -347,7 +347,7 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_EMA_Open (identity, unstable 5)", lb,
                 TA_EMA_Open( &st, bars, lb, 1, &v ),
                 TA_EMA_Open( &st, bars, lb + 1, 1, &v ),
-                TA_EMA_Open( &st, bars, 200, 0, &v ),
+                TA_EMA_Open( &st, bars, 200, 0, &v ), TA_BAD_PARAM,
                 TA_EMA_Close( st ) );
       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
    }
@@ -364,7 +364,7 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_MAVP_OpenAndFill", lb,
                 TA_MAVP_OpenAndFill( &st, bars, periods, lb, 2, 30, TA_MAType_SMA, &beg, &nb, out2 ),
                 TA_MAVP_OpenAndFill( &st, bars, periods, lb + 1, 2, 30, TA_MAType_SMA, &beg, &nb, out2 ),
-                TA_MAVP_OpenAndFill( &st, bars, periods, 200, 2, 0, TA_MAType_SMA, &beg, &nb, out2 ),
+                TA_MAVP_OpenAndFill( &st, bars, periods, 200, 2, 0, TA_MAType_SMA, &beg, &nb, out2 ), TA_BAD_PARAM,
                 TA_MAVP_Close( st ) );
    }
 
@@ -377,8 +377,90 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_SMA_OpenAndFill", lb,
                 TA_SMA_OpenAndFill( &st, bars, lb, 30, &beg, &nb, out ),
                 TA_SMA_OpenAndFill( &st, bars, lb + 1, 30, &beg, &nb, out ),
-                TA_SMA_OpenAndFill( &st, bars, 200, 0, &beg, &nb, out ),
+                TA_SMA_OpenAndFill( &st, bars, 200, 0, &beg, &nb, out ), TA_BAD_PARAM,
                 TA_SMA_Close( st ) );
+   }
+
+   /* Rule S1, the LOWER half of the history bound: the implied `startIdx` of 0
+    * has to name a bar, so an empty history is TA_OUT_OF_RANGE_START_INDEX --
+    * B1's code, because an opener is a batch call over `[0, historyLen - 1]`.
+    *
+    * What is worth the probe is the ORDER, not the code alone. The pair is
+    * evaluated ahead of every presence check, so a call that is BOTH an absent
+    * output and an empty history reports this rather than TA_BAD_PARAM; until
+    * #268 it reported the absent output, and a caller who fixed that argument
+    * got the same rejection back for a reason nothing had mentioned. The one
+    * check that still precedes the pair is the handle, and for a reason no
+    * ordering choice can remove: `*stream = NULL` is how "no handle on any
+    * failure" is published, and there is nowhere to publish it without one.
+    * That case is the last control below. */
+   {
+      TA_SMA_Stream     *sst = NULL;
+      TA_MA_Stream      *mst = NULL;
+      TA_MAVP_Stream    *pst = NULL;
+      TA_CDLDOJI_Stream *cst = NULL;
+      static double out[512];
+      double v = 0.0;
+      int iv = 0;
+      int beg = 0, nb = 0;
+      TA_RetCode rc;
+      struct { const char *name; TA_RetCode rc; } cases[8];
+
+      cases[0].name = "TA_SMA_Open(historyLen=0)";
+      cases[0].rc   = TA_SMA_Open( &sst, bars, 0, 30, &v );
+      cases[1].name = "TA_SMA_OpenAndFill(historyLen=0)";
+      cases[1].rc   = TA_SMA_OpenAndFill( &sst, bars, 0, 30, &beg, &nb, out );
+      cases[2].name = "TA_SMA_Open(historyLen=-1)";
+      cases[2].rc   = TA_SMA_Open( &sst, bars, -1, 30, &v );
+      /* The order claim: each of these is also an S4 rejection. */
+      cases[3].name = "TA_SMA_Open(historyLen=0, outReal=NULL)";
+      cases[3].rc   = TA_SMA_Open( &sst, bars, 0, 30, NULL );
+      cases[4].name = "TA_SMA_OpenAndFill(historyLen=0, outBegIdx=NULL)";
+      cases[4].rc   = TA_SMA_OpenAndFill( &sst, bars, 0, 30, NULL, &nb, out );
+      cases[5].name = "TA_SMA_OpenAndFill(historyLen=0, inReal=NULL)";
+      cases[5].rc   = TA_SMA_OpenAndFill( &sst, NULL, 0, 30, &beg, &nb, out );
+      /* The dispatch tier and the period bank hand-roll their own prologue. */
+      cases[6].name = "TA_MA_Open(historyLen=0)";
+      cases[6].rc   = TA_MA_Open( &mst, bars, 0, 30, TA_MAType_EMA, &v );
+      cases[7].name = "TA_MAVP_Open(historyLen=0)";
+      cases[7].rc   = TA_MAVP_Open( &pst, bars, periods, 0, 2, 30, TA_MAType_SMA, &v );
+
+      for( i = 0; i < 8; i++ )
+      {
+         rc = cases[i].rc;
+         if( rc != TA_OUT_OF_RANGE_START_INDEX )
+         {
+            printf( "\nFailed: %s returned %d, expected "
+                    "TA_OUT_OF_RANGE_START_INDEX (%d)\n",
+                    cases[i].name, (int)rc, (int)TA_OUT_OF_RANGE_START_INDEX );
+            return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
+         }
+         shEmpty++;
+      }
+
+      /* A candlestick reaches it through four price legs rather than one. */
+      if( TA_CDLDOJI_Open( &cst, bars, bars, bars, bars, 0, &iv )
+          != TA_OUT_OF_RANGE_START_INDEX )
+      {
+         printf( "\nFailed: TA_CDLDOJI_Open(historyLen=0) did not report "
+                 "TA_OUT_OF_RANGE_START_INDEX\n" );
+         return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
+      }
+      shEmpty++;
+
+      /* Controls. A history of exactly one bar is inside the domain -- it is
+       * S7's business, not S1's -- and the handle still answers first. */
+      if( TA_SMA_Open( &sst, bars, 1, 30, &v ) != TA_INSUFFICIENT_HISTORY )
+      {
+         printf( "\nFailed: a one-bar history did not reach the warm-up check\n" );
+         return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
+      }
+      if( TA_SMA_Open( NULL, bars, 0, 30, &v ) != TA_BAD_PARAM )
+      {
+         printf( "\nFailed: an absent handle must answer TA_BAD_PARAM even on "
+                 "an empty history\n" );
+         return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
+      }
    }
 
    /* Rule S2, the other half of the history bound: `historyLen - 1` is the
@@ -419,6 +501,7 @@ static ErrorNumber testStreamShortHistory( void )
    printf( "  Streaming short history (S7): %d rejection(s) reporting "
            "TA_INSUFFICIENT_HISTORY, %d control(s)\n", shShort, shControl );
    printf( "  Streaming history upper bound (S2): %d rejection(s)\n", shUpper );
+   printf( "  Streaming empty history (S1): %d rejection(s)\n", shEmpty );
 
    /* Literal floors, not derived from the cases above: a count computed from the
     * loop would move with a deleted case and still "pass". */
@@ -427,6 +510,12 @@ static ErrorNumber testStreamShortHistory( void )
       printf( "\nFailed: the history upper-bound gate ran fewer checks than it "
               "was written with\n" );
       return TA_STREAM_SHORT_HISTORY_VACUOUS;
+   }
+   if( shEmpty < 9 )
+   {
+      printf( "\nFailed: the empty-history gate ran fewer checks than it was "
+              "written with\n" );
+      return TA_STREAM_EMPTY_HISTORY_VACUOUS;
    }
    if( shShort < 8 || shControl < 16 )
    {

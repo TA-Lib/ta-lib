@@ -877,11 +877,14 @@
    private RetCode MAVP_OpenImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
-      if( historyLen < 1 || inPeriods.length != inReal.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inPeriods.length != inReal.length ) {
+         return RetCode.BadParam;
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
@@ -936,11 +939,14 @@
    private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
-      if( historyLen < 1 || inPeriods.length != inReal.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inPeriods.length != inReal.length ) {
+         return RetCode.BadParam;
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
@@ -1029,10 +1035,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MAVP_Stream MAVP_Open( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
+      requireArgument("MAVP open", "inReal", inReal);
+      requireHistory("MAVP open", inReal.length);
+      requireArgument("MAVP open", "inPeriods", inPeriods);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**
@@ -1046,6 +1058,10 @@
     */
    public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
+      requireArgument("MAVP openAndFill", "inReal", inReal);
+      requireHistory("MAVP openAndFill", inReal.length);
+      requireArgument("MAVP openAndFill", "inPeriods", inPeriods);
+      requireArgument("MAVP openAndFill", "outReal", outReal);
       MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

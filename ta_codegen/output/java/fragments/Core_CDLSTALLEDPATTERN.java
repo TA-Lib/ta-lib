@@ -797,11 +797,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -1052,10 +1055,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLSTALLEDPATTERN open", "inOpen", inOpen);
+      requireHistory("CDLSTALLEDPATTERN open", inOpen.length);
+      requireArgument("CDLSTALLEDPATTERN open", "inHigh", inHigh);
+      requireArgument("CDLSTALLEDPATTERN open", "inLow", inLow);
+      requireArgument("CDLSTALLEDPATTERN open", "inClose", inClose);
       return CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -1069,6 +1080,12 @@
     */
    public CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLSTALLEDPATTERN openAndFill", "inOpen", inOpen);
+      requireHistory("CDLSTALLEDPATTERN openAndFill", inOpen.length);
+      requireArgument("CDLSTALLEDPATTERN openAndFill", "inHigh", inHigh);
+      requireArgument("CDLSTALLEDPATTERN openAndFill", "inLow", inLow);
+      requireArgument("CDLSTALLEDPATTERN openAndFill", "inClose", inClose);
+      requireArgument("CDLSTALLEDPATTERN openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

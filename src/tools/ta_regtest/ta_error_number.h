@@ -436,6 +436,10 @@ typedef enum
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
   TA_STREAM_SHORT_HISTORY_VACUOUS    = 1599,
 
+  /* Streaming empty-history rejection (rule S1 / TA_OUT_OF_RANGE_START_INDEX). */
+  TA_STREAM_EMPTY_HISTORY_WRONG_CODE = 1607,
+  TA_STREAM_EMPTY_HISTORY_VACUOUS    = 1608,
+
   /* Streaming UpdateAndFill: n bars in one call, and its partial commit. */
   TA_STREAM_UFILL_ACCEPTED_BAD_BAR   = 1601,
   TA_STREAM_UFILL_WRONG_COMMIT       = 1602,

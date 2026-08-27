@@ -24,8 +24,9 @@
 //!   restored into a reused thread-local scratch, so a peek calls the
 //!   allocator only the first time that thread peeks that function (#201).
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
-//! - `historyLen` is the input slice length; multi-input opens require
-//!   non-empty, equal-length slices (`Err(BadParam)` otherwise).
+//! - `historyLen` is the FIRST input slice's length: empty is
+//!   `Err(OutOfRangeStartIndex)` (rule S1), and a multi-input open additionally
+//!   requires the rest to match that length (`Err(BadParam)` otherwise).
 
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
@@ -1423,17 +1424,22 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
     }
 }
 
-/// The open validation head: non-empty (+ equal-length) inputs, the Fill-mode
-/// output-distinctness guard (#108), then optional-param validation. Shared by
-/// every tier.
+/// The open validation head: the implied index pair, the equal-length input
+/// check, the Fill-mode output-distinctness guard (#108), then optional-param
+/// validation. Shared by every tier.
+///
+/// The pair comes first because an opener is a batch call over
+/// `[0, historyLen - 1]`: S1 and S2 are B1 and B2 read on that range and answer
+/// the same two codes (`docs/error-handling-spec.md` §2.3). `historyLen` is the
+/// FIRST input's length — a later input being empty is a length disagreement,
+/// which is `BadParam` like every other argument fault.
 fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    let mut empties: Vec<String> = inputs.iter().map(|i| format!("{i}.is_empty()")).collect();
-    for extra in &inputs[1..] {
-        empties.push(format!("{extra}.len() != {first}.len()"));
-    }
-    let _ = writeln!(o, "        if {} {{\n            return Err(RetCode::BadParam);\n        }}", empties.join(" || "));
+    let _ = writeln!(
+        o,
+        "        if {first}.is_empty() {{\n            return Err(RetCode::OutOfRangeStartIndex);\n        }}"
+    );
     // Input-size ceiling. The fill covers bars 0..historyLen-1, so its last bar
     // is an index like any other and TA_MAX_INDEX bounds it too (#180) —
     // otherwise the streaming entry points would compute over exactly the
@@ -1447,6 +1453,17 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         o,
         "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
+    let mismatches: Vec<String> = inputs[1..]
+        .iter()
+        .map(|extra| format!("{extra}.len() != {first}.len()"))
+        .collect();
+    if !mismatches.is_empty() {
+        let _ = writeln!(
+            o,
+            "        if {} {{\n            return Err(RetCode::BadParam);\n        }}",
+            mismatches.join(" || ")
+        );
+    }
     if mode == OutMode::Fill {
         // Output mutual-distinctness (#108) — same guard the batch emits. FILL
         // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
@@ -2061,7 +2078,7 @@ fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String 
     );
     let _ = writeln!(
         d,
-        "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::InsufficientHistory`] when the history holds fewer than\n    /// `lookback + 1` bars — the one failure here worth retrying, since another\n    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an\n    /// input is empty, or input lengths differ."
+        "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::InsufficientHistory`] when the history holds fewer than\n    /// `lookback + 1` bars — the one failure here worth retrying, since another\n    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.\n    /// [`RetCode::BadParam`] when a parameter is out of range or the input\n    /// lengths differ."
     );
     if let Some(doctest) = stream_doctest(func, &sn, enums) {
         let _ = writeln!(d, "    ///");

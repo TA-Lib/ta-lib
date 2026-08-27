@@ -593,11 +593,14 @@
       int lookbackTotal = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.length != inReal.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.length != inReal.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -765,10 +768,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public VWMA_Stream VWMA_Open( double inReal[], double inVolume[], int optInTimePeriod )
    {
+      requireArgument("VWMA open", "inReal", inReal);
+      requireHistory("VWMA open", inReal.length);
+      requireArgument("VWMA open", "inVolume", inVolume);
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -782,6 +791,10 @@
     */
    public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("VWMA openAndFill", "inReal", inReal);
+      requireHistory("VWMA openAndFill", inReal.length);
+      requireArgument("VWMA openAndFill", "inVolume", inVolume);
+      requireArgument("VWMA openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

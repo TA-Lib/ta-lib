@@ -1570,7 +1570,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -2024,10 +2024,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public HT_SINE_Stream HT_SINE_Open( double inReal[] )
    {
+      requireArgument("HT_SINE open", "inReal", inReal);
+      requireHistory("HT_SINE open", inReal.length);
       return HT_SINE_OpenInternal(inReal, 0);
    }
    /**
@@ -2041,6 +2046,10 @@
     */
    public HT_SINE_Stream HT_SINE_OpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
    {
+      requireArgument("HT_SINE openAndFill", "inReal", inReal);
+      requireHistory("HT_SINE openAndFill", inReal.length);
+      requireArgument("HT_SINE openAndFill", "outSine", outSine);
+      requireArgument("HT_SINE openAndFill", "outLeadSine", outLeadSine);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
          throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

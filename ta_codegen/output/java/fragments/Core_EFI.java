@@ -570,11 +570,14 @@
    {
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.length != inClose.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inVolume.length != inClose.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
@@ -817,10 +820,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public EFI_Stream EFI_Open( double inClose[], double inVolume[], int optInTimePeriod )
    {
+      requireArgument("EFI open", "inClose", inClose);
+      requireHistory("EFI open", inClose.length);
+      requireArgument("EFI open", "inVolume", inVolume);
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -834,6 +843,10 @@
     */
    public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("EFI openAndFill", "inClose", inClose);
+      requireHistory("EFI openAndFill", inClose.length);
+      requireArgument("EFI openAndFill", "inVolume", inVolume);
+      requireArgument("EFI openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

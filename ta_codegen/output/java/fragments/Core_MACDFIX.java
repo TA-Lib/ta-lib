@@ -711,7 +711,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -929,10 +929,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MACDFIX_Stream MACDFIX_Open( double inReal[], int optInSignalPeriod )
    {
+      requireArgument("MACDFIX open", "inReal", inReal);
+      requireHistory("MACDFIX open", inReal.length);
       return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
    }
    /**
@@ -946,6 +951,11 @@
     */
    public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
+      requireArgument("MACDFIX openAndFill", "inReal", inReal);
+      requireHistory("MACDFIX openAndFill", inReal.length);
+      requireArgument("MACDFIX openAndFill", "outMACD", outMACD);
+      requireArgument("MACDFIX openAndFill", "outMACDSignal", outMACDSignal);
+      requireArgument("MACDFIX openAndFill", "outMACDHist", outMACDHist);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          throw new TaLibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

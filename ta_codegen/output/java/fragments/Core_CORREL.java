@@ -976,11 +976,14 @@
       int barsSinceReseed = 0;
       int historyLen = inReal0.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inReal1.length != inReal0.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inReal1.length != inReal0.length ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -1280,10 +1283,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CORREL_Stream CORREL_Open( double inReal0[], double inReal1[], int optInTimePeriod )
    {
+      requireArgument("CORREL open", "inReal0", inReal0);
+      requireHistory("CORREL open", inReal0.length);
+      requireArgument("CORREL open", "inReal1", inReal1);
       return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
@@ -1297,6 +1306,10 @@
     */
    public CORREL_Stream CORREL_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("CORREL openAndFill", "inReal0", inReal0);
+      requireHistory("CORREL openAndFill", inReal0.length);
+      requireArgument("CORREL openAndFill", "inReal1", inReal1);
+      requireArgument("CORREL openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -153,9 +153,9 @@ static TA_RetCode TA_ADD_OpenImpl( struct TA_ADD_Stream **stream, const double i
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
    {
       *outBegIdx = 0;
@@ -208,9 +208,9 @@ TA_LIB_API TA_RetCode TA_ADD_Open( TA_ADD_Stream **stream, const double inReal0[
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
    return TA_ADD_OpenInternal( stream, inReal0, inReal1, 0, historyLen, outReal );
 }
 
@@ -218,10 +218,9 @@ TA_LIB_API TA_RetCode TA_ADD_OpenAndFill( TA_ADD_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal0 || !inReal1 || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
    return TA_ADD_OpenAndFillInternal( stream, inReal0, inReal1, 0, historyLen, outBegIdx, outNBElement, outReal );
 }

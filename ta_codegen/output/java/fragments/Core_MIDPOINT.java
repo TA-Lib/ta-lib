@@ -714,7 +714,7 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.BadParam;
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -896,10 +896,15 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public MIDPOINT_Stream MIDPOINT_Open( double inReal[], int optInTimePeriod )
    {
+      requireArgument("MIDPOINT open", "inReal", inReal);
+      requireHistory("MIDPOINT open", inReal.length);
       return MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -913,6 +918,9 @@
     */
    public MIDPOINT_Stream MIDPOINT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
+      requireArgument("MIDPOINT openAndFill", "inReal", inReal);
+      requireHistory("MIDPOINT openAndFill", inReal.length);
+      requireArgument("MIDPOINT openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inReal ) {
          throw new TaLibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

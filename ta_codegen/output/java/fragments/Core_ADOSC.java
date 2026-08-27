@@ -637,11 +637,14 @@
       double ad = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 3;
@@ -817,10 +820,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public ADOSC_Stream ADOSC_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
    {
+      requireArgument("ADOSC open", "inHigh", inHigh);
+      requireHistory("ADOSC open", inHigh.length);
+      requireArgument("ADOSC open", "inLow", inLow);
+      requireArgument("ADOSC open", "inClose", inClose);
+      requireArgument("ADOSC open", "inVolume", inVolume);
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
@@ -834,6 +845,12 @@
     */
    public ADOSC_Stream ADOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
+      requireArgument("ADOSC openAndFill", "inHigh", inHigh);
+      requireHistory("ADOSC openAndFill", inHigh.length);
+      requireArgument("ADOSC openAndFill", "inLow", inLow);
+      requireArgument("ADOSC openAndFill", "inClose", inClose);
+      requireArgument("ADOSC openAndFill", "inVolume", inVolume);
+      requireArgument("ADOSC openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          throw new TaLibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

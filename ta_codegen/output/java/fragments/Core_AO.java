@@ -641,11 +641,14 @@
       int lookbackTotal = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length ) {
+         return RetCode.BadParam;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
@@ -837,10 +840,16 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public AO_Stream AO_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
    {
+      requireArgument("AO open", "inHigh", inHigh);
+      requireHistory("AO open", inHigh.length);
+      requireArgument("AO open", "inLow", inLow);
       return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
@@ -854,6 +863,10 @@
     */
    public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
+      requireArgument("AO openAndFill", "inHigh", inHigh);
+      requireHistory("AO openAndFill", inHigh.length);
+      requireArgument("AO openAndFill", "inLow", inLow);
+      requireArgument("AO openAndFill", "outReal", outReal);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          throw new TaLibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -630,11 +630,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -815,10 +818,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLHARAMI_Stream CDLHARAMI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLHARAMI open", "inOpen", inOpen);
+      requireHistory("CDLHARAMI open", inOpen.length);
+      requireArgument("CDLHARAMI open", "inHigh", inHigh);
+      requireArgument("CDLHARAMI open", "inLow", inLow);
+      requireArgument("CDLHARAMI open", "inClose", inClose);
       return CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -832,6 +843,12 @@
     */
    public CDLHARAMI_Stream CDLHARAMI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLHARAMI openAndFill", "inOpen", inOpen);
+      requireHistory("CDLHARAMI openAndFill", inOpen.length);
+      requireArgument("CDLHARAMI openAndFill", "inHigh", inHigh);
+      requireArgument("CDLHARAMI openAndFill", "inLow", inLow);
+      requireArgument("CDLHARAMI openAndFill", "inClose", inClose);
+      requireArgument("CDLHARAMI openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLHARAMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

@@ -544,11 +544,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -695,10 +698,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLPIERCING_Stream CDLPIERCING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLPIERCING open", "inOpen", inOpen);
+      requireHistory("CDLPIERCING open", inOpen.length);
+      requireArgument("CDLPIERCING open", "inHigh", inHigh);
+      requireArgument("CDLPIERCING open", "inLow", inLow);
+      requireArgument("CDLPIERCING open", "inClose", inClose);
       return CDLPIERCING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -712,6 +723,12 @@
     */
    public CDLPIERCING_Stream CDLPIERCING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLPIERCING openAndFill", "inOpen", inOpen);
+      requireHistory("CDLPIERCING openAndFill", inOpen.length);
+      requireArgument("CDLPIERCING openAndFill", "inHigh", inHigh);
+      requireArgument("CDLPIERCING openAndFill", "inLow", inLow);
+      requireArgument("CDLPIERCING openAndFill", "inClose", inClose);
+      requireArgument("CDLPIERCING openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLPIERCING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

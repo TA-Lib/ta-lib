@@ -541,11 +541,14 @@
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
       }
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
@@ -699,10 +702,18 @@
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API).
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
     */
    public CDLTASUKIGAP_Stream CDLTASUKIGAP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      requireArgument("CDLTASUKIGAP open", "inOpen", inOpen);
+      requireHistory("CDLTASUKIGAP open", inOpen.length);
+      requireArgument("CDLTASUKIGAP open", "inHigh", inHigh);
+      requireArgument("CDLTASUKIGAP open", "inLow", inLow);
+      requireArgument("CDLTASUKIGAP open", "inClose", inClose);
       return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -716,6 +727,12 @@
     */
    public CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      requireArgument("CDLTASUKIGAP openAndFill", "inOpen", inOpen);
+      requireHistory("CDLTASUKIGAP openAndFill", inOpen.length);
+      requireArgument("CDLTASUKIGAP openAndFill", "inHigh", inHigh);
+      requireArgument("CDLTASUKIGAP openAndFill", "inLow", inLow);
+      requireArgument("CDLTASUKIGAP openAndFill", "inClose", inClose);
+      requireArgument("CDLTASUKIGAP openAndFill", "outInteger", outInteger);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }

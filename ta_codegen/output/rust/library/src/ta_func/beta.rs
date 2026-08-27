@@ -858,11 +858,14 @@ impl Core {
     pub(crate) fn BETA_OpenImpl(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<BETA_Stream, RetCode> {
-        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
-            return Err(RetCode::BadParam);
+        if inReal0.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
         }
         if inReal0.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if inReal1.len() != inReal0.len() {
+            return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
@@ -1270,8 +1273,9 @@ impl Core {
     ///
     /// [`RetCode::InsufficientHistory`] when the history holds fewer than
     /// `lookback + 1` bars — the one failure here worth retrying, since another
-    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
-    /// input is empty, or input lengths differ.
+    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
+    /// [`RetCode::BadParam`] when a parameter is out of range or the input
+    /// lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
