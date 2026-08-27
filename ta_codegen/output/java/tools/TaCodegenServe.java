@@ -80,7 +80,9 @@ class Core {
         switch (retCode) {
             case OutOfRangeStartIndex: return new TaLibIndexException(where + "startIdx out of range", retCode);
             case OutOfRangeEndIndex: return new TaLibIndexException(where + "endIdx out of range", retCode);
-            case BadParam: return new TaLibArgumentException(where + "bad parameter", retCode);
+            case BadParam: return new TaLibArgumentException(
+                where + "bad parameter (out-of-range optional parameter, or two "
+                      + "outputs sharing one array)", retCode);
             case AllocErr: return new TaLibStateException(where + "allocation failed", retCode);
             case InternalError: return new TaLibStateException(where + "internal error", retCode);
             case InsufficientHistory: return new InsufficientHistoryException(where + "history shorter than the lookback");

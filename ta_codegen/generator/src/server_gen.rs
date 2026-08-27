@@ -3269,7 +3269,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        switch (retCode) {\n");
     s.push_str("            case OutOfRangeStartIndex: return new TaLibIndexException(where + \"startIdx out of range\", retCode);\n");
     s.push_str("            case OutOfRangeEndIndex: return new TaLibIndexException(where + \"endIdx out of range\", retCode);\n");
-    s.push_str("            case BadParam: return new TaLibArgumentException(where + \"bad parameter\", retCode);\n");
+    // Split exactly as the shipped `Core.java` splits it: the parity gate
+    // compares these bodies token by token (issue #271 item 3).
+    s.push_str("            case BadParam: return new TaLibArgumentException(\n");
+    s.push_str("                where + \"bad parameter (out-of-range optional parameter, or two \"\n");
+    s.push_str("                      + \"outputs sharing one array)\", retCode);\n");
     s.push_str("            case AllocErr: return new TaLibStateException(where + \"allocation failed\", retCode);\n");
     s.push_str("            case InternalError: return new TaLibStateException(where + \"internal error\", retCode);\n");
     s.push_str("            case InsufficientHistory: return new InsufficientHistoryException(where + \"history shorter than the lookback\");\n");

@@ -8671,7 +8671,20 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
             }
         }
         assert!(end > at, "{what}: `{sig}` has no body");
-        src[at..end].split_whitespace().collect::<Vec<_>>().join(" ")
+        // Comments are not the contract: the shipped copy carries the prose,
+        // the spliced one is deliberately bare. Only the code has to agree.
+        let mut code = String::new();
+        let mut rest = &src[at..end];
+        while let Some(i) = [rest.find("//"), rest.find("/*")].into_iter().flatten().min() {
+            code.push_str(&rest[..i]);
+            rest = if rest[i..].starts_with("//") {
+                rest[i..].find('\n').map_or("", |j| &rest[i + j..])
+            } else {
+                rest[i..].find("*/").map_or("", |j| &rest[i + j + 2..])
+            };
+        }
+        code.push_str(rest);
+        code.split_whitespace().collect::<Vec<_>>().join(" ")
     }
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -8683,11 +8696,21 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
         std::fs::read_to_string(root.join("ta_codegen/output/java/tools/TaCodegenServe.java"))
             .expect("the generated Java server");
 
+    // All ten, not the four the gate started with: `checkLength` is where rule
+    // S5's rejection actually happens, and `failure` is the whole RetCode ->
+    // exception mapping. Adding one is a line (issue #271 item 3).
     for sig in [
+        "static RuntimeException failure(String funcName, RetCode retCode) {",
+        "static int clampedStart(String funcName, int startIdx, int lookback) {",
+        "static void requireLength(String funcName, String argName, double[] array, int required) {",
+        "static void requireLength(String funcName, String argName, float[] array, int required) {",
+        "static void requireLength(String funcName, String argName, int[] array, int required) {",
+        "static void checkLength(String funcName, String argName, int actual, int required) {",
         "static int openFillCount(String funcName, int historyLen, int lookback) {",
         "static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {",
         "static void requireHistory(String funcName, int historyLen) {",
         "static void requireIndexRange(String funcName, int startIdx, int endIdx) {",
+        "static void requireArgument(String funcName, String argName, Object argument) {",
     ] {
         assert_eq!(
             method(&core, sig, "Core.java"),
