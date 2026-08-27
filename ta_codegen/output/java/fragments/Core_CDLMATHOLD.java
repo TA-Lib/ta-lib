@@ -953,6 +953,9 @@
       requireArgument("CDLMATHOLD open", "inHigh", inHigh);
       requireArgument("CDLMATHOLD open", "inLow", inLow);
       requireArgument("CDLMATHOLD open", "inClose", inClose);
+      requireHistoryLength("CDLMATHOLD open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMATHOLD open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMATHOLD open", "inClose", inClose.length, inOpen.length);
       return CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**

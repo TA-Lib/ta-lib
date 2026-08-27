@@ -420,6 +420,7 @@
       requireArgument("MULT open", "inReal0", inReal0);
       requireHistory("MULT open", inReal0.length);
       requireArgument("MULT open", "inReal1", inReal1);
+      requireHistoryLength("MULT open", "inReal1", inReal1.length, inReal0.length);
       return MULT_OpenInternal(inReal0, inReal1, 0);
    }
    /**

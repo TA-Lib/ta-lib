@@ -785,6 +785,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLTASUKIGAP open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLTASUKIGAP open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLTASUKIGAP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLTASUKIGAP", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLTASUKIGAP", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLTASUKIGAP", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

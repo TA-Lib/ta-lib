@@ -410,6 +410,7 @@
       requireArgument("SUB open", "inReal0", inReal0);
       requireHistory("SUB open", inReal0.length);
       requireArgument("SUB open", "inReal1", inReal1);
+      requireHistoryLength("SUB open", "inReal1", inReal1.length, inReal0.length);
       return SUB_OpenInternal(inReal0, inReal1, 0);
    }
    /**

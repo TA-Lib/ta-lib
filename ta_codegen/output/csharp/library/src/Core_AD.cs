@@ -607,6 +607,9 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AD open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("AD open: inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("AD open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("AD", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("AD", "open", "inClose", inClose.Length, inHigh.Length);
+      RequireHistoryLength("AD", "open", "inVolume", inVolume.Length, inHigh.Length);
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
 

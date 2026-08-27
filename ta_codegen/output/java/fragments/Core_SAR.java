@@ -1194,6 +1194,7 @@
       requireArgument("SAR open", "inHigh", inHigh);
       requireHistory("SAR open", inHigh.length);
       requireArgument("SAR open", "inLow", inLow);
+      requireHistoryLength("SAR open", "inLow", inLow.length, inHigh.length);
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
    /**

@@ -761,6 +761,9 @@
       requireArgument("CDLDRAGONFLYDOJI open", "inHigh", inHigh);
       requireArgument("CDLDRAGONFLYDOJI open", "inLow", inLow);
       requireArgument("CDLDRAGONFLYDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLDRAGONFLYDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLDRAGONFLYDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

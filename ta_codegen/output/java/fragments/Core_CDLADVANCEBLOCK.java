@@ -1214,6 +1214,9 @@
       requireArgument("CDLADVANCEBLOCK open", "inHigh", inHigh);
       requireArgument("CDLADVANCEBLOCK open", "inLow", inLow);
       requireArgument("CDLADVANCEBLOCK open", "inClose", inClose);
+      requireHistoryLength("CDLADVANCEBLOCK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK open", "inClose", inClose.length, inOpen.length);
       return CDLADVANCEBLOCK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

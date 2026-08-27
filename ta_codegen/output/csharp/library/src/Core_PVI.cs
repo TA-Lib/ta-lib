@@ -638,6 +638,7 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("PVI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("PVI", "open", "inVolume", inVolume.Length, inClose.Length);
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
 

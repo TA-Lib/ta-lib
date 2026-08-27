@@ -885,6 +885,9 @@
       requireArgument("CDLSEPARATINGLINES open", "inHigh", inHigh);
       requireArgument("CDLSEPARATINGLINES open", "inLow", inLow);
       requireArgument("CDLSEPARATINGLINES open", "inClose", inClose);
+      requireHistoryLength("CDLSEPARATINGLINES open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES open", "inClose", inClose.length, inOpen.length);
       return CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

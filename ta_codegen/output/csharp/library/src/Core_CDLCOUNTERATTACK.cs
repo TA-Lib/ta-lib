@@ -870,6 +870,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLCOUNTERATTACK open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLCOUNTERATTACK open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLCOUNTERATTACK open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLCOUNTERATTACK", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLCOUNTERATTACK", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLCOUNTERATTACK", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLCOUNTERATTACK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

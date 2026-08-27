@@ -915,6 +915,7 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AROONOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      RequireHistoryLength("AROONOSC", "open", "inLow", inLow.Length, inHigh.Length);
       return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 

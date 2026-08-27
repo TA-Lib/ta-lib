@@ -606,6 +606,7 @@
       requireArgument("IMI open", "inOpen", inOpen);
       requireHistory("IMI open", inOpen.length);
       requireArgument("IMI open", "inClose", inClose);
+      requireHistoryLength("IMI open", "inClose", inClose.length, inOpen.length);
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**

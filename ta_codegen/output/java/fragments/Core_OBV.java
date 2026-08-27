@@ -464,6 +464,7 @@
       requireArgument("OBV open", "inReal", inReal);
       requireHistory("OBV open", inReal.length);
       requireArgument("OBV open", "inVolume", inVolume);
+      requireHistoryLength("OBV open", "inVolume", inVolume.length, inReal.length);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
    /**

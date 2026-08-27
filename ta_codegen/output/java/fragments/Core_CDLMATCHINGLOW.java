@@ -673,6 +673,9 @@
       requireArgument("CDLMATCHINGLOW open", "inHigh", inHigh);
       requireArgument("CDLMATCHINGLOW open", "inLow", inLow);
       requireArgument("CDLMATCHINGLOW open", "inClose", inClose);
+      requireHistoryLength("CDLMATCHINGLOW open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMATCHINGLOW open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMATCHINGLOW open", "inClose", inClose.length, inOpen.length);
       return CDLMATCHINGLOW_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

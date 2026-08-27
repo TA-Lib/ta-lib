@@ -727,6 +727,9 @@
       requireArgument("CDLTRISTAR open", "inHigh", inHigh);
       requireArgument("CDLTRISTAR open", "inLow", inLow);
       requireArgument("CDLTRISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLTRISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

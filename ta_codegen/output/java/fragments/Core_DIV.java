@@ -416,6 +416,7 @@
       requireArgument("DIV open", "inReal0", inReal0);
       requireHistory("DIV open", inReal0.length);
       requireArgument("DIV open", "inReal1", inReal1);
+      requireHistoryLength("DIV open", "inReal1", inReal1.length, inReal0.length);
       return DIV_OpenInternal(inReal0, inReal1, 0);
    }
    /**

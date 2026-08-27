@@ -533,6 +533,7 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("OBV open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("OBV", "open", "inVolume", inVolume.Length, inReal.Length);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
 

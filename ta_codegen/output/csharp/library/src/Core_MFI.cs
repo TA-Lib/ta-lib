@@ -1057,6 +1057,9 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("MFI open: inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("MFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("MFI", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("MFI", "open", "inClose", inClose.Length, inHigh.Length);
+      RequireHistoryLength("MFI", "open", "inVolume", inVolume.Length, inHigh.Length);
       return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 

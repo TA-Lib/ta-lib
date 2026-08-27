@@ -640,6 +640,8 @@
       requireHistory("WAD open", inHigh.length);
       requireArgument("WAD open", "inLow", inLow);
       requireArgument("WAD open", "inClose", inClose);
+      requireHistoryLength("WAD open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WAD open", "inClose", inClose.length, inHigh.length);
       return WAD_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**

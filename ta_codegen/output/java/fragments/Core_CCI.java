@@ -784,6 +784,8 @@
       requireHistory("CCI open", inHigh.length);
       requireArgument("CCI open", "inLow", inLow);
       requireArgument("CCI open", "inClose", inClose);
+      requireHistoryLength("CCI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CCI open", "inClose", inClose.length, inHigh.length);
       return CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

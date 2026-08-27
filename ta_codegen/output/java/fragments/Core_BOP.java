@@ -477,6 +477,9 @@
       requireArgument("BOP open", "inHigh", inHigh);
       requireArgument("BOP open", "inLow", inLow);
       requireArgument("BOP open", "inClose", inClose);
+      requireHistoryLength("BOP open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("BOP open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("BOP open", "inClose", inClose.length, inOpen.length);
       return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

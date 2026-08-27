@@ -586,6 +586,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MARKETFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("MARKETFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("MARKETFI", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("MARKETFI", "open", "inVolume", inVolume.Length, inHigh.Length);
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
 

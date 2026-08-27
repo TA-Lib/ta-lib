@@ -819,6 +819,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLBELTHOLD open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLBELTHOLD open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLBELTHOLD open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLBELTHOLD", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLBELTHOLD", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLBELTHOLD", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLBELTHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

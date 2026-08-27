@@ -942,6 +942,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLIDENTICAL3CROWS", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLIDENTICAL3CROWS", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLIDENTICAL3CROWS", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

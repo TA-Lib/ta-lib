@@ -1555,6 +1555,7 @@
       requireArgument("SAREXT open", "inHigh", inHigh);
       requireHistory("SAREXT open", inHigh.length);
       requireArgument("SAREXT open", "inLow", inLow);
+      requireHistoryLength("SAREXT open", "inLow", inLow.length, inHigh.length);
       return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
    /**

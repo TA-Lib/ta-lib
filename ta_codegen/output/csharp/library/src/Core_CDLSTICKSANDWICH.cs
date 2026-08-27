@@ -764,6 +764,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLSTICKSANDWICH open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLSTICKSANDWICH open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLSTICKSANDWICH open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLSTICKSANDWICH", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLSTICKSANDWICH", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLSTICKSANDWICH", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

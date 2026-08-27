@@ -699,6 +699,9 @@
       requireArgument("CDLSTICKSANDWICH open", "inHigh", inHigh);
       requireArgument("CDLSTICKSANDWICH open", "inLow", inLow);
       requireArgument("CDLSTICKSANDWICH open", "inClose", inClose);
+      requireHistoryLength("CDLSTICKSANDWICH open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH open", "inClose", inClose.length, inOpen.length);
       return CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

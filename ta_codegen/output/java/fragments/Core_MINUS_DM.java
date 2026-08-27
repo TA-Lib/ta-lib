@@ -1074,6 +1074,7 @@
       requireArgument("MINUS_DM open", "inHigh", inHigh);
       requireHistory("MINUS_DM open", inHigh.length);
       requireArgument("MINUS_DM open", "inLow", inLow);
+      requireHistoryLength("MINUS_DM open", "inLow", inLow.length, inHigh.length);
       return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**

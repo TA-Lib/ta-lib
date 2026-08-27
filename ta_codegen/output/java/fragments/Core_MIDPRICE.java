@@ -948,6 +948,7 @@
       requireArgument("MIDPRICE open", "inHigh", inHigh);
       requireHistory("MIDPRICE open", inHigh.length);
       requireArgument("MIDPRICE open", "inLow", inLow);
+      requireHistoryLength("MIDPRICE open", "inLow", inLow.length, inHigh.length);
       return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**

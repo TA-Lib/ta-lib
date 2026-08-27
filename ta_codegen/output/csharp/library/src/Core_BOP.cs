@@ -552,6 +552,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("BOP open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("BOP open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("BOP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("BOP", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("BOP", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("BOP", "open", "inClose", inClose.Length, inOpen.Length);
       return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

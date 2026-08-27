@@ -853,6 +853,7 @@
       requireArgument("AO open", "inHigh", inHigh);
       requireHistory("AO open", inHigh.length);
       requireArgument("AO open", "inLow", inLow);
+      requireHistoryLength("AO open", "inLow", inLow.length, inHigh.length);
       return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**

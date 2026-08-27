@@ -871,6 +871,9 @@
       requireArgument("CDLEVENINGSTAR open", "inHigh", inHigh);
       requireArgument("CDLEVENINGSTAR open", "inLow", inLow);
       requireArgument("CDLEVENINGSTAR open", "inClose", inClose);
+      requireHistoryLength("CDLEVENINGSTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGSTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGSTAR open", "inClose", inClose.length, inOpen.length);
       return CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**

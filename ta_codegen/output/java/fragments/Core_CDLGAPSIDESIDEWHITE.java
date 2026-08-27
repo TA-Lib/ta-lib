@@ -811,6 +811,9 @@
       requireArgument("CDLGAPSIDESIDEWHITE open", "inHigh", inHigh);
       requireArgument("CDLGAPSIDESIDEWHITE open", "inLow", inLow);
       requireArgument("CDLGAPSIDESIDEWHITE open", "inClose", inClose);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inClose", inClose.length, inOpen.length);
       return CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

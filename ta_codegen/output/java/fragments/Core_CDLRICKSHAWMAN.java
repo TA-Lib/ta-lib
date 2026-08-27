@@ -853,6 +853,9 @@
       requireArgument("CDLRICKSHAWMAN open", "inHigh", inHigh);
       requireArgument("CDLRICKSHAWMAN open", "inLow", inLow);
       requireArgument("CDLRICKSHAWMAN open", "inClose", inClose);
+      requireHistoryLength("CDLRICKSHAWMAN open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRICKSHAWMAN open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRICKSHAWMAN open", "inClose", inClose.length, inOpen.length);
       return CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

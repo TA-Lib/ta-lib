@@ -847,6 +847,9 @@
       requireArgument("CDLTAKURI open", "inHigh", inHigh);
       requireArgument("CDLTAKURI open", "inLow", inLow);
       requireArgument("CDLTAKURI open", "inClose", inClose);
+      requireHistoryLength("CDLTAKURI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTAKURI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTAKURI open", "inClose", inClose.length, inOpen.length);
       return CDLTAKURI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

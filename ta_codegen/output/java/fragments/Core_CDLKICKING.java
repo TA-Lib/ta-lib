@@ -822,6 +822,9 @@
       requireArgument("CDLKICKING open", "inHigh", inHigh);
       requireArgument("CDLKICKING open", "inLow", inLow);
       requireArgument("CDLKICKING open", "inClose", inClose);
+      requireHistoryLength("CDLKICKING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLKICKING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLKICKING open", "inClose", inClose.length, inOpen.length);
       return CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

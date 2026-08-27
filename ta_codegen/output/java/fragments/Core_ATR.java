@@ -859,6 +859,8 @@
       requireHistory("ATR open", inHigh.length);
       requireArgument("ATR open", "inLow", inLow);
       requireArgument("ATR open", "inClose", inClose);
+      requireHistoryLength("ATR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ATR open", "inClose", inClose.length, inHigh.length);
       return ATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

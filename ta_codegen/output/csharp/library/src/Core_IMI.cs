@@ -668,6 +668,7 @@ public partial class Core
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("IMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("IMI", "open", "inClose", inClose.Length, inOpen.Length);
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 

@@ -524,6 +524,8 @@
       requireHistory("MARKETFI open", inHigh.length);
       requireArgument("MARKETFI open", "inLow", inLow);
       requireArgument("MARKETFI open", "inVolume", inVolume);
+      requireHistoryLength("MARKETFI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MARKETFI open", "inVolume", inVolume.length, inHigh.length);
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
    /**

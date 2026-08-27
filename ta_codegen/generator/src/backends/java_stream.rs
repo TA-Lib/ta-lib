@@ -2234,14 +2234,8 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
         // rule, in that order, and this is B5 over `[0, historyLen - 1]`. The
         // core tests the inputs too, but only after the capacity bound below
         // would have answered, so a short input series was reported as an
-        // output-capacity fault. The history's own length IS the range here, so
-        // the inputs must agree with it rather than merely reach it.
-        for input in &inputs[1..] {
-            let _ = writeln!(
-                o,
-                "      requireHistoryLength(\"{n} {verb}\", \"{input}\", {input}.length, {history}.length);"
-            );
-        }
+        // output-capacity fault.
+        o.push_str(&history_length_guards(func, &n, verb));
         // …then the outputs. `requireLength` carries S4 and S5 in one call,
         // exactly as the batch wrapper's does, and an output marked `nullable`
         // is bounded only where it was supplied (rule B6a).
@@ -2258,7 +2252,30 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
                 out.name
             );
         }
+    } else {
+        // Rule S5's input half, which is the whole of S5 here — the plain open
+        // writes nothing, so there is no output capacity to bound. It belongs
+        // on this frame for the same reason the fill's does: the core makes the
+        // test, but answers it as a bare `BadParam` naming nothing, where the
+        // same fault at `OpenAndFill` named the leg (issue #271 item 1).
+        o.push_str(&history_length_guards(func, &n, verb));
     }
+}
+
+/// Rule S5's input half, the same at both openers: the history's own length IS
+/// the range, so every other declared input must AGREE with it rather than
+/// merely reach it.
+fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
+    let inputs = streaming::input_array_names(func);
+    let history = &inputs[0];
+    let mut s = String::new();
+    for input in &inputs[1..] {
+        let _ = writeln!(
+            s,
+            "      requireHistoryLength(\"{n} {verb}\", \"{input}\", {input}.length, {history}.length);"
+        );
+    }
+    s
 }
 
 /// The javadoc sentence naming the outputs a caller may decline, or nothing when

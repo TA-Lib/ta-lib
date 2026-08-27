@@ -915,6 +915,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLRICKSHAWMAN open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLRICKSHAWMAN open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLRICKSHAWMAN open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLRICKSHAWMAN", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLRICKSHAWMAN", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLRICKSHAWMAN", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

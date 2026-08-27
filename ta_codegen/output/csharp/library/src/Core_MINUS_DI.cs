@@ -1544,6 +1544,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MINUS_DI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("MINUS_DI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("MINUS_DI", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("MINUS_DI", "open", "inClose", inClose.Length, inHigh.Length);
       return MINUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 

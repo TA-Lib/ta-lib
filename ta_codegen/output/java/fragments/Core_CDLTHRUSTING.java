@@ -798,6 +798,9 @@
       requireArgument("CDLTHRUSTING open", "inHigh", inHigh);
       requireArgument("CDLTHRUSTING open", "inLow", inLow);
       requireArgument("CDLTHRUSTING open", "inClose", inClose);
+      requireHistoryLength("CDLTHRUSTING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING open", "inClose", inClose.length, inOpen.length);
       return CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

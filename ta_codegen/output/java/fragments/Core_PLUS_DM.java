@@ -1073,6 +1073,7 @@
       requireArgument("PLUS_DM open", "inHigh", inHigh);
       requireHistory("PLUS_DM open", inHigh.length);
       requireArgument("PLUS_DM open", "inLow", inLow);
+      requireHistoryLength("PLUS_DM open", "inLow", inLow.length, inHigh.length);
       return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**

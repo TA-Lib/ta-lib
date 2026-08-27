@@ -879,6 +879,9 @@
       requireArgument("CDLIDENTICAL3CROWS open", "inHigh", inHigh);
       requireArgument("CDLIDENTICAL3CROWS open", "inLow", inLow);
       requireArgument("CDLIDENTICAL3CROWS open", "inClose", inClose);
+      requireHistoryLength("CDLIDENTICAL3CROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLIDENTICAL3CROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLIDENTICAL3CROWS open", "inClose", inClose.length, inOpen.length);
       return CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

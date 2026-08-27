@@ -1072,6 +1072,9 @@
       requireArgument("CDLSTALLEDPATTERN open", "inHigh", inHigh);
       requireArgument("CDLSTALLEDPATTERN open", "inLow", inLow);
       requireArgument("CDLSTALLEDPATTERN open", "inClose", inClose);
+      requireHistoryLength("CDLSTALLEDPATTERN open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN open", "inClose", inClose.length, inOpen.length);
       return CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

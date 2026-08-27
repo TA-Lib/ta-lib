@@ -751,6 +751,9 @@
       requireArgument("CDLLONGLEGGEDDOJI open", "inHigh", inHigh);
       requireArgument("CDLLONGLEGGEDDOJI open", "inLow", inLow);
       requireArgument("CDLLONGLEGGEDDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLLONGLEGGEDDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLLONGLEGGEDDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

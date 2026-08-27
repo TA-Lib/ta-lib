@@ -712,6 +712,9 @@
       requireArgument("CDLHIKKAKE open", "inHigh", inHigh);
       requireArgument("CDLHIKKAKE open", "inLow", inLow);
       requireArgument("CDLHIKKAKE open", "inClose", inClose);
+      requireHistoryLength("CDLHIKKAKE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKE open", "inClose", inClose.length, inOpen.length);
       return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

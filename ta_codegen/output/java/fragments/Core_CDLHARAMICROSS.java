@@ -831,6 +831,9 @@
       requireArgument("CDLHARAMICROSS open", "inHigh", inHigh);
       requireArgument("CDLHARAMICROSS open", "inLow", inLow);
       requireArgument("CDLHARAMICROSS open", "inClose", inClose);
+      requireHistoryLength("CDLHARAMICROSS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMICROSS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMICROSS open", "inClose", inClose.length, inOpen.length);
       return CDLHARAMICROSS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

@@ -1074,6 +1074,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WILLR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("WILLR open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("WILLR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("WILLR", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("WILLR", "open", "inClose", inClose.Length, inHigh.Length);
       return WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 

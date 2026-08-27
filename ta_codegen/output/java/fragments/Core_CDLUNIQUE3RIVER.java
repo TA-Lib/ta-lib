@@ -817,6 +817,9 @@
       requireArgument("CDLUNIQUE3RIVER open", "inHigh", inHigh);
       requireArgument("CDLUNIQUE3RIVER open", "inLow", inLow);
       requireArgument("CDLUNIQUE3RIVER open", "inClose", inClose);
+      requireHistoryLength("CDLUNIQUE3RIVER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER open", "inClose", inClose.length, inOpen.length);
       return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

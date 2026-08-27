@@ -778,6 +778,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKE open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLHIKKAKE", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLHIKKAKE", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLHIKKAKE", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

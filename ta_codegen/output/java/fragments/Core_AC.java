@@ -1077,6 +1077,7 @@
       requireArgument("AC open", "inHigh", inHigh);
       requireHistory("AC open", inHigh.length);
       requireArgument("AC open", "inLow", inLow);
+      requireHistoryLength("AC open", "inLow", inLow.length, inHigh.length);
       return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**

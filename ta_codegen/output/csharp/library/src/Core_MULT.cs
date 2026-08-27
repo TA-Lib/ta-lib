@@ -481,6 +481,7 @@ public partial class Core
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("MULT open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      RequireHistoryLength("MULT", "open", "inReal1", inReal1.Length, inReal0.Length);
       return MULT_OpenInternal(inReal0, inReal1, 0);
    }
 

@@ -775,6 +775,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLPIERCING open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLPIERCING open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLPIERCING open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLPIERCING", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLPIERCING", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLPIERCING", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLPIERCING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

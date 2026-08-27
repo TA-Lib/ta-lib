@@ -582,6 +582,8 @@
       requireHistory("TRANGE open", inHigh.length);
       requireArgument("TRANGE open", "inLow", inLow);
       requireArgument("TRANGE open", "inClose", inClose);
+      requireHistoryLength("TRANGE open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TRANGE open", "inClose", inClose.length, inHigh.length);
       return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**

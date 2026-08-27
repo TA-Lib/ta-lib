@@ -811,6 +811,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLSHORTLINE open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLSHORTLINE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLSHORTLINE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLSHORTLINE", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLSHORTLINE", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLSHORTLINE", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

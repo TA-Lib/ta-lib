@@ -952,6 +952,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLSEPARATINGLINES open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLSEPARATINGLINES open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLSEPARATINGLINES open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLSEPARATINGLINES", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLSEPARATINGLINES", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLSEPARATINGLINES", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

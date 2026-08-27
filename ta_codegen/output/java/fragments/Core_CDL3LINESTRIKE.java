@@ -766,6 +766,9 @@
       requireArgument("CDL3LINESTRIKE open", "inHigh", inHigh);
       requireArgument("CDL3LINESTRIKE open", "inLow", inLow);
       requireArgument("CDL3LINESTRIKE open", "inClose", inClose);
+      requireHistoryLength("CDL3LINESTRIKE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3LINESTRIKE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3LINESTRIKE open", "inClose", inClose.length, inOpen.length);
       return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

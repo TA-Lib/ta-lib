@@ -863,6 +863,9 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("VWAP open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("VWAP open: inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("VWAP open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("VWAP", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("VWAP", "open", "inClose", inClose.Length, inHigh.Length);
+      RequireHistoryLength("VWAP", "open", "inVolume", inVolume.Length, inHigh.Length);
       return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
 

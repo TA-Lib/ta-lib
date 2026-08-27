@@ -878,6 +878,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLUNIQUE3RIVER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLUNIQUE3RIVER open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLUNIQUE3RIVER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLUNIQUE3RIVER", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLUNIQUE3RIVER", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLUNIQUE3RIVER", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

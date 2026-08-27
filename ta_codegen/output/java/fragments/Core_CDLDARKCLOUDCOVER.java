@@ -718,6 +718,9 @@
       requireArgument("CDLDARKCLOUDCOVER open", "inHigh", inHigh);
       requireArgument("CDLDARKCLOUDCOVER open", "inLow", inLow);
       requireArgument("CDLDARKCLOUDCOVER open", "inClose", inClose);
+      requireHistoryLength("CDLDARKCLOUDCOVER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDARKCLOUDCOVER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDARKCLOUDCOVER open", "inClose", inClose.length, inOpen.length);
       return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**

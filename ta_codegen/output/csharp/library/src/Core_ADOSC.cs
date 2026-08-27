@@ -911,6 +911,9 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("ADOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("ADOSC open: inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("ADOSC open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("ADOSC", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("ADOSC", "open", "inClose", inClose.Length, inHigh.Length);
+      RequireHistoryLength("ADOSC", "open", "inVolume", inVolume.Length, inHigh.Length);
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
 

@@ -1293,6 +1293,8 @@
       requireHistory("DX open", inHigh.length);
       requireArgument("DX open", "inLow", inLow);
       requireArgument("DX open", "inClose", inClose);
+      requireHistoryLength("DX open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("DX open", "inClose", inClose.length, inHigh.length);
       return DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

@@ -1540,6 +1540,8 @@
       requireHistory("SMI open", inHigh.length);
       requireArgument("SMI open", "inLow", inLow);
       requireArgument("SMI open", "inClose", inClose);
+      requireHistoryLength("SMI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("SMI open", "inClose", inClose.length, inHigh.length);
       return SMI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**

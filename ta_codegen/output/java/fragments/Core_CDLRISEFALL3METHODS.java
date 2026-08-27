@@ -930,6 +930,9 @@
       requireArgument("CDLRISEFALL3METHODS open", "inHigh", inHigh);
       requireArgument("CDLRISEFALL3METHODS open", "inLow", inLow);
       requireArgument("CDLRISEFALL3METHODS open", "inClose", inClose);
+      requireHistoryLength("CDLRISEFALL3METHODS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS open", "inClose", inClose.length, inOpen.length);
       return CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

@@ -1132,6 +1132,7 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("PLUS_DM open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      RequireHistoryLength("PLUS_DM", "open", "inLow", inLow.Length, inHigh.Length);
       return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 

@@ -745,6 +745,9 @@
       requireArgument("CDLMARUBOZU open", "inHigh", inHigh);
       requireArgument("CDLMARUBOZU open", "inLow", inLow);
       requireArgument("CDLMARUBOZU open", "inClose", inClose);
+      requireHistoryLength("CDLMARUBOZU open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMARUBOZU open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMARUBOZU open", "inClose", inClose.length, inOpen.length);
       return CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

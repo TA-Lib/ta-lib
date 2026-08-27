@@ -905,6 +905,7 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROON open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROON open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AROON open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      RequireHistoryLength("AROON", "open", "inLow", inLow.Length, inHigh.Length);
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 

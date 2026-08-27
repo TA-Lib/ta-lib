@@ -733,6 +733,9 @@
       requireArgument("CDLLONGLINE open", "inHigh", inHigh);
       requireArgument("CDLLONGLINE open", "inLow", inLow);
       requireArgument("CDLLONGLINE open", "inClose", inClose);
+      requireHistoryLength("CDLLONGLINE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLINE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLINE open", "inClose", inClose.length, inOpen.length);
       return CDLLONGLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

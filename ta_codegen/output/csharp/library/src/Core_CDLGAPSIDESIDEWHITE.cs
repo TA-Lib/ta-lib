@@ -877,6 +877,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLGAPSIDESIDEWHITE", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLGAPSIDESIDEWHITE", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLGAPSIDESIDEWHITE", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

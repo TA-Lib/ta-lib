@@ -808,6 +808,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLBREAKAWAY open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLBREAKAWAY open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLBREAKAWAY open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLBREAKAWAY", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLBREAKAWAY", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLBREAKAWAY", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

@@ -1068,6 +1068,9 @@
       requireArgument("CDL3STARSINSOUTH open", "inHigh", inHigh);
       requireArgument("CDL3STARSINSOUTH open", "inLow", inLow);
       requireArgument("CDL3STARSINSOUTH open", "inClose", inClose);
+      requireHistoryLength("CDL3STARSINSOUTH open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3STARSINSOUTH open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3STARSINSOUTH open", "inClose", inClose.length, inOpen.length);
       return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

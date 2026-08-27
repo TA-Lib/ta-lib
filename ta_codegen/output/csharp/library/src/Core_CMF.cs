@@ -941,6 +941,9 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CMF open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CMF open: inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("CMF open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      RequireHistoryLength("CMF", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("CMF", "open", "inClose", inClose.Length, inHigh.Length);
+      RequireHistoryLength("CMF", "open", "inVolume", inVolume.Length, inHigh.Length);
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 

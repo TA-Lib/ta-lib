@@ -813,6 +813,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHIGHWAVE open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHIGHWAVE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHIGHWAVE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLHIGHWAVE", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLHIGHWAVE", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLHIGHWAVE", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

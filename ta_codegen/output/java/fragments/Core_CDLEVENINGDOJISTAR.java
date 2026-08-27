@@ -952,6 +952,9 @@
       requireArgument("CDLEVENINGDOJISTAR open", "inHigh", inHigh);
       requireArgument("CDLEVENINGDOJISTAR open", "inLow", inLow);
       requireArgument("CDLEVENINGDOJISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLEVENINGDOJISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGDOJISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGDOJISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**

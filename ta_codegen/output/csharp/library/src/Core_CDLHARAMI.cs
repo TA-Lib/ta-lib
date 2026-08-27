@@ -899,6 +899,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHARAMI open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHARAMI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHARAMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLHARAMI", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLHARAMI", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLHARAMI", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

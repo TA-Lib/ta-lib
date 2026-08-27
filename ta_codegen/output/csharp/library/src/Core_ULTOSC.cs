@@ -1478,6 +1478,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ULTOSC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("ULTOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("ULTOSC open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("ULTOSC", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("ULTOSC", "open", "inClose", inClose.Length, inHigh.Length);
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
 

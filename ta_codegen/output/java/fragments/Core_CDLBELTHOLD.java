@@ -757,6 +757,9 @@
       requireArgument("CDLBELTHOLD open", "inHigh", inHigh);
       requireArgument("CDLBELTHOLD open", "inLow", inLow);
       requireArgument("CDLBELTHOLD open", "inClose", inClose);
+      requireHistoryLength("CDLBELTHOLD open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLBELTHOLD open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLBELTHOLD open", "inClose", inClose.length, inOpen.length);
       return CDLBELTHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

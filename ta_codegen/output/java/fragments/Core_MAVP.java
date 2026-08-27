@@ -1013,6 +1013,7 @@
       requireHistory("MAVP open", inReal.length);
       requireArgument("MAVP open", "optInMAType", optInMAType);
       requireArgument("MAVP open", "inPeriods", inPeriods);
+      requireHistoryLength("MAVP open", "inPeriods", inPeriods.length, inReal.length);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**

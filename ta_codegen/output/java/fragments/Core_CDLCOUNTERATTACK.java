@@ -807,6 +807,9 @@
       requireArgument("CDLCOUNTERATTACK open", "inHigh", inHigh);
       requireArgument("CDLCOUNTERATTACK open", "inLow", inLow);
       requireArgument("CDLCOUNTERATTACK open", "inClose", inClose);
+      requireHistoryLength("CDLCOUNTERATTACK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCOUNTERATTACK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCOUNTERATTACK open", "inClose", inClose.length, inOpen.length);
       return CDLCOUNTERATTACK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

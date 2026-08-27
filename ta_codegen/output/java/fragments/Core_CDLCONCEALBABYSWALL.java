@@ -779,6 +779,9 @@
       requireArgument("CDLCONCEALBABYSWALL open", "inHigh", inHigh);
       requireArgument("CDLCONCEALBABYSWALL open", "inLow", inLow);
       requireArgument("CDLCONCEALBABYSWALL open", "inClose", inClose);
+      requireHistoryLength("CDLCONCEALBABYSWALL open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCONCEALBABYSWALL open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCONCEALBABYSWALL open", "inClose", inClose.length, inOpen.length);
       return CDLCONCEALBABYSWALL_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

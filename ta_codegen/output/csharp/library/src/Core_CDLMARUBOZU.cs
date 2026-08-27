@@ -807,6 +807,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLMARUBOZU open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLMARUBOZU open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLMARUBOZU open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLMARUBOZU", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLMARUBOZU", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLMARUBOZU", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

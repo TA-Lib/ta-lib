@@ -719,6 +719,9 @@
       requireArgument("CDLTASUKIGAP open", "inHigh", inHigh);
       requireArgument("CDLTASUKIGAP open", "inLow", inLow);
       requireArgument("CDLTASUKIGAP open", "inClose", inClose);
+      requireHistoryLength("CDLTASUKIGAP open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTASUKIGAP open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTASUKIGAP open", "inClose", inClose.length, inOpen.length);
       return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

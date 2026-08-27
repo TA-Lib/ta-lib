@@ -796,6 +796,9 @@
       requireArgument("CDLONNECK open", "inHigh", inHigh);
       requireArgument("CDLONNECK open", "inLow", inLow);
       requireArgument("CDLONNECK open", "inClose", inClose);
+      requireHistoryLength("CDLONNECK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLONNECK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLONNECK open", "inClose", inClose.length, inOpen.length);
       return CDLONNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

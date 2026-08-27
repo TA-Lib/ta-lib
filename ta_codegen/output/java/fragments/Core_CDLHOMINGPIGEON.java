@@ -792,6 +792,9 @@
       requireArgument("CDLHOMINGPIGEON open", "inHigh", inHigh);
       requireArgument("CDLHOMINGPIGEON open", "inLow", inLow);
       requireArgument("CDLHOMINGPIGEON open", "inClose", inClose);
+      requireHistoryLength("CDLHOMINGPIGEON open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON open", "inClose", inClose.length, inOpen.length);
       return CDLHOMINGPIGEON_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

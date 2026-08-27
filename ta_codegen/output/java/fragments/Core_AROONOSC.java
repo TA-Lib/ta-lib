@@ -853,6 +853,7 @@
       requireArgument("AROONOSC open", "inHigh", inHigh);
       requireHistory("AROONOSC open", inHigh.length);
       requireArgument("AROONOSC open", "inLow", inLow);
+      requireHistoryLength("AROONOSC open", "inLow", inLow.length, inHigh.length);
       return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**

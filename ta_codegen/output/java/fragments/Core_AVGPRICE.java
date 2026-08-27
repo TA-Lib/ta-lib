@@ -441,6 +441,9 @@
       requireArgument("AVGPRICE open", "inHigh", inHigh);
       requireArgument("AVGPRICE open", "inLow", inLow);
       requireArgument("AVGPRICE open", "inClose", inClose);
+      requireHistoryLength("AVGPRICE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("AVGPRICE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("AVGPRICE open", "inClose", inClose.length, inOpen.length);
       return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

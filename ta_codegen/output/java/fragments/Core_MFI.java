@@ -994,6 +994,9 @@
       requireArgument("MFI open", "inLow", inLow);
       requireArgument("MFI open", "inClose", inClose);
       requireArgument("MFI open", "inVolume", inVolume);
+      requireHistoryLength("MFI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MFI open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("MFI open", "inVolume", inVolume.length, inHigh.length);
       return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**

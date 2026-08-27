@@ -586,6 +586,9 @@
       requireArgument("CDLXSIDEGAP3METHODS open", "inHigh", inHigh);
       requireArgument("CDLXSIDEGAP3METHODS open", "inLow", inLow);
       requireArgument("CDLXSIDEGAP3METHODS open", "inClose", inClose);
+      requireHistoryLength("CDLXSIDEGAP3METHODS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLXSIDEGAP3METHODS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLXSIDEGAP3METHODS open", "inClose", inClose.length, inOpen.length);
       return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

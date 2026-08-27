@@ -837,6 +837,9 @@
       requireArgument("ADOSC open", "inLow", inLow);
       requireArgument("ADOSC open", "inClose", inClose);
       requireArgument("ADOSC open", "inVolume", inVolume);
+      requireHistoryLength("ADOSC open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADOSC open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("ADOSC open", "inVolume", inVolume.length, inHigh.length);
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**

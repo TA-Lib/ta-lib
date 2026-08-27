@@ -858,6 +858,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLTHRUSTING open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLTHRUSTING open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLTHRUSTING open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLTHRUSTING", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLTHRUSTING", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLTHRUSTING", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

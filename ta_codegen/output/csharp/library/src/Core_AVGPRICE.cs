@@ -510,6 +510,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("AVGPRICE open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AVGPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("AVGPRICE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("AVGPRICE", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("AVGPRICE", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("AVGPRICE", "open", "inClose", inClose.Length, inOpen.Length);
       return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

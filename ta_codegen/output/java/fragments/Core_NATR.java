@@ -989,6 +989,8 @@
       requireHistory("NATR open", inHigh.length);
       requireArgument("NATR open", "inLow", inLow);
       requireArgument("NATR open", "inClose", inClose);
+      requireHistoryLength("NATR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("NATR open", "inClose", inClose.length, inHigh.length);
       return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

@@ -696,6 +696,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLSPINNINGTOP open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLSPINNINGTOP open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLSPINNINGTOP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLSPINNINGTOP", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLSPINNINGTOP", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLSPINNINGTOP", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

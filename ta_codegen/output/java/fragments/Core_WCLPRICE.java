@@ -429,6 +429,8 @@
       requireHistory("WCLPRICE open", inHigh.length);
       requireArgument("WCLPRICE open", "inLow", inLow);
       requireArgument("WCLPRICE open", "inClose", inClose);
+      requireHistoryLength("WCLPRICE open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WCLPRICE open", "inClose", inClose.length, inHigh.length);
       return WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**

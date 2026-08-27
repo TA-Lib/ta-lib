@@ -884,6 +884,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLKICKING open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLKICKING open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLKICKING open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLKICKING", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLKICKING", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLKICKING", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

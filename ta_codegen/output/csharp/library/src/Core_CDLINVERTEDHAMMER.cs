@@ -931,6 +931,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLINVERTEDHAMMER", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLINVERTEDHAMMER", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLINVERTEDHAMMER", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLINVERTEDHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

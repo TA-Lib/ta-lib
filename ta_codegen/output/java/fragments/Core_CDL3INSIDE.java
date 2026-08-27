@@ -809,6 +809,9 @@
       requireArgument("CDL3INSIDE open", "inHigh", inHigh);
       requireArgument("CDL3INSIDE open", "inLow", inLow);
       requireArgument("CDL3INSIDE open", "inClose", inClose);
+      requireHistoryLength("CDL3INSIDE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3INSIDE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3INSIDE open", "inClose", inClose.length, inOpen.length);
       return CDL3INSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

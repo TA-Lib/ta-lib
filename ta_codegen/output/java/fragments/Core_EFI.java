@@ -833,6 +833,7 @@
       requireArgument("EFI open", "inClose", inClose);
       requireHistory("EFI open", inClose.length);
       requireArgument("EFI open", "inVolume", inVolume);
+      requireHistoryLength("EFI open", "inVolume", inVolume.length, inClose.length);
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
    /**

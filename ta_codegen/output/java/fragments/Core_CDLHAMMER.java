@@ -976,6 +976,9 @@
       requireArgument("CDLHAMMER open", "inHigh", inHigh);
       requireArgument("CDLHAMMER open", "inLow", inLow);
       requireArgument("CDLHAMMER open", "inClose", inClose);
+      requireHistoryLength("CDLHAMMER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHAMMER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHAMMER open", "inClose", inClose.length, inOpen.length);
       return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

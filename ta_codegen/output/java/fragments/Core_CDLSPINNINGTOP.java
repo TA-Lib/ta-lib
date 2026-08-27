@@ -630,6 +630,9 @@
       requireArgument("CDLSPINNINGTOP open", "inHigh", inHigh);
       requireArgument("CDLSPINNINGTOP open", "inLow", inLow);
       requireArgument("CDLSPINNINGTOP open", "inClose", inClose);
+      requireHistoryLength("CDLSPINNINGTOP open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSPINNINGTOP open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSPINNINGTOP open", "inClose", inClose.length, inOpen.length);
       return CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

@@ -868,6 +868,9 @@
       requireArgument("CDLINVERTEDHAMMER open", "inHigh", inHigh);
       requireArgument("CDLINVERTEDHAMMER open", "inLow", inLow);
       requireArgument("CDLINVERTEDHAMMER open", "inClose", inClose);
+      requireHistoryLength("CDLINVERTEDHAMMER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLINVERTEDHAMMER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLINVERTEDHAMMER open", "inClose", inClose.length, inOpen.length);
       return CDLINVERTEDHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

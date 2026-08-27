@@ -1009,6 +1009,8 @@
       requireHistory("WILLR open", inHigh.length);
       requireArgument("WILLR open", "inLow", inLow);
       requireArgument("WILLR open", "inClose", inClose);
+      requireHistoryLength("WILLR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WILLR open", "inClose", inClose.length, inHigh.length);
       return WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

@@ -1133,6 +1133,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLSTALLEDPATTERN open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLSTALLEDPATTERN open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLSTALLEDPATTERN open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLSTALLEDPATTERN", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLSTALLEDPATTERN", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLSTALLEDPATTERN", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

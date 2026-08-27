@@ -1346,6 +1346,8 @@
       requireArgument("STOCH open", "optInSlowD_MAType", optInSlowD_MAType);
       requireArgument("STOCH open", "inLow", inLow);
       requireArgument("STOCH open", "inClose", inClose);
+      requireHistoryLength("STOCH open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCH open", "inClose", inClose.length, inHigh.length);
       return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
    }
    /**

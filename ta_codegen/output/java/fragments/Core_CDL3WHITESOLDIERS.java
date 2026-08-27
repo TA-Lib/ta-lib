@@ -1105,6 +1105,9 @@
       requireArgument("CDL3WHITESOLDIERS open", "inHigh", inHigh);
       requireArgument("CDL3WHITESOLDIERS open", "inLow", inLow);
       requireArgument("CDL3WHITESOLDIERS open", "inClose", inClose);
+      requireHistoryLength("CDL3WHITESOLDIERS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3WHITESOLDIERS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3WHITESOLDIERS open", "inClose", inClose.length, inOpen.length);
       return CDL3WHITESOLDIERS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

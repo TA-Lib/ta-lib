@@ -1053,6 +1053,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "NATR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("NATR open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("NATR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("NATR", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("NATR", "open", "inClose", inClose.Length, inHigh.Length);
       return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 

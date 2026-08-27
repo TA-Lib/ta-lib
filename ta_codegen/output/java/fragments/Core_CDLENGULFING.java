@@ -574,6 +574,9 @@
       requireArgument("CDLENGULFING open", "inHigh", inHigh);
       requireArgument("CDLENGULFING open", "inLow", inLow);
       requireArgument("CDLENGULFING open", "inClose", inClose);
+      requireHistoryLength("CDLENGULFING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING open", "inClose", inClose.length, inOpen.length);
       return CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

@@ -638,6 +638,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLENGULFING open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLENGULFING open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLENGULFING open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLENGULFING", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLENGULFING", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLENGULFING", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

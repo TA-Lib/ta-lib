@@ -710,6 +710,9 @@
       requireArgument("CDL2CROWS open", "inHigh", inHigh);
       requireArgument("CDL2CROWS open", "inLow", inLow);
       requireArgument("CDL2CROWS open", "inClose", inClose);
+      requireHistoryLength("CDL2CROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL2CROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL2CROWS open", "inClose", inClose.length, inOpen.length);
       return CDL2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

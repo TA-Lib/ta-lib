@@ -755,6 +755,9 @@
       requireArgument("CDLHIGHWAVE open", "inHigh", inHigh);
       requireArgument("CDLHIGHWAVE open", "inLow", inLow);
       requireArgument("CDLHIGHWAVE open", "inClose", inClose);
+      requireHistoryLength("CDLHIGHWAVE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE open", "inClose", inClose.length, inOpen.length);
       return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

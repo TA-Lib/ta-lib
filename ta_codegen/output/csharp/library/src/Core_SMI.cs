@@ -1589,6 +1589,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SMI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("SMI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("SMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("SMI", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("SMI", "open", "inClose", inClose.Length, inHigh.Length);
       return SMI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 

@@ -652,6 +652,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLXSIDEGAP3METHODS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLXSIDEGAP3METHODS open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLXSIDEGAP3METHODS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLXSIDEGAP3METHODS", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLXSIDEGAP3METHODS", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLXSIDEGAP3METHODS", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

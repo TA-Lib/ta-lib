@@ -1483,6 +1483,8 @@
       requireHistory("MINUS_DI open", inHigh.length);
       requireArgument("MINUS_DI open", "inLow", inLow);
       requireArgument("MINUS_DI open", "inClose", inClose);
+      requireHistoryLength("MINUS_DI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MINUS_DI open", "inClose", inClose.length, inHigh.length);
       return MINUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

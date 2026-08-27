@@ -874,6 +874,9 @@
       requireArgument("CDLHIKKAKEMOD open", "inHigh", inHigh);
       requireArgument("CDLHIKKAKEMOD open", "inLow", inLow);
       requireArgument("CDLHIKKAKEMOD open", "inClose", inClose);
+      requireHistoryLength("CDLHIKKAKEMOD open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD open", "inClose", inClose.length, inOpen.length);
       return CDLHIKKAKEMOD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

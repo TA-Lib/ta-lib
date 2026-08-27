@@ -761,6 +761,9 @@
       requireArgument("CDLGRAVESTONEDOJI open", "inHigh", inHigh);
       requireArgument("CDLGRAVESTONEDOJI open", "inLow", inLow);
       requireArgument("CDLGRAVESTONEDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLGRAVESTONEDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGRAVESTONEDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGRAVESTONEDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLGRAVESTONEDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

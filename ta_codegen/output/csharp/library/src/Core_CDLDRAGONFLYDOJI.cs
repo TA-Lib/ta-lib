@@ -822,6 +822,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLDRAGONFLYDOJI open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLDRAGONFLYDOJI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLDRAGONFLYDOJI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLDRAGONFLYDOJI", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLDRAGONFLYDOJI", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLDRAGONFLYDOJI", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLDRAGONFLYDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

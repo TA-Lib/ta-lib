@@ -872,6 +872,9 @@
       requireArgument("CDLSHOOTINGSTAR open", "inHigh", inHigh);
       requireArgument("CDLSHOOTINGSTAR open", "inLow", inLow);
       requireArgument("CDLSHOOTINGSTAR open", "inClose", inClose);
+      requireHistoryLength("CDLSHOOTINGSTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR open", "inClose", inClose.length, inOpen.length);
       return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

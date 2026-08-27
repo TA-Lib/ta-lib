@@ -920,6 +920,8 @@
       requireHistory("ACCBANDS open", inHigh.length);
       requireArgument("ACCBANDS open", "inLow", inLow);
       requireArgument("ACCBANDS open", "inClose", inClose);
+      requireHistoryLength("ACCBANDS open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ACCBANDS open", "inClose", inClose.length, inHigh.length);
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

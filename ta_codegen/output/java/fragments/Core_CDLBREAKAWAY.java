@@ -744,6 +744,9 @@
       requireArgument("CDLBREAKAWAY open", "inHigh", inHigh);
       requireArgument("CDLBREAKAWAY open", "inLow", inLow);
       requireArgument("CDLBREAKAWAY open", "inClose", inClose);
+      requireHistoryLength("CDLBREAKAWAY open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLBREAKAWAY open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLBREAKAWAY open", "inClose", inClose.length, inOpen.length);
       return CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

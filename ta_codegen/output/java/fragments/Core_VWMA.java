@@ -781,6 +781,7 @@
       requireArgument("VWMA open", "inReal", inReal);
       requireHistory("VWMA open", inReal.length);
       requireArgument("VWMA open", "inVolume", inVolume);
+      requireHistoryLength("VWMA open", "inVolume", inVolume.length, inReal.length);
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**

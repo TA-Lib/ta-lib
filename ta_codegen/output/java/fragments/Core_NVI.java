@@ -571,6 +571,7 @@
       requireArgument("NVI open", "inClose", inClose);
       requireHistory("NVI open", inClose.length);
       requireArgument("NVI open", "inVolume", inVolume);
+      requireHistoryLength("NVI open", "inVolume", inVolume.length, inClose.length);
       return NVI_OpenInternal(inClose, inVolume, 0);
    }
    /**

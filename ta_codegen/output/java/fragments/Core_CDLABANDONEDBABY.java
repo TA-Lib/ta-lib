@@ -949,6 +949,9 @@
       requireArgument("CDLABANDONEDBABY open", "inHigh", inHigh);
       requireArgument("CDLABANDONEDBABY open", "inLow", inLow);
       requireArgument("CDLABANDONEDBABY open", "inClose", inClose);
+      requireHistoryLength("CDLABANDONEDBABY open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLABANDONEDBABY open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLABANDONEDBABY open", "inClose", inClose.length, inOpen.length);
       return CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**

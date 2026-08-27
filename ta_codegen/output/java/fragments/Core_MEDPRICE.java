@@ -431,6 +431,7 @@
       requireArgument("MEDPRICE open", "inHigh", inHigh);
       requireHistory("MEDPRICE open", inHigh.length);
       requireArgument("MEDPRICE open", "inLow", inLow);
+      requireHistoryLength("MEDPRICE open", "inLow", inLow.length, inHigh.length);
       return MEDPRICE_OpenInternal(inHigh, inLow, 0);
    }
    /**

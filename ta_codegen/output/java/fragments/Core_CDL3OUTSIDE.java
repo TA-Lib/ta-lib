@@ -566,6 +566,9 @@
       requireArgument("CDL3OUTSIDE open", "inHigh", inHigh);
       requireArgument("CDL3OUTSIDE open", "inLow", inLow);
       requireArgument("CDL3OUTSIDE open", "inClose", inClose);
+      requireHistoryLength("CDL3OUTSIDE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3OUTSIDE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3OUTSIDE open", "inClose", inClose.length, inOpen.length);
       return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

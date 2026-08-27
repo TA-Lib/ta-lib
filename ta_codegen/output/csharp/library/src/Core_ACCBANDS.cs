@@ -975,6 +975,8 @@ public partial class Core
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ACCBANDS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("ACCBANDS open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("ACCBANDS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("ACCBANDS", "open", "inLow", inLow.Length, inHigh.Length);
+      RequireHistoryLength("ACCBANDS", "open", "inClose", inClose.Length, inHigh.Length);
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 

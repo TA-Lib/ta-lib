@@ -858,6 +858,7 @@
       requireArgument("AROON open", "inHigh", inHigh);
       requireHistory("AROON open", inHigh.length);
       requireArgument("AROON open", "inLow", inLow);
+      requireHistoryLength("AROON open", "inLow", inLow.length, inHigh.length);
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**

@@ -1411,6 +1411,8 @@
       requireHistory("ULTOSC open", inHigh.length);
       requireArgument("ULTOSC open", "inLow", inLow);
       requireArgument("ULTOSC open", "inClose", inClose);
+      requireHistoryLength("ULTOSC open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ULTOSC open", "inClose", inClose.length, inHigh.length);
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
    /**

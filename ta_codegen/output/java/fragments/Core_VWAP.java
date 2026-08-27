@@ -800,6 +800,9 @@
       requireArgument("VWAP open", "inLow", inLow);
       requireArgument("VWAP open", "inClose", inClose);
       requireArgument("VWAP open", "inVolume", inVolume);
+      requireHistoryLength("VWAP open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("VWAP open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("VWAP open", "inVolume", inVolume.length, inHigh.length);
       return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**

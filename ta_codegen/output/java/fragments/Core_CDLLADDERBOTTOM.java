@@ -732,6 +732,9 @@
       requireArgument("CDLLADDERBOTTOM open", "inHigh", inHigh);
       requireArgument("CDLLADDERBOTTOM open", "inLow", inLow);
       requireArgument("CDLLADDERBOTTOM open", "inClose", inClose);
+      requireHistoryLength("CDLLADDERBOTTOM open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLADDERBOTTOM open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLADDERBOTTOM open", "inClose", inClose.length, inOpen.length);
       return CDLLADDERBOTTOM_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

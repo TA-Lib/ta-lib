@@ -1955,7 +1955,7 @@ fn emit_extras_and_candle(
 
 /// This backend's IR cleanup sequence — `java_stream::cleanup_open_body`'s twin,
 /// with this backend's own admission test. See it for why the sequence runs
-/// where the body is BUILT and what `InsufficientHistory` answers; the C#
+/// where the body is BUILT and what `INSUFFICIENT_HISTORY` answers; the C#
 /// stake in the first is CS0219 on an orphaned local, which
 /// `TreatWarningsAsErrors` makes a build failure.
 fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> {
@@ -2492,6 +2492,28 @@ fn public_open_empty_guards(n: &str, verb: &str, inputs: &[String]) -> String {
     s
 }
 
+/// Rule S5's input half, the same at both openers: the history's own length IS
+/// the range, so every other declared input must AGREE with it rather than
+/// merely reach it.
+///
+/// At the plain open it is the whole of S5 — nothing is written, so there is no
+/// capacity to bound — and it belongs on this frame for the same reason the
+/// fill's does: the core makes the test, but answers it as a bare `BadParam`
+/// naming nothing, where the same fault at `OpenAndFill` named the leg (issue
+/// #271 item 1).
+fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
+    let inputs = streaming::input_array_names(func);
+    let history = &inputs[0];
+    let mut s = String::new();
+    for input in &inputs[1..] {
+        let _ = writeln!(
+            s,
+            "      RequireHistoryLength(\"{n}\", \"{verb}\", \"{input}\", {input}.Length, {history}.Length);"
+        );
+    }
+    s
+}
+
 /// Rule S5 at the PUBLIC `OpenAndFill`.
 ///
 /// An opener is a batch call over `[0, historyLen - 1]`, so B5's produced count
@@ -2527,12 +2549,7 @@ fn public_open_fill_capacity(func: &FuncDef, n: &str, history: &str) -> String {
         lb_args.join(", ")
     );
     // Then S5's input half, ahead of its output half — the order B5 states.
-    for input in streaming::input_array_names(func).iter().skip(1) {
-        let _ = writeln!(
-            s,
-            "      RequireHistoryLength(\"{n}\", \"openAndFill\", \"{input}\", {input}.Length, {history}.Length);"
-        );
-    }
+    s.push_str(&history_length_guards(func, n, "openAndFill"));
     // A `nullable` output may be declined with an empty span (rule B6a read on
     // this tier), so its bound is conditional — the shape the batch wrapper uses.
     let nullable = super::common::nullable_output_names(func);
@@ -2686,6 +2703,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     );
     let _ = writeln!(o, "   {{");
     o.push_str(&public_open_empty_guards(&n, "open", &in_fwd));
+    o.push_str(&history_length_guards(func, &n, "open"));
     let _ = writeln!(
         o,
         "      return {base}_OpenInternal({}, 0{opt_fwd_str});",

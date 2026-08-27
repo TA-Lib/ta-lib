@@ -630,6 +630,9 @@
       requireArgument("CDLDOJI open", "inHigh", inHigh);
       requireArgument("CDLDOJI open", "inLow", inLow);
       requireArgument("CDLDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

@@ -429,6 +429,8 @@
       requireHistory("TYPPRICE open", inHigh.length);
       requireArgument("TYPPRICE open", "inLow", inLow);
       requireArgument("TYPPRICE open", "inClose", inClose);
+      requireHistoryLength("TYPPRICE open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TYPPRICE open", "inClose", inClose.length, inHigh.length);
       return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**

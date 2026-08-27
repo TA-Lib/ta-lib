@@ -1296,6 +1296,7 @@
       requireArgument("CORREL open", "inReal0", inReal0);
       requireHistory("CORREL open", inReal0.length);
       requireArgument("CORREL open", "inReal1", inReal1);
+      requireHistoryLength("CORREL open", "inReal1", inReal1.length, inReal0.length);
       return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**

@@ -1129,6 +1129,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDL3STARSINSOUTH open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDL3STARSINSOUTH open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDL3STARSINSOUTH open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDL3STARSINSOUTH", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDL3STARSINSOUTH", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDL3STARSINSOUTH", "open", "inClose", inClose.Length, inOpen.Length);
       return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

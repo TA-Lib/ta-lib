@@ -693,6 +693,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLDOJI open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLDOJI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLDOJI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLDOJI", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLDOJI", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLDOJI", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

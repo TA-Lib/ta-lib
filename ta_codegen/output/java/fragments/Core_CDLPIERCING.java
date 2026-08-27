@@ -715,6 +715,9 @@
       requireArgument("CDLPIERCING open", "inHigh", inHigh);
       requireArgument("CDLPIERCING open", "inLow", inLow);
       requireArgument("CDLPIERCING open", "inClose", inClose);
+      requireHistoryLength("CDLPIERCING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING open", "inClose", inClose.length, inOpen.length);
       return CDLPIERCING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

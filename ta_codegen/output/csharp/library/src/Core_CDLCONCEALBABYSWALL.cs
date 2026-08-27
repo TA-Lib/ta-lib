@@ -843,6 +843,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLCONCEALBABYSWALL open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLCONCEALBABYSWALL open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLCONCEALBABYSWALL open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLCONCEALBABYSWALL", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLCONCEALBABYSWALL", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLCONCEALBABYSWALL", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLCONCEALBABYSWALL_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

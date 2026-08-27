@@ -855,6 +855,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHOMINGPIGEON open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHOMINGPIGEON open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHOMINGPIGEON open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLHOMINGPIGEON", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLHOMINGPIGEON", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLHOMINGPIGEON", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLHOMINGPIGEON_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

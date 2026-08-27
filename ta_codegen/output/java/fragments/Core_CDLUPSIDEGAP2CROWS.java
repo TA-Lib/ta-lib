@@ -821,6 +821,9 @@
       requireArgument("CDLUPSIDEGAP2CROWS open", "inHigh", inHigh);
       requireArgument("CDLUPSIDEGAP2CROWS open", "inLow", inLow);
       requireArgument("CDLUPSIDEGAP2CROWS open", "inClose", inClose);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inClose", inClose.length, inOpen.length);
       return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

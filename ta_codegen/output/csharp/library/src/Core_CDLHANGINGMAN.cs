@@ -1038,6 +1038,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHANGINGMAN open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHANGINGMAN open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHANGINGMAN open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLHANGINGMAN", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLHANGINGMAN", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLHANGINGMAN", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLHANGINGMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

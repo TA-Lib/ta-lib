@@ -12492,34 +12492,38 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
                     func.name
                 );
             }
-            if verb == "openAndFill" {
-                // Rule S5, and the width it is derived from. An opener's
-                // `startIdx` is the constant 0, so B5's produced count collapses
-                // to `historyLen - lookback` — read from the function's OWN
-                // lookback, never from the history's width.
+            // Rule S5, and the width the fill's half is derived from. An
+            // opener's `startIdx` is the constant 0, so B5's produced count
+            // collapses to `historyLen - lookback` — read from the function's
+            // OWN lookback, never from the history's width.
+            let at_width = (verb == "openAndFill").then(|| {
                 let width = format!(
                     "int guardOutLen = OpenFillCount(\"{base}\", \"openAndFill\", {history}.Length, {base}_Lookback("
                 );
-                let at_width = body.find(&width).unwrap_or_else(|| {
+                body.find(&width).unwrap_or_else(|| {
                     panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
+                })
+            });
+            // S5's input half, at BOTH openers (issue #271 item 1): the two
+            // used to answer the same fault differently, the fill naming the
+            // leg and the plain open reporting a bare `BadParam` from the core.
+            // At the fill it sits after S3 (the width's own rejection) and
+            // before the output capacity — the order B5 states.
+            for extra in &inputs[1..] {
+                let needle = format!(
+                    "RequireHistoryLength(\"{base}\", \"{verb}\", \"{extra}\", {extra}.Length, {history}.Length);"
+                );
+                let at_in = body.find(&needle).unwrap_or_else(|| {
+                    panic!("{}: {verb} does not require `{extra}` to be the history's length", func.name)
                 });
-                // S5's input half, after S3 (the width's own rejection) and
-                // before the output capacity — the order B5 states.
-                for extra in &inputs[1..] {
-                    let needle = format!(
-                        "RequireHistoryLength(\"{base}\", \"openAndFill\", \"{extra}\", {extra}.Length, {history}.Length);"
-                    );
-                    let at_in = body.find(&needle).unwrap_or_else(|| {
-                        panic!("{}: openAndFill does not require `{extra}` to be the history's length", func.name)
-                    });
-                    assert!(at_in > at_width, "{}: `{extra}`'s length is checked before the parameters", func.name);
-                }
+                assert!(at_in > at_width.unwrap_or(at_s1), "{}: {verb} checks `{extra}`'s length too early", func.name);
+            }
+            if verb == "openAndFill" {
                 for out in &func.outputs {
                     // A `nullable` output is bounded only when it was supplied
                     // (rule B6a); the guard is part of the needle, so a
                     // regression to an unconditional bound — or to none — is a
                     // failure rather than a substring that still matches.
-                    let _ = at_width;
                     let bound = format!(
                         "RequireFillLength(\"{base}\", \"openAndFill\", \"{0}\", {0}.Length, guardOutLen);",
                         out.name
@@ -12615,31 +12619,37 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
                     func.name
                 );
             }
-            if with_outputs {
-                // S5's width, derived from the lookback rather than from the
-                // requested range: an opener's `startIdx` is the constant 0, so
-                // B5's produced count collapses to `historyLen - lookback`.
+            // S5's width, derived from the lookback rather than from the
+            // requested range: an opener's `startIdx` is the constant 0, so
+            // B5's produced count collapses to `historyLen - lookback`. Only
+            // the fill has one — the plain open writes nothing.
+            let at_width = with_outputs.then(|| {
                 let width = format!(
                     "int guardOutLen = openFillCount(\"{base} {verb}\", {history}.length, {base}_Lookback("
                 );
-                let at_width = body.find(&width).unwrap_or_else(|| {
+                body.find(&width).unwrap_or_else(|| {
                     panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
+                })
+            });
+            // S5's input half, at BOTH openers (issue #271 item 1): the two
+            // used to answer the same fault differently, the fill naming the
+            // leg and the plain open reporting a bare `BadParam` from the core.
+            // At the fill it sits after S3 (the width's own rejection) and
+            // before the output capacity — the order B5 states.
+            for extra in streaming::input_array_names(&func).iter().skip(1) {
+                let needle = format!(
+                    "requireHistoryLength(\"{base} {verb}\", \"{extra}\", {extra}.length, {history}.length);"
+                );
+                let at_in = body.find(&needle).unwrap_or_else(|| {
+                    panic!("{}: {verb} does not require `{extra}` to be the history's length", func.name)
                 });
-                // S5's input half, after S3 (the width's own rejection) and
-                // before the output capacity — the order B5 states.
-                for extra in streaming::input_array_names(&func).iter().skip(1) {
-                    let needle = format!(
-                        "requireHistoryLength(\"{base} {verb}\", \"{extra}\", {extra}.length, {history}.length);"
-                    );
-                    let at_in = body.find(&needle).unwrap_or_else(|| {
-                        panic!("{}: openAndFill does not require `{extra}` to be the history's length", func.name)
-                    });
-                    assert!(
-                        at_in > at_width,
-                        "{}: `{extra}`'s length is checked before the parameters",
-                        func.name
-                    );
-                }
+                assert!(
+                    at_in > at_width.unwrap_or(pair),
+                    "{}: {verb} checks `{extra}`'s length too early",
+                    func.name
+                );
+            }
+            if with_outputs {
                 for out in &func.outputs {
                     // A `nullable` output is bounded only when it was supplied
                     // (rule B6a). The guard is part of the needle: without it

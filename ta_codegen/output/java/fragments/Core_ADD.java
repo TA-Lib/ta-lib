@@ -408,6 +408,7 @@
       requireArgument("ADD open", "inReal0", inReal0);
       requireHistory("ADD open", inReal0.length);
       requireArgument("ADD open", "inReal1", inReal1);
+      requireHistoryLength("ADD open", "inReal1", inReal1.length, inReal0.length);
       return ADD_OpenInternal(inReal0, inReal1, 0);
    }
    /**

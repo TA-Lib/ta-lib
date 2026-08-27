@@ -835,6 +835,9 @@
       requireArgument("CDLHARAMI open", "inHigh", inHigh);
       requireArgument("CDLHARAMI open", "inLow", inLow);
       requireArgument("CDLHARAMI open", "inClose", inClose);
+      requireHistoryLength("CDLHARAMI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI open", "inClose", inClose.length, inOpen.length);
       return CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

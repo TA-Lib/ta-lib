@@ -1606,6 +1606,7 @@
       requireArgument("BETA open", "inReal0", inReal0);
       requireHistory("BETA open", inReal0.length);
       requireArgument("BETA open", "inReal1", inReal1);
+      requireHistoryLength("BETA open", "inReal1", inReal1.length, inReal0.length);
       return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**

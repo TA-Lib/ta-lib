@@ -571,6 +571,7 @@
       requireArgument("PVI open", "inClose", inClose);
       requireHistory("PVI open", inClose.length);
       requireArgument("PVI open", "inVolume", inVolume);
+      requireHistoryLength("PVI open", "inVolume", inVolume.length, inClose.length);
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
    /**

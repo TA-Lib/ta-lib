@@ -878,6 +878,9 @@
       requireArgument("CMF open", "inLow", inLow);
       requireArgument("CMF open", "inClose", inClose);
       requireArgument("CMF open", "inVolume", inVolume);
+      requireHistoryLength("CMF open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CMF open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("CMF open", "inVolume", inVolume.length, inHigh.length);
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**

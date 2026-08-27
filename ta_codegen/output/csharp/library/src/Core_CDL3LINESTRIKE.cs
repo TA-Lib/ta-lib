@@ -830,6 +830,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDL3LINESTRIKE open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDL3LINESTRIKE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDL3LINESTRIKE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDL3LINESTRIKE", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDL3LINESTRIKE", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDL3LINESTRIKE", "open", "inClose", inClose.Length, inOpen.Length);
       return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

@@ -1089,6 +1089,7 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inPeriods.IsEmpty ) throw new TaLibArgumentException("MAVP open: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      RequireHistoryLength("MAVP", "open", "inPeriods", inPeriods.Length, inReal.Length);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 

@@ -978,6 +978,9 @@
       requireArgument("CDLHANGINGMAN open", "inHigh", inHigh);
       requireArgument("CDLHANGINGMAN open", "inLow", inLow);
       requireArgument("CDLHANGINGMAN open", "inClose", inClose);
+      requireHistoryLength("CDLHANGINGMAN open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHANGINGMAN open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHANGINGMAN open", "inClose", inClose.length, inOpen.length);
       return CDLHANGINGMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

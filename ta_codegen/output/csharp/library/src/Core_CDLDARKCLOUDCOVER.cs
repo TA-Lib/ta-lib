@@ -783,6 +783,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLDARKCLOUDCOVER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLDARKCLOUDCOVER open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLDARKCLOUDCOVER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLDARKCLOUDCOVER", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLDARKCLOUDCOVER", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLDARKCLOUDCOVER", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 

@@ -1562,6 +1562,7 @@ public final class Core {
       requireArgument("AC open", "inHigh", inHigh);
       requireHistory("AC open", inHigh.length);
       requireArgument("AC open", "inLow", inLow);
+      requireHistoryLength("AC open", "inLow", inLow.length, inHigh.length);
       return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**
@@ -2512,6 +2513,8 @@ public final class Core {
       requireHistory("ACCBANDS open", inHigh.length);
       requireArgument("ACCBANDS open", "inLow", inLow);
       requireArgument("ACCBANDS open", "inClose", inClose);
+      requireHistoryLength("ACCBANDS open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ACCBANDS open", "inClose", inClose.length, inHigh.length);
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -3515,6 +3518,9 @@ public final class Core {
       requireArgument("AD open", "inLow", inLow);
       requireArgument("AD open", "inClose", inClose);
       requireArgument("AD open", "inVolume", inVolume);
+      requireHistoryLength("AD open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("AD open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("AD open", "inVolume", inVolume.length, inHigh.length);
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
@@ -3957,6 +3963,7 @@ public final class Core {
       requireArgument("ADD open", "inReal0", inReal0);
       requireHistory("ADD open", inReal0.length);
       requireArgument("ADD open", "inReal1", inReal1);
+      requireHistoryLength("ADD open", "inReal1", inReal1.length, inReal0.length);
       return ADD_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -4824,6 +4831,9 @@ public final class Core {
       requireArgument("ADOSC open", "inLow", inLow);
       requireArgument("ADOSC open", "inClose", inClose);
       requireArgument("ADOSC open", "inVolume", inVolume);
+      requireHistoryLength("ADOSC open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADOSC open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("ADOSC open", "inVolume", inVolume.length, inHigh.length);
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
@@ -6306,6 +6316,8 @@ public final class Core {
       requireHistory("ADX open", inHigh.length);
       requireArgument("ADX open", "inLow", inLow);
       requireArgument("ADX open", "inClose", inClose);
+      requireHistoryLength("ADX open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADX open", "inClose", inClose.length, inHigh.length);
       return ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -6967,6 +6979,8 @@ public final class Core {
       requireHistory("ADXR open", inHigh.length);
       requireArgument("ADXR open", "inLow", inLow);
       requireArgument("ADXR open", "inClose", inClose);
+      requireHistoryLength("ADXR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADXR open", "inClose", inClose.length, inHigh.length);
       return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -7852,6 +7866,7 @@ public final class Core {
       requireArgument("AO open", "inHigh", inHigh);
       requireHistory("AO open", inHigh.length);
       requireArgument("AO open", "inLow", inLow);
+      requireHistoryLength("AO open", "inLow", inLow.length, inHigh.length);
       return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
@@ -9454,6 +9469,7 @@ public final class Core {
       requireArgument("AROON open", "inHigh", inHigh);
       requireHistory("AROON open", inHigh.length);
       requireArgument("AROON open", "inLow", inLow);
+      requireHistoryLength("AROON open", "inLow", inLow.length, inHigh.length);
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -10338,6 +10354,7 @@ public final class Core {
       requireArgument("AROONOSC open", "inHigh", inHigh);
       requireHistory("AROONOSC open", inHigh.length);
       requireArgument("AROONOSC open", "inLow", inLow);
+      requireHistoryLength("AROONOSC open", "inLow", inLow.length, inHigh.length);
       return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -12085,6 +12102,8 @@ public final class Core {
       requireHistory("ATR open", inHigh.length);
       requireArgument("ATR open", "inLow", inLow);
       requireArgument("ATR open", "inClose", inClose);
+      requireHistoryLength("ATR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ATR open", "inClose", inClose.length, inHigh.length);
       return ATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -13138,6 +13157,9 @@ public final class Core {
       requireArgument("AVGPRICE open", "inHigh", inHigh);
       requireArgument("AVGPRICE open", "inLow", inLow);
       requireArgument("AVGPRICE open", "inClose", inClose);
+      requireHistoryLength("AVGPRICE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("AVGPRICE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("AVGPRICE open", "inClose", inClose.length, inOpen.length);
       return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -16016,6 +16038,7 @@ public final class Core {
       requireArgument("BETA open", "inReal0", inReal0);
       requireHistory("BETA open", inReal0.length);
       requireArgument("BETA open", "inReal1", inReal1);
+      requireHistoryLength("BETA open", "inReal1", inReal1.length, inReal0.length);
       return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
@@ -16523,6 +16546,9 @@ public final class Core {
       requireArgument("BOP open", "inHigh", inHigh);
       requireArgument("BOP open", "inLow", inLow);
       requireArgument("BOP open", "inClose", inClose);
+      requireHistoryLength("BOP open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("BOP open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("BOP open", "inClose", inClose.length, inOpen.length);
       return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -17341,6 +17367,8 @@ public final class Core {
       requireHistory("CCI open", inHigh.length);
       requireArgument("CCI open", "inLow", inLow);
       requireArgument("CCI open", "inClose", inClose);
+      requireHistoryLength("CCI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CCI open", "inClose", inClose.length, inHigh.length);
       return CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -18083,6 +18111,9 @@ public final class Core {
       requireArgument("CDL2CROWS open", "inHigh", inHigh);
       requireArgument("CDL2CROWS open", "inLow", inLow);
       requireArgument("CDL2CROWS open", "inClose", inClose);
+      requireHistoryLength("CDL2CROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL2CROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL2CROWS open", "inClose", inClose.length, inOpen.length);
       return CDL2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -18894,6 +18925,9 @@ public final class Core {
       requireArgument("CDL3BLACKCROWS open", "inHigh", inHigh);
       requireArgument("CDL3BLACKCROWS open", "inLow", inLow);
       requireArgument("CDL3BLACKCROWS open", "inClose", inClose);
+      requireHistoryLength("CDL3BLACKCROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS open", "inClose", inClose.length, inOpen.length);
       return CDL3BLACKCROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -19737,6 +19771,9 @@ public final class Core {
       requireArgument("CDL3INSIDE open", "inHigh", inHigh);
       requireArgument("CDL3INSIDE open", "inLow", inLow);
       requireArgument("CDL3INSIDE open", "inClose", inClose);
+      requireHistoryLength("CDL3INSIDE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3INSIDE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3INSIDE open", "inClose", inClose.length, inOpen.length);
       return CDL3INSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -20537,6 +20574,9 @@ public final class Core {
       requireArgument("CDL3LINESTRIKE open", "inHigh", inHigh);
       requireArgument("CDL3LINESTRIKE open", "inLow", inLow);
       requireArgument("CDL3LINESTRIKE open", "inClose", inClose);
+      requireHistoryLength("CDL3LINESTRIKE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3LINESTRIKE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3LINESTRIKE open", "inClose", inClose.length, inOpen.length);
       return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -21137,6 +21177,9 @@ public final class Core {
       requireArgument("CDL3OUTSIDE open", "inHigh", inHigh);
       requireArgument("CDL3OUTSIDE open", "inLow", inLow);
       requireArgument("CDL3OUTSIDE open", "inClose", inClose);
+      requireHistoryLength("CDL3OUTSIDE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3OUTSIDE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3OUTSIDE open", "inClose", inClose.length, inOpen.length);
       return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -22239,6 +22282,9 @@ public final class Core {
       requireArgument("CDL3STARSINSOUTH open", "inHigh", inHigh);
       requireArgument("CDL3STARSINSOUTH open", "inLow", inLow);
       requireArgument("CDL3STARSINSOUTH open", "inClose", inClose);
+      requireHistoryLength("CDL3STARSINSOUTH open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3STARSINSOUTH open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3STARSINSOUTH open", "inClose", inClose.length, inOpen.length);
       return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -23378,6 +23424,9 @@ public final class Core {
       requireArgument("CDL3WHITESOLDIERS open", "inHigh", inHigh);
       requireArgument("CDL3WHITESOLDIERS open", "inLow", inLow);
       requireArgument("CDL3WHITESOLDIERS open", "inClose", inClose);
+      requireHistoryLength("CDL3WHITESOLDIERS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3WHITESOLDIERS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3WHITESOLDIERS open", "inClose", inClose.length, inOpen.length);
       return CDL3WHITESOLDIERS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -24361,6 +24410,9 @@ public final class Core {
       requireArgument("CDLABANDONEDBABY open", "inHigh", inHigh);
       requireArgument("CDLABANDONEDBABY open", "inLow", inLow);
       requireArgument("CDLABANDONEDBABY open", "inClose", inClose);
+      requireHistoryLength("CDLABANDONEDBABY open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLABANDONEDBABY open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLABANDONEDBABY open", "inClose", inClose.length, inOpen.length);
       return CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -25609,6 +25661,9 @@ public final class Core {
       requireArgument("CDLADVANCEBLOCK open", "inHigh", inHigh);
       requireArgument("CDLADVANCEBLOCK open", "inLow", inLow);
       requireArgument("CDLADVANCEBLOCK open", "inClose", inClose);
+      requireHistoryLength("CDLADVANCEBLOCK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLADVANCEBLOCK open", "inClose", inClose.length, inOpen.length);
       return CDLADVANCEBLOCK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -26400,6 +26455,9 @@ public final class Core {
       requireArgument("CDLBELTHOLD open", "inHigh", inHigh);
       requireArgument("CDLBELTHOLD open", "inLow", inLow);
       requireArgument("CDLBELTHOLD open", "inClose", inClose);
+      requireHistoryLength("CDLBELTHOLD open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLBELTHOLD open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLBELTHOLD open", "inClose", inClose.length, inOpen.length);
       return CDLBELTHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -27178,6 +27236,9 @@ public final class Core {
       requireArgument("CDLBREAKAWAY open", "inHigh", inHigh);
       requireArgument("CDLBREAKAWAY open", "inLow", inLow);
       requireArgument("CDLBREAKAWAY open", "inClose", inClose);
+      requireHistoryLength("CDLBREAKAWAY open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLBREAKAWAY open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLBREAKAWAY open", "inClose", inClose.length, inOpen.length);
       return CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -27965,6 +28026,9 @@ public final class Core {
       requireArgument("CDLCLOSINGMARUBOZU open", "inHigh", inHigh);
       requireArgument("CDLCLOSINGMARUBOZU open", "inLow", inLow);
       requireArgument("CDLCLOSINGMARUBOZU open", "inClose", inClose);
+      requireHistoryLength("CDLCLOSINGMARUBOZU open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCLOSINGMARUBOZU open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCLOSINGMARUBOZU open", "inClose", inClose.length, inOpen.length);
       return CDLCLOSINGMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -28778,6 +28842,9 @@ public final class Core {
       requireArgument("CDLCONCEALBABYSWALL open", "inHigh", inHigh);
       requireArgument("CDLCONCEALBABYSWALL open", "inLow", inLow);
       requireArgument("CDLCONCEALBABYSWALL open", "inClose", inClose);
+      requireHistoryLength("CDLCONCEALBABYSWALL open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCONCEALBABYSWALL open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCONCEALBABYSWALL open", "inClose", inClose.length, inOpen.length);
       return CDLCONCEALBABYSWALL_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -29619,6 +29686,9 @@ public final class Core {
       requireArgument("CDLCOUNTERATTACK open", "inHigh", inHigh);
       requireArgument("CDLCOUNTERATTACK open", "inLow", inLow);
       requireArgument("CDLCOUNTERATTACK open", "inClose", inClose);
+      requireHistoryLength("CDLCOUNTERATTACK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLCOUNTERATTACK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLCOUNTERATTACK open", "inClose", inClose.length, inOpen.length);
       return CDLCOUNTERATTACK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -30371,6 +30441,9 @@ public final class Core {
       requireArgument("CDLDARKCLOUDCOVER open", "inHigh", inHigh);
       requireArgument("CDLDARKCLOUDCOVER open", "inLow", inLow);
       requireArgument("CDLDARKCLOUDCOVER open", "inClose", inClose);
+      requireHistoryLength("CDLDARKCLOUDCOVER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDARKCLOUDCOVER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDARKCLOUDCOVER open", "inClose", inClose.length, inOpen.length);
       return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -31035,6 +31108,9 @@ public final class Core {
       requireArgument("CDLDOJI open", "inHigh", inHigh);
       requireArgument("CDLDOJI open", "inLow", inLow);
       requireArgument("CDLDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -31865,6 +31941,9 @@ public final class Core {
       requireArgument("CDLDOJISTAR open", "inHigh", inHigh);
       requireArgument("CDLDOJISTAR open", "inLow", inLow);
       requireArgument("CDLDOJISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLDOJISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDOJISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDOJISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -32660,6 +32739,9 @@ public final class Core {
       requireArgument("CDLDRAGONFLYDOJI open", "inHigh", inHigh);
       requireArgument("CDLDRAGONFLYDOJI open", "inLow", inLow);
       requireArgument("CDLDRAGONFLYDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLDRAGONFLYDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDRAGONFLYDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLDRAGONFLYDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -33268,6 +33350,9 @@ public final class Core {
       requireArgument("CDLENGULFING open", "inHigh", inHigh);
       requireArgument("CDLENGULFING open", "inLow", inLow);
       requireArgument("CDLENGULFING open", "inClose", inClose);
+      requireHistoryLength("CDLENGULFING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLENGULFING open", "inClose", inClose.length, inOpen.length);
       return CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -34254,6 +34339,9 @@ public final class Core {
       requireArgument("CDLEVENINGDOJISTAR open", "inHigh", inHigh);
       requireArgument("CDLEVENINGDOJISTAR open", "inLow", inLow);
       requireArgument("CDLEVENINGDOJISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLEVENINGDOJISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGDOJISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGDOJISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -35159,6 +35247,9 @@ public final class Core {
       requireArgument("CDLEVENINGSTAR open", "inHigh", inHigh);
       requireArgument("CDLEVENINGSTAR open", "inLow", inLow);
       requireArgument("CDLEVENINGSTAR open", "inClose", inClose);
+      requireHistoryLength("CDLEVENINGSTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGSTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLEVENINGSTAR open", "inClose", inClose.length, inOpen.length);
       return CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -36004,6 +36095,9 @@ public final class Core {
       requireArgument("CDLGAPSIDESIDEWHITE open", "inHigh", inHigh);
       requireArgument("CDLGAPSIDESIDEWHITE open", "inLow", inLow);
       requireArgument("CDLGAPSIDESIDEWHITE open", "inClose", inClose);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inClose", inClose.length, inOpen.length);
       return CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -36799,6 +36893,9 @@ public final class Core {
       requireArgument("CDLGRAVESTONEDOJI open", "inHigh", inHigh);
       requireArgument("CDLGRAVESTONEDOJI open", "inLow", inLow);
       requireArgument("CDLGRAVESTONEDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLGRAVESTONEDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLGRAVESTONEDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLGRAVESTONEDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLGRAVESTONEDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -37809,6 +37906,9 @@ public final class Core {
       requireArgument("CDLHAMMER open", "inHigh", inHigh);
       requireArgument("CDLHAMMER open", "inLow", inLow);
       requireArgument("CDLHAMMER open", "inClose", inClose);
+      requireHistoryLength("CDLHAMMER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHAMMER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHAMMER open", "inClose", inClose.length, inOpen.length);
       return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -38821,6 +38921,9 @@ public final class Core {
       requireArgument("CDLHANGINGMAN open", "inHigh", inHigh);
       requireArgument("CDLHANGINGMAN open", "inLow", inLow);
       requireArgument("CDLHANGINGMAN open", "inClose", inClose);
+      requireHistoryLength("CDLHANGINGMAN open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHANGINGMAN open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHANGINGMAN open", "inClose", inClose.length, inOpen.length);
       return CDLHANGINGMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -39690,6 +39793,9 @@ public final class Core {
       requireArgument("CDLHARAMI open", "inHigh", inHigh);
       requireArgument("CDLHARAMI open", "inLow", inLow);
       requireArgument("CDLHARAMI open", "inClose", inClose);
+      requireHistoryLength("CDLHARAMI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMI open", "inClose", inClose.length, inOpen.length);
       return CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -40555,6 +40661,9 @@ public final class Core {
       requireArgument("CDLHARAMICROSS open", "inHigh", inHigh);
       requireArgument("CDLHARAMICROSS open", "inLow", inLow);
       requireArgument("CDLHARAMICROSS open", "inClose", inClose);
+      requireHistoryLength("CDLHARAMICROSS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHARAMICROSS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHARAMICROSS open", "inClose", inClose.length, inOpen.length);
       return CDLHARAMICROSS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -41344,6 +41453,9 @@ public final class Core {
       requireArgument("CDLHIGHWAVE open", "inHigh", inHigh);
       requireArgument("CDLHIGHWAVE open", "inLow", inLow);
       requireArgument("CDLHIGHWAVE open", "inClose", inClose);
+      requireHistoryLength("CDLHIGHWAVE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIGHWAVE open", "inClose", inClose.length, inOpen.length);
       return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -42090,6 +42202,9 @@ public final class Core {
       requireArgument("CDLHIKKAKE open", "inHigh", inHigh);
       requireArgument("CDLHIKKAKE open", "inLow", inLow);
       requireArgument("CDLHIKKAKE open", "inClose", inClose);
+      requireHistoryLength("CDLHIKKAKE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKE open", "inClose", inClose.length, inOpen.length);
       return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -42998,6 +43113,9 @@ public final class Core {
       requireArgument("CDLHIKKAKEMOD open", "inHigh", inHigh);
       requireArgument("CDLHIKKAKEMOD open", "inLow", inLow);
       requireArgument("CDLHIKKAKEMOD open", "inClose", inClose);
+      requireHistoryLength("CDLHIKKAKEMOD open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHIKKAKEMOD open", "inClose", inClose.length, inOpen.length);
       return CDLHIKKAKEMOD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -43824,6 +43942,9 @@ public final class Core {
       requireArgument("CDLHOMINGPIGEON open", "inHigh", inHigh);
       requireArgument("CDLHOMINGPIGEON open", "inLow", inLow);
       requireArgument("CDLHOMINGPIGEON open", "inClose", inClose);
+      requireHistoryLength("CDLHOMINGPIGEON open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLHOMINGPIGEON open", "inClose", inClose.length, inOpen.length);
       return CDLHOMINGPIGEON_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -44737,6 +44858,9 @@ public final class Core {
       requireArgument("CDLIDENTICAL3CROWS open", "inHigh", inHigh);
       requireArgument("CDLIDENTICAL3CROWS open", "inLow", inLow);
       requireArgument("CDLIDENTICAL3CROWS open", "inClose", inClose);
+      requireHistoryLength("CDLIDENTICAL3CROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLIDENTICAL3CROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLIDENTICAL3CROWS open", "inClose", inClose.length, inOpen.length);
       return CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -45569,6 +45693,9 @@ public final class Core {
       requireArgument("CDLINNECK open", "inHigh", inHigh);
       requireArgument("CDLINNECK open", "inLow", inLow);
       requireArgument("CDLINNECK open", "inClose", inClose);
+      requireHistoryLength("CDLINNECK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLINNECK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLINNECK open", "inClose", inClose.length, inOpen.length);
       return CDLINNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -46471,6 +46598,9 @@ public final class Core {
       requireArgument("CDLINVERTEDHAMMER open", "inHigh", inHigh);
       requireArgument("CDLINVERTEDHAMMER open", "inLow", inLow);
       requireArgument("CDLINVERTEDHAMMER open", "inClose", inClose);
+      requireHistoryLength("CDLINVERTEDHAMMER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLINVERTEDHAMMER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLINVERTEDHAMMER open", "inClose", inClose.length, inOpen.length);
       return CDLINVERTEDHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -47327,6 +47457,9 @@ public final class Core {
       requireArgument("CDLKICKING open", "inHigh", inHigh);
       requireArgument("CDLKICKING open", "inLow", inLow);
       requireArgument("CDLKICKING open", "inClose", inClose);
+      requireHistoryLength("CDLKICKING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLKICKING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLKICKING open", "inClose", inClose.length, inOpen.length);
       return CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -48179,6 +48312,9 @@ public final class Core {
       requireArgument("CDLKICKINGBYLENGTH open", "inHigh", inHigh);
       requireArgument("CDLKICKINGBYLENGTH open", "inLow", inLow);
       requireArgument("CDLKICKINGBYLENGTH open", "inClose", inClose);
+      requireHistoryLength("CDLKICKINGBYLENGTH open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLKICKINGBYLENGTH open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLKICKINGBYLENGTH open", "inClose", inClose.length, inOpen.length);
       return CDLKICKINGBYLENGTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -48945,6 +49081,9 @@ public final class Core {
       requireArgument("CDLLADDERBOTTOM open", "inHigh", inHigh);
       requireArgument("CDLLADDERBOTTOM open", "inLow", inLow);
       requireArgument("CDLLADDERBOTTOM open", "inClose", inClose);
+      requireHistoryLength("CDLLADDERBOTTOM open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLADDERBOTTOM open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLADDERBOTTOM open", "inClose", inClose.length, inOpen.length);
       return CDLLADDERBOTTOM_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -49730,6 +49869,9 @@ public final class Core {
       requireArgument("CDLLONGLEGGEDDOJI open", "inHigh", inHigh);
       requireArgument("CDLLONGLEGGEDDOJI open", "inLow", inLow);
       requireArgument("CDLLONGLEGGEDDOJI open", "inClose", inClose);
+      requireHistoryLength("CDLLONGLEGGEDDOJI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLEGGEDDOJI open", "inClose", inClose.length, inOpen.length);
       return CDLLONGLEGGEDDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -50497,6 +50639,9 @@ public final class Core {
       requireArgument("CDLLONGLINE open", "inHigh", inHigh);
       requireArgument("CDLLONGLINE open", "inLow", inLow);
       requireArgument("CDLLONGLINE open", "inClose", inClose);
+      requireHistoryLength("CDLLONGLINE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLLONGLINE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLLONGLINE open", "inClose", inClose.length, inOpen.length);
       return CDLLONGLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -51276,6 +51421,9 @@ public final class Core {
       requireArgument("CDLMARUBOZU open", "inHigh", inHigh);
       requireArgument("CDLMARUBOZU open", "inLow", inLow);
       requireArgument("CDLMARUBOZU open", "inClose", inClose);
+      requireHistoryLength("CDLMARUBOZU open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMARUBOZU open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMARUBOZU open", "inClose", inClose.length, inOpen.length);
       return CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -51983,6 +52131,9 @@ public final class Core {
       requireArgument("CDLMATCHINGLOW open", "inHigh", inHigh);
       requireArgument("CDLMATCHINGLOW open", "inLow", inLow);
       requireArgument("CDLMATCHINGLOW open", "inClose", inClose);
+      requireHistoryLength("CDLMATCHINGLOW open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMATCHINGLOW open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMATCHINGLOW open", "inClose", inClose.length, inOpen.length);
       return CDLMATCHINGLOW_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -52970,6 +53121,9 @@ public final class Core {
       requireArgument("CDLMATHOLD open", "inHigh", inHigh);
       requireArgument("CDLMATHOLD open", "inLow", inLow);
       requireArgument("CDLMATHOLD open", "inClose", inClose);
+      requireHistoryLength("CDLMATHOLD open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMATHOLD open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMATHOLD open", "inClose", inClose.length, inOpen.length);
       return CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -53963,6 +54117,9 @@ public final class Core {
       requireArgument("CDLMORNINGDOJISTAR open", "inHigh", inHigh);
       requireArgument("CDLMORNINGDOJISTAR open", "inLow", inLow);
       requireArgument("CDLMORNINGDOJISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLMORNINGDOJISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGDOJISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGDOJISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLMORNINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -54876,6 +55033,9 @@ public final class Core {
       requireArgument("CDLMORNINGSTAR open", "inHigh", inHigh);
       requireArgument("CDLMORNINGSTAR open", "inLow", inLow);
       requireArgument("CDLMORNINGSTAR open", "inClose", inClose);
+      requireHistoryLength("CDLMORNINGSTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGSTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLMORNINGSTAR open", "inClose", inClose.length, inOpen.length);
       return CDLMORNINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -55706,6 +55866,9 @@ public final class Core {
       requireArgument("CDLONNECK open", "inHigh", inHigh);
       requireArgument("CDLONNECK open", "inLow", inLow);
       requireArgument("CDLONNECK open", "inClose", inClose);
+      requireHistoryLength("CDLONNECK open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLONNECK open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLONNECK open", "inClose", inClose.length, inOpen.length);
       return CDLONNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -56455,6 +56618,9 @@ public final class Core {
       requireArgument("CDLPIERCING open", "inHigh", inHigh);
       requireArgument("CDLPIERCING open", "inLow", inLow);
       requireArgument("CDLPIERCING open", "inClose", inClose);
+      requireHistoryLength("CDLPIERCING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLPIERCING open", "inClose", inClose.length, inOpen.length);
       return CDLPIERCING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -57342,6 +57508,9 @@ public final class Core {
       requireArgument("CDLRICKSHAWMAN open", "inHigh", inHigh);
       requireArgument("CDLRICKSHAWMAN open", "inLow", inLow);
       requireArgument("CDLRICKSHAWMAN open", "inClose", inClose);
+      requireHistoryLength("CDLRICKSHAWMAN open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRICKSHAWMAN open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRICKSHAWMAN open", "inClose", inClose.length, inOpen.length);
       return CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -58306,6 +58475,9 @@ public final class Core {
       requireArgument("CDLRISEFALL3METHODS open", "inHigh", inHigh);
       requireArgument("CDLRISEFALL3METHODS open", "inLow", inLow);
       requireArgument("CDLRISEFALL3METHODS open", "inClose", inClose);
+      requireHistoryLength("CDLRISEFALL3METHODS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLRISEFALL3METHODS open", "inClose", inClose.length, inOpen.length);
       return CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -59225,6 +59397,9 @@ public final class Core {
       requireArgument("CDLSEPARATINGLINES open", "inHigh", inHigh);
       requireArgument("CDLSEPARATINGLINES open", "inLow", inLow);
       requireArgument("CDLSEPARATINGLINES open", "inClose", inClose);
+      requireHistoryLength("CDLSEPARATINGLINES open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSEPARATINGLINES open", "inClose", inClose.length, inOpen.length);
       return CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -60131,6 +60306,9 @@ public final class Core {
       requireArgument("CDLSHOOTINGSTAR open", "inHigh", inHigh);
       requireArgument("CDLSHOOTINGSTAR open", "inLow", inLow);
       requireArgument("CDLSHOOTINGSTAR open", "inClose", inClose);
+      requireHistoryLength("CDLSHOOTINGSTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHOOTINGSTAR open", "inClose", inClose.length, inOpen.length);
       return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -60914,6 +61092,9 @@ public final class Core {
       requireArgument("CDLSHORTLINE open", "inHigh", inHigh);
       requireArgument("CDLSHORTLINE open", "inLow", inLow);
       requireArgument("CDLSHORTLINE open", "inClose", inClose);
+      requireHistoryLength("CDLSHORTLINE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE open", "inClose", inClose.length, inOpen.length);
       return CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -61578,6 +61759,9 @@ public final class Core {
       requireArgument("CDLSPINNINGTOP open", "inHigh", inHigh);
       requireArgument("CDLSPINNINGTOP open", "inLow", inLow);
       requireArgument("CDLSPINNINGTOP open", "inClose", inClose);
+      requireHistoryLength("CDLSPINNINGTOP open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSPINNINGTOP open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSPINNINGTOP open", "inClose", inClose.length, inOpen.length);
       return CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -62684,6 +62868,9 @@ public final class Core {
       requireArgument("CDLSTALLEDPATTERN open", "inHigh", inHigh);
       requireArgument("CDLSTALLEDPATTERN open", "inLow", inLow);
       requireArgument("CDLSTALLEDPATTERN open", "inClose", inClose);
+      requireHistoryLength("CDLSTALLEDPATTERN open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTALLEDPATTERN open", "inClose", inClose.length, inOpen.length);
       return CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -63417,6 +63604,9 @@ public final class Core {
       requireArgument("CDLSTICKSANDWICH open", "inHigh", inHigh);
       requireArgument("CDLSTICKSANDWICH open", "inLow", inLow);
       requireArgument("CDLSTICKSANDWICH open", "inClose", inClose);
+      requireHistoryLength("CDLSTICKSANDWICH open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSTICKSANDWICH open", "inClose", inClose.length, inOpen.length);
       return CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -64298,6 +64488,9 @@ public final class Core {
       requireArgument("CDLTAKURI open", "inHigh", inHigh);
       requireArgument("CDLTAKURI open", "inLow", inLow);
       requireArgument("CDLTAKURI open", "inClose", inClose);
+      requireHistoryLength("CDLTAKURI open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTAKURI open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTAKURI open", "inClose", inClose.length, inOpen.length);
       return CDLTAKURI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -65051,6 +65244,9 @@ public final class Core {
       requireArgument("CDLTASUKIGAP open", "inHigh", inHigh);
       requireArgument("CDLTASUKIGAP open", "inLow", inLow);
       requireArgument("CDLTASUKIGAP open", "inClose", inClose);
+      requireHistoryLength("CDLTASUKIGAP open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTASUKIGAP open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTASUKIGAP open", "inClose", inClose.length, inOpen.length);
       return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -65883,6 +66079,9 @@ public final class Core {
       requireArgument("CDLTHRUSTING open", "inHigh", inHigh);
       requireArgument("CDLTHRUSTING open", "inLow", inLow);
       requireArgument("CDLTHRUSTING open", "inClose", inClose);
+      requireHistoryLength("CDLTHRUSTING open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTHRUSTING open", "inClose", inClose.length, inOpen.length);
       return CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -66644,6 +66843,9 @@ public final class Core {
       requireArgument("CDLTRISTAR open", "inHigh", inHigh);
       requireArgument("CDLTRISTAR open", "inLow", inLow);
       requireArgument("CDLTRISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLTRISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLTRISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -67495,6 +67697,9 @@ public final class Core {
       requireArgument("CDLUNIQUE3RIVER open", "inHigh", inHigh);
       requireArgument("CDLUNIQUE3RIVER open", "inLow", inLow);
       requireArgument("CDLUNIQUE3RIVER open", "inClose", inClose);
+      requireHistoryLength("CDLUNIQUE3RIVER open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUNIQUE3RIVER open", "inClose", inClose.length, inOpen.length);
       return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -68350,6 +68555,9 @@ public final class Core {
       requireArgument("CDLUPSIDEGAP2CROWS open", "inHigh", inHigh);
       requireArgument("CDLUPSIDEGAP2CROWS open", "inLow", inLow);
       requireArgument("CDLUPSIDEGAP2CROWS open", "inClose", inClose);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inClose", inClose.length, inOpen.length);
       return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -68970,6 +69178,9 @@ public final class Core {
       requireArgument("CDLXSIDEGAP3METHODS open", "inHigh", inHigh);
       requireArgument("CDLXSIDEGAP3METHODS open", "inLow", inLow);
       requireArgument("CDLXSIDEGAP3METHODS open", "inClose", inClose);
+      requireHistoryLength("CDLXSIDEGAP3METHODS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLXSIDEGAP3METHODS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLXSIDEGAP3METHODS open", "inClose", inClose.length, inOpen.length);
       return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -70303,6 +70514,9 @@ public final class Core {
       requireArgument("CMF open", "inLow", inLow);
       requireArgument("CMF open", "inClose", inClose);
       requireArgument("CMF open", "inVolume", inVolume);
+      requireHistoryLength("CMF open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("CMF open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("CMF open", "inVolume", inVolume.length, inHigh.length);
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -73450,6 +73664,7 @@ public final class Core {
       requireArgument("CORREL open", "inReal0", inReal0);
       requireHistory("CORREL open", inReal0.length);
       requireArgument("CORREL open", "inReal1", inReal1);
+      requireHistoryLength("CORREL open", "inReal1", inReal1.length, inReal0.length);
       return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
@@ -75547,6 +75762,7 @@ public final class Core {
       requireArgument("DIV open", "inReal0", inReal0);
       requireHistory("DIV open", inReal0.length);
       requireArgument("DIV open", "inReal1", inReal1);
+      requireHistoryLength("DIV open", "inReal1", inReal1.length, inReal0.length);
       return DIV_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -76870,6 +77086,8 @@ public final class Core {
       requireHistory("DX open", inHigh.length);
       requireArgument("DX open", "inLow", inLow);
       requireArgument("DX open", "inClose", inClose);
+      requireHistoryLength("DX open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("DX open", "inClose", inClose.length, inHigh.length);
       return DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -77735,6 +77953,7 @@ public final class Core {
       requireArgument("EFI open", "inClose", inClose);
       requireHistory("EFI open", inClose.length);
       requireArgument("EFI open", "inVolume", inVolume);
+      requireHistoryLength("EFI open", "inVolume", inVolume.length, inClose.length);
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -93691,6 +93910,7 @@ public final class Core {
       requireArgument("IMI open", "inOpen", inOpen);
       requireHistory("IMI open", inOpen.length);
       requireArgument("IMI open", "inClose", inClose);
+      requireHistoryLength("IMI open", "inClose", inClose.length, inOpen.length);
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
@@ -106797,6 +107017,8 @@ public final class Core {
       requireHistory("MARKETFI open", inHigh.length);
       requireArgument("MARKETFI open", "inLow", inLow);
       requireArgument("MARKETFI open", "inVolume", inVolume);
+      requireHistoryLength("MARKETFI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MARKETFI open", "inVolume", inVolume.length, inHigh.length);
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
    /**
@@ -107842,6 +108064,7 @@ public final class Core {
       requireHistory("MAVP open", inReal.length);
       requireArgument("MAVP open", "optInMAType", optInMAType);
       requireArgument("MAVP open", "inPeriods", inPeriods);
+      requireHistoryLength("MAVP open", "inPeriods", inPeriods.length, inReal.length);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**
@@ -109802,6 +110025,7 @@ public final class Core {
       requireArgument("MEDPRICE open", "inHigh", inHigh);
       requireHistory("MEDPRICE open", inHigh.length);
       requireArgument("MEDPRICE open", "inLow", inLow);
+      requireHistoryLength("MEDPRICE open", "inLow", inLow.length, inHigh.length);
       return MEDPRICE_OpenInternal(inHigh, inLow, 0);
    }
    /**
@@ -110826,6 +111050,9 @@ public final class Core {
       requireArgument("MFI open", "inLow", inLow);
       requireArgument("MFI open", "inClose", inClose);
       requireArgument("MFI open", "inVolume", inVolume);
+      requireHistoryLength("MFI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MFI open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("MFI open", "inVolume", inVolume.length, inHigh.length);
       return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -112743,6 +112970,7 @@ public final class Core {
       requireArgument("MIDPRICE open", "inHigh", inHigh);
       requireHistory("MIDPRICE open", inHigh.length);
       requireArgument("MIDPRICE open", "inLow", inLow);
+      requireHistoryLength("MIDPRICE open", "inLow", inLow.length, inHigh.length);
       return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -117552,6 +117780,8 @@ public final class Core {
       requireHistory("MINUS_DI open", inHigh.length);
       requireArgument("MINUS_DI open", "inLow", inLow);
       requireArgument("MINUS_DI open", "inClose", inClose);
+      requireHistoryLength("MINUS_DI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("MINUS_DI open", "inClose", inClose.length, inHigh.length);
       return MINUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -118658,6 +118888,7 @@ public final class Core {
       requireArgument("MINUS_DM open", "inHigh", inHigh);
       requireHistory("MINUS_DM open", inHigh.length);
       requireArgument("MINUS_DM open", "inLow", inLow);
+      requireHistoryLength("MINUS_DM open", "inLow", inLow.length, inHigh.length);
       return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -119720,6 +119951,7 @@ public final class Core {
       requireArgument("MULT open", "inReal0", inReal0);
       requireHistory("MULT open", inReal0.length);
       requireArgument("MULT open", "inReal1", inReal1);
+      requireHistoryLength("MULT open", "inReal1", inReal1.length, inReal0.length);
       return MULT_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -120739,6 +120971,8 @@ public final class Core {
       requireHistory("NATR open", inHigh.length);
       requireArgument("NATR open", "inLow", inLow);
       requireArgument("NATR open", "inClose", inClose);
+      requireHistoryLength("NATR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("NATR open", "inClose", inClose.length, inHigh.length);
       return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -121342,6 +121576,7 @@ public final class Core {
       requireArgument("NVI open", "inClose", inClose);
       requireHistory("NVI open", inClose.length);
       requireArgument("NVI open", "inVolume", inVolume);
+      requireHistoryLength("NVI open", "inVolume", inVolume.length, inClose.length);
       return NVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
@@ -121836,6 +122071,7 @@ public final class Core {
       requireArgument("OBV open", "inReal", inReal);
       requireHistory("OBV open", inReal.length);
       requireArgument("OBV open", "inVolume", inVolume);
+      requireHistoryLength("OBV open", "inVolume", inVolume.length, inReal.length);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
    /**
@@ -123357,6 +123593,8 @@ public final class Core {
       requireHistory("PLUS_DI open", inHigh.length);
       requireArgument("PLUS_DI open", "inLow", inLow);
       requireArgument("PLUS_DI open", "inClose", inClose);
+      requireHistoryLength("PLUS_DI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("PLUS_DI open", "inClose", inClose.length, inHigh.length);
       return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -124462,6 +124700,7 @@ public final class Core {
       requireArgument("PLUS_DM open", "inHigh", inHigh);
       requireHistory("PLUS_DM open", inHigh.length);
       requireArgument("PLUS_DM open", "inLow", inLow);
+      requireHistoryLength("PLUS_DM open", "inLow", inLow.length, inHigh.length);
       return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -125798,6 +126037,7 @@ public final class Core {
       requireArgument("PVI open", "inClose", inClose);
       requireHistory("PVI open", inClose.length);
       requireArgument("PVI open", "inVolume", inVolume);
+      requireHistoryLength("PVI open", "inVolume", inVolume.length, inClose.length);
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
@@ -127213,6 +127453,7 @@ public final class Core {
       requireArgument("QSTICK open", "inOpen", inOpen);
       requireHistory("QSTICK open", inOpen.length);
       requireArgument("QSTICK open", "inClose", inClose);
+      requireHistoryLength("QSTICK open", "inClose", inClose.length, inOpen.length);
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
@@ -131918,6 +132159,7 @@ public final class Core {
       requireArgument("SAR open", "inHigh", inHigh);
       requireHistory("SAR open", inHigh.length);
       requireArgument("SAR open", "inLow", inLow);
+      requireHistoryLength("SAR open", "inLow", inLow.length, inHigh.length);
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
    /**
@@ -133503,6 +133745,7 @@ public final class Core {
       requireArgument("SAREXT open", "inHigh", inHigh);
       requireHistory("SAREXT open", inHigh.length);
       requireArgument("SAREXT open", "inLow", inLow);
+      requireHistoryLength("SAREXT open", "inLow", inLow.length, inHigh.length);
       return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
    /**
@@ -136544,6 +136787,8 @@ public final class Core {
       requireHistory("SMI open", inHigh.length);
       requireArgument("SMI open", "inLow", inLow);
       requireArgument("SMI open", "inClose", inClose);
+      requireHistoryLength("SMI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("SMI open", "inClose", inClose.length, inHigh.length);
       return SMI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**
@@ -138966,6 +139211,8 @@ public final class Core {
       requireArgument("STOCH open", "optInSlowD_MAType", optInSlowD_MAType);
       requireArgument("STOCH open", "inLow", inLow);
       requireArgument("STOCH open", "inClose", inClose);
+      requireHistoryLength("STOCH open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCH open", "inClose", inClose.length, inHigh.length);
       return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
    }
    /**
@@ -140230,6 +140477,8 @@ public final class Core {
       requireArgument("STOCHF open", "optInFastD_MAType", optInFastD_MAType);
       requireArgument("STOCHF open", "inLow", inLow);
       requireArgument("STOCHF open", "inClose", inClose);
+      requireHistoryLength("STOCHF open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("STOCHF open", "inClose", inClose.length, inHigh.length);
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
@@ -141515,6 +141764,7 @@ public final class Core {
       requireArgument("SUB open", "inReal0", inReal0);
       requireHistory("SUB open", inReal0.length);
       requireArgument("SUB open", "inReal1", inReal1);
+      requireHistoryLength("SUB open", "inReal1", inReal1.length, inReal0.length);
       return SUB_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -145430,6 +145680,8 @@ public final class Core {
       requireHistory("TRANGE open", inHigh.length);
       requireArgument("TRANGE open", "inLow", inLow);
       requireArgument("TRANGE open", "inClose", inClose);
+      requireHistoryLength("TRANGE open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TRANGE open", "inClose", inClose.length, inHigh.length);
       return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
@@ -149067,6 +149319,8 @@ public final class Core {
       requireHistory("TYPPRICE open", inHigh.length);
       requireArgument("TYPPRICE open", "inLow", inLow);
       requireArgument("TYPPRICE open", "inClose", inClose);
+      requireHistoryLength("TYPPRICE open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("TYPPRICE open", "inClose", inClose.length, inHigh.length);
       return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
@@ -150510,6 +150764,8 @@ public final class Core {
       requireHistory("ULTOSC open", inHigh.length);
       requireArgument("ULTOSC open", "inLow", inLow);
       requireArgument("ULTOSC open", "inClose", inClose);
+      requireHistoryLength("ULTOSC open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ULTOSC open", "inClose", inClose.length, inHigh.length);
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
    /**
@@ -152416,6 +152672,9 @@ public final class Core {
       requireArgument("VWAP open", "inLow", inLow);
       requireArgument("VWAP open", "inClose", inClose);
       requireArgument("VWAP open", "inVolume", inVolume);
+      requireHistoryLength("VWAP open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("VWAP open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("VWAP open", "inVolume", inVolume.length, inHigh.length);
       return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
@@ -153231,6 +153490,7 @@ public final class Core {
       requireArgument("VWMA open", "inReal", inReal);
       requireHistory("VWMA open", inReal.length);
       requireArgument("VWMA open", "inVolume", inVolume);
+      requireHistoryLength("VWMA open", "inVolume", inVolume.length, inReal.length);
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -153901,6 +154161,8 @@ public final class Core {
       requireHistory("WAD open", inHigh.length);
       requireArgument("WAD open", "inLow", inLow);
       requireArgument("WAD open", "inClose", inClose);
+      requireHistoryLength("WAD open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WAD open", "inClose", inClose.length, inHigh.length);
       return WAD_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
@@ -154362,6 +154624,8 @@ public final class Core {
       requireHistory("WCLPRICE open", inHigh.length);
       requireArgument("WCLPRICE open", "inLow", inLow);
       requireArgument("WCLPRICE open", "inClose", inClose);
+      requireHistoryLength("WCLPRICE open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WCLPRICE open", "inClose", inClose.length, inHigh.length);
       return WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
@@ -155403,6 +155667,8 @@ public final class Core {
       requireHistory("WILLR open", inHigh.length);
       requireArgument("WILLR open", "inLow", inLow);
       requireArgument("WILLR open", "inClose", inClose);
+      requireHistoryLength("WILLR open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WILLR open", "inClose", inClose.length, inHigh.length);
       return WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**

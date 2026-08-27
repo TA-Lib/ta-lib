@@ -777,6 +777,9 @@
       requireArgument("CDL3BLACKCROWS open", "inHigh", inHigh);
       requireArgument("CDL3BLACKCROWS open", "inLow", inLow);
       requireArgument("CDL3BLACKCROWS open", "inClose", inClose);
+      requireHistoryLength("CDL3BLACKCROWS open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDL3BLACKCROWS open", "inClose", inClose.length, inOpen.length);
       return CDL3BLACKCROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

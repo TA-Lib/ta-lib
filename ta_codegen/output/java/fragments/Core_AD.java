@@ -538,6 +538,9 @@
       requireArgument("AD open", "inLow", inLow);
       requireArgument("AD open", "inClose", inClose);
       requireArgument("AD open", "inVolume", inVolume);
+      requireHistoryLength("AD open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("AD open", "inClose", inClose.length, inHigh.length);
+      requireHistoryLength("AD open", "inVolume", inVolume.length, inHigh.length);
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**

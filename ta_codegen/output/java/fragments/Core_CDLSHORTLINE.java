@@ -749,6 +749,9 @@
       requireArgument("CDLSHORTLINE open", "inHigh", inHigh);
       requireArgument("CDLSHORTLINE open", "inLow", inLow);
       requireArgument("CDLSHORTLINE open", "inClose", inClose);
+      requireHistoryLength("CDLSHORTLINE open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLSHORTLINE open", "inClose", inClose.length, inOpen.length);
       return CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

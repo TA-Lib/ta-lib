@@ -933,6 +933,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLSHOOTINGSTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLSHOOTINGSTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLSHOOTINGSTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      RequireHistoryLength("CDLSHOOTINGSTAR", "open", "inHigh", inHigh.Length, inOpen.Length);
+      RequireHistoryLength("CDLSHOOTINGSTAR", "open", "inLow", inLow.Length, inOpen.Length);
+      RequireHistoryLength("CDLSHOOTINGSTAR", "open", "inClose", inClose.Length, inOpen.Length);
       return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 

@@ -796,6 +796,9 @@
       requireArgument("CDLDOJISTAR open", "inHigh", inHigh);
       requireArgument("CDLDOJISTAR open", "inLow", inLow);
       requireArgument("CDLDOJISTAR open", "inClose", inClose);
+      requireHistoryLength("CDLDOJISTAR open", "inHigh", inHigh.length, inOpen.length);
+      requireHistoryLength("CDLDOJISTAR open", "inLow", inLow.length, inOpen.length);
+      requireHistoryLength("CDLDOJISTAR open", "inClose", inClose.length, inOpen.length);
       return CDLDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**

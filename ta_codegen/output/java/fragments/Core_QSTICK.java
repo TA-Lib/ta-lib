@@ -652,6 +652,7 @@
       requireArgument("QSTICK open", "inOpen", inOpen);
       requireHistory("QSTICK open", inOpen.length);
       requireArgument("QSTICK open", "inClose", inClose);
+      requireHistoryLength("QSTICK open", "inClose", inClose.length, inOpen.length);
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**

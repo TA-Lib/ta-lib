@@ -1448,6 +1448,8 @@
       requireHistory("ADX open", inHigh.length);
       requireArgument("ADX open", "inLow", inLow);
       requireArgument("ADX open", "inClose", inClose);
+      requireHistoryLength("ADX open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ADX open", "inClose", inClose.length, inHigh.length);
       return ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
