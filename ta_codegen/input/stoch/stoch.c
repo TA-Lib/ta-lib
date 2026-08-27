@@ -19,6 +19,8 @@
  *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
  *               fixed band zeroed the whole output for any instrument quoted
  *               small enough to fall under it.
+ *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
+ *               the stale *outNBElement overran outSlowK by lookbackDSlow.
  *
  */
 
@@ -259,6 +261,19 @@ TA_RetCode stoch(int startIdx, int endIdx,
       optInSlowD_MAType,
       outBegIdx, outNBElement, outSlowD );
 
+   /* The rejection is answered before the copy, never after: a rejected ma()
+    * leaves *outNBElement holding %K's count, and the copy would then overrun
+    * outSlowK by lookbackDSlow (issue #269).
+    */
+   if( retCode != TA_SUCCESS )
+   {
+      /* Something wrong happen while processing %D? */
+      if (bufferIsAllocated) { free(tempBuffer); }
+         *outBegIdx = 0;
+      *outNBElement = 0;
+      return retCode;
+   }
+
    /* Copy tempBuffer into the caller buffer.
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
@@ -271,17 +286,9 @@ TA_RetCode stoch(int startIdx, int endIdx,
    /* Don't need K anymore, free it if it was allocated here. */
    if (bufferIsAllocated) { free(tempBuffer); }
 
-      if( retCode != TA_SUCCESS )
-   {
-      /* Something wrong happen while processing %D? */
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   /* Note: Keep the outBegIdx relative to the
-    *       caller input before returning.
-    */
+      /* Note: Keep the outBegIdx relative to the
+       *       caller input before returning.
+       */
    *outBegIdx = startIdx;
 
    return TA_SUCCESS;

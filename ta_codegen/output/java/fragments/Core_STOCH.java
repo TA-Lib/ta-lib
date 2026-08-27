@@ -19,6 +19,8 @@
  *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
  *               fixed band zeroed the whole output for any instrument quoted
  *               small enough to fall under it.
+ *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
+ *               the stale *outNBElement overran outSlowK by lookbackDSlow.
  */
 
    /**
@@ -311,6 +313,18 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
+      /* The rejection is answered before the copy, never after: a rejected ma()
+       * leaves *outNBElement holding %K's count, and the copy would then overrun
+       * outSlowK by lookbackDSlow (issue #269).
+       */
+      if( retCode != RetCode.Success ) {
+         /* Something wrong happen while processing %D? */
+         if( (bufferIsAllocated) != 0 ) {
+         }
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return retCode ;
+      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -322,12 +336,6 @@
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
       }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
@@ -484,13 +492,15 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-      if( (bufferIsAllocated) != 0 ) {
-      }
       if( retCode != RetCode.Success ) {
+         if( (bufferIsAllocated) != 0 ) {
+         }
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
+      }
+      System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
+      if( (bufferIsAllocated) != 0 ) {
       }
       outBegIdx.value = startIdx;
       return RetCode.Success ;
@@ -1242,6 +1252,18 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
+      /* The rejection is answered before the copy, never after: a rejected ma()
+       * leaves *outNBElement holding %K's count, and the copy would then overrun
+       * outSlowK by lookbackDSlow (issue #269).
+       */
+      if( retCode != RetCode.Success ) {
+         /* Something wrong happen while processing %D? */
+         if( (bufferIsAllocated) != 0 ) {
+         }
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return retCode ;
+      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1253,12 +1275,6 @@
       System.arraycopy(tempBuffer, lookbackDSlow, sc_outSlowK, 0, (int)outNBElement.value * 1);
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
       }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.

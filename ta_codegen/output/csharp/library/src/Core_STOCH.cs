@@ -63,6 +63,8 @@ public partial class Core
     *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
     *               fixed band zeroed the whole output for any instrument quoted
     *               small enough to fall under it.
+    *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
+    *               the stale *outNBElement overran outSlowK by lookbackDSlow.
     */
    /// <summary>
    /// Number of leading input bars <c>STOCH</c> consumes before it can produce
@@ -365,6 +367,18 @@ public partial class Core
       outBegIdx = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
+      /* The rejection is answered before the copy, never after: a rejected ma()
+       * leaves *outNBElement holding %K's count, and the copy would then overrun
+       * outSlowK by lookbackDSlow (issue #269).
+       */
+      if( retCode != RetCode.Success ) {
+         /* Something wrong happen while processing %D? */
+         if( (bufferIsAllocated) != 0 ) {
+         }
+         outBegIdx = 0;
+         outNBElement = 0;
+         return retCode ;
+      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -376,12 +390,6 @@ public partial class Core
       tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(outSlowK.Slice(0));
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
       }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
@@ -540,13 +548,15 @@ public partial class Core
       outBegIdx = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
-      tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(outSlowK.Slice(0));
-      if( (bufferIsAllocated) != 0 ) {
-      }
       if( retCode != RetCode.Success ) {
+         if( (bufferIsAllocated) != 0 ) {
+         }
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
+      }
+      tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(outSlowK.Slice(0));
+      if( (bufferIsAllocated) != 0 ) {
       }
       outBegIdx = startIdx;
       return RetCode.Success ;
@@ -1309,6 +1319,18 @@ public partial class Core
       tempBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
       MA_Stream sub1 = MA_OpenAndFillInternal(subSrc1_0, 0, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
+      /* The rejection is answered before the copy, never after: a rejected ma()
+       * leaves *outNBElement holding %K's count, and the copy would then overrun
+       * outSlowK by lookbackDSlow (issue #269).
+       */
+      if( retCode != RetCode.Success ) {
+         /* Something wrong happen while processing %D? */
+         if( (bufferIsAllocated) != 0 ) {
+         }
+         outBegIdx = 0;
+         outNBElement = 0;
+         return retCode ;
+      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1320,12 +1342,6 @@ public partial class Core
       tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(sc_outSlowK.Slice(0));
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
       }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.

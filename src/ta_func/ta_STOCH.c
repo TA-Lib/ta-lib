@@ -63,6 +63,8 @@
  *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
  *               fixed band zeroed the whole output for any instrument quoted
  *               small enough to fall under it.
+ *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
+ *               the stale *outNBElement overran outSlowK by lookbackDSlow.
  */
 
 TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -355,6 +357,21 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     * the already smoothed %K.
     */
    retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   /* The rejection is answered before the copy, never after: a rejected ma()
+    * leaves *outNBElement holding %K's count, and the copy would then overrun
+    * outSlowK by lookbackDSlow (issue #269).
+    */
+   if( retCode != TA_SUCCESS )
+   {
+      /* Something wrong happen while processing %D? */
+      if( bufferIsAllocated )
+      {
+         free(tempBuffer);
+      }
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return retCode;
+   }
    /* Copy tempBuffer into the caller buffer.
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
@@ -368,13 +385,6 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    if( bufferIsAllocated )
    {
       free(tempBuffer);
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      /* Something wrong happen while processing %D? */
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
    }
    /* Note: Keep the outBegIdx relative to the
     *       caller input before returning.
@@ -559,16 +569,20 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       return retCode;
    }
    retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   if( retCode != TA_SUCCESS )
+   {
+      if( bufferIsAllocated )
+      {
+         free(tempBuffer);
+      }
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return retCode;
+   }
    memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
    }
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -1029,6 +1043,22 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
          }
       }
       retCode = subRc;
+      /* The rejection is answered before the copy, never after: a rejected ma()
+       * leaves *outNBElement holding %K's count, and the copy would then overrun
+       * outSlowK by lookbackDSlow (issue #269).
+       */
+      if( retCode != TA_SUCCESS )
+      {
+         /* Something wrong happen while processing %D? */
+         if( bufferIsAllocated )
+         {
+            free(tempBuffer);
+         }
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
+         return retCode;
+      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1042,14 +1072,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       if( bufferIsAllocated )
       {
          free(tempBuffer);
-      }
-      if( retCode != TA_SUCCESS )
-      {
-         /* Something wrong happen while processing %D? */
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
-         return retCode;
       }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.

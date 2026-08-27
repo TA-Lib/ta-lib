@@ -61,6 +61,8 @@
  *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
  *               fixed band zeroed the whole output for any instrument quoted
  *               small enough to fall under it.
+ *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
+ *               the stale *outNBElement overran outSlowK by lookbackDSlow.
  */
 
 // Import types from parent module
@@ -364,6 +366,17 @@ impl Core {
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
+        // The rejection is answered before the copy, never after: a rejected ma()
+        // leaves *outNBElement holding %K's count, and the copy would then overrun
+        // outSlowK by lookbackDSlow (issue #269).
+        if retCode != RetCode::Success {
+            // Something wrong happen while processing %D?
+            if bufferIsAllocated != 0 {
+            }
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return retCode;
+        }
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -378,12 +391,6 @@ impl Core {
         };
         // Don't need K anymore, free it if it was allocated here.
         if bufferIsAllocated != 0 {
-        }
-        if retCode != RetCode::Success {
-            // Something wrong happen while processing %D?
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
         }
         // Note: Keep the outBegIdx relative to the
         //       caller input before returning.
@@ -942,6 +949,17 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.MA_OpenAndFillInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..])?;
         retCode = RetCode::Success;
+        // The rejection is answered before the copy, never after: a rejected ma()
+        // leaves *outNBElement holding %K's count, and the copy would then overrun
+        // outSlowK by lookbackDSlow (issue #269).
+        if retCode != RetCode::Success {
+            // Something wrong happen while processing %D?
+            if bufferIsAllocated != 0 {
+            }
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(retCode);
+        }
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -956,12 +974,6 @@ impl Core {
         };
         // Don't need K anymore, free it if it was allocated here.
         if bufferIsAllocated != 0 {
-        }
-        if retCode != RetCode::Success {
-            // Something wrong happen while processing %D?
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
         }
         // Note: Keep the outBegIdx relative to the
         //       caller input before returning.
