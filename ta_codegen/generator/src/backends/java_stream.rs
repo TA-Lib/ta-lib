@@ -3328,6 +3328,35 @@ fn transform_map_step(
     rewritten.iter().flat_map(drop_forc_shells).collect()
 }
 
+/// The composed step's locals: the producer's temps, the map temps, and one
+/// `cur_` scalar per output and sub-call intermediate.
+///
+/// A `cur_` scalar is typed by what it stands for, as in C — an output's own
+/// element type, `double` for the intermediates. Sizing them all as `double`
+/// truncated an integer output on the way out.
+fn emit_composed_step_decls(
+    o: &mut String,
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    cur_scalars: &[String],
+) {
+    if let Some(model) = &cp.producer {
+        for (name, ty) in &model.temps {
+            let (jty, default) = field_type_and_default(ty);
+            let _ = writeln!(o, "      {jty} {name} = {default};");
+        }
+    }
+    for (name, ty) in &cp.map_temps {
+        let (jty, default) = field_type_and_default(ty);
+        let _ = writeln!(o, "      {jty} {name} = {default};");
+    }
+    for name in cur_scalars {
+        let ty = out_java_type(func, name);
+        let zero = if ty == "int" { "0" } else { "0.0" };
+        let _ = writeln!(o, "      {ty} cur_{name} = {zero};");
+    }
+}
+
 /// The composed StepImpl: producer transition (writing `cur_<series>`), then
 /// the batch-tail pipeline through the owned sub handles, combine maps per
 /// bar, lag-ring pushes, and the `sp.cur_*` output stores. No peek flag: peek
@@ -3349,23 +3378,7 @@ fn emit_composed_step(
     emit_step_sig(o, func);
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
 
-    if let Some(model) = &cp.producer {
-        for (name, ty) in &model.temps {
-            let (jty, default) = field_type_and_default(ty);
-            let _ = writeln!(o, "      {jty} {name} = {default};");
-        }
-    }
-    for (name, ty) in &cp.map_temps {
-        let (jty, default) = field_type_and_default(ty);
-        let _ = writeln!(o, "      {jty} {name} = {default};");
-    }
-    for name in &cur_scalars {
-        // Typed by what the scalar stands for, as in C: an output's own element
-        // type, `double` for the sub-call intermediates.
-        let ty = out_java_type(func, name);
-        let zero = if ty == "int" { "0" } else { "0.0" };
-        let _ = writeln!(o, "      {ty} cur_{name} = {zero};");
-    }
+    emit_composed_step_decls(o, func, cp, &cur_scalars);
 
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
