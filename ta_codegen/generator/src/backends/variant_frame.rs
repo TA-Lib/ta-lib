@@ -210,15 +210,18 @@ fn emit_thunks(o: &mut String, func: &FuncDef) {
         }
         args.push("outBegIdx".into());
         args.push("outNBElement".into());
-        let mut real_i = 0;
-        let mut int_i = 0;
-        for out in &func.outputs {
+        // Both arrays are subscripted by the output's DECLARATION position, not
+        // by a per-kind running counter, so slot i of each always means output
+        // i and whichever array the slot does not belong to simply has a hole
+        // there. Every caller populates both arrays at every slot already
+        // (test_variants.c, test_codegen.c), so the harnesses read back the
+        // buffer they handed over without tracking a second index — which is
+        // what keeps a mixed-type function (SYNTH12) correct there for free.
+        for (i, out) in func.outputs.iter().enumerate() {
             if out.param_type == ParamType::Integer {
-                args.push(format!("outInteger[{int_i}] /* {} */", out.name));
-                int_i += 1;
+                args.push(format!("outInteger[{i}] /* {} */", out.name));
             } else {
-                args.push(format!("outReal[{real_i}] /* {} */", out.name));
-                real_i += 1;
+                args.push(format!("outReal[{i}] /* {} */", out.name));
             }
         }
         let _ = writeln!(o, "   return {callee}(");
@@ -324,7 +327,12 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
          \x20  int                  nbOptInput;\n\
          \x20  const TA_VOptSpec   *optInput;     /* NULL when nbOptInput == 0 */\n\
          \x20  int                  nbOutput;\n\
-         \x20  int                  outIsInteger; /* 1 = outputs are TA_Integer */\n\
+         \x20  /* Per output, indexed by declaration position: 1 = TA_Integer.\n\
+         \x20   * A function may mix the two (SYNTH12), so this cannot collapse\n\
+         \x20   * to one flag; the thunks subscript outReal[]/outInteger[] by\n\
+         \x20   * that same declaration position, leaving a hole in whichever\n\
+         \x20   * array the slot does not belong to. */\n\
+         \x20  const int           *outIsInt;\n\
          \x20  /* 1 when the guarded body delegates to a shared TA_<N>_Private\n\
          \x20   * rather than holding the algorithm inline. Derived from the\n\
          \x20   * definition having an explicit <name>_private() in\n\
@@ -343,6 +351,14 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
         for (k, (kind, _)) in inputs.iter().enumerate() {
             let comma = if k + 1 == inputs.len() { "" } else { ", " };
             let _ = write!(o, "{kind}{comma}");
+        }
+        o.push_str(" };\n");
+
+        let _ = write!(o, "static const int TA_VOutIsInt_{}[] = {{ ", func.name);
+        for (k, out) in func.outputs.iter().enumerate() {
+            let comma = if k + 1 == func.outputs.len() { "" } else { ", " };
+            let is_int = i32::from(matches!(out.param_type, ParamType::Integer));
+            let _ = write!(o, "{is_int}{comma}");
         }
         o.push_str(" };\n");
 
@@ -376,25 +392,11 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
         } else {
             format!("TA_VOpt_{n}")
         };
-        // No shipped function mixes real and integer outputs; the gate relies on
-        // that so one flag per function is enough. Assert it here rather than
-        // letting a future mixed-output function emit a silently wrong table.
-        let nb_int = func
-            .outputs
-            .iter()
-            .filter(|o| matches!(o.param_type, ParamType::Integer))
-            .count();
-        assert!(
-            nb_int == 0 || nb_int == func.outputs.len(),
-            "TA_{n} mixes real and integer outputs — ta_variant_frame's single \
-             outIsInteger flag can no longer describe it"
-        );
         let _ = writeln!(
             o,
             "   {{ \"{n}\", TA_{n}_VFrameD, TA_{n}_VFrameS,\n\
-             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, {}, {} }},",
+             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, TA_VOutIsInt_{n}, {} }},",
             func.outputs.len(),
-            i32::from(nb_int > 0),
             i32::from(func.has_explicit_private)
         );
     }

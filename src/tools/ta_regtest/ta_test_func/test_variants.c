@@ -557,7 +557,10 @@ static void set_canaries( VariantCtx *ctx, const TA_VariantEntry *e )
    int i;
    for( i = 0; i < e->nbOutput; i++ )
    {
-      if( e->outIsInteger )
+      /* Per output, not per function: a mixed-type function (SYNTH12) would
+       * otherwise leave one kind's buffers uncanaried, and an over-write past
+       * the end of those is exactly what this exists to catch. */
+      if( e->outIsInt[i] )
       {
          ctx->outDi [i][ctx->nb] = V_CANARY_I;
          ctx->outSi [i][ctx->nb] = V_CANARY_I;
@@ -575,7 +578,7 @@ static int canaries_intact( VariantCtx *ctx, const TA_VariantEntry *e )
    int i;
    for( i = 0; i < e->nbOutput; i++ )
    {
-      if( e->outIsInteger )
+      if( e->outIsInt[i] )   /* symmetric with set_canaries, per output */
       {
          if( ctx->outDi [i][ctx->nb] != V_CANARY_I ) return 0;
          if( ctx->outSi [i][ctx->nb] != V_CANARY_I ) return 0;
@@ -662,9 +665,9 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
 
    for( i = 0; i < e->nbOutput; i++ )
    {
-      size_t width = e->outIsInteger ? sizeof(TA_Integer) : sizeof(TA_Real);
-      const void *a  = e->outIsInteger ? (const void *)ctx->outDi[i] : (const void *)ctx->outD[i];
-      const void *c  = e->outIsInteger ? (const void *)ctx->outSi[i] : (const void *)ctx->outS[i];
+      size_t width = e->outIsInt[i] ? sizeof(TA_Integer) : sizeof(TA_Real);
+      const void *a  = e->outIsInt[i] ? (const void *)ctx->outDi[i] : (const void *)ctx->outD[i];
+      const void *c  = e->outIsInt[i] ? (const void *)ctx->outSi[i] : (const void *)ctx->outS[i];
       size_t len = (size_t)nbD * width;
 
       /* Counted HERE, at the memcmp itself, not at the call above: a counter

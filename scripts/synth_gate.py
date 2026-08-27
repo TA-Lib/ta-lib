@@ -16,6 +16,11 @@ the SYNTH family:
   2. ta_regtest --xlang-hash --function=SYNTH
        batch output parity: Rust/Java/C# against the in-process C golden,
        bitwise, across the fuzz shapes/seeds/sizes/params.
+  3. input_synth/synth_values.py
+       hand-derived golden VALUES for every fixture, against all four servers.
+       Legs 1 and 2 only compare implementations against each other, so a
+       fixture that computes the wrong thing in all four backends passes both;
+       this is the only leg that knows what the numbers should be.
 
 Anti-vacuity: the script asserts from the gate output that EXACTLY the
 expected number of SYNTH functions were exercised by each leg in each
@@ -160,6 +165,23 @@ def main():
                        cwd=os.path.join(wt, "bin"), capture=True)
         if rc != 0:
             sys.exit(f"synth_gate: FAIL — --xlang-hash exited {rc}")
+
+        # Leg 3: hand-derived golden VALUES, all four servers. Legs 1 and 2 are
+        # both comparative — stream against batch, and three languages against
+        # C — so a fixture that is wrong the same way everywhere passes both.
+        # This is the only leg with an opinion about what the numbers should be.
+        # Run the ORIGINAL tree's copy, not the worktree's: the worktree comes
+        # from `git stash create`, which snapshots tracked files only, so an
+        # as-yet-uncommitted synth_values.py would simply not be there (the
+        # fixtures dodge this by being copytree'd in explicitly). Reading it
+        # from `synth_src` also means a local edit to the oracle is what runs,
+        # which is what you want while writing a new fixture's row.
+        rc, _ = run([sys.executable,
+                     os.path.join(synth_src, "synth_values.py"),
+                     os.path.join(wt, "bin")],
+                    cwd=wt, capture=True)
+        if rc != 0:
+            sys.exit(f"synth_gate: FAIL — synth_values exited {rc}")
 
         # Anti-vacuity: prove the SYNTH functions were actually exercised.
         # Stream leg: one "Stream verify: N functions, M legs ..." line per

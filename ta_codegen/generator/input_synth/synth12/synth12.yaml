@@ -1,0 +1,24 @@
+name: SYNTH12
+group: Math Operators
+hint: Synthetic gate function 12 - real and integer outputs in one function (never shipped)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  # INTERLEAVED types: real, integer, real. The interleaving is load-bearing,
+  # not decoration. The frame thunks index `outReal[]` and `outInteger[]` by a
+  # PER-TYPE running counter while every consumer used to index its buffers by
+  # the global output position; the two agree for as long as one function's
+  # outputs all share a type. Putting the integer between the two reals makes
+  # them disagree on two of the three slots, where a trailing integer would
+  # disagree on one. See issue #262 for the arity work this builds on.
+  - name: outHalf
+    type: real
+    flags: [line]
+  - name: outSign
+    type: integer
+    flags: [line]
+  - name: outQuarter
+    type: real
+    flags: [line]

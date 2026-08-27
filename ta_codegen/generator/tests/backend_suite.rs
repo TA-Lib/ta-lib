@@ -8279,15 +8279,66 @@ fn panic_message(err: &Box<dyn std::any::Any + Send>) -> String {
 /// four backends cannot even compile such a term — `double * == int *` is a
 /// constraint violation in C, `double[] == int[]` is "incomparable types" in
 /// Java, `*const f64 == *const i32` is a type error in Rust — and C# has always
-/// skipped them because `Overlaps` is not defined across element types. A
-/// synthetic fixture cannot carry the case either: `ta_variant_frame` and
-/// `ta_stream_frame` hold one `outIsInteger` flag per FUNCTION and assert that
-/// no function mixes, so a mixed-output definition fails the generator before it
-/// reaches any of this (#262).
+/// skipped them because `Overlaps` is not defined across element types.
+/// SYNTH12 does declare a mixed-type function now, but it cannot stand in for
+/// this pin: its cross-typed pairs are exactly the ones the emitters drop, so
+/// the fixture shows the term ABSENT and never shows it absent *for this
+/// reason*. Re-typing an output here is what makes the omission attributable.
 ///
 /// MINMAXINDEX is the vehicle: two integer outputs, one of them re-typed here,
 /// which turns its single same-typed pair into a single cross-typed one. The
 /// guard must then disappear entirely rather than emit an uncompilable term.
+/// The two frame emitters subscript `outReal[]` / `outInteger[]` by the output's
+/// DECLARATION position, and describe each output's type in a per-output
+/// `TA_VOutIsInt_<N>[]`.
+///
+/// Nothing else on the PR gate can see either property. On a type-homogeneous
+/// corpus the declaration index and a per-kind packed counter emit byte-identical
+/// text, so `regen-check` is blind to a revert, and the harnesses that would
+/// mis-read the table only run under the nightly synth gate. So this pins both
+/// against a mixed function built here — the shape SYNTH12 carries, reached
+/// without depending on the fixture, which lives outside `input/`.
+#[test]
+fn test_frames_index_outputs_by_declaration_position() {
+    let (mut func, enums) = load_indicator("minmaxindex");
+    assert_eq!(func.outputs.len(), 2, "MINMAXINDEX declares two outputs");
+    // [integer, real]: the real output sits at declaration index 1, where a
+    // per-kind counter would have called it outReal[0].
+    func.outputs[1].param_type = ir::ParamType::Real;
+    let (a, b) = (func.outputs[0].name.clone(), func.outputs[1].name.clone());
+
+    let rendered = backends::variant_frame::render(std::slice::from_ref(&func), &enums);
+    assert!(
+        rendered.contains(&format!("outInteger[0] /* {a} */")),
+        "output 0 is integer and must be outInteger[0]"
+    );
+    assert!(
+        rendered.contains(&format!("outReal[1] /* {b} */")),
+        "output 1 is real and must be outReal[1] — a per-kind counter would emit \
+         outReal[0], which the harnesses read as output 0's buffer"
+    );
+    assert!(
+        !rendered.contains(&format!("outReal[0] /* {b} */")),
+        "the packed spelling must not come back"
+    );
+    assert!(
+        rendered.contains("static const int TA_VOutIsInt_MINMAXINDEX[] = { 1, 0 };"),
+        "the per-output type vector must describe each output, in order"
+    );
+
+    // The stream table reuses that same vector rather than emitting a second one.
+    func.streaming = true;
+    let streamed = backends::stream_frame::render(std::slice::from_ref(&func));
+    assert!(
+        streamed.contains("TA_VOutIsInt_MINMAXINDEX"),
+        "the stream row must point at ta_variant_frame.h's vector"
+    );
+    assert!(
+        streamed.contains(&format!("outReal[1] /* {b} */")),
+        "the stream thunks must use the same declaration-position subscript"
+    );
+}
+
 #[test]
 fn test_cross_typed_output_pairs_are_not_compared() {
     let (mut func, enums) = load_indicator("minmaxindex");

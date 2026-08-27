@@ -89,16 +89,18 @@ fn lead_in_args(func: &FuncDef, inputs: &[(&'static str, String)]) -> Vec<String
 }
 
 /// One `outReal[i]` / `outInteger[i]` per output, in declaration order.
+///
+/// The subscript is the declaration position in BOTH arrays, so whichever one
+/// the slot does not belong to has a hole there. See the same loop in
+/// `variant_frame::emit_thunks` for why that is what a mixed-type function
+/// (SYNTH12) needs.
 fn output_args(func: &FuncDef) -> Vec<String> {
     let mut args = Vec::with_capacity(func.outputs.len());
-    let (mut real_i, mut int_i) = (0, 0);
-    for out in &func.outputs {
+    for (i, out) in func.outputs.iter().enumerate() {
         if out.param_type == ParamType::Integer {
-            args.push(format!("outInteger[{int_i}] /* {} */", out.name));
-            int_i += 1;
+            args.push(format!("outInteger[{i}] /* {} */", out.name));
         } else {
-            args.push(format!("outReal[{real_i}] /* {} */", out.name));
-            real_i += 1;
+            args.push(format!("outReal[{i}] /* {} */", out.name));
         }
     }
     args
@@ -243,7 +245,7 @@ pub fn render(funcs: &[FuncDef]) -> String {
          \x20  int                  nbOptInput;\n\
          \x20  const TA_VOptSpec   *optInput;      /* from ta_variant_frame.h; NULL when nbOptInput == 0 */\n\
          \x20  int                  nbOutput;\n\
-         \x20  int                  outIsInteger;  /* 1 = outputs are TA_Integer */\n\
+         \x20  const int           *outIsInt;      /* from ta_variant_frame.h; per output, 1 = TA_Integer */\n\
          } TA_StreamEntry;\n\n",
     );
 
@@ -261,22 +263,11 @@ pub fn render(funcs: &[FuncDef]) -> String {
         } else {
             format!("TA_VOpt_{n}")
         };
-        let nb_int = func
-            .outputs
-            .iter()
-            .filter(|o| matches!(o.param_type, ParamType::Integer))
-            .count();
-        assert!(
-            nb_int == 0 || nb_int == func.outputs.len(),
-            "TA_{n} mixes real and integer outputs — ta_stream_frame's single \
-             outIsInteger flag can no longer describe it"
-        );
         let _ = writeln!(
             o,
             "   {{ \"{n}\", TA_{n}_SFrameOpen, TA_{n}_SFrameFill, TA_{n}_SFrameClose,\n\
-             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, {} }},",
-            func.outputs.len(),
-            i32::from(nb_int > 0)
+             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, TA_VOutIsInt_{n} }},",
+            func.outputs.len()
         );
     }
     o.push_str("};\n\n");

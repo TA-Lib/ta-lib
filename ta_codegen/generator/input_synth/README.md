@@ -10,6 +10,12 @@ there, and runs the usual cross-language gates on the result:
   batch-vs-stream `stream_verify` / OpenAndFill bitwise gates, all four servers.
 - `ta_regtest --xlang-hash --function=SYNTH` — batch output parity, Rust/Java/C#
   against the in-process C golden, bitwise (fuzz shapes x seeds x sizes x params).
+- `synth_values.py` — hand-derived golden VALUES per fixture, all four servers.
+  The two legs above are both *comparative*: one diffs a fixture's stream tier
+  against its own batch tier, the other diffs three languages against C. A
+  fixture that is wrong the SAME way everywhere passes both. This leg is the
+  only one that knows what the numbers should be, so a new fixture needs a row
+  in its `GOLDEN` table or it is exercised without ever being checked.
 
 The point: exercise generator constructs (bitwise operators, truthiness
 conditions, do-while, switch-on-expression, `PRAGMA TA_ALT` alternates, ...)
@@ -44,7 +50,11 @@ Two mechanics worth knowing before touching the script:
    range-stability leg compares a sub-range call against a full-range one, and
    without the flag it fails `RANGE TEST FAILED (code=162)`. SYNTH1 and SYNTH4
    both need it, and each says why on the flag.
-3. Run `python3 scripts/synth_gate.py` until green.
+3. Add its row to `synth_values.py`'s `GOLDEN` table, derived by hand from the
+   `.c` you just wrote — not from what the generator emits, which is the thing
+   under test. Without a row the fixture still runs, and still proves nothing
+   about its own values.
+4. Run `python3 scripts/synth_gate.py` until green.
 
 ## What a fixture's docs may say
 

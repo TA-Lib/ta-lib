@@ -1079,6 +1079,30 @@ static int codegen_ref_value_exempt(const char *name)
         || strcmp(name, "CORREL") == 0;
 }
 
+/* The JSON response key for output `o`: the type name plus that output's rank
+ * among outputs of the SAME type, rank omitted at 0 — so [real, integer, real]
+ * is "outReal", "outInteger", "outReal1".
+ *
+ * The rank is PER-TYPE, never the output's position. The two agree for exactly
+ * as long as one function's outputs all share a type, which is why the
+ * positional spelling this replaced passed on all 176 shipped functions and
+ * misses two of SYNTH12's three keys. `json_find_field` matches the literal
+ * key, so a wrong one reads as absent rather than as a near miss.
+ *
+ * The rule is the servers' `output_json_key` (server_gen.rs), and it is built
+ * by hand here, in `ta_abstract_serve.c` and in `test_abstract.c`. Those two
+ * already counted per type; this file had four sites that did not. */
+static void codegen_output_field( char *buf, size_t size,
+                                  const int *outIsInteger, unsigned int o )
+{
+    const char *base = outIsInteger[o] ? "outInteger" : "outReal";
+    unsigned int rank = 0, k;
+    for( k = 0; k < o; k++ )
+        if( outIsInteger[k] == outIsInteger[o] ) rank++;
+    if( rank == 0 ) snprintf(buf, size, "%s", base);
+    else            snprintf(buf, size, "%s%u", base, rank);
+}
+
 /* The response DECLARED outNBElement (checked against C's just above) — this
  * asserts the array actually carried that many values. Both loops below are
  * bounded by `i < parsed`, so without this a payload the parser could not read
@@ -1182,10 +1206,7 @@ static void compare_codegen_output_generic(
     {
         /* Integer output comparison (exact match) */
         char fieldName[64];
-        if( outputNb == 0 )
-            snprintf(fieldName, sizeof(fieldName), "outInteger");
-        else
-            snprintf(fieldName, sizeof(fieldName), "outInteger%d", outputNb);
+        codegen_output_field(fieldName, sizeof(fieldName), p->outputIsInteger, outputNb);
 
         TA_Integer cg_out[MAX_NB_TEST_ELEMENT];
         int parsed = json_get_int_array(p->responseBuf, fieldName,
@@ -1207,10 +1228,7 @@ static void compare_codegen_output_generic(
     {
         /* Real output comparison (epsilon) */
         char fieldName[64];
-        if( outputNb == 0 )
-            snprintf(fieldName, sizeof(fieldName), "outReal");
-        else
-            snprintf(fieldName, sizeof(fieldName), "outReal%d", outputNb);
+        codegen_output_field(fieldName, sizeof(fieldName), p->outputIsInteger, outputNb);
 
         TA_Real cg_out[MAX_NB_TEST_ELEMENT];
         int parsed = json_get_double_array(p->responseBuf, fieldName,
@@ -1790,23 +1808,18 @@ static double parse_ref_baseline(CodegenRangeTestParam *p)
 
     if( p->lastRetCode == TA_SUCCESS && p->lastNbElement > 0 )
     {
-        for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
+        /* `&& o < MAX_OUTPUTS` matches every other output loop in this file;
+         * the buffers it indexes are all sized by that bound. */
+        for( unsigned int o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
         {
             char fieldName[64];
+            codegen_output_field(fieldName, sizeof(fieldName), p->outputIsInteger, o);
             if( p->outputIsInteger[o] )
-            {
-                if( o == 0 ) snprintf(fieldName, sizeof(fieldName), "outInteger");
-                else         snprintf(fieldName, sizeof(fieldName), "outInteger%d", (int)o);
                 json_get_int_array(p->responseBuf, fieldName,
                                    p->outIntBufs[o], MAX_NB_TEST_ELEMENT);
-            }
             else
-            {
-                if( o == 0 ) snprintf(fieldName, sizeof(fieldName), "outReal");
-                else         snprintf(fieldName, sizeof(fieldName), "outReal%d", (int)o);
                 json_get_double_array(p->responseBuf, fieldName,
                                       p->outRealBufs[o], MAX_NB_TEST_ELEMENT);
-            }
         }
     }
 
@@ -5840,9 +5853,9 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
     for( unsigned int o = 0; o < fi->nbOutput && o < MAX_OUTPUTS; o++ )
     {
         char field[32];
+        codegen_output_field(field, sizeof(field), p->outputIsInteger, o);
         if( p->outputIsInteger[o] )
         {
-            snprintf(field, sizeof(field), o == 0 ? "outInteger" : "outInteger%u", o);
             json_get_int_array(ctx->respBuf, field, g_fz064Int[o], MAX_NB_TEST_ELEMENT);
             for( int j = 0; j < curNb; j++ )
                 if( p->outIntBufs[o][j] != g_fz064Int[o][j] )
@@ -5850,7 +5863,6 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
         }
         else
         {
-            snprintf(field, sizeof(field), o == 0 ? "outReal" : "outReal%u", o);
             json_get_double_array(ctx->respBuf, field, g_fz064Real[o], MAX_NB_TEST_ELEMENT);
             for( int j = 0; j < curNb; j++ )
             {
@@ -6677,10 +6689,9 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
  * codegen_hash_compare's retCode/shape gating, then compares each output's
  * elements: reals at `tol` (relative for |v|>1, absolute otherwise; finite-vs-
  * NaN always fails, so the tolerance path is as NaN-discriminating as the
- * bitwise hash of raw bytes), integers exact. Output field keys follow the raw
- * output index (outReal/outReal1/…, outInteger/outInteger1/…); every
- * multi-output TA function is type-homogeneous, so that equals within-type
- * indexing. Both gates' output lengths are far under CODEGEN_TOL_MAX_OUT. */
+ * bitwise hash of raw bytes), integers exact. Output field keys come from
+ * `codegen_output_field`, which ranks per type. Both gates' output lengths are
+ * far under CODEGEN_TOL_MAX_OUT. */
 #define CODEGEN_TOL_MAX_OUT 512
 CTolVerdict codegen_compare_tol(const char *resp,
                                 unsigned int nbOutput, const int *outIsInteger,
@@ -6703,9 +6714,9 @@ CTolVerdict codegen_compare_tol(const char *resp,
     for( unsigned int o = 0; o < nbOutput && o < MAX_OUTPUTS; o++ )
     {
         char field[32];
+        codegen_output_field(field, sizeof(field), outIsInteger, o);
         if( outIsInteger[o] )
         {
-            snprintf(field, sizeof(field), o == 0 ? "outInteger" : "outInteger%u", o);
             TA_Integer srv[CODEGEN_TOL_MAX_OUT];
             int cnt = json_get_int_array(resp, field, srv, CODEGEN_TOL_MAX_OUT);
             if( cnt != goldNb )
@@ -6721,7 +6732,6 @@ CTolVerdict codegen_compare_tol(const char *resp,
         }
         else
         {
-            snprintf(field, sizeof(field), o == 0 ? "outReal" : "outReal%u", o);
             TA_Real srv[CODEGEN_TOL_MAX_OUT];
             int cnt = json_get_double_array(resp, field, srv, CODEGEN_TOL_MAX_OUT);
             if( cnt != goldNb )
@@ -7146,26 +7156,23 @@ static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp
     out->rc        = json_get_int(resp, "retCode");
     out->begIdx    = json_get_int(resp, "outBegIdx");
     out->nbElement = json_get_int(resp, "outNBElement");
-    int realIdx = 0, intIdx = 0;
     for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
     {
         const TA_OutputParameterInfo *oi;
         TA_GetOutputParameterInfo(fi->handle, o, &oi);
+        out->isInt[o] = (oi->type == TA_Output_Integer);
+    }
+    for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
+    {
         char field[24];
-        if( oi->type == TA_Output_Integer )
-        {
-            out->isInt[o] = 1;
-            snprintf(field, sizeof(field), intIdx == 0 ? "outInteger" : "outInteger%d", intIdx);
+        /* `isInt` is filled for every output first: the key depends on how many
+         * SAME-typed outputs precede this one, which the one-pass form could
+         * only know by carrying its own counters — a second copy of the rule. */
+        codegen_output_field(field, sizeof(field), out->isInt, o);
+        if( out->isInt[o] )
             json_get_int_array(resp, field, out->intg[o], LB_TIER_N);
-            intIdx++;
-        }
         else
-        {
-            out->isInt[o] = 0;
-            snprintf(field, sizeof(field), realIdx == 0 ? "outReal" : "outReal%d", realIdx);
             json_get_double_array(resp, field, out->real[o], LB_TIER_N);
-            realIdx++;
-        }
     }
 }
 
@@ -7545,9 +7552,10 @@ static void xlang_tier_native_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
         double *outReal[LB_TIER_MAX_OUT];
         TA_Integer *outIntg[LB_TIER_MAX_OUT];
         for( int o = 0; o < LB_TIER_MAX_OUT; o++ ) { outReal[o] = &scalarReal[o]; outIntg[o] = &scalarInt[o]; }
+        /* Both lists, always: a mixed-type function's thunk dereferences a slot
+         * in each, and a homogeneous one `(void)`s the list it does not use. */
         TA_RetCode openRc = entry->open(&stream, in, LB_TIER_N, optArr,
-                                        entry->outIsInteger ? NULL : outReal,
-                                        entry->outIsInteger ? outIntg : NULL);
+                                        outReal, outIntg);
         if( stream ) entry->close(stream);
         out->openRc = openRc;
         out->haveOpen = 1;
@@ -7581,16 +7589,15 @@ static void xlang_tier_native_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
         for( int o = 0; o < LB_TIER_MAX_OUT; o++ ) { outReal[o] = oafReal[o]; outIntg[o] = oafInt[o]; }
         TA_Integer oafBeg = 0, oafNb = 0;
         TA_RetCode oafRc = entry->openAndFill(&stream, in, LB_TIER_N, optArr, &oafBeg, &oafNb,
-                                              entry->outIsInteger ? NULL : outReal,
-                                              entry->outIsInteger ? outIntg : NULL);
+                                              outReal, outIntg);
         if( stream ) entry->close(stream);
         out->oafR.rc = oafRc;
         out->oafR.begIdx = oafBeg;
         out->oafR.nbElement = oafNb;
         for( unsigned int o = 0; o < funcInfo->nbOutput && o < LB_TIER_MAX_OUT; o++ )
         {
-            out->oafR.isInt[o] = entry->outIsInteger;
-            if( entry->outIsInteger )
+            out->oafR.isInt[o] = entry->outIsInt[o];
+            if( entry->outIsInt[o] )
                 memcpy(out->oafR.intg[o], oafInt[o], sizeof(oafInt[o]));
             else
                 memcpy(out->oafR.real[o], oafReal[o], sizeof(oafReal[o]));

@@ -2281,13 +2281,23 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // sharing a buffer must reject (#108 class). Covers the mutual-
             // distinctness guard the input-output probe above never touches, and
             // exercises the integer-output multi-out funcs (MINMAXINDEX) whose
-            // guard the input-output probe skips. Outputs are homogeneously typed,
-            // so aliasing output 1 onto output 0's buffer is type-consistent.
-            if n_outs >= 2 {
+            // guard the input-output probe skips.
+            //
+            // The pair has to be SAME-TYPED, and is searched for rather than
+            // assumed to be (0, 1): substituting a `double*` buffer into an
+            // `int*` slot is an incompatible-pointer-type, i.e. the generated
+            // server would not compile. Searching keeps the probe alive for a
+            // mixed-type function whose same-typed pair is not adjacent —
+            // SYNTH12's reals are outputs 0 and 2. C# already pairs by type
+            // (below); Java gates on `!out_is_int[1]`.
+            let aa_pair = (0..n_outs)
+                .flat_map(|i| ((i + 1)..n_outs).map(move |j| (i, j)))
+                .find(|&(i, j)| out_is_int[i] == out_is_int[j]);
+            if let Some((ai, aj)) = aa_pair {
                 let aa_out: Vec<String> = fbuf
                     .iter()
                     .enumerate()
-                    .map(|(i, b)| if i == 1 { fbuf[0].clone() } else { b.clone() })
+                    .map(|(i, b)| if i == aj { fbuf[ai].clone() } else { b.clone() })
                     .collect::<Vec<_>>();
                 let aa_args = aa_out.join(", ");
                 s.push_str("        {\n");

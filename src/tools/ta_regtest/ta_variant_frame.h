@@ -103,7 +103,12 @@ typedef struct {
    int                  nbOptInput;
    const TA_VOptSpec   *optInput;     /* NULL when nbOptInput == 0 */
    int                  nbOutput;
-   int                  outIsInteger; /* 1 = outputs are TA_Integer */
+   /* Per output, indexed by declaration position: 1 = TA_Integer.
+    * A function may mix the two (SYNTH12), so this cannot collapse
+    * to one flag; the thunks subscript outReal[]/outInteger[] by
+    * that same declaration position, leaving a hole in whichever
+    * array the slot does not belong to. */
+   const int           *outIsInt;
    /* 1 when the guarded body delegates to a shared TA_<N>_Private
     * rather than holding the algorithm inline. Derived from the
     * definition having an explicit <name>_private() in
@@ -152,6 +157,7 @@ static TA_RetCode TA_AC_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AC[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_AC[] = { 0 };
 static const TA_VOptSpec TA_VOpt_AC[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 34.0 },
@@ -200,6 +206,7 @@ static TA_RetCode TA_ACCBANDS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ACCBANDS[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ACCBANDS[] = { 0, 0, 0 };
 static const TA_VOptSpec TA_VOpt_ACCBANDS[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
 };
@@ -238,6 +245,7 @@ static TA_RetCode TA_ACOS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ACOS[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ACOS[] = { 0 };
 
 static TA_RetCode TA_AD_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -279,6 +287,7 @@ static TA_RetCode TA_AD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AD[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_AD[] = { 0 };
 
 static TA_RetCode TA_ADD_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -316,6 +325,7 @@ static TA_RetCode TA_ADD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ADD[] = { TA_VIN_REAL, TA_VIN_REAL };
+static const int TA_VOutIsInt_ADD[] = { 0 };
 
 static TA_RetCode TA_ADOSC_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -359,6 +369,7 @@ static TA_RetCode TA_ADOSC_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ADOSC[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_ADOSC[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ADOSC[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 3.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
@@ -402,6 +413,7 @@ static TA_RetCode TA_ADX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ADX[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ADX[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ADX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -444,6 +456,7 @@ static TA_RetCode TA_ADXR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ADXR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ADXR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ADXR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -486,6 +499,7 @@ static TA_RetCode TA_AO_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AO[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_AO[] = { 0 };
 static const TA_VOptSpec TA_VOpt_AO[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 34.0 },
@@ -529,6 +543,7 @@ static TA_RetCode TA_APO_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_APO[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_APO[] = { 0 };
 static const TA_VOptSpec TA_VOpt_APO[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
@@ -573,6 +588,7 @@ static TA_RetCode TA_AROON_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AROON[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_AROON[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_AROON[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -613,6 +629,7 @@ static TA_RetCode TA_AROONOSC_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AROONOSC[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_AROONOSC[] = { 0 };
 static const TA_VOptSpec TA_VOpt_AROONOSC[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -651,6 +668,7 @@ static TA_RetCode TA_ASIN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ASIN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ASIN[] = { 0 };
 
 static TA_RetCode TA_ATAN_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -686,6 +704,7 @@ static TA_RetCode TA_ATAN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ATAN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ATAN[] = { 0 };
 
 static TA_RetCode TA_ATR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -725,6 +744,7 @@ static TA_RetCode TA_ATR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ATR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ATR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ATR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
@@ -763,6 +783,7 @@ static TA_RetCode TA_AVGDEV_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AVGDEV[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_AVGDEV[] = { 0 };
 static const TA_VOptSpec TA_VOpt_AVGDEV[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -807,6 +828,7 @@ static TA_RetCode TA_AVGPRICE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_AVGPRICE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_AVGPRICE[] = { 0 };
 
 static TA_RetCode TA_BBANDS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -852,6 +874,7 @@ static TA_RetCode TA_BBANDS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_BBANDS[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_BBANDS[] = { 0, 0, 0 };
 static const TA_VOptSpec TA_VOpt_BBANDS[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
    { "optInNbDevUp", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
@@ -895,6 +918,7 @@ static TA_RetCode TA_BETA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_BETA[] = { TA_VIN_REAL, TA_VIN_REAL };
+static const int TA_VOutIsInt_BETA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_BETA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
 };
@@ -939,6 +963,7 @@ static TA_RetCode TA_BOP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_BOP[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_BOP[] = { 0 };
 
 static TA_RetCode TA_CCI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -978,6 +1003,7 @@ static TA_RetCode TA_CCI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CCI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CCI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_CCI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -1022,6 +1048,7 @@ static TA_RetCode TA_CDL2CROWS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL2CROWS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL2CROWS[] = { 1 };
 
 static TA_RetCode TA_CDL3BLACKCROWS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1063,6 +1090,7 @@ static TA_RetCode TA_CDL3BLACKCROWS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL3BLACKCROWS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL3BLACKCROWS[] = { 1 };
 
 static TA_RetCode TA_CDL3INSIDE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1104,6 +1132,7 @@ static TA_RetCode TA_CDL3INSIDE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL3INSIDE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL3INSIDE[] = { 1 };
 
 static TA_RetCode TA_CDL3LINESTRIKE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1145,6 +1174,7 @@ static TA_RetCode TA_CDL3LINESTRIKE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL3LINESTRIKE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL3LINESTRIKE[] = { 1 };
 
 static TA_RetCode TA_CDL3OUTSIDE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1186,6 +1216,7 @@ static TA_RetCode TA_CDL3OUTSIDE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL3OUTSIDE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL3OUTSIDE[] = { 1 };
 
 static TA_RetCode TA_CDL3STARSINSOUTH_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1227,6 +1258,7 @@ static TA_RetCode TA_CDL3STARSINSOUTH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL3STARSINSOUTH[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL3STARSINSOUTH[] = { 1 };
 
 static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1268,6 +1300,7 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDL3WHITESOLDIERS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDL3WHITESOLDIERS[] = { 1 };
 
 static TA_RetCode TA_CDLABANDONEDBABY_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1309,6 +1342,7 @@ static TA_RetCode TA_CDLABANDONEDBABY_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLABANDONEDBABY[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLABANDONEDBABY[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLABANDONEDBABY[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
@@ -1353,6 +1387,7 @@ static TA_RetCode TA_CDLADVANCEBLOCK_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLADVANCEBLOCK[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLADVANCEBLOCK[] = { 1 };
 
 static TA_RetCode TA_CDLBELTHOLD_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1394,6 +1429,7 @@ static TA_RetCode TA_CDLBELTHOLD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLBELTHOLD[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLBELTHOLD[] = { 1 };
 
 static TA_RetCode TA_CDLBREAKAWAY_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1435,6 +1471,7 @@ static TA_RetCode TA_CDLBREAKAWAY_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLBREAKAWAY[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLBREAKAWAY[] = { 1 };
 
 static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1476,6 +1513,7 @@ static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLCLOSINGMARUBOZU[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLCLOSINGMARUBOZU[] = { 1 };
 
 static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1517,6 +1555,7 @@ static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLCONCEALBABYSWALL[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLCONCEALBABYSWALL[] = { 1 };
 
 static TA_RetCode TA_CDLCOUNTERATTACK_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1558,6 +1597,7 @@ static TA_RetCode TA_CDLCOUNTERATTACK_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLCOUNTERATTACK[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLCOUNTERATTACK[] = { 1 };
 
 static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1599,6 +1639,7 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLDARKCLOUDCOVER[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLDARKCLOUDCOVER[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLDARKCLOUDCOVER[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
 };
@@ -1643,6 +1684,7 @@ static TA_RetCode TA_CDLDOJI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLDOJI[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLDOJI[] = { 1 };
 
 static TA_RetCode TA_CDLDOJISTAR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1684,6 +1726,7 @@ static TA_RetCode TA_CDLDOJISTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLDOJISTAR[] = { 1 };
 
 static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1725,6 +1768,7 @@ static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLDRAGONFLYDOJI[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLDRAGONFLYDOJI[] = { 1 };
 
 static TA_RetCode TA_CDLENGULFING_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1766,6 +1810,7 @@ static TA_RetCode TA_CDLENGULFING_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLENGULFING[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLENGULFING[] = { 1 };
 
 static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1807,6 +1852,7 @@ static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLEVENINGDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLEVENINGDOJISTAR[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLEVENINGDOJISTAR[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
@@ -1851,6 +1897,7 @@ static TA_RetCode TA_CDLEVENINGSTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLEVENINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLEVENINGSTAR[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLEVENINGSTAR[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
@@ -1895,6 +1942,7 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLGAPSIDESIDEWHITE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLGAPSIDESIDEWHITE[] = { 1 };
 
 static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1936,6 +1984,7 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLGRAVESTONEDOJI[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLGRAVESTONEDOJI[] = { 1 };
 
 static TA_RetCode TA_CDLHAMMER_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -1977,6 +2026,7 @@ static TA_RetCode TA_CDLHAMMER_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHAMMER[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHAMMER[] = { 1 };
 
 static TA_RetCode TA_CDLHANGINGMAN_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2018,6 +2068,7 @@ static TA_RetCode TA_CDLHANGINGMAN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHANGINGMAN[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHANGINGMAN[] = { 1 };
 
 static TA_RetCode TA_CDLHARAMI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2059,6 +2110,7 @@ static TA_RetCode TA_CDLHARAMI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHARAMI[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHARAMI[] = { 1 };
 
 static TA_RetCode TA_CDLHARAMICROSS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2100,6 +2152,7 @@ static TA_RetCode TA_CDLHARAMICROSS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHARAMICROSS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHARAMICROSS[] = { 1 };
 
 static TA_RetCode TA_CDLHIGHWAVE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2141,6 +2194,7 @@ static TA_RetCode TA_CDLHIGHWAVE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHIGHWAVE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHIGHWAVE[] = { 1 };
 
 static TA_RetCode TA_CDLHIKKAKE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2182,6 +2236,7 @@ static TA_RetCode TA_CDLHIKKAKE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHIKKAKE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHIKKAKE[] = { 1 };
 
 static TA_RetCode TA_CDLHIKKAKEMOD_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2223,6 +2278,7 @@ static TA_RetCode TA_CDLHIKKAKEMOD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHIKKAKEMOD[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHIKKAKEMOD[] = { 1 };
 
 static TA_RetCode TA_CDLHOMINGPIGEON_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2264,6 +2320,7 @@ static TA_RetCode TA_CDLHOMINGPIGEON_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLHOMINGPIGEON[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLHOMINGPIGEON[] = { 1 };
 
 static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2305,6 +2362,7 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLIDENTICAL3CROWS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLIDENTICAL3CROWS[] = { 1 };
 
 static TA_RetCode TA_CDLINNECK_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2346,6 +2404,7 @@ static TA_RetCode TA_CDLINNECK_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLINNECK[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLINNECK[] = { 1 };
 
 static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2387,6 +2446,7 @@ static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLINVERTEDHAMMER[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLINVERTEDHAMMER[] = { 1 };
 
 static TA_RetCode TA_CDLKICKING_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2428,6 +2488,7 @@ static TA_RetCode TA_CDLKICKING_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLKICKING[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLKICKING[] = { 1 };
 
 static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2469,6 +2530,7 @@ static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLKICKINGBYLENGTH[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLKICKINGBYLENGTH[] = { 1 };
 
 static TA_RetCode TA_CDLLADDERBOTTOM_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2510,6 +2572,7 @@ static TA_RetCode TA_CDLLADDERBOTTOM_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLLADDERBOTTOM[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLLADDERBOTTOM[] = { 1 };
 
 static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2551,6 +2614,7 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLLONGLEGGEDDOJI[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLLONGLEGGEDDOJI[] = { 1 };
 
 static TA_RetCode TA_CDLLONGLINE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2592,6 +2656,7 @@ static TA_RetCode TA_CDLLONGLINE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLLONGLINE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLLONGLINE[] = { 1 };
 
 static TA_RetCode TA_CDLMARUBOZU_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2633,6 +2698,7 @@ static TA_RetCode TA_CDLMARUBOZU_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLMARUBOZU[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLMARUBOZU[] = { 1 };
 
 static TA_RetCode TA_CDLMATCHINGLOW_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2674,6 +2740,7 @@ static TA_RetCode TA_CDLMATCHINGLOW_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLMATCHINGLOW[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLMATCHINGLOW[] = { 1 };
 
 static TA_RetCode TA_CDLMATHOLD_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2715,6 +2782,7 @@ static TA_RetCode TA_CDLMATHOLD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLMATHOLD[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLMATHOLD[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLMATHOLD[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
 };
@@ -2759,6 +2827,7 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLMORNINGDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLMORNINGDOJISTAR[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLMORNINGDOJISTAR[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
@@ -2803,6 +2872,7 @@ static TA_RetCode TA_CDLMORNINGSTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLMORNINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLMORNINGSTAR[] = { 1 };
 static const TA_VOptSpec TA_VOpt_CDLMORNINGSTAR[] = {
    { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
@@ -2847,6 +2917,7 @@ static TA_RetCode TA_CDLONNECK_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLONNECK[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLONNECK[] = { 1 };
 
 static TA_RetCode TA_CDLPIERCING_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2888,6 +2959,7 @@ static TA_RetCode TA_CDLPIERCING_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLPIERCING[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLPIERCING[] = { 1 };
 
 static TA_RetCode TA_CDLRICKSHAWMAN_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2929,6 +3001,7 @@ static TA_RetCode TA_CDLRICKSHAWMAN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLRICKSHAWMAN[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLRICKSHAWMAN[] = { 1 };
 
 static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -2970,6 +3043,7 @@ static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLRISEFALL3METHODS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLRISEFALL3METHODS[] = { 1 };
 
 static TA_RetCode TA_CDLSEPARATINGLINES_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3011,6 +3085,7 @@ static TA_RetCode TA_CDLSEPARATINGLINES_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLSEPARATINGLINES[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLSEPARATINGLINES[] = { 1 };
 
 static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3052,6 +3127,7 @@ static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLSHOOTINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLSHOOTINGSTAR[] = { 1 };
 
 static TA_RetCode TA_CDLSHORTLINE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3093,6 +3169,7 @@ static TA_RetCode TA_CDLSHORTLINE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLSHORTLINE[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLSHORTLINE[] = { 1 };
 
 static TA_RetCode TA_CDLSPINNINGTOP_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3134,6 +3211,7 @@ static TA_RetCode TA_CDLSPINNINGTOP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLSPINNINGTOP[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLSPINNINGTOP[] = { 1 };
 
 static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3175,6 +3253,7 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLSTALLEDPATTERN[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLSTALLEDPATTERN[] = { 1 };
 
 static TA_RetCode TA_CDLSTICKSANDWICH_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3216,6 +3295,7 @@ static TA_RetCode TA_CDLSTICKSANDWICH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLSTICKSANDWICH[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLSTICKSANDWICH[] = { 1 };
 
 static TA_RetCode TA_CDLTAKURI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3257,6 +3337,7 @@ static TA_RetCode TA_CDLTAKURI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLTAKURI[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLTAKURI[] = { 1 };
 
 static TA_RetCode TA_CDLTASUKIGAP_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3298,6 +3379,7 @@ static TA_RetCode TA_CDLTASUKIGAP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLTASUKIGAP[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLTASUKIGAP[] = { 1 };
 
 static TA_RetCode TA_CDLTHRUSTING_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3339,6 +3421,7 @@ static TA_RetCode TA_CDLTHRUSTING_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLTHRUSTING[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLTHRUSTING[] = { 1 };
 
 static TA_RetCode TA_CDLTRISTAR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3380,6 +3463,7 @@ static TA_RetCode TA_CDLTRISTAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLTRISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLTRISTAR[] = { 1 };
 
 static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3421,6 +3505,7 @@ static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLUNIQUE3RIVER[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLUNIQUE3RIVER[] = { 1 };
 
 static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3462,6 +3547,7 @@ static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLUPSIDEGAP2CROWS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLUPSIDEGAP2CROWS[] = { 1 };
 
 static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3503,6 +3589,7 @@ static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CDLXSIDEGAP3METHODS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CDLXSIDEGAP3METHODS[] = { 1 };
 
 static TA_RetCode TA_CEIL_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3538,6 +3625,7 @@ static TA_RetCode TA_CEIL_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CEIL[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_CEIL[] = { 0 };
 
 static TA_RetCode TA_CMF_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3579,6 +3667,7 @@ static TA_RetCode TA_CMF_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CMF[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_CMF[] = { 0 };
 static const TA_VOptSpec TA_VOpt_CMF[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
 };
@@ -3617,6 +3706,7 @@ static TA_RetCode TA_CMO_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CMO[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_CMO[] = { 0 };
 static const TA_VOptSpec TA_VOpt_CMO[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -3655,6 +3745,7 @@ static TA_RetCode TA_CMOU_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CMOU[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_CMOU[] = { 0 };
 static const TA_VOptSpec TA_VOpt_CMOU[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -3695,6 +3786,7 @@ static TA_RetCode TA_CORREL_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_CORREL[] = { TA_VIN_REAL, TA_VIN_REAL };
+static const int TA_VOutIsInt_CORREL[] = { 0 };
 static const TA_VOptSpec TA_VOpt_CORREL[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -3733,6 +3825,7 @@ static TA_RetCode TA_COS_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_COS[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_COS[] = { 0 };
 
 static TA_RetCode TA_COSH_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3768,6 +3861,7 @@ static TA_RetCode TA_COSH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_COSH[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_COSH[] = { 0 };
 
 static TA_RetCode TA_DEMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3803,6 +3897,7 @@ static TA_RetCode TA_DEMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_DEMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_DEMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_DEMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -3843,6 +3938,7 @@ static TA_RetCode TA_DIV_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_DIV[] = { TA_VIN_REAL, TA_VIN_REAL };
+static const int TA_VOutIsInt_DIV[] = { 0 };
 
 static TA_RetCode TA_DX_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -3882,6 +3978,7 @@ static TA_RetCode TA_DX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_DX[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_DX[] = { 0 };
 static const TA_VOptSpec TA_VOpt_DX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -3922,6 +4019,7 @@ static TA_RetCode TA_EFI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_EFI[] = { TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_EFI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_EFI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 13.0 },
 };
@@ -3960,6 +4058,7 @@ static TA_RetCode TA_EMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_EMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_EMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_EMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -3998,6 +4097,7 @@ static TA_RetCode TA_EXP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_EXP[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_EXP[] = { 0 };
 
 static TA_RetCode TA_FLOOR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4033,6 +4133,7 @@ static TA_RetCode TA_FLOOR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_FLOOR[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_FLOOR[] = { 0 };
 
 static TA_RetCode TA_HMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4068,6 +4169,7 @@ static TA_RetCode TA_HMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_HMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 20.0 },
 };
@@ -4106,6 +4208,7 @@ static TA_RetCode TA_HT_DCPERIOD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HT_DCPERIOD[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HT_DCPERIOD[] = { 0 };
 
 static TA_RetCode TA_HT_DCPHASE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4141,6 +4244,7 @@ static TA_RetCode TA_HT_DCPHASE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HT_DCPHASE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HT_DCPHASE[] = { 0 };
 
 static TA_RetCode TA_HT_PHASOR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4178,6 +4282,7 @@ static TA_RetCode TA_HT_PHASOR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HT_PHASOR[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HT_PHASOR[] = { 0, 0 };
 
 static TA_RetCode TA_HT_SINE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4215,6 +4320,7 @@ static TA_RetCode TA_HT_SINE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HT_SINE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HT_SINE[] = { 0, 0 };
 
 static TA_RetCode TA_HT_TRENDLINE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4250,6 +4356,7 @@ static TA_RetCode TA_HT_TRENDLINE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HT_TRENDLINE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HT_TRENDLINE[] = { 0 };
 
 static TA_RetCode TA_HT_TRENDMODE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4285,6 +4392,7 @@ static TA_RetCode TA_HT_TRENDMODE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_HT_TRENDMODE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_HT_TRENDMODE[] = { 1 };
 
 static TA_RetCode TA_IMI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4322,6 +4430,7 @@ static TA_RetCode TA_IMI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_IMI[] = { TA_VIN_OPEN, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_IMI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_IMI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -4360,6 +4469,7 @@ static TA_RetCode TA_KAMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_KAMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_KAMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_KAMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -4398,6 +4508,7 @@ static TA_RetCode TA_LINEARREG_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_LINEARREG[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_LINEARREG[] = { 0 };
 static const TA_VOptSpec TA_VOpt_LINEARREG[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -4436,6 +4547,7 @@ static TA_RetCode TA_LINEARREG_ANGLE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_LINEARREG_ANGLE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_LINEARREG_ANGLE[] = { 0 };
 static const TA_VOptSpec TA_VOpt_LINEARREG_ANGLE[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -4474,6 +4586,7 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_LINEARREG_INTERCEPT[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_LINEARREG_INTERCEPT[] = { 0 };
 static const TA_VOptSpec TA_VOpt_LINEARREG_INTERCEPT[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -4512,6 +4625,7 @@ static TA_RetCode TA_LINEARREG_SLOPE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_LINEARREG_SLOPE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_LINEARREG_SLOPE[] = { 0 };
 static const TA_VOptSpec TA_VOpt_LINEARREG_SLOPE[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -4550,6 +4664,7 @@ static TA_RetCode TA_LN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_LN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_LN[] = { 0 };
 
 static TA_RetCode TA_LOG10_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4585,6 +4700,7 @@ static TA_RetCode TA_LOG10_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_LOG10[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_LOG10[] = { 0 };
 
 static TA_RetCode TA_MA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4622,6 +4738,7 @@ static TA_RetCode TA_MA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
    { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
@@ -4669,6 +4786,7 @@ static TA_RetCode TA_MACD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MACD[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MACD[] = { 0, 0, 0 };
 static const TA_VOptSpec TA_VOpt_MACD[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
@@ -4723,6 +4841,7 @@ static TA_RetCode TA_MACDEXT_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MACDEXT[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MACDEXT[] = { 0, 0, 0 };
 static const TA_VOptSpec TA_VOpt_MACDEXT[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
    { "optInFastMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
@@ -4770,6 +4889,7 @@ static TA_RetCode TA_MACDFIX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MACDFIX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MACDFIX[] = { 0, 0, 0 };
 static const TA_VOptSpec TA_VOpt_MACDFIX[] = {
    { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
 };
@@ -4812,6 +4932,7 @@ static TA_RetCode TA_MAMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MAMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MAMA[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_MAMA[] = {
    { "optInFastLimit", TA_VOPT_REAL, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000000e-1 },
    { "optInSlowLimit", TA_VOPT_REAL, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000028e-2 },
@@ -4855,6 +4976,7 @@ static TA_RetCode TA_MARKETFI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MARKETFI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_MARKETFI[] = { 0 };
 
 static TA_RetCode TA_MAVP_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -4896,6 +5018,7 @@ static TA_RetCode TA_MAVP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MAVP[] = { TA_VIN_REAL, TA_VIN_PERIODS };
+static const int TA_VOutIsInt_MAVP[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MAVP[] = {
    { "optInMinPeriod", TA_VOPT_INT, 1.0, 100000.0, 2.0 },
    { "optInMaxPeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
@@ -4936,6 +5059,7 @@ static TA_RetCode TA_MAX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MAX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MAX[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MAX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -4974,6 +5098,7 @@ static TA_RetCode TA_MAXINDEX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MAXINDEX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MAXINDEX[] = { 1 };
 static const TA_VOptSpec TA_VOpt_MAXINDEX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -5014,6 +5139,7 @@ static TA_RetCode TA_MEDPRICE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MEDPRICE[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_MEDPRICE[] = { 0 };
 
 static TA_RetCode TA_MFI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -5055,6 +5181,7 @@ static TA_RetCode TA_MFI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MFI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_MFI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MFI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -5093,6 +5220,7 @@ static TA_RetCode TA_MIDPOINT_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MIDPOINT[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MIDPOINT[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MIDPOINT[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -5133,6 +5261,7 @@ static TA_RetCode TA_MIDPRICE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MIDPRICE[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_MIDPRICE[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MIDPRICE[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -5171,6 +5300,7 @@ static TA_RetCode TA_MIN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MIN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MIN[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MIN[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -5209,6 +5339,7 @@ static TA_RetCode TA_MININDEX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MININDEX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MININDEX[] = { 1 };
 static const TA_VOptSpec TA_VOpt_MININDEX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -5249,6 +5380,7 @@ static TA_RetCode TA_MINMAX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MINMAX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MINMAX[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_MINMAX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -5289,6 +5421,7 @@ static TA_RetCode TA_MINMAXINDEX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MINMAXINDEX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MINMAXINDEX[] = { 1, 1 };
 static const TA_VOptSpec TA_VOpt_MINMAXINDEX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -5331,6 +5464,7 @@ static TA_RetCode TA_MINUS_DI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MINUS_DI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_MINUS_DI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MINUS_DI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
@@ -5371,6 +5505,7 @@ static TA_RetCode TA_MINUS_DM_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MINUS_DM[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_MINUS_DM[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MINUS_DM[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
@@ -5409,6 +5544,7 @@ static TA_RetCode TA_MOM_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MOM[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MOM[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MOM[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
@@ -5449,6 +5585,7 @@ static TA_RetCode TA_MULT_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_MULT[] = { TA_VIN_REAL, TA_VIN_REAL };
+static const int TA_VOutIsInt_MULT[] = { 0 };
 
 static TA_RetCode TA_NATR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -5488,6 +5625,7 @@ static TA_RetCode TA_NATR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_NATR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_NATR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_NATR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
@@ -5528,6 +5666,7 @@ static TA_RetCode TA_NVI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_NVI[] = { TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_NVI[] = { 0 };
 
 static TA_RetCode TA_OBV_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -5565,6 +5704,7 @@ static TA_RetCode TA_OBV_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_OBV[] = { TA_VIN_REAL, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_OBV[] = { 0 };
 
 static TA_RetCode TA_PLUS_DI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -5604,6 +5744,7 @@ static TA_RetCode TA_PLUS_DI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_PLUS_DI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_PLUS_DI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_PLUS_DI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
@@ -5644,6 +5785,7 @@ static TA_RetCode TA_PLUS_DM_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_PLUS_DM[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_PLUS_DM[] = { 0 };
 static const TA_VOptSpec TA_VOpt_PLUS_DM[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
@@ -5686,6 +5828,7 @@ static TA_RetCode TA_PPO_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_PPO[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_PPO[] = { 0 };
 static const TA_VOptSpec TA_VOpt_PPO[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
@@ -5728,6 +5871,7 @@ static TA_RetCode TA_PVI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_PVI[] = { TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_PVI[] = { 0 };
 
 static TA_RetCode TA_PVO_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -5767,6 +5911,7 @@ static TA_RetCode TA_PVO_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_PVO[] = { TA_VIN_VOLUME };
+static const int TA_VOutIsInt_PVO[] = { 0 };
 static const TA_VOptSpec TA_VOpt_PVO[] = {
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
    { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
@@ -5809,6 +5954,7 @@ static TA_RetCode TA_QSTICK_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_QSTICK[] = { TA_VIN_OPEN, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_QSTICK[] = { 0 };
 static const TA_VOptSpec TA_VOpt_QSTICK[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
@@ -5847,6 +5993,7 @@ static TA_RetCode TA_ROC_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ROC[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ROC[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ROC[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
@@ -5885,6 +6032,7 @@ static TA_RetCode TA_ROCP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ROCP[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ROCP[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ROCP[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
@@ -5923,6 +6071,7 @@ static TA_RetCode TA_ROCR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ROCR[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ROCR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ROCR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
@@ -5961,6 +6110,7 @@ static TA_RetCode TA_ROCR100_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ROCR100[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_ROCR100[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ROCR100[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
@@ -5999,6 +6149,7 @@ static TA_RetCode TA_RSI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_RSI[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_RSI[] = { 0 };
 static const TA_VOptSpec TA_VOpt_RSI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -6041,6 +6192,7 @@ static TA_RetCode TA_SAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SAR[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_SAR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_SAR[] = {
    { "optInAcceleration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
    { "optInMaximum", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
@@ -6096,6 +6248,7 @@ static TA_RetCode TA_SAREXT_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SAREXT[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_SAREXT[] = { 0 };
 static const TA_VOptSpec TA_VOpt_SAREXT[] = {
    { "optInStartValue", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 0.0 },
    { "optInOffsetOnReverse", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 0.0 },
@@ -6141,6 +6294,7 @@ static TA_RetCode TA_SIN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SIN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SIN[] = { 0 };
 
 static TA_RetCode TA_SINH_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6176,6 +6330,7 @@ static TA_RetCode TA_SINH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SINH[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SINH[] = { 0 };
 
 static TA_RetCode TA_SMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6211,6 +6366,7 @@ static TA_RetCode TA_SMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_SMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -6261,6 +6417,7 @@ static TA_RetCode TA_SMI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SMI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_SMI[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_SMI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 13.0 },
    { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 2.0 },
@@ -6302,6 +6459,7 @@ static TA_RetCode TA_SQRT_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SQRT[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SQRT[] = { 0 };
 
 static TA_RetCode TA_STDDEV_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6339,6 +6497,7 @@ static TA_RetCode TA_STDDEV_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_STDDEV[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_STDDEV[] = { 0 };
 static const TA_VOptSpec TA_VOpt_STDDEV[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
    { "optInNbDev", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
@@ -6392,6 +6551,7 @@ static TA_RetCode TA_STOCH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_STOCH[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_STOCH[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_STOCH[] = {
    { "optInFastK_Period", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
    { "optInSlowK_Period", TA_VOPT_INT, 1.0, 100000.0, 3.0 },
@@ -6444,6 +6604,7 @@ static TA_RetCode TA_STOCHF_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_STOCHF[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_STOCHF[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_STOCHF[] = {
    { "optInFastK_Period", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
    { "optInFastD_Period", TA_VOPT_INT, 1.0, 100000.0, 3.0 },
@@ -6492,6 +6653,7 @@ static TA_RetCode TA_STOCHRSI_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_STOCHRSI[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_STOCHRSI[] = { 0, 0 };
 static const TA_VOptSpec TA_VOpt_STOCHRSI[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
    { "optInFastK_Period", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
@@ -6535,6 +6697,7 @@ static TA_RetCode TA_SUB_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SUB[] = { TA_VIN_REAL, TA_VIN_REAL };
+static const int TA_VOutIsInt_SUB[] = { 0 };
 
 static TA_RetCode TA_SUM_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6570,6 +6733,7 @@ static TA_RetCode TA_SUM_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_SUM[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SUM[] = { 0 };
 static const TA_VOptSpec TA_VOpt_SUM[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
@@ -6610,6 +6774,7 @@ static TA_RetCode TA_T3_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_T3[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_T3[] = { 0 };
 static const TA_VOptSpec TA_VOpt_T3[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
    { "optInVFactor", TA_VOPT_REAL, 0.0, 1.0, 6.99999999999999956e-1 },
@@ -6649,6 +6814,7 @@ static TA_RetCode TA_TAN_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TAN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_TAN[] = { 0 };
 
 static TA_RetCode TA_TANH_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6684,6 +6850,7 @@ static TA_RetCode TA_TANH_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TANH[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_TANH[] = { 0 };
 
 static TA_RetCode TA_TEMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6719,6 +6886,7 @@ static TA_RetCode TA_TEMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TEMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_TEMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_TEMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -6761,6 +6929,7 @@ static TA_RetCode TA_TRANGE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TRANGE[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_TRANGE[] = { 0 };
 
 static TA_RetCode TA_TRIMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6796,6 +6965,7 @@ static TA_RetCode TA_TRIMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TRIMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_TRIMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_TRIMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -6834,6 +7004,7 @@ static TA_RetCode TA_TRIX_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TRIX[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_TRIX[] = { 0 };
 static const TA_VOptSpec TA_VOpt_TRIX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -6872,6 +7043,7 @@ static TA_RetCode TA_TSF_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TSF[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_TSF[] = { 0 };
 static const TA_VOptSpec TA_VOpt_TSF[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -6914,6 +7086,7 @@ static TA_RetCode TA_TYPPRICE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_TYPPRICE[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_TYPPRICE[] = { 0 };
 
 static TA_RetCode TA_ULTOSC_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -6957,6 +7130,7 @@ static TA_RetCode TA_ULTOSC_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_ULTOSC[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ULTOSC[] = { 0 };
 static const TA_VOptSpec TA_VOpt_ULTOSC[] = {
    { "optInTimePeriod1", TA_VOPT_INT, 1.0, 100000.0, 7.0 },
    { "optInTimePeriod2", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
@@ -6999,6 +7173,7 @@ static TA_RetCode TA_VAR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_VAR[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_VAR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_VAR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
    { "optInNbDev", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
@@ -7044,6 +7219,7 @@ static TA_RetCode TA_VWAP_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_VWAP[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_VWAP[] = { 0 };
 
 static TA_RetCode TA_VWMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -7081,6 +7257,7 @@ static TA_RetCode TA_VWMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_VWMA[] = { TA_VIN_REAL, TA_VIN_VOLUME };
+static const int TA_VOutIsInt_VWMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_VWMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
@@ -7123,6 +7300,7 @@ static TA_RetCode TA_WAD_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_WAD[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_WAD[] = { 0 };
 
 static TA_RetCode TA_WCLPRICE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -7162,6 +7340,7 @@ static TA_RetCode TA_WCLPRICE_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_WCLPRICE[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_WCLPRICE[] = { 0 };
 
 static TA_RetCode TA_WILLR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -7201,6 +7380,7 @@ static TA_RetCode TA_WILLR_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_WILLR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_WILLR[] = { 0 };
 static const TA_VOptSpec TA_VOpt_WILLR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
@@ -7239,363 +7419,364 @@ static TA_RetCode TA_WMA_VFrameS( int startIdx, int endIdx,
 }
 
 static const TA_VInputKind TA_VIn_WMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_WMA[] = { 0 };
 static const TA_VOptSpec TA_VOpt_WMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static const TA_VariantEntry TA_VariantTable[] = {
    { "AC", TA_AC_VFrameD, TA_AC_VFrameS,
-     2, TA_VIn_AC, 3, TA_VOpt_AC, 1, 0, 0 },
+     2, TA_VIn_AC, 3, TA_VOpt_AC, 1, TA_VOutIsInt_AC, 0 },
    { "ACCBANDS", TA_ACCBANDS_VFrameD, TA_ACCBANDS_VFrameS,
-     3, TA_VIn_ACCBANDS, 1, TA_VOpt_ACCBANDS, 3, 0, 0 },
+     3, TA_VIn_ACCBANDS, 1, TA_VOpt_ACCBANDS, 3, TA_VOutIsInt_ACCBANDS, 0 },
    { "ACOS", TA_ACOS_VFrameD, TA_ACOS_VFrameS,
-     1, TA_VIn_ACOS, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_ACOS, 0, NULL, 1, TA_VOutIsInt_ACOS, 0 },
    { "AD", TA_AD_VFrameD, TA_AD_VFrameS,
-     4, TA_VIn_AD, 0, NULL, 1, 0, 0 },
+     4, TA_VIn_AD, 0, NULL, 1, TA_VOutIsInt_AD, 0 },
    { "ADD", TA_ADD_VFrameD, TA_ADD_VFrameS,
-     2, TA_VIn_ADD, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_ADD, 0, NULL, 1, TA_VOutIsInt_ADD, 0 },
    { "ADOSC", TA_ADOSC_VFrameD, TA_ADOSC_VFrameS,
-     4, TA_VIn_ADOSC, 2, TA_VOpt_ADOSC, 1, 0, 0 },
+     4, TA_VIn_ADOSC, 2, TA_VOpt_ADOSC, 1, TA_VOutIsInt_ADOSC, 0 },
    { "ADX", TA_ADX_VFrameD, TA_ADX_VFrameS,
-     3, TA_VIn_ADX, 1, TA_VOpt_ADX, 1, 0, 0 },
+     3, TA_VIn_ADX, 1, TA_VOpt_ADX, 1, TA_VOutIsInt_ADX, 0 },
    { "ADXR", TA_ADXR_VFrameD, TA_ADXR_VFrameS,
-     3, TA_VIn_ADXR, 1, TA_VOpt_ADXR, 1, 0, 0 },
+     3, TA_VIn_ADXR, 1, TA_VOpt_ADXR, 1, TA_VOutIsInt_ADXR, 0 },
    { "AO", TA_AO_VFrameD, TA_AO_VFrameS,
-     2, TA_VIn_AO, 2, TA_VOpt_AO, 1, 0, 0 },
+     2, TA_VIn_AO, 2, TA_VOpt_AO, 1, TA_VOutIsInt_AO, 0 },
    { "APO", TA_APO_VFrameD, TA_APO_VFrameS,
-     1, TA_VIn_APO, 3, TA_VOpt_APO, 1, 0, 0 },
+     1, TA_VIn_APO, 3, TA_VOpt_APO, 1, TA_VOutIsInt_APO, 0 },
    { "AROON", TA_AROON_VFrameD, TA_AROON_VFrameS,
-     2, TA_VIn_AROON, 1, TA_VOpt_AROON, 2, 0, 0 },
+     2, TA_VIn_AROON, 1, TA_VOpt_AROON, 2, TA_VOutIsInt_AROON, 0 },
    { "AROONOSC", TA_AROONOSC_VFrameD, TA_AROONOSC_VFrameS,
-     2, TA_VIn_AROONOSC, 1, TA_VOpt_AROONOSC, 1, 0, 0 },
+     2, TA_VIn_AROONOSC, 1, TA_VOpt_AROONOSC, 1, TA_VOutIsInt_AROONOSC, 0 },
    { "ASIN", TA_ASIN_VFrameD, TA_ASIN_VFrameS,
-     1, TA_VIn_ASIN, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_ASIN, 0, NULL, 1, TA_VOutIsInt_ASIN, 0 },
    { "ATAN", TA_ATAN_VFrameD, TA_ATAN_VFrameS,
-     1, TA_VIn_ATAN, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_ATAN, 0, NULL, 1, TA_VOutIsInt_ATAN, 0 },
    { "ATR", TA_ATR_VFrameD, TA_ATR_VFrameS,
-     3, TA_VIn_ATR, 1, TA_VOpt_ATR, 1, 0, 0 },
+     3, TA_VIn_ATR, 1, TA_VOpt_ATR, 1, TA_VOutIsInt_ATR, 0 },
    { "AVGDEV", TA_AVGDEV_VFrameD, TA_AVGDEV_VFrameS,
-     1, TA_VIn_AVGDEV, 1, TA_VOpt_AVGDEV, 1, 0, 0 },
+     1, TA_VIn_AVGDEV, 1, TA_VOpt_AVGDEV, 1, TA_VOutIsInt_AVGDEV, 0 },
    { "AVGPRICE", TA_AVGPRICE_VFrameD, TA_AVGPRICE_VFrameS,
-     4, TA_VIn_AVGPRICE, 0, NULL, 1, 0, 0 },
+     4, TA_VIn_AVGPRICE, 0, NULL, 1, TA_VOutIsInt_AVGPRICE, 0 },
    { "BBANDS", TA_BBANDS_VFrameD, TA_BBANDS_VFrameS,
-     1, TA_VIn_BBANDS, 4, TA_VOpt_BBANDS, 3, 0, 0 },
+     1, TA_VIn_BBANDS, 4, TA_VOpt_BBANDS, 3, TA_VOutIsInt_BBANDS, 0 },
    { "BETA", TA_BETA_VFrameD, TA_BETA_VFrameS,
-     2, TA_VIn_BETA, 1, TA_VOpt_BETA, 1, 0, 0 },
+     2, TA_VIn_BETA, 1, TA_VOpt_BETA, 1, TA_VOutIsInt_BETA, 0 },
    { "BOP", TA_BOP_VFrameD, TA_BOP_VFrameS,
-     4, TA_VIn_BOP, 0, NULL, 1, 0, 0 },
+     4, TA_VIn_BOP, 0, NULL, 1, TA_VOutIsInt_BOP, 0 },
    { "CCI", TA_CCI_VFrameD, TA_CCI_VFrameS,
-     3, TA_VIn_CCI, 1, TA_VOpt_CCI, 1, 0, 0 },
+     3, TA_VIn_CCI, 1, TA_VOpt_CCI, 1, TA_VOutIsInt_CCI, 0 },
    { "CDL2CROWS", TA_CDL2CROWS_VFrameD, TA_CDL2CROWS_VFrameS,
-     4, TA_VIn_CDL2CROWS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL2CROWS, 0, NULL, 1, TA_VOutIsInt_CDL2CROWS, 0 },
    { "CDL3BLACKCROWS", TA_CDL3BLACKCROWS_VFrameD, TA_CDL3BLACKCROWS_VFrameS,
-     4, TA_VIn_CDL3BLACKCROWS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL3BLACKCROWS, 0, NULL, 1, TA_VOutIsInt_CDL3BLACKCROWS, 0 },
    { "CDL3INSIDE", TA_CDL3INSIDE_VFrameD, TA_CDL3INSIDE_VFrameS,
-     4, TA_VIn_CDL3INSIDE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL3INSIDE, 0, NULL, 1, TA_VOutIsInt_CDL3INSIDE, 0 },
    { "CDL3LINESTRIKE", TA_CDL3LINESTRIKE_VFrameD, TA_CDL3LINESTRIKE_VFrameS,
-     4, TA_VIn_CDL3LINESTRIKE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL3LINESTRIKE, 0, NULL, 1, TA_VOutIsInt_CDL3LINESTRIKE, 0 },
    { "CDL3OUTSIDE", TA_CDL3OUTSIDE_VFrameD, TA_CDL3OUTSIDE_VFrameS,
-     4, TA_VIn_CDL3OUTSIDE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL3OUTSIDE, 0, NULL, 1, TA_VOutIsInt_CDL3OUTSIDE, 0 },
    { "CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH_VFrameD, TA_CDL3STARSINSOUTH_VFrameS,
-     4, TA_VIn_CDL3STARSINSOUTH, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL3STARSINSOUTH, 0, NULL, 1, TA_VOutIsInt_CDL3STARSINSOUTH, 0 },
    { "CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS_VFrameD, TA_CDL3WHITESOLDIERS_VFrameS,
-     4, TA_VIn_CDL3WHITESOLDIERS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDL3WHITESOLDIERS, 0, NULL, 1, TA_VOutIsInt_CDL3WHITESOLDIERS, 0 },
    { "CDLABANDONEDBABY", TA_CDLABANDONEDBABY_VFrameD, TA_CDLABANDONEDBABY_VFrameS,
-     4, TA_VIn_CDLABANDONEDBABY, 1, TA_VOpt_CDLABANDONEDBABY, 1, 1, 0 },
+     4, TA_VIn_CDLABANDONEDBABY, 1, TA_VOpt_CDLABANDONEDBABY, 1, TA_VOutIsInt_CDLABANDONEDBABY, 0 },
    { "CDLADVANCEBLOCK", TA_CDLADVANCEBLOCK_VFrameD, TA_CDLADVANCEBLOCK_VFrameS,
-     4, TA_VIn_CDLADVANCEBLOCK, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLADVANCEBLOCK, 0, NULL, 1, TA_VOutIsInt_CDLADVANCEBLOCK, 0 },
    { "CDLBELTHOLD", TA_CDLBELTHOLD_VFrameD, TA_CDLBELTHOLD_VFrameS,
-     4, TA_VIn_CDLBELTHOLD, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLBELTHOLD, 0, NULL, 1, TA_VOutIsInt_CDLBELTHOLD, 0 },
    { "CDLBREAKAWAY", TA_CDLBREAKAWAY_VFrameD, TA_CDLBREAKAWAY_VFrameS,
-     4, TA_VIn_CDLBREAKAWAY, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLBREAKAWAY, 0, NULL, 1, TA_VOutIsInt_CDLBREAKAWAY, 0 },
    { "CDLCLOSINGMARUBOZU", TA_CDLCLOSINGMARUBOZU_VFrameD, TA_CDLCLOSINGMARUBOZU_VFrameS,
-     4, TA_VIn_CDLCLOSINGMARUBOZU, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLCLOSINGMARUBOZU, 0, NULL, 1, TA_VOutIsInt_CDLCLOSINGMARUBOZU, 0 },
    { "CDLCONCEALBABYSWALL", TA_CDLCONCEALBABYSWALL_VFrameD, TA_CDLCONCEALBABYSWALL_VFrameS,
-     4, TA_VIn_CDLCONCEALBABYSWALL, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLCONCEALBABYSWALL, 0, NULL, 1, TA_VOutIsInt_CDLCONCEALBABYSWALL, 0 },
    { "CDLCOUNTERATTACK", TA_CDLCOUNTERATTACK_VFrameD, TA_CDLCOUNTERATTACK_VFrameS,
-     4, TA_VIn_CDLCOUNTERATTACK, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLCOUNTERATTACK, 0, NULL, 1, TA_VOutIsInt_CDLCOUNTERATTACK, 0 },
    { "CDLDARKCLOUDCOVER", TA_CDLDARKCLOUDCOVER_VFrameD, TA_CDLDARKCLOUDCOVER_VFrameS,
-     4, TA_VIn_CDLDARKCLOUDCOVER, 1, TA_VOpt_CDLDARKCLOUDCOVER, 1, 1, 0 },
+     4, TA_VIn_CDLDARKCLOUDCOVER, 1, TA_VOpt_CDLDARKCLOUDCOVER, 1, TA_VOutIsInt_CDLDARKCLOUDCOVER, 0 },
    { "CDLDOJI", TA_CDLDOJI_VFrameD, TA_CDLDOJI_VFrameS,
-     4, TA_VIn_CDLDOJI, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLDOJI, 0, NULL, 1, TA_VOutIsInt_CDLDOJI, 0 },
    { "CDLDOJISTAR", TA_CDLDOJISTAR_VFrameD, TA_CDLDOJISTAR_VFrameS,
-     4, TA_VIn_CDLDOJISTAR, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLDOJISTAR, 0, NULL, 1, TA_VOutIsInt_CDLDOJISTAR, 0 },
    { "CDLDRAGONFLYDOJI", TA_CDLDRAGONFLYDOJI_VFrameD, TA_CDLDRAGONFLYDOJI_VFrameS,
-     4, TA_VIn_CDLDRAGONFLYDOJI, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLDRAGONFLYDOJI, 0, NULL, 1, TA_VOutIsInt_CDLDRAGONFLYDOJI, 0 },
    { "CDLENGULFING", TA_CDLENGULFING_VFrameD, TA_CDLENGULFING_VFrameS,
-     4, TA_VIn_CDLENGULFING, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLENGULFING, 0, NULL, 1, TA_VOutIsInt_CDLENGULFING, 0 },
    { "CDLEVENINGDOJISTAR", TA_CDLEVENINGDOJISTAR_VFrameD, TA_CDLEVENINGDOJISTAR_VFrameS,
-     4, TA_VIn_CDLEVENINGDOJISTAR, 1, TA_VOpt_CDLEVENINGDOJISTAR, 1, 1, 0 },
+     4, TA_VIn_CDLEVENINGDOJISTAR, 1, TA_VOpt_CDLEVENINGDOJISTAR, 1, TA_VOutIsInt_CDLEVENINGDOJISTAR, 0 },
    { "CDLEVENINGSTAR", TA_CDLEVENINGSTAR_VFrameD, TA_CDLEVENINGSTAR_VFrameS,
-     4, TA_VIn_CDLEVENINGSTAR, 1, TA_VOpt_CDLEVENINGSTAR, 1, 1, 0 },
+     4, TA_VIn_CDLEVENINGSTAR, 1, TA_VOpt_CDLEVENINGSTAR, 1, TA_VOutIsInt_CDLEVENINGSTAR, 0 },
    { "CDLGAPSIDESIDEWHITE", TA_CDLGAPSIDESIDEWHITE_VFrameD, TA_CDLGAPSIDESIDEWHITE_VFrameS,
-     4, TA_VIn_CDLGAPSIDESIDEWHITE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLGAPSIDESIDEWHITE, 0, NULL, 1, TA_VOutIsInt_CDLGAPSIDESIDEWHITE, 0 },
    { "CDLGRAVESTONEDOJI", TA_CDLGRAVESTONEDOJI_VFrameD, TA_CDLGRAVESTONEDOJI_VFrameS,
-     4, TA_VIn_CDLGRAVESTONEDOJI, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLGRAVESTONEDOJI, 0, NULL, 1, TA_VOutIsInt_CDLGRAVESTONEDOJI, 0 },
    { "CDLHAMMER", TA_CDLHAMMER_VFrameD, TA_CDLHAMMER_VFrameS,
-     4, TA_VIn_CDLHAMMER, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHAMMER, 0, NULL, 1, TA_VOutIsInt_CDLHAMMER, 0 },
    { "CDLHANGINGMAN", TA_CDLHANGINGMAN_VFrameD, TA_CDLHANGINGMAN_VFrameS,
-     4, TA_VIn_CDLHANGINGMAN, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHANGINGMAN, 0, NULL, 1, TA_VOutIsInt_CDLHANGINGMAN, 0 },
    { "CDLHARAMI", TA_CDLHARAMI_VFrameD, TA_CDLHARAMI_VFrameS,
-     4, TA_VIn_CDLHARAMI, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHARAMI, 0, NULL, 1, TA_VOutIsInt_CDLHARAMI, 0 },
    { "CDLHARAMICROSS", TA_CDLHARAMICROSS_VFrameD, TA_CDLHARAMICROSS_VFrameS,
-     4, TA_VIn_CDLHARAMICROSS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHARAMICROSS, 0, NULL, 1, TA_VOutIsInt_CDLHARAMICROSS, 0 },
    { "CDLHIGHWAVE", TA_CDLHIGHWAVE_VFrameD, TA_CDLHIGHWAVE_VFrameS,
-     4, TA_VIn_CDLHIGHWAVE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHIGHWAVE, 0, NULL, 1, TA_VOutIsInt_CDLHIGHWAVE, 0 },
    { "CDLHIKKAKE", TA_CDLHIKKAKE_VFrameD, TA_CDLHIKKAKE_VFrameS,
-     4, TA_VIn_CDLHIKKAKE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHIKKAKE, 0, NULL, 1, TA_VOutIsInt_CDLHIKKAKE, 0 },
    { "CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD_VFrameD, TA_CDLHIKKAKEMOD_VFrameS,
-     4, TA_VIn_CDLHIKKAKEMOD, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHIKKAKEMOD, 0, NULL, 1, TA_VOutIsInt_CDLHIKKAKEMOD, 0 },
    { "CDLHOMINGPIGEON", TA_CDLHOMINGPIGEON_VFrameD, TA_CDLHOMINGPIGEON_VFrameS,
-     4, TA_VIn_CDLHOMINGPIGEON, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLHOMINGPIGEON, 0, NULL, 1, TA_VOutIsInt_CDLHOMINGPIGEON, 0 },
    { "CDLIDENTICAL3CROWS", TA_CDLIDENTICAL3CROWS_VFrameD, TA_CDLIDENTICAL3CROWS_VFrameS,
-     4, TA_VIn_CDLIDENTICAL3CROWS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLIDENTICAL3CROWS, 0, NULL, 1, TA_VOutIsInt_CDLIDENTICAL3CROWS, 0 },
    { "CDLINNECK", TA_CDLINNECK_VFrameD, TA_CDLINNECK_VFrameS,
-     4, TA_VIn_CDLINNECK, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLINNECK, 0, NULL, 1, TA_VOutIsInt_CDLINNECK, 0 },
    { "CDLINVERTEDHAMMER", TA_CDLINVERTEDHAMMER_VFrameD, TA_CDLINVERTEDHAMMER_VFrameS,
-     4, TA_VIn_CDLINVERTEDHAMMER, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLINVERTEDHAMMER, 0, NULL, 1, TA_VOutIsInt_CDLINVERTEDHAMMER, 0 },
    { "CDLKICKING", TA_CDLKICKING_VFrameD, TA_CDLKICKING_VFrameS,
-     4, TA_VIn_CDLKICKING, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLKICKING, 0, NULL, 1, TA_VOutIsInt_CDLKICKING, 0 },
    { "CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH_VFrameD, TA_CDLKICKINGBYLENGTH_VFrameS,
-     4, TA_VIn_CDLKICKINGBYLENGTH, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLKICKINGBYLENGTH, 0, NULL, 1, TA_VOutIsInt_CDLKICKINGBYLENGTH, 0 },
    { "CDLLADDERBOTTOM", TA_CDLLADDERBOTTOM_VFrameD, TA_CDLLADDERBOTTOM_VFrameS,
-     4, TA_VIn_CDLLADDERBOTTOM, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLLADDERBOTTOM, 0, NULL, 1, TA_VOutIsInt_CDLLADDERBOTTOM, 0 },
    { "CDLLONGLEGGEDDOJI", TA_CDLLONGLEGGEDDOJI_VFrameD, TA_CDLLONGLEGGEDDOJI_VFrameS,
-     4, TA_VIn_CDLLONGLEGGEDDOJI, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLLONGLEGGEDDOJI, 0, NULL, 1, TA_VOutIsInt_CDLLONGLEGGEDDOJI, 0 },
    { "CDLLONGLINE", TA_CDLLONGLINE_VFrameD, TA_CDLLONGLINE_VFrameS,
-     4, TA_VIn_CDLLONGLINE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLLONGLINE, 0, NULL, 1, TA_VOutIsInt_CDLLONGLINE, 0 },
    { "CDLMARUBOZU", TA_CDLMARUBOZU_VFrameD, TA_CDLMARUBOZU_VFrameS,
-     4, TA_VIn_CDLMARUBOZU, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLMARUBOZU, 0, NULL, 1, TA_VOutIsInt_CDLMARUBOZU, 0 },
    { "CDLMATCHINGLOW", TA_CDLMATCHINGLOW_VFrameD, TA_CDLMATCHINGLOW_VFrameS,
-     4, TA_VIn_CDLMATCHINGLOW, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLMATCHINGLOW, 0, NULL, 1, TA_VOutIsInt_CDLMATCHINGLOW, 0 },
    { "CDLMATHOLD", TA_CDLMATHOLD_VFrameD, TA_CDLMATHOLD_VFrameS,
-     4, TA_VIn_CDLMATHOLD, 1, TA_VOpt_CDLMATHOLD, 1, 1, 0 },
+     4, TA_VIn_CDLMATHOLD, 1, TA_VOpt_CDLMATHOLD, 1, TA_VOutIsInt_CDLMATHOLD, 0 },
    { "CDLMORNINGDOJISTAR", TA_CDLMORNINGDOJISTAR_VFrameD, TA_CDLMORNINGDOJISTAR_VFrameS,
-     4, TA_VIn_CDLMORNINGDOJISTAR, 1, TA_VOpt_CDLMORNINGDOJISTAR, 1, 1, 0 },
+     4, TA_VIn_CDLMORNINGDOJISTAR, 1, TA_VOpt_CDLMORNINGDOJISTAR, 1, TA_VOutIsInt_CDLMORNINGDOJISTAR, 0 },
    { "CDLMORNINGSTAR", TA_CDLMORNINGSTAR_VFrameD, TA_CDLMORNINGSTAR_VFrameS,
-     4, TA_VIn_CDLMORNINGSTAR, 1, TA_VOpt_CDLMORNINGSTAR, 1, 1, 0 },
+     4, TA_VIn_CDLMORNINGSTAR, 1, TA_VOpt_CDLMORNINGSTAR, 1, TA_VOutIsInt_CDLMORNINGSTAR, 0 },
    { "CDLONNECK", TA_CDLONNECK_VFrameD, TA_CDLONNECK_VFrameS,
-     4, TA_VIn_CDLONNECK, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLONNECK, 0, NULL, 1, TA_VOutIsInt_CDLONNECK, 0 },
    { "CDLPIERCING", TA_CDLPIERCING_VFrameD, TA_CDLPIERCING_VFrameS,
-     4, TA_VIn_CDLPIERCING, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLPIERCING, 0, NULL, 1, TA_VOutIsInt_CDLPIERCING, 0 },
    { "CDLRICKSHAWMAN", TA_CDLRICKSHAWMAN_VFrameD, TA_CDLRICKSHAWMAN_VFrameS,
-     4, TA_VIn_CDLRICKSHAWMAN, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLRICKSHAWMAN, 0, NULL, 1, TA_VOutIsInt_CDLRICKSHAWMAN, 0 },
    { "CDLRISEFALL3METHODS", TA_CDLRISEFALL3METHODS_VFrameD, TA_CDLRISEFALL3METHODS_VFrameS,
-     4, TA_VIn_CDLRISEFALL3METHODS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLRISEFALL3METHODS, 0, NULL, 1, TA_VOutIsInt_CDLRISEFALL3METHODS, 0 },
    { "CDLSEPARATINGLINES", TA_CDLSEPARATINGLINES_VFrameD, TA_CDLSEPARATINGLINES_VFrameS,
-     4, TA_VIn_CDLSEPARATINGLINES, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLSEPARATINGLINES, 0, NULL, 1, TA_VOutIsInt_CDLSEPARATINGLINES, 0 },
    { "CDLSHOOTINGSTAR", TA_CDLSHOOTINGSTAR_VFrameD, TA_CDLSHOOTINGSTAR_VFrameS,
-     4, TA_VIn_CDLSHOOTINGSTAR, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLSHOOTINGSTAR, 0, NULL, 1, TA_VOutIsInt_CDLSHOOTINGSTAR, 0 },
    { "CDLSHORTLINE", TA_CDLSHORTLINE_VFrameD, TA_CDLSHORTLINE_VFrameS,
-     4, TA_VIn_CDLSHORTLINE, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLSHORTLINE, 0, NULL, 1, TA_VOutIsInt_CDLSHORTLINE, 0 },
    { "CDLSPINNINGTOP", TA_CDLSPINNINGTOP_VFrameD, TA_CDLSPINNINGTOP_VFrameS,
-     4, TA_VIn_CDLSPINNINGTOP, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLSPINNINGTOP, 0, NULL, 1, TA_VOutIsInt_CDLSPINNINGTOP, 0 },
    { "CDLSTALLEDPATTERN", TA_CDLSTALLEDPATTERN_VFrameD, TA_CDLSTALLEDPATTERN_VFrameS,
-     4, TA_VIn_CDLSTALLEDPATTERN, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLSTALLEDPATTERN, 0, NULL, 1, TA_VOutIsInt_CDLSTALLEDPATTERN, 0 },
    { "CDLSTICKSANDWICH", TA_CDLSTICKSANDWICH_VFrameD, TA_CDLSTICKSANDWICH_VFrameS,
-     4, TA_VIn_CDLSTICKSANDWICH, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLSTICKSANDWICH, 0, NULL, 1, TA_VOutIsInt_CDLSTICKSANDWICH, 0 },
    { "CDLTAKURI", TA_CDLTAKURI_VFrameD, TA_CDLTAKURI_VFrameS,
-     4, TA_VIn_CDLTAKURI, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLTAKURI, 0, NULL, 1, TA_VOutIsInt_CDLTAKURI, 0 },
    { "CDLTASUKIGAP", TA_CDLTASUKIGAP_VFrameD, TA_CDLTASUKIGAP_VFrameS,
-     4, TA_VIn_CDLTASUKIGAP, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLTASUKIGAP, 0, NULL, 1, TA_VOutIsInt_CDLTASUKIGAP, 0 },
    { "CDLTHRUSTING", TA_CDLTHRUSTING_VFrameD, TA_CDLTHRUSTING_VFrameS,
-     4, TA_VIn_CDLTHRUSTING, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLTHRUSTING, 0, NULL, 1, TA_VOutIsInt_CDLTHRUSTING, 0 },
    { "CDLTRISTAR", TA_CDLTRISTAR_VFrameD, TA_CDLTRISTAR_VFrameS,
-     4, TA_VIn_CDLTRISTAR, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLTRISTAR, 0, NULL, 1, TA_VOutIsInt_CDLTRISTAR, 0 },
    { "CDLUNIQUE3RIVER", TA_CDLUNIQUE3RIVER_VFrameD, TA_CDLUNIQUE3RIVER_VFrameS,
-     4, TA_VIn_CDLUNIQUE3RIVER, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLUNIQUE3RIVER, 0, NULL, 1, TA_VOutIsInt_CDLUNIQUE3RIVER, 0 },
    { "CDLUPSIDEGAP2CROWS", TA_CDLUPSIDEGAP2CROWS_VFrameD, TA_CDLUPSIDEGAP2CROWS_VFrameS,
-     4, TA_VIn_CDLUPSIDEGAP2CROWS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLUPSIDEGAP2CROWS, 0, NULL, 1, TA_VOutIsInt_CDLUPSIDEGAP2CROWS, 0 },
    { "CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS_VFrameD, TA_CDLXSIDEGAP3METHODS_VFrameS,
-     4, TA_VIn_CDLXSIDEGAP3METHODS, 0, NULL, 1, 1, 0 },
+     4, TA_VIn_CDLXSIDEGAP3METHODS, 0, NULL, 1, TA_VOutIsInt_CDLXSIDEGAP3METHODS, 0 },
    { "CEIL", TA_CEIL_VFrameD, TA_CEIL_VFrameS,
-     1, TA_VIn_CEIL, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_CEIL, 0, NULL, 1, TA_VOutIsInt_CEIL, 0 },
    { "CMF", TA_CMF_VFrameD, TA_CMF_VFrameS,
-     4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, 0, 0 },
+     4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF, 0 },
    { "CMO", TA_CMO_VFrameD, TA_CMO_VFrameS,
-     1, TA_VIn_CMO, 1, TA_VOpt_CMO, 1, 0, 0 },
+     1, TA_VIn_CMO, 1, TA_VOpt_CMO, 1, TA_VOutIsInt_CMO, 0 },
    { "CMOU", TA_CMOU_VFrameD, TA_CMOU_VFrameS,
-     1, TA_VIn_CMOU, 1, TA_VOpt_CMOU, 1, 0, 0 },
+     1, TA_VIn_CMOU, 1, TA_VOpt_CMOU, 1, TA_VOutIsInt_CMOU, 0 },
    { "CORREL", TA_CORREL_VFrameD, TA_CORREL_VFrameS,
-     2, TA_VIn_CORREL, 1, TA_VOpt_CORREL, 1, 0, 0 },
+     2, TA_VIn_CORREL, 1, TA_VOpt_CORREL, 1, TA_VOutIsInt_CORREL, 0 },
    { "COS", TA_COS_VFrameD, TA_COS_VFrameS,
-     1, TA_VIn_COS, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_COS, 0, NULL, 1, TA_VOutIsInt_COS, 0 },
    { "COSH", TA_COSH_VFrameD, TA_COSH_VFrameS,
-     1, TA_VIn_COSH, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_COSH, 0, NULL, 1, TA_VOutIsInt_COSH, 0 },
    { "DEMA", TA_DEMA_VFrameD, TA_DEMA_VFrameS,
-     1, TA_VIn_DEMA, 1, TA_VOpt_DEMA, 1, 0, 0 },
+     1, TA_VIn_DEMA, 1, TA_VOpt_DEMA, 1, TA_VOutIsInt_DEMA, 0 },
    { "DIV", TA_DIV_VFrameD, TA_DIV_VFrameS,
-     2, TA_VIn_DIV, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_DIV, 0, NULL, 1, TA_VOutIsInt_DIV, 0 },
    { "DX", TA_DX_VFrameD, TA_DX_VFrameS,
-     3, TA_VIn_DX, 1, TA_VOpt_DX, 1, 0, 0 },
+     3, TA_VIn_DX, 1, TA_VOpt_DX, 1, TA_VOutIsInt_DX, 0 },
    { "EFI", TA_EFI_VFrameD, TA_EFI_VFrameS,
-     2, TA_VIn_EFI, 1, TA_VOpt_EFI, 1, 0, 0 },
+     2, TA_VIn_EFI, 1, TA_VOpt_EFI, 1, TA_VOutIsInt_EFI, 0 },
    { "EMA", TA_EMA_VFrameD, TA_EMA_VFrameS,
-     1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, 0, 0 },
+     1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, TA_VOutIsInt_EMA, 0 },
    { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameS,
-     1, TA_VIn_EXP, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_EXP, 0, NULL, 1, TA_VOutIsInt_EXP, 0 },
    { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameS,
-     1, TA_VIn_FLOOR, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_FLOOR, 0, NULL, 1, TA_VOutIsInt_FLOOR, 0 },
    { "HMA", TA_HMA_VFrameD, TA_HMA_VFrameS,
-     1, TA_VIn_HMA, 1, TA_VOpt_HMA, 1, 0, 0 },
+     1, TA_VIn_HMA, 1, TA_VOpt_HMA, 1, TA_VOutIsInt_HMA, 0 },
    { "HT_DCPERIOD", TA_HT_DCPERIOD_VFrameD, TA_HT_DCPERIOD_VFrameS,
-     1, TA_VIn_HT_DCPERIOD, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_HT_DCPERIOD, 0, NULL, 1, TA_VOutIsInt_HT_DCPERIOD, 0 },
    { "HT_DCPHASE", TA_HT_DCPHASE_VFrameD, TA_HT_DCPHASE_VFrameS,
-     1, TA_VIn_HT_DCPHASE, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_HT_DCPHASE, 0, NULL, 1, TA_VOutIsInt_HT_DCPHASE, 0 },
    { "HT_PHASOR", TA_HT_PHASOR_VFrameD, TA_HT_PHASOR_VFrameS,
-     1, TA_VIn_HT_PHASOR, 0, NULL, 2, 0, 0 },
+     1, TA_VIn_HT_PHASOR, 0, NULL, 2, TA_VOutIsInt_HT_PHASOR, 0 },
    { "HT_SINE", TA_HT_SINE_VFrameD, TA_HT_SINE_VFrameS,
-     1, TA_VIn_HT_SINE, 0, NULL, 2, 0, 0 },
+     1, TA_VIn_HT_SINE, 0, NULL, 2, TA_VOutIsInt_HT_SINE, 0 },
    { "HT_TRENDLINE", TA_HT_TRENDLINE_VFrameD, TA_HT_TRENDLINE_VFrameS,
-     1, TA_VIn_HT_TRENDLINE, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_HT_TRENDLINE, 0, NULL, 1, TA_VOutIsInt_HT_TRENDLINE, 0 },
    { "HT_TRENDMODE", TA_HT_TRENDMODE_VFrameD, TA_HT_TRENDMODE_VFrameS,
-     1, TA_VIn_HT_TRENDMODE, 0, NULL, 1, 1, 0 },
+     1, TA_VIn_HT_TRENDMODE, 0, NULL, 1, TA_VOutIsInt_HT_TRENDMODE, 0 },
    { "IMI", TA_IMI_VFrameD, TA_IMI_VFrameS,
-     2, TA_VIn_IMI, 1, TA_VOpt_IMI, 1, 0, 0 },
+     2, TA_VIn_IMI, 1, TA_VOpt_IMI, 1, TA_VOutIsInt_IMI, 0 },
    { "KAMA", TA_KAMA_VFrameD, TA_KAMA_VFrameS,
-     1, TA_VIn_KAMA, 1, TA_VOpt_KAMA, 1, 0, 0 },
+     1, TA_VIn_KAMA, 1, TA_VOpt_KAMA, 1, TA_VOutIsInt_KAMA, 0 },
    { "LINEARREG", TA_LINEARREG_VFrameD, TA_LINEARREG_VFrameS,
-     1, TA_VIn_LINEARREG, 1, TA_VOpt_LINEARREG, 1, 0, 0 },
+     1, TA_VIn_LINEARREG, 1, TA_VOpt_LINEARREG, 1, TA_VOutIsInt_LINEARREG, 0 },
    { "LINEARREG_ANGLE", TA_LINEARREG_ANGLE_VFrameD, TA_LINEARREG_ANGLE_VFrameS,
-     1, TA_VIn_LINEARREG_ANGLE, 1, TA_VOpt_LINEARREG_ANGLE, 1, 0, 0 },
+     1, TA_VIn_LINEARREG_ANGLE, 1, TA_VOpt_LINEARREG_ANGLE, 1, TA_VOutIsInt_LINEARREG_ANGLE, 0 },
    { "LINEARREG_INTERCEPT", TA_LINEARREG_INTERCEPT_VFrameD, TA_LINEARREG_INTERCEPT_VFrameS,
-     1, TA_VIn_LINEARREG_INTERCEPT, 1, TA_VOpt_LINEARREG_INTERCEPT, 1, 0, 0 },
+     1, TA_VIn_LINEARREG_INTERCEPT, 1, TA_VOpt_LINEARREG_INTERCEPT, 1, TA_VOutIsInt_LINEARREG_INTERCEPT, 0 },
    { "LINEARREG_SLOPE", TA_LINEARREG_SLOPE_VFrameD, TA_LINEARREG_SLOPE_VFrameS,
-     1, TA_VIn_LINEARREG_SLOPE, 1, TA_VOpt_LINEARREG_SLOPE, 1, 0, 0 },
+     1, TA_VIn_LINEARREG_SLOPE, 1, TA_VOpt_LINEARREG_SLOPE, 1, TA_VOutIsInt_LINEARREG_SLOPE, 0 },
    { "LN", TA_LN_VFrameD, TA_LN_VFrameS,
-     1, TA_VIn_LN, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_LN, 0, NULL, 1, TA_VOutIsInt_LN, 0 },
    { "LOG10", TA_LOG10_VFrameD, TA_LOG10_VFrameS,
-     1, TA_VIn_LOG10, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_LOG10, 0, NULL, 1, TA_VOutIsInt_LOG10, 0 },
    { "MA", TA_MA_VFrameD, TA_MA_VFrameS,
-     1, TA_VIn_MA, 2, TA_VOpt_MA, 1, 0, 0 },
+     1, TA_VIn_MA, 2, TA_VOpt_MA, 1, TA_VOutIsInt_MA, 0 },
    { "MACD", TA_MACD_VFrameD, TA_MACD_VFrameS,
-     1, TA_VIn_MACD, 3, TA_VOpt_MACD, 3, 0, 0 },
+     1, TA_VIn_MACD, 3, TA_VOpt_MACD, 3, TA_VOutIsInt_MACD, 0 },
    { "MACDEXT", TA_MACDEXT_VFrameD, TA_MACDEXT_VFrameS,
-     1, TA_VIn_MACDEXT, 6, TA_VOpt_MACDEXT, 3, 0, 0 },
+     1, TA_VIn_MACDEXT, 6, TA_VOpt_MACDEXT, 3, TA_VOutIsInt_MACDEXT, 0 },
    { "MACDFIX", TA_MACDFIX_VFrameD, TA_MACDFIX_VFrameS,
-     1, TA_VIn_MACDFIX, 1, TA_VOpt_MACDFIX, 3, 0, 0 },
+     1, TA_VIn_MACDFIX, 1, TA_VOpt_MACDFIX, 3, TA_VOutIsInt_MACDFIX, 0 },
    { "MAMA", TA_MAMA_VFrameD, TA_MAMA_VFrameS,
-     1, TA_VIn_MAMA, 2, TA_VOpt_MAMA, 2, 0, 0 },
+     1, TA_VIn_MAMA, 2, TA_VOpt_MAMA, 2, TA_VOutIsInt_MAMA, 0 },
    { "MARKETFI", TA_MARKETFI_VFrameD, TA_MARKETFI_VFrameS,
-     3, TA_VIn_MARKETFI, 0, NULL, 1, 0, 0 },
+     3, TA_VIn_MARKETFI, 0, NULL, 1, TA_VOutIsInt_MARKETFI, 0 },
    { "MAVP", TA_MAVP_VFrameD, TA_MAVP_VFrameS,
-     2, TA_VIn_MAVP, 3, TA_VOpt_MAVP, 1, 0, 0 },
+     2, TA_VIn_MAVP, 3, TA_VOpt_MAVP, 1, TA_VOutIsInt_MAVP, 0 },
    { "MAX", TA_MAX_VFrameD, TA_MAX_VFrameS,
-     1, TA_VIn_MAX, 1, TA_VOpt_MAX, 1, 0, 0 },
+     1, TA_VIn_MAX, 1, TA_VOpt_MAX, 1, TA_VOutIsInt_MAX, 0 },
    { "MAXINDEX", TA_MAXINDEX_VFrameD, TA_MAXINDEX_VFrameS,
-     1, TA_VIn_MAXINDEX, 1, TA_VOpt_MAXINDEX, 1, 1, 0 },
+     1, TA_VIn_MAXINDEX, 1, TA_VOpt_MAXINDEX, 1, TA_VOutIsInt_MAXINDEX, 0 },
    { "MEDPRICE", TA_MEDPRICE_VFrameD, TA_MEDPRICE_VFrameS,
-     2, TA_VIn_MEDPRICE, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_MEDPRICE, 0, NULL, 1, TA_VOutIsInt_MEDPRICE, 0 },
    { "MFI", TA_MFI_VFrameD, TA_MFI_VFrameS,
-     4, TA_VIn_MFI, 1, TA_VOpt_MFI, 1, 0, 0 },
+     4, TA_VIn_MFI, 1, TA_VOpt_MFI, 1, TA_VOutIsInt_MFI, 0 },
    { "MIDPOINT", TA_MIDPOINT_VFrameD, TA_MIDPOINT_VFrameS,
-     1, TA_VIn_MIDPOINT, 1, TA_VOpt_MIDPOINT, 1, 0, 0 },
+     1, TA_VIn_MIDPOINT, 1, TA_VOpt_MIDPOINT, 1, TA_VOutIsInt_MIDPOINT, 0 },
    { "MIDPRICE", TA_MIDPRICE_VFrameD, TA_MIDPRICE_VFrameS,
-     2, TA_VIn_MIDPRICE, 1, TA_VOpt_MIDPRICE, 1, 0, 0 },
+     2, TA_VIn_MIDPRICE, 1, TA_VOpt_MIDPRICE, 1, TA_VOutIsInt_MIDPRICE, 0 },
    { "MIN", TA_MIN_VFrameD, TA_MIN_VFrameS,
-     1, TA_VIn_MIN, 1, TA_VOpt_MIN, 1, 0, 0 },
+     1, TA_VIn_MIN, 1, TA_VOpt_MIN, 1, TA_VOutIsInt_MIN, 0 },
    { "MININDEX", TA_MININDEX_VFrameD, TA_MININDEX_VFrameS,
-     1, TA_VIn_MININDEX, 1, TA_VOpt_MININDEX, 1, 1, 0 },
+     1, TA_VIn_MININDEX, 1, TA_VOpt_MININDEX, 1, TA_VOutIsInt_MININDEX, 0 },
    { "MINMAX", TA_MINMAX_VFrameD, TA_MINMAX_VFrameS,
-     1, TA_VIn_MINMAX, 1, TA_VOpt_MINMAX, 2, 0, 0 },
+     1, TA_VIn_MINMAX, 1, TA_VOpt_MINMAX, 2, TA_VOutIsInt_MINMAX, 0 },
    { "MINMAXINDEX", TA_MINMAXINDEX_VFrameD, TA_MINMAXINDEX_VFrameS,
-     1, TA_VIn_MINMAXINDEX, 1, TA_VOpt_MINMAXINDEX, 2, 1, 0 },
+     1, TA_VIn_MINMAXINDEX, 1, TA_VOpt_MINMAXINDEX, 2, TA_VOutIsInt_MINMAXINDEX, 0 },
    { "MINUS_DI", TA_MINUS_DI_VFrameD, TA_MINUS_DI_VFrameS,
-     3, TA_VIn_MINUS_DI, 1, TA_VOpt_MINUS_DI, 1, 0, 0 },
+     3, TA_VIn_MINUS_DI, 1, TA_VOpt_MINUS_DI, 1, TA_VOutIsInt_MINUS_DI, 0 },
    { "MINUS_DM", TA_MINUS_DM_VFrameD, TA_MINUS_DM_VFrameS,
-     2, TA_VIn_MINUS_DM, 1, TA_VOpt_MINUS_DM, 1, 0, 0 },
+     2, TA_VIn_MINUS_DM, 1, TA_VOpt_MINUS_DM, 1, TA_VOutIsInt_MINUS_DM, 0 },
    { "MOM", TA_MOM_VFrameD, TA_MOM_VFrameS,
-     1, TA_VIn_MOM, 1, TA_VOpt_MOM, 1, 0, 0 },
+     1, TA_VIn_MOM, 1, TA_VOpt_MOM, 1, TA_VOutIsInt_MOM, 0 },
    { "MULT", TA_MULT_VFrameD, TA_MULT_VFrameS,
-     2, TA_VIn_MULT, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_MULT, 0, NULL, 1, TA_VOutIsInt_MULT, 0 },
    { "NATR", TA_NATR_VFrameD, TA_NATR_VFrameS,
-     3, TA_VIn_NATR, 1, TA_VOpt_NATR, 1, 0, 0 },
+     3, TA_VIn_NATR, 1, TA_VOpt_NATR, 1, TA_VOutIsInt_NATR, 0 },
    { "NVI", TA_NVI_VFrameD, TA_NVI_VFrameS,
-     2, TA_VIn_NVI, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_NVI, 0, NULL, 1, TA_VOutIsInt_NVI, 0 },
    { "OBV", TA_OBV_VFrameD, TA_OBV_VFrameS,
-     2, TA_VIn_OBV, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_OBV, 0, NULL, 1, TA_VOutIsInt_OBV, 0 },
    { "PLUS_DI", TA_PLUS_DI_VFrameD, TA_PLUS_DI_VFrameS,
-     3, TA_VIn_PLUS_DI, 1, TA_VOpt_PLUS_DI, 1, 0, 0 },
+     3, TA_VIn_PLUS_DI, 1, TA_VOpt_PLUS_DI, 1, TA_VOutIsInt_PLUS_DI, 0 },
    { "PLUS_DM", TA_PLUS_DM_VFrameD, TA_PLUS_DM_VFrameS,
-     2, TA_VIn_PLUS_DM, 1, TA_VOpt_PLUS_DM, 1, 0, 0 },
+     2, TA_VIn_PLUS_DM, 1, TA_VOpt_PLUS_DM, 1, TA_VOutIsInt_PLUS_DM, 0 },
    { "PPO", TA_PPO_VFrameD, TA_PPO_VFrameS,
-     1, TA_VIn_PPO, 3, TA_VOpt_PPO, 1, 0, 0 },
+     1, TA_VIn_PPO, 3, TA_VOpt_PPO, 1, TA_VOutIsInt_PPO, 0 },
    { "PVI", TA_PVI_VFrameD, TA_PVI_VFrameS,
-     2, TA_VIn_PVI, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_PVI, 0, NULL, 1, TA_VOutIsInt_PVI, 0 },
    { "PVO", TA_PVO_VFrameD, TA_PVO_VFrameS,
-     1, TA_VIn_PVO, 3, TA_VOpt_PVO, 1, 0, 0 },
+     1, TA_VIn_PVO, 3, TA_VOpt_PVO, 1, TA_VOutIsInt_PVO, 0 },
    { "QSTICK", TA_QSTICK_VFrameD, TA_QSTICK_VFrameS,
-     2, TA_VIn_QSTICK, 1, TA_VOpt_QSTICK, 1, 0, 0 },
+     2, TA_VIn_QSTICK, 1, TA_VOpt_QSTICK, 1, TA_VOutIsInt_QSTICK, 0 },
    { "ROC", TA_ROC_VFrameD, TA_ROC_VFrameS,
-     1, TA_VIn_ROC, 1, TA_VOpt_ROC, 1, 0, 0 },
+     1, TA_VIn_ROC, 1, TA_VOpt_ROC, 1, TA_VOutIsInt_ROC, 0 },
    { "ROCP", TA_ROCP_VFrameD, TA_ROCP_VFrameS,
-     1, TA_VIn_ROCP, 1, TA_VOpt_ROCP, 1, 0, 0 },
+     1, TA_VIn_ROCP, 1, TA_VOpt_ROCP, 1, TA_VOutIsInt_ROCP, 0 },
    { "ROCR", TA_ROCR_VFrameD, TA_ROCR_VFrameS,
-     1, TA_VIn_ROCR, 1, TA_VOpt_ROCR, 1, 0, 0 },
+     1, TA_VIn_ROCR, 1, TA_VOpt_ROCR, 1, TA_VOutIsInt_ROCR, 0 },
    { "ROCR100", TA_ROCR100_VFrameD, TA_ROCR100_VFrameS,
-     1, TA_VIn_ROCR100, 1, TA_VOpt_ROCR100, 1, 0, 0 },
+     1, TA_VIn_ROCR100, 1, TA_VOpt_ROCR100, 1, TA_VOutIsInt_ROCR100, 0 },
    { "RSI", TA_RSI_VFrameD, TA_RSI_VFrameS,
-     1, TA_VIn_RSI, 1, TA_VOpt_RSI, 1, 0, 0 },
+     1, TA_VIn_RSI, 1, TA_VOpt_RSI, 1, TA_VOutIsInt_RSI, 0 },
    { "SAR", TA_SAR_VFrameD, TA_SAR_VFrameS,
-     2, TA_VIn_SAR, 2, TA_VOpt_SAR, 1, 0, 0 },
+     2, TA_VIn_SAR, 2, TA_VOpt_SAR, 1, TA_VOutIsInt_SAR, 0 },
    { "SAREXT", TA_SAREXT_VFrameD, TA_SAREXT_VFrameS,
-     2, TA_VIn_SAREXT, 8, TA_VOpt_SAREXT, 1, 0, 0 },
+     2, TA_VIn_SAREXT, 8, TA_VOpt_SAREXT, 1, TA_VOutIsInt_SAREXT, 0 },
    { "SIN", TA_SIN_VFrameD, TA_SIN_VFrameS,
-     1, TA_VIn_SIN, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_SIN, 0, NULL, 1, TA_VOutIsInt_SIN, 0 },
    { "SINH", TA_SINH_VFrameD, TA_SINH_VFrameS,
-     1, TA_VIn_SINH, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_SINH, 0, NULL, 1, TA_VOutIsInt_SINH, 0 },
    { "SMA", TA_SMA_VFrameD, TA_SMA_VFrameS,
-     1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, 0, 0 },
+     1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, TA_VOutIsInt_SMA, 0 },
    { "SMI", TA_SMI_VFrameD, TA_SMI_VFrameS,
-     3, TA_VIn_SMI, 4, TA_VOpt_SMI, 2, 0, 0 },
+     3, TA_VIn_SMI, 4, TA_VOpt_SMI, 2, TA_VOutIsInt_SMI, 0 },
    { "SQRT", TA_SQRT_VFrameD, TA_SQRT_VFrameS,
-     1, TA_VIn_SQRT, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_SQRT, 0, NULL, 1, TA_VOutIsInt_SQRT, 0 },
    { "STDDEV", TA_STDDEV_VFrameD, TA_STDDEV_VFrameS,
-     1, TA_VIn_STDDEV, 2, TA_VOpt_STDDEV, 1, 0, 0 },
+     1, TA_VIn_STDDEV, 2, TA_VOpt_STDDEV, 1, TA_VOutIsInt_STDDEV, 0 },
    { "STOCH", TA_STOCH_VFrameD, TA_STOCH_VFrameS,
-     3, TA_VIn_STOCH, 5, TA_VOpt_STOCH, 2, 0, 0 },
+     3, TA_VIn_STOCH, 5, TA_VOpt_STOCH, 2, TA_VOutIsInt_STOCH, 0 },
    { "STOCHF", TA_STOCHF_VFrameD, TA_STOCHF_VFrameS,
-     3, TA_VIn_STOCHF, 3, TA_VOpt_STOCHF, 2, 0, 0 },
+     3, TA_VIn_STOCHF, 3, TA_VOpt_STOCHF, 2, TA_VOutIsInt_STOCHF, 0 },
    { "STOCHRSI", TA_STOCHRSI_VFrameD, TA_STOCHRSI_VFrameS,
-     1, TA_VIn_STOCHRSI, 4, TA_VOpt_STOCHRSI, 2, 0, 0 },
+     1, TA_VIn_STOCHRSI, 4, TA_VOpt_STOCHRSI, 2, TA_VOutIsInt_STOCHRSI, 0 },
    { "SUB", TA_SUB_VFrameD, TA_SUB_VFrameS,
-     2, TA_VIn_SUB, 0, NULL, 1, 0, 0 },
+     2, TA_VIn_SUB, 0, NULL, 1, TA_VOutIsInt_SUB, 0 },
    { "SUM", TA_SUM_VFrameD, TA_SUM_VFrameS,
-     1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, 0, 0 },
+     1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, TA_VOutIsInt_SUM, 0 },
    { "T3", TA_T3_VFrameD, TA_T3_VFrameS,
-     1, TA_VIn_T3, 2, TA_VOpt_T3, 1, 0, 0 },
+     1, TA_VIn_T3, 2, TA_VOpt_T3, 1, TA_VOutIsInt_T3, 0 },
    { "TAN", TA_TAN_VFrameD, TA_TAN_VFrameS,
-     1, TA_VIn_TAN, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_TAN, 0, NULL, 1, TA_VOutIsInt_TAN, 0 },
    { "TANH", TA_TANH_VFrameD, TA_TANH_VFrameS,
-     1, TA_VIn_TANH, 0, NULL, 1, 0, 0 },
+     1, TA_VIn_TANH, 0, NULL, 1, TA_VOutIsInt_TANH, 0 },
    { "TEMA", TA_TEMA_VFrameD, TA_TEMA_VFrameS,
-     1, TA_VIn_TEMA, 1, TA_VOpt_TEMA, 1, 0, 0 },
+     1, TA_VIn_TEMA, 1, TA_VOpt_TEMA, 1, TA_VOutIsInt_TEMA, 0 },
    { "TRANGE", TA_TRANGE_VFrameD, TA_TRANGE_VFrameS,
-     3, TA_VIn_TRANGE, 0, NULL, 1, 0, 0 },
+     3, TA_VIn_TRANGE, 0, NULL, 1, TA_VOutIsInt_TRANGE, 0 },
    { "TRIMA", TA_TRIMA_VFrameD, TA_TRIMA_VFrameS,
-     1, TA_VIn_TRIMA, 1, TA_VOpt_TRIMA, 1, 0, 0 },
+     1, TA_VIn_TRIMA, 1, TA_VOpt_TRIMA, 1, TA_VOutIsInt_TRIMA, 0 },
    { "TRIX", TA_TRIX_VFrameD, TA_TRIX_VFrameS,
-     1, TA_VIn_TRIX, 1, TA_VOpt_TRIX, 1, 0, 0 },
+     1, TA_VIn_TRIX, 1, TA_VOpt_TRIX, 1, TA_VOutIsInt_TRIX, 0 },
    { "TSF", TA_TSF_VFrameD, TA_TSF_VFrameS,
-     1, TA_VIn_TSF, 1, TA_VOpt_TSF, 1, 0, 0 },
+     1, TA_VIn_TSF, 1, TA_VOpt_TSF, 1, TA_VOutIsInt_TSF, 0 },
    { "TYPPRICE", TA_TYPPRICE_VFrameD, TA_TYPPRICE_VFrameS,
-     3, TA_VIn_TYPPRICE, 0, NULL, 1, 0, 0 },
+     3, TA_VIn_TYPPRICE, 0, NULL, 1, TA_VOutIsInt_TYPPRICE, 0 },
    { "ULTOSC", TA_ULTOSC_VFrameD, TA_ULTOSC_VFrameS,
-     3, TA_VIn_ULTOSC, 3, TA_VOpt_ULTOSC, 1, 0, 0 },
+     3, TA_VIn_ULTOSC, 3, TA_VOpt_ULTOSC, 1, TA_VOutIsInt_ULTOSC, 0 },
    { "VAR", TA_VAR_VFrameD, TA_VAR_VFrameS,
-     1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, 0, 0 },
+     1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, TA_VOutIsInt_VAR, 0 },
    { "VWAP", TA_VWAP_VFrameD, TA_VWAP_VFrameS,
-     4, TA_VIn_VWAP, 0, NULL, 1, 0, 0 },
+     4, TA_VIn_VWAP, 0, NULL, 1, TA_VOutIsInt_VWAP, 0 },
    { "VWMA", TA_VWMA_VFrameD, TA_VWMA_VFrameS,
-     2, TA_VIn_VWMA, 1, TA_VOpt_VWMA, 1, 0, 0 },
+     2, TA_VIn_VWMA, 1, TA_VOpt_VWMA, 1, TA_VOutIsInt_VWMA, 0 },
    { "WAD", TA_WAD_VFrameD, TA_WAD_VFrameS,
-     3, TA_VIn_WAD, 0, NULL, 1, 0, 0 },
+     3, TA_VIn_WAD, 0, NULL, 1, TA_VOutIsInt_WAD, 0 },
    { "WCLPRICE", TA_WCLPRICE_VFrameD, TA_WCLPRICE_VFrameS,
-     3, TA_VIn_WCLPRICE, 0, NULL, 1, 0, 0 },
+     3, TA_VIn_WCLPRICE, 0, NULL, 1, TA_VOutIsInt_WCLPRICE, 0 },
    { "WILLR", TA_WILLR_VFrameD, TA_WILLR_VFrameS,
-     3, TA_VIn_WILLR, 1, TA_VOpt_WILLR, 1, 0, 0 },
+     3, TA_VIn_WILLR, 1, TA_VOpt_WILLR, 1, TA_VOutIsInt_WILLR, 0 },
    { "WMA", TA_WMA_VFrameD, TA_WMA_VFrameS,
-     1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
+     1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA, 0 },
 };
 
 #define TA_VARIANT_TABLE_SIZE 176
