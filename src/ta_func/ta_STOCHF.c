@@ -65,6 +65,8 @@
  *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
  *               fixed band zeroed the whole output for any instrument quoted
  *               small enough to fall under it.
+ *  082726 MF,CC Drop the dead retCode block after the copy: the rejection is
+ *               already answered above it, and the shape reads like #269.
  */
 
 TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType )
@@ -343,13 +345,6 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
    {
       free(tempBuffer);
    }
-   if( retCode != TA_SUCCESS )
-   {
-      /* Something wrong happen while processing %D? */
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
    /* Note: Keep the outBegIdx relative to the
     *       caller input before returning.
     */
@@ -524,12 +519,6 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
    if( bufferIsAllocated )
    {
       free(tempBuffer);
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
    }
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -960,14 +949,6 @@ static TA_RetCode TA_STOCHF_OpenImpl( struct TA_STOCHF_Stream **stream, const do
       if( bufferIsAllocated )
       {
          free(tempBuffer);
-      }
-      if( retCode != TA_SUCCESS )
-      {
-         /* Something wrong happen while processing %D? */
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );
-         return retCode;
       }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.

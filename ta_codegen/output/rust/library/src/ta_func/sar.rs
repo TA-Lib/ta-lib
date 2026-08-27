@@ -54,6 +54,8 @@
  *  010802 MF     Template creation.
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  122104 MF,CF  Fix#1089506 for out-of-bound access to ep_temp.
+ *  082726 MF,CC  Answer a rejected minus_dm before reading ep_temp, not after:
+ *                the read was of an uninitialised local.
  */
 
 // Import types from parent module
@@ -247,15 +249,15 @@ impl Core {
         tempInt = _xr0.beg_idx;
         tempInt = _xr0.count;
         retCode = RetCode::Success;
-        if ep_temp[0] > 0_f64 {
-            isLong = 0;
-        } else {
-            isLong = 1;
-        }
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return retCode;
+        }
+        if ep_temp[0] > 0_f64 {
+            isLong = 0;
+        } else {
+            isLong = 1;
         }
         (*outBegIdx) = startIdx;
         outIdx = 0;
@@ -804,15 +806,15 @@ impl Core {
         tempInt = _xr0.beg_idx;
         tempInt = _xr0.count;
         retCode = RetCode::Success;
-        if ep_temp[0] > 0_f64 {
-            isLong = 0;
-        } else {
-            isLong = 1;
-        }
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(retCode);
+        }
+        if ep_temp[0] > 0_f64 {
+            isLong = 0;
+        } else {
+            isLong = 1;
         }
         (*outBegIdx) = startIdx;
         outIdx = 0;

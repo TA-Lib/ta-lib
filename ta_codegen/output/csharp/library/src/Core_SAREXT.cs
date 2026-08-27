@@ -59,6 +59,8 @@ public partial class Core
     *  092103 MF    Some changes related on first round of tests
     *  092303 PP    Minor bug fixes.
     *  122104 MF,CF Fix#1089506 for out-of-bound access to ep_temp.
+    *  082726 MF,CC Answer a rejected minus_dm before reading ep_temp, not after:
+    *               the read was of an uninitialised local.
     */
    /// <summary>
    /// Number of leading input bars <c>SAREXT</c> consumes before it can produce
@@ -320,15 +322,15 @@ public partial class Core
          tempInt = _xr0.BegIdx;
          tempInt = _xr0.Count;
          retCode = RetCode.Success;
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
          if( retCode != RetCode.Success ) {
             outBegIdx = 0;
             outNBElement = 0;
             return retCode ;
+         }
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
          }
       } else if( optInStartValue > 0 ) {
          /* Start Long */
@@ -598,15 +600,15 @@ public partial class Core
          tempInt = _xr0.BegIdx;
          tempInt = _xr0.Count;
          retCode = RetCode.Success;
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
          if( retCode != RetCode.Success ) {
             outBegIdx = 0;
             outNBElement = 0;
             return retCode ;
+         }
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
          }
       } else if( optInStartValue > 0 ) {
          isLong = 1;
@@ -1391,15 +1393,15 @@ public partial class Core
          tempInt = _xr0.BegIdx;
          tempInt = _xr0.Count;
          retCode = RetCode.Success;
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
          if( retCode != RetCode.Success ) {
             outBegIdx = 0;
             outNBElement = 0;
             return retCode ;
+         }
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
          }
       } else if( optInStartValue > 0 ) {
          /* Start Long */

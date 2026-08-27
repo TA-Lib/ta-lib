@@ -304,15 +304,23 @@ fn scan_line(line: &str, mut in_bc: bool) -> LineScan {
     let last = code.chars().last().unwrap_or('\0');
     let is_label = (starts_with_keyword(code, "case") || starts_with_keyword(code, "default"))
         && last == ':';
-    // A header is complete on this line (parens balanced back to zero) and does
-    // not itself open a brace or terminate a statement.
+    // A header owns the next line's statement only when it is left DANGLING at
+    // the end of this one, so the keyword test applies twice: to the line, as
+    // before, and again to whatever follows the last `}` -- everything up to
+    // that brace already closed here. `if( c ) { f(); }` owns nothing, while
+    // `if( c ) { f(); } else` still owns the next statement. A header with no
+    // brace at all is its own tail, so the second test is a no-op on it.
+    const HEADER_KW: [&str; 6] = ["if", "for", "while", "switch", "else", "do"];
+    let tail = match code.rfind('}') {
+        Some(i) => code[i + 1..].trim(),
+        None => code,
+    };
     let is_header = paren == 0
         && last != '{'
         && last != ';'
         && last != ':'
-        && ["if", "for", "while", "switch", "else", "do"]
-            .iter()
-            .any(|kw| starts_with_keyword(code, kw));
+        && HEADER_KW.iter().any(|kw| starts_with_keyword(code, kw))
+        && HEADER_KW.iter().any(|kw| starts_with_keyword(tail, kw));
 
     LineScan {
         brace_delta: brace,
@@ -414,6 +422,29 @@ mod tests {
         assert_eq!(lines[0], "for( i = 0; i < n; i++ )");
         assert_eq!(lines[1], "   sum += a[i];"); // single braceless statement
         assert_eq!(lines[2], "return sum;"); // back to base level
+    }
+
+    #[test]
+    fn does_not_bump_after_self_contained_one_line_if() {
+        // The body is on the header's own line, so the next statement is a
+        // sibling, not the header's.
+        let src = "if( allocated ) { free( p ); }\n*outBegIdx = 0;\n";
+        let out = reindent_source(src);
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines[0], "if( allocated ) { free( p ); }");
+        assert_eq!(lines[1], "*outBegIdx = 0;");
+    }
+
+    #[test]
+    fn bumps_after_a_one_line_if_left_dangling_by_else() {
+        // The `{ ... }` closed here, but the trailing `else` still owns the
+        // next statement -- the whole point of judging the tail, not the line.
+        let src = "if( a ) { g(); } else\nh();\ni();\n";
+        let out = reindent_source(src);
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines[0], "if( a ) { g(); } else");
+        assert_eq!(lines[1], "   h();");
+        assert_eq!(lines[2], "i();");
     }
 
     #[test]

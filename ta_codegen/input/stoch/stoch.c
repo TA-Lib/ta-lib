@@ -247,7 +247,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
    if( (retCode != TA_SUCCESS ) || ((int)*outNBElement == 0) )
    {
       if (bufferIsAllocated) { free(tempBuffer); }
-         /* Something wrong happen? No further data? */
+      /* Something wrong happen? No further data? */
       *outBegIdx = 0;
       *outNBElement = 0;
       return retCode;
@@ -269,7 +269,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
    {
       /* Something wrong happen while processing %D? */
       if (bufferIsAllocated) { free(tempBuffer); }
-         *outBegIdx = 0;
+      *outBegIdx = 0;
       *outNBElement = 0;
       return retCode;
    }
@@ -286,9 +286,9 @@ TA_RetCode stoch(int startIdx, int endIdx,
    /* Don't need K anymore, free it if it was allocated here. */
    if (bufferIsAllocated) { free(tempBuffer); }
 
-      /* Note: Keep the outBegIdx relative to the
-       *       caller input before returning.
-       */
+   /* Note: Keep the outBegIdx relative to the
+    *       caller input before returning.
+    */
    *outBegIdx = startIdx;
 
    return TA_SUCCESS;

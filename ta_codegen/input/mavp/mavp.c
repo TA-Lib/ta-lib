@@ -209,7 +209,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
       free(localPeriodArray);
       free(sortedIdx);
       if( finalIsAllocated ) { free(localFinalArray); }
-         *outBegIdx = 0;
+      *outBegIdx = 0;
       *outNBElement = 0;
       return TA_BAD_PARAM;
    }
@@ -227,7 +227,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
       free(localPeriodArray);
       free(sortedIdx);
       if( finalIsAllocated ) { free(localFinalArray); }
-         *outBegIdx = 0;
+      *outBegIdx = 0;
       *outNBElement = 0;
       return TA_ALLOC_ERR;
    }
@@ -248,7 +248,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
          free(sortedIdx);
          free(bucketOfs);
          if( finalIsAllocated ) { free(localFinalArray); }
-            *outBegIdx = 0;
+         *outBegIdx = 0;
          *outNBElement = 0;
          return retCode;
       }
@@ -312,7 +312,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
                free(sortedIdx);
                free(bucketOfs);
                if( finalIsAllocated ) { free(localFinalArray); }
-                  *outBegIdx = 0;
+               *outBegIdx = 0;
                *outNBElement = 0;
                return retCode;
             }
@@ -351,7 +351,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
    free(bucketOfs);
    if( finalIsAllocated ) { free(localFinalArray); }
 
-      /* Done. Inform the caller of the success. */
+   /* Done. Inform the caller of the success. */
    *outBegIdx = startIdx;
    *outNBElement = outputSize;
    return TA_SUCCESS;

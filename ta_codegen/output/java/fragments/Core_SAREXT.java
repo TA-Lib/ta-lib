@@ -15,6 +15,8 @@
  *  092103 MF    Some changes related on first round of tests
  *  092303 PP    Minor bug fixes.
  *  122104 MF,CF Fix#1089506 for out-of-bound access to ep_temp.
+ *  082726 MF,CC Answer a rejected minus_dm before reading ep_temp, not after:
+ *               the read was of an uninitialised local.
  */
 
    /**
@@ -272,15 +274,15 @@
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.Success;
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
          if( retCode != RetCode.Success ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
             return retCode ;
+         }
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
          }
       } else if( optInStartValue > 0 ) {
          /* Start Long */
@@ -548,15 +550,15 @@
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.Success;
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
          if( retCode != RetCode.Success ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
             return retCode ;
+         }
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
          }
       } else if( optInStartValue > 0 ) {
          isLong = 1;
@@ -1320,15 +1322,15 @@
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.Success;
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
          if( retCode != RetCode.Success ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
             return retCode ;
+         }
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
          }
       } else if( optInStartValue > 0 ) {
          /* Start Long */

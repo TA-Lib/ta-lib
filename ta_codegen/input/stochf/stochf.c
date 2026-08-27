@@ -21,6 +21,8 @@
  *  082326 MF,CC Fix #253. Scale that guard to the window's own extremes: the
  *               fixed band zeroed the whole output for any instrument quoted
  *               small enough to fall under it.
+ *  082726 MF,CC Drop the dead retCode block after the copy: the rejection is
+ *               already answered above it, and the shape reads like #269.
  *
  */
 
@@ -240,7 +242,7 @@ TA_RetCode stochf(int startIdx, int endIdx,
    if( (retCode != TA_SUCCESS ) || ((int)*outNBElement) == 0 )
    {
       if (bufferIsAllocated) { free(tempBuffer); }
-         /* Something wrong happen? No further data? */
+      /* Something wrong happen? No further data? */
       *outBegIdx = 0;
       *outNBElement = 0;
       return retCode;
@@ -257,14 +259,6 @@ TA_RetCode stochf(int startIdx, int endIdx,
 
    /* Don't need K anymore, free it if it was allocated here. */
    if (bufferIsAllocated) { free(tempBuffer); }
-
-      if( retCode != TA_SUCCESS )
-   {
-      /* Something wrong happen while processing %D? */
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
 
    /* Note: Keep the outBegIdx relative to the
     *       caller input before returning.

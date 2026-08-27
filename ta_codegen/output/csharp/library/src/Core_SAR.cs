@@ -56,6 +56,8 @@ public partial class Core
     *  010802 MF     Template creation.
     *  052603 MF     Adapt code to compile with .NET Managed C++
     *  122104 MF,CF  Fix#1089506 for out-of-bound access to ep_temp.
+    *  082726 MF,CC  Answer a rejected minus_dm before reading ep_temp, not after:
+    *                the read was of an uninitialised local.
     */
    /// <summary>
    /// Number of leading input bars <c>SAR</c> consumes before it can produce its
@@ -205,15 +207,15 @@ public partial class Core
       tempInt = _xr0.BegIdx;
       tempInt = _xr0.Count;
       retCode = RetCode.Success;
-      if( ep_temp[0] > 0 ) {
-         isLong = 0;
-      } else {
-         isLong = 1;
-      }
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
+      }
+      if( ep_temp[0] > 0 ) {
+         isLong = 0;
+      } else {
+         isLong = 1;
       }
       outBegIdx = startIdx;
       outIdx = 0;
@@ -410,15 +412,15 @@ public partial class Core
       tempInt = _xr0.BegIdx;
       tempInt = _xr0.Count;
       retCode = RetCode.Success;
-      if( ep_temp[0] > 0 ) {
-         isLong = 0;
-      } else {
-         isLong = 1;
-      }
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
+      }
+      if( ep_temp[0] > 0 ) {
+         isLong = 0;
+      } else {
+         isLong = 1;
       }
       outBegIdx = startIdx;
       outIdx = 0;
@@ -1058,15 +1060,15 @@ public partial class Core
       tempInt = _xr0.BegIdx;
       tempInt = _xr0.Count;
       retCode = RetCode.Success;
-      if( ep_temp[0] > 0 ) {
-         isLong = 0;
-      } else {
-         isLong = 1;
-      }
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
+      }
+      if( ep_temp[0] > 0 ) {
+         isLong = 0;
+      } else {
+         isLong = 1;
       }
       outBegIdx = startIdx;
       outIdx = 0;
