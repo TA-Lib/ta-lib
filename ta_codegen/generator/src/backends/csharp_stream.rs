@@ -1711,7 +1711,7 @@ fn emit_open_body(
 ) {
     emit_open_body_sig(o, func, OutMode::Core);
     emit_out_meta_seed(o);
-    let open_body = build_open_body_cs(model, body);
+    let open_body = cleanup_open_body(&build_open_body_cs(model, body), registry);
     emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
     emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
     emit_open_region(
@@ -1953,6 +1953,17 @@ fn emit_extras_and_candle(
     }
 }
 
+/// This backend's IR cleanup sequence — `java_stream::cleanup_open_body`'s twin,
+/// with this backend's own admission test. See it for why the sequence runs
+/// where the body is BUILT; the C# stake in that is CS0219 on an orphaned
+/// local, which `TreatWarningsAsErrors` makes a build failure.
+fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> {
+    let admits = |f: &str, a: &[Expr]| super::csharp::cross_call_split(f, a, registry).is_some();
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    super::ir_cleanup::drop_inert_guards(&folded)
+}
+
 /// Render the transcribed open region: VarDecl initializations then the
 /// statements, with tier inserts (composed sub-opens) spliced by index.
 #[allow(clippy::too_many_arguments)]
@@ -1968,21 +1979,6 @@ fn emit_open_region(
     inserts: &[(usize, String)],
     replaced: &HashSet<usize>,
 ) {
-    // This backend's cleanup sequence, explicit so a pass can be made conditional
-    // later. C states none: every one of these would be wrong there. Run before
-    // anything below is derived from the body; every pass is length-preserving,
-    // so `inserts` / `replaced` indices into this slice stay valid.
-    //
-    // KNOWN GAP, as in `java_stream`: `emit_body_decls` still derives from the
-    // UNFOLDED body, so a local whose only address-of sits inside a folded guard
-    // would be declared in the wrapped form and used plain — and an orphaned
-    // local is CS0219 under this project's `TreatWarningsAsErrors`. Neither is
-    // reachable today; the fix is to derive both from one body.
-    let admits = |f: &str, a: &[Expr]| super::csharp::cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(open_body, &admits);
-    let folded = super::ir_cleanup::drop_deallocation(&folded);
-    let folded = super::ir_cleanup::drop_inert_guards(&folded);
-    let open_body: &[Statement] = &folded;
     let address_of_vars = collect_address_of_vars(open_body);
     let double_address_of_vars = collect_double_address_of_vars(open_body, &address_of_vars);
     let empty = HashSet::new();
@@ -2982,7 +2978,7 @@ fn emit_dual_mode(
             let mut body: Vec<Statement> = dmp.prologue.to_vec();
             body.extend_from_slice(arm.body);
             body.extend_from_slice(dmp.epilogue);
-            let open_body = build_open_body_cs(arm, &body);
+            let open_body = cleanup_open_body(&build_open_body_cs(arm, &body), registry);
             let mut s = String::new();
             emit_body_decls(&mut s, func, &open_body);
             emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma);
@@ -3984,11 +3980,10 @@ fn emit_composed_open(
     emit_open_body_sig(o, func, OutMode::Core);
     emit_out_meta_seed(o);
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs);
-    let combined: Vec<Statement> = region_stmts
-        .iter()
-        .cloned()
-        .chain(tail_stmts.iter().cloned())
-        .collect();
+    let combined: Vec<Statement> = cleanup_open_body(
+        &region_stmts.iter().cloned().chain(tail_stmts.iter().cloned()).collect::<Vec<_>>(),
+        registry,
+    );
     emit_body_decls(o, func, &combined);
     emit_open_head(o, func, &[]);
     emit_open_validation(o, func, OutMode::Core, enums);
