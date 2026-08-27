@@ -321,8 +321,6 @@ public partial class Core
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
          /* Something wrong happen? No further data? */
          outBegIdx = 0;
          outNBElement = 0;
@@ -337,9 +335,6 @@ public partial class Core
        * reused as scratch, so source and destination overlap (issue #94).
        */
       tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
-      /* Don't need K anymore, free it if it was allocated here. */
-      if( (bufferIsAllocated) != 0 ) {
-      }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */
@@ -473,15 +468,11 @@ public partial class Core
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
       tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
-      if( (bufferIsAllocated) != 0 ) {
-      }
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
@@ -1177,8 +1168,6 @@ public partial class Core
       MA_Stream sub0 = MA_OpenAndFillInternal(subSrc0_0, 0, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, sc_outFastD);
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
          /* Something wrong happen? No further data? */
          outBegIdx = 0;
          outNBElement = 0;
@@ -1193,9 +1182,6 @@ public partial class Core
        * reused as scratch, so source and destination overlap (issue #94).
        */
       tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(sc_outFastK.Slice(0));
-      /* Don't need K anymore, free it if it was allocated here. */
-      if( (bufferIsAllocated) != 0 ) {
-      }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */

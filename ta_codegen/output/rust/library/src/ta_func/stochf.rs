@@ -325,8 +325,6 @@ impl Core {
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
         if ((*outNBElement) as usize) == 0 {
-            if bufferIsAllocated != 0 {
-            }
             // Something wrong happen? No further data?
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -344,9 +342,6 @@ impl Core {
             let _si = (lookbackFastD) as usize;
             outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
         };
-        // Don't need K anymore, free it if it was allocated here.
-        if bufferIsAllocated != 0 {
-        }
         // Note: Keep the outBegIdx relative to the
         //       caller input before returning.
         (*outBegIdx) = startIdx;
@@ -857,8 +852,6 @@ impl Core {
         let sub0 = self.MA_OpenAndFillInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..])?;
         retCode = RetCode::Success;
         if ((*outNBElement) as usize) == 0 {
-            if bufferIsAllocated != 0 {
-            }
             // Something wrong happen? No further data?
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -876,9 +869,6 @@ impl Core {
             let _si = (lookbackFastD) as usize;
             sc_outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
         };
-        // Don't need K anymore, free it if it was allocated here.
-        if bufferIsAllocated != 0 {
-        }
         // Note: Keep the outBegIdx relative to the
         //       caller input before returning.
         (*outBegIdx) = startIdx;

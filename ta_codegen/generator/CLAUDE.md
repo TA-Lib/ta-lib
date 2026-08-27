@@ -76,6 +76,7 @@ indicator.
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded `<N>` plus `<N>_Private` where declared) |
 | `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
 | `backends/java.rs` | Generates Java Core class methods |
+| `backends/ir_cleanup.rs` | Backend-selected IR cleanup, between the streaming decision and rendering. Each ported backend states its own explicit sequence — answered cross-call guards, deallocation, then inert guards. C states none. Every pass is length-preserving, because the stream emitters address the body by index |
 | `backends/csharp.rs` | Generates the shipped C# indicators — one `Core_<NAME>.cs` (`public partial class Core`) per function; XML docs via `csharp_doc.rs`, condition folding shared with Java via `compat_fold.rs` |
 | `backends/{c,rust,java,csharp}_stream.rs` | The four streaming emitters — one per backend, each rendering the *same* backend-neutral analysis from `streaming.rs` (`StreamPlan`, `StreamModel`, `build_transition`, the `NameMap` trait) into its own language. Adding a fifth means writing only the new emitter: the neutral layer and the other three stay untouched, which is what keeps them byte-frozen by construction while it lands. **The `NameMap` prefixes are shared on purpose** — `fma::stream_base` strips exactly `sp->`, `sp.` and `cur_` to decide integer-vs-float typing, so a backend that invents its own spelling silently changes which sites fuse `a*b+c`, i.e. ~1 ULP with nothing pointing at the cause |
 | `backends/csharp_metadata.rs` | Generates the shipped C# introspection registry (`TALib.Metadata` under `csharp/library/src/metadata/`) **and, into the test project, `NoPhantomIoBinder.g.cs` — the phantom-I/O probe's own `<N>_Impl` call sites, which is what keeps that probe's corpus complete under `regen-check` (#265)**: the vocabularies, the model records, `FunctionCall`, and one factory per function carrying its two dispatch thunks. The C# JSON-RPC server answers the `ta_abstract` RPCs out of *this* registry — its csproj compiles the library sources — so `test_abstract.c` proves the shipped artifact, not a test-only copy |
@@ -300,7 +301,7 @@ so `render_cross_indicator_call` drops the two out-meta arguments, binds the
 returned range to a `_xrN` local with a `match`, assigns both out-params from it,
 and then sets `retCode = RetCode::Success`. The `if( retCode != SUCCESS )` that
 followed can no longer be taken and is folded out by
-`compat_fold::drop_answered_cross_call_guards`; 22 of the 36 sites hand the
+`ir_cleanup::drop_answered_cross_call_guards`; 22 of the 36 sites hand the
 callee the caller's own `&mut outBegIdx` / `&mut outNBElement` and read them
 back, and 10 fold "success with zero output" into the same conditional, so that
 half survives alone and keeps the assignment live.

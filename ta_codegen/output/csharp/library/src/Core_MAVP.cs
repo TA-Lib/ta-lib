@@ -294,8 +294,6 @@ public partial class Core
        * If you delete this, delete the clamps and the comments together.
        */
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-         if( (finalIsAllocated) != 0 ) {
-         }
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.BadParam ;
@@ -382,8 +380,6 @@ public partial class Core
        */
       if( localFinalArray != outReal ) {
          localFinalArray.Slice(0, outputSize * 1).CopyTo(outReal.Slice(0));
-      }
-      if( (finalIsAllocated) != 0 ) {
       }
       /* Done. Inform the caller of the success. */
       outBegIdx = startIdx;
@@ -506,8 +502,6 @@ public partial class Core
          }
       }
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-         if( (finalIsAllocated) != 0 ) {
-         }
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.BadParam ;
@@ -558,8 +552,6 @@ public partial class Core
       }
       if( localFinalArray != outReal ) {
          localFinalArray.Slice(0, outputSize * 1).CopyTo(outReal.Slice(0));
-      }
-      if( (finalIsAllocated) != 0 ) {
       }
       outBegIdx = startIdx;
       outNBElement = outputSize;

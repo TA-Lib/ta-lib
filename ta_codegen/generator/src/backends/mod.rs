@@ -5,6 +5,7 @@ pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;
 pub mod compat_fold;
+pub mod ir_cleanup;
 pub mod csharp;
 pub mod csharp_doc;
 pub mod csharp_enums;

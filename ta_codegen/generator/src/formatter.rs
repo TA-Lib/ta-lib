@@ -222,11 +222,11 @@ struct LineScan {
     is_header: bool, // braceless control header owning a single statement
 }
 
-/// Scan a line for brace/paren balance and comment state, masking out the
-/// contents of strings/chars/comments so a `{` inside `"..."` never counts.
 /// The keywords that can own the next line's statement when left dangling.
 const HEADER_KW: [&str; 6] = ["if", "for", "while", "switch", "else", "do"];
 
+/// Scan a line for brace/paren balance and comment state, masking out the
+/// contents of strings/chars/comments so a `{` inside `"..."` never counts.
 fn scan_line(line: &str, mut in_bc: bool) -> LineScan {
     let chars: Vec<char> = line.chars().collect();
     let n = chars.len();

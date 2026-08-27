@@ -299,8 +299,6 @@
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
          /* Something wrong happen? No further data? */
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -322,9 +320,6 @@
        * reused as scratch, so source and destination overlap (issue #94).
        */
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-      /* Don't need K anymore, free it if it was allocated here. */
-      if( (bufferIsAllocated) != 0 ) {
-      }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */
@@ -470,8 +465,6 @@
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -481,8 +474,6 @@
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-      if( (bufferIsAllocated) != 0 ) {
-      }
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
@@ -1219,8 +1210,6 @@
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
          /* Something wrong happen? No further data? */
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -1242,9 +1231,6 @@
        * reused as scratch, so source and destination overlap (issue #94).
        */
       System.arraycopy(tempBuffer, lookbackDSlow, sc_outSlowK, 0, (int)outNBElement.value * 1);
-      /* Don't need K anymore, free it if it was allocated here. */
-      if( (bufferIsAllocated) != 0 ) {
-      }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */

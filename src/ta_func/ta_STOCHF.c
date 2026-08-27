@@ -342,7 +342,6 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
     * reused as scratch, so source and destination overlap (issue #94).
     */
    memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
-   /* Don't need K anymore, free it if it was allocated here. */
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -949,7 +948,6 @@ static TA_RetCode TA_STOCHF_OpenImpl( struct TA_STOCHF_Stream **stream, const do
        * reused as scratch, so source and destination overlap (issue #94).
        */
       memmove(sc_outFastK,&tempBuffer[lookbackFastD],(int)dummyNBElement * sizeof(double));
-      /* Don't need K anymore, free it if it was allocated here. */
       if( bufferIsAllocated )
       {
          free(tempBuffer);

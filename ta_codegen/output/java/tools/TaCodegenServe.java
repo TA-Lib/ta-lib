@@ -106269,8 +106269,6 @@ class Core {
            * If you delete this, delete the clamps and the comments together.
            */
           if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-             if( (finalIsAllocated) != 0 ) {
-             }
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.BadParam ;
@@ -106357,8 +106355,6 @@ class Core {
            */
           if( localFinalArray != outReal ) {
              System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
-          }
-          if( (finalIsAllocated) != 0 ) {
           }
           /* Done. Inform the caller of the success. */
           outBegIdx.value = startIdx;
@@ -106482,8 +106478,6 @@ class Core {
              }
           }
           if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-             if( (finalIsAllocated) != 0 ) {
-             }
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.BadParam ;
@@ -106534,8 +106528,6 @@ class Core {
           }
           if( localFinalArray != outReal ) {
              System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
-          }
-          if( (finalIsAllocated) != 0 ) {
           }
           outBegIdx.value = startIdx;
           outNBElement.value = outputSize;
@@ -137027,8 +137019,6 @@ class Core {
           outNBElement.value = _xr0.count();
           retCode = RetCode.Success;
           if( (int)outNBElement.value == 0 ) {
-             if( (bufferIsAllocated) != 0 ) {
-             }
              /* Something wrong happen? No further data? */
              outBegIdx.value = 0;
              outNBElement.value = 0;
@@ -137050,9 +137040,6 @@ class Core {
            * reused as scratch, so source and destination overlap (issue #94).
            */
           System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-          /* Don't need K anymore, free it if it was allocated here. */
-          if( (bufferIsAllocated) != 0 ) {
-          }
           /* Note: Keep the outBegIdx relative to the
            *       caller input before returning.
            */
@@ -137198,8 +137185,6 @@ class Core {
           outNBElement.value = _xr0.count();
           retCode = RetCode.Success;
           if( (int)outNBElement.value == 0 ) {
-             if( (bufferIsAllocated) != 0 ) {
-             }
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return retCode ;
@@ -137209,8 +137194,6 @@ class Core {
           outNBElement.value = _xr1.count();
           retCode = RetCode.Success;
           System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-          if( (bufferIsAllocated) != 0 ) {
-          }
           outBegIdx.value = startIdx;
           return RetCode.Success ;
        }
@@ -137947,8 +137930,6 @@ class Core {
           outNBElement.value = _xr0.count();
           retCode = RetCode.Success;
           if( (int)outNBElement.value == 0 ) {
-             if( (bufferIsAllocated) != 0 ) {
-             }
              /* Something wrong happen? No further data? */
              outBegIdx.value = 0;
              outNBElement.value = 0;
@@ -137970,9 +137951,6 @@ class Core {
            * reused as scratch, so source and destination overlap (issue #94).
            */
           System.arraycopy(tempBuffer, lookbackDSlow, sc_outSlowK, 0, (int)outNBElement.value * 1);
-          /* Don't need K anymore, free it if it was allocated here. */
-          if( (bufferIsAllocated) != 0 ) {
-          }
           /* Note: Keep the outBegIdx relative to the
            *       caller input before returning.
            */
@@ -138387,8 +138365,6 @@ class Core {
           outNBElement.value = _xr0.count();
           retCode = RetCode.Success;
           if( (int)outNBElement.value == 0 ) {
-             if( (bufferIsAllocated) != 0 ) {
-             }
              /* Something wrong happen? No further data? */
              outBegIdx.value = 0;
              outNBElement.value = 0;
@@ -138403,9 +138379,6 @@ class Core {
            * reused as scratch, so source and destination overlap (issue #94).
            */
           System.arraycopy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement.value * 1);
-          /* Don't need K anymore, free it if it was allocated here. */
-          if( (bufferIsAllocated) != 0 ) {
-          }
           /* Note: Keep the outBegIdx relative to the
            *       caller input before returning.
            */
@@ -138539,15 +138512,11 @@ class Core {
           outNBElement.value = _xr0.count();
           retCode = RetCode.Success;
           if( (int)outNBElement.value == 0 ) {
-             if( (bufferIsAllocated) != 0 ) {
-             }
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return retCode ;
           }
           System.arraycopy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement.value * 1);
-          if( (bufferIsAllocated) != 0 ) {
-          }
           outBegIdx.value = startIdx;
           return RetCode.Success ;
        }
@@ -139231,8 +139200,6 @@ class Core {
           MA_Stream sub0 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
           retCode = RetCode.Success;
           if( (int)outNBElement.value == 0 ) {
-             if( (bufferIsAllocated) != 0 ) {
-             }
              /* Something wrong happen? No further data? */
              outBegIdx.value = 0;
              outNBElement.value = 0;
@@ -139247,9 +139214,6 @@ class Core {
            * reused as scratch, so source and destination overlap (issue #94).
            */
           System.arraycopy(tempBuffer, lookbackFastD, sc_outFastK, 0, (int)outNBElement.value * 1);
-          /* Don't need K anymore, free it if it was allocated here. */
-          if( (bufferIsAllocated) != 0 ) {
-          }
           /* Note: Keep the outBegIdx relative to the
            *       caller input before returning.
            */

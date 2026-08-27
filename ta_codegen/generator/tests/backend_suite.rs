@@ -1254,8 +1254,8 @@ fn rust_cross_calls_target_the_public_tier() {
 ///
 /// What this CANNOT see is whether the fold is selective -- whether a guard
 /// whose `|| count == 0` half is live kept that half. Text cannot tell that
-/// survivor from an unrelated `if`. The unit tests on `fold_guard` in
-/// `compat_fold` carry that half, over IR, where it is decidable.
+/// survivor from an unrelated `if`. The unit tests in `backends::ir_cleanup`
+/// carry that half, over IR, where it is decidable.
 #[test]
 fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
     /// `(assignments, dead)` over one rendered body.
@@ -1342,6 +1342,70 @@ fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
     // would read green on a corpus with nothing left to check.
     assert!(scanned >= 176, "only {scanned} indicators in the corpus");
     assert!(assigns >= 100, "only {assigns} success assignments seen — the sweep found nothing");
+}
+
+/// Deallocation is removed from the IR for the backends that have none, and the
+/// guard left behind goes with it — while C, which needs both, keeps both
+/// (#269 follow-up).
+///
+/// The second half is the one that matters: nothing else would catch a cleanup
+/// pass that leaked into `c.rs`, and the symptom would be a leaked buffer in the
+/// shipped library rather than an ugly diff.
+#[test]
+fn deallocation_is_dropped_only_where_the_backend_has_none() {
+    /// `if (...) {}` with nothing between the braces.
+    fn inert_guards(src: &str, open: &str) -> usize {
+        let lines: Vec<&str> = src.lines().map(str::trim).collect();
+        lines
+            .windows(2)
+            .filter(|w| w[0].starts_with("if") && w[0].ends_with(open) && w[1] == "}")
+            .count()
+    }
+
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let (mut ported_inert, mut c_guards, mut scanned) = (0usize, 0usize, 0usize);
+
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        scanned += 1;
+
+        let mut rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let mut java = backends::java::generate(&func, &enums, &registry, &helpers);
+        let mut csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        if func.streaming {
+            if backends::rust_stream::emits_stream(&func, &registry) {
+                rust.push_str(&backends::rust_stream::generate(&func, &enums, &registry, &helpers));
+            }
+            if backends::java_stream::emits_stream(&func, &registry) {
+                java.push_str(&backends::java_stream::generate(&func, &enums, &registry, &helpers));
+            }
+            if backends::csharp_stream::emits_stream(&func, &registry) {
+                csharp
+                    .push_str(&backends::csharp_stream::generate(&func, &enums, &registry, &helpers));
+            }
+        }
+
+        for (src, open, lang) in
+            [(&rust, "{", "rust"), (&java, ") {", "java"), (&csharp, ") {", "csharp")]
+        {
+            let n = inert_guards(src, open);
+            assert_eq!(n, 0, "{name}/{lang}: {n} guard(s) left with an empty body");
+            ported_inert += n;
+            assert!(
+                !src.contains("free("),
+                "{name}/{lang}: a free() reached the output — deallocation was not dropped"
+            );
+        }
+        c_guards += c.matches("free(").count();
+    }
+
+    assert_eq!(ported_inert, 0);
+    assert!(scanned >= 176, "only {scanned} indicators in the corpus");
+    // C keeps every one. Without this floor the whole test is satisfied by a
+    // pass that ran on C too and freed nothing anywhere.
+    assert!(c_guards >= 10, "only {c_guards} free() call(s) left in C — the cleanup reached c.rs");
 }
 
 #[test]
@@ -5074,19 +5138,17 @@ fn rust_func_call_malloc_f64_default() {
     );
 }
 
+/// `free()` no longer reaches the Rust renderer at all: `drop_deallocation`
+/// removes it from the IR, and the renderer's arm is now the assertion that it
+/// did. The behaviour this used to check lives in `ir_cleanup`'s own tests; what
+/// is worth pinning here is the corpus-level property, which
+/// `deallocation_is_dropped_only_where_the_backend_has_none` carries.
 #[test]
-fn rust_func_call_free_is_noop() {
-    let stmt = ir::Statement::Expr(ir::Expr::FuncCall(
-        "free".to_string(),
-        vec![ir::Expr::Var("buf".to_string())],
-    ));
-    let rendered = render_rust_stmt(&stmt);
-    // free() is a no-op in Rust (returns empty string from render_func_call)
-    // The statement expression with an empty value should be skipped
-    assert!(
-        !rendered.contains("free("),
-        "free() should not appear in Rust output: {rendered}"
-    );
+fn rust_free_never_reaches_the_renderer() {
+    let (func, enums) = load_indicator("stoch");
+    let out = generate_all(&func, &enums);
+    assert!(!out.rust.contains("free("), "a free() survived into the Rust output");
+    assert!(out.c.contains("free("), "C must keep its deallocation");
 }
 
 #[test]
@@ -7327,17 +7389,12 @@ fn c_stochrsi_full_generate() {
 // Java: Assign to _ with free() should be empty (exercises lines 756-758)
 // ---------------------------------------------------------------------------
 
+/// See `rust_free_never_reaches_the_renderer` — same mechanism, same reason.
 #[test]
-fn java_assign_underscore_free_is_empty() {
-    let stmt = ir::Statement::Expr(ir::Expr::FuncCall(
-        "free".to_string(),
-        vec![ir::Expr::Var("buf".to_string())],
-    ));
-    let rendered = render_java_stmt(&stmt);
-    assert!(
-        rendered.is_empty(),
-        "Java Expr(free(buf)) should produce empty output: '{rendered}'"
-    );
+fn java_free_never_reaches_the_renderer() {
+    let (func, enums) = load_indicator("stoch");
+    let out = generate_all(&func, &enums);
+    assert!(!out.java.contains("free("), "a free() survived into the Java output");
 }
 
 // ---------------------------------------------------------------------------
@@ -8113,7 +8170,11 @@ fn test_a_stored_bool_ternary_keeps_its_int_form() {
     tested.streaming = false;
     tested.body.push(ir::Statement::If {
         condition: flag(),
-        then_body: vec![],
+        // A body, because `ir_cleanup::drop_inert_guards` removes a guard that
+        // does nothing — which is the point of that pass, not a problem here.
+        // The subject is the condition's rendering, and it needs the `if` to
+        // survive to be seen.
+        then_body: vec![ir::Statement::Break],
         else_body: vec![],
         cond_comments: vec![],
     });

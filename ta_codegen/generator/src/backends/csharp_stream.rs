@@ -1936,12 +1936,20 @@ fn emit_open_region(
     inserts: &[(usize, String)],
     replaced: &HashSet<usize>,
 ) {
-    // The transcribed guard on a cross-call this backend answers by throwing is
-    // dead (#267). Fold it before anything below is derived from the body; the
-    // pass is length-preserving, so `inserts` / `replaced` indices into this
-    // slice stay valid.
+    // This backend's cleanup sequence, explicit so a pass can be made conditional
+    // later. C states none: every one of these would be wrong there. Run before
+    // anything below is derived from the body; every pass is length-preserving,
+    // so `inserts` / `replaced` indices into this slice stay valid.
+    //
+    // KNOWN GAP, as in `java_stream`: `emit_body_decls` still derives from the
+    // UNFOLDED body, so a local whose only address-of sits inside a folded guard
+    // would be declared in the wrapped form and used plain — and an orphaned
+    // local is CS0219 under this project's `TreatWarningsAsErrors`. Neither is
+    // reachable today; the fix is to derive both from one body.
     let admits = |f: &str, a: &[Expr]| super::csharp::cross_call_split(f, a, registry).is_some();
-    let folded = super::compat_fold::drop_answered_cross_call_guards(open_body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(open_body, &admits);
+    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let open_body: &[Statement] = &folded;
     let address_of_vars = collect_address_of_vars(open_body);
     let double_address_of_vars = collect_double_address_of_vars(open_body, &address_of_vars);

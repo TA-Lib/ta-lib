@@ -1708,11 +1708,12 @@ fn emit_open_region(
     counter: &Cell<usize>,
     inserts: &[(usize, String)],
 ) {
-    // The transcribed guard on a cross-call this tier answers itself is dead
-    // (#267). Fold it before anything below is derived from the body; the pass
-    // is length-preserving, so `inserts` indices into this slice stay valid.
+    // This backend's cleanup sequence, explicit so a pass can be made
+    // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
-    let folded = super::compat_fold::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;
 
     // Scoped to the open body: a declined output's store is wrapped in
@@ -4171,8 +4172,12 @@ fn emit_composed_region(
     // The transcribed guard on a cross-call this tier answers itself is dead
     // (#267). Fold it before anything below is derived from the body; the pass
     // is length-preserving, so `inserts` / `replaced` indices into this slice stay valid.
+    // This backend's cleanup sequence, explicit so a pass can be made
+    // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
-    let folded = super::compat_fold::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;
     let ctx = &typing.ctx;
     let for_loop_vars = collect_for_loop_vars(body);

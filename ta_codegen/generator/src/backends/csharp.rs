@@ -822,10 +822,12 @@ fn gen_func_inner(
         &body_stripped
     };
 
-    // The transcribed guard on a cross-call this backend answers by throwing is
-    // dead (#267). Fold it before anything below is derived from the body.
+    // This backend's cleanup sequence, explicit so a pass can be made
+    // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| cross_call_split(f, a, registry).is_some();
-    let folded = super::compat_fold::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;
 
     // Pre-scan for variables used in AddressOf contexts. Integer ones stay
@@ -1709,7 +1711,7 @@ pub(crate) fn render_csharp_switch_label(label: &str, enums: &HashMap<String, En
 /// not. So dropping those two arguments IS the switch -- there is nothing to
 /// rename. See `render_cross_indicator_call` in the Java backend for why the
 /// out-parameters are found positionally, and
-/// `compat_fold::drop_answered_cross_call_guards` for what becomes of the
+/// `ir_cleanup::drop_answered_cross_call_guards` for what becomes of the
 /// `if( retCode != Success )` that follows.
 /// Where a cross-indicator call's out-meta pair sits, and the admission test for
 /// the whole rewrite: `None` means this shape is not understood and the call
@@ -2316,8 +2318,14 @@ fn render_func_call(
                 }
             }
             StdlibFn::Free => {
-                // No-op (garbage collector handles deallocation)
-                String::new()
+                // Deallocation is removed from the IR before rendering, so this
+                // arm is the assertion that it was -- not a second way to make a
+                // `free` vanish, which could disagree with the pass.
+                unreachable!(
+                    "free() reached the C# renderer: `ir_cleanup::drop_deallocation` \
+                     runs on every body this backend renders, so a `free` here means a \
+                     render path was added without the cleanup sequence"
+                )
             }
             StdlibFn::Memcpy | StdlibFn::Memmove => {
                 // memcpy/memmove(dst, src, count) -> src.Slice(..).CopyTo(dst.Slice(..)).

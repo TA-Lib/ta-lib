@@ -240,8 +240,6 @@
        * If you delete this, delete the clamps and the comments together.
        */
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-         if( (finalIsAllocated) != 0 ) {
-         }
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.BadParam ;
@@ -328,8 +326,6 @@
        */
       if( localFinalArray != outReal ) {
          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
-      }
-      if( (finalIsAllocated) != 0 ) {
       }
       /* Done. Inform the caller of the success. */
       outBegIdx.value = startIdx;
@@ -453,8 +449,6 @@
          }
       }
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
-         if( (finalIsAllocated) != 0 ) {
-         }
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.BadParam ;
@@ -505,8 +499,6 @@
       }
       if( localFinalArray != outReal ) {
          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
-      }
-      if( (finalIsAllocated) != 0 ) {
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;

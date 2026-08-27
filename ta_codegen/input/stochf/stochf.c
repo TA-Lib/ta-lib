@@ -259,7 +259,6 @@ TA_RetCode stochf(int startIdx, int endIdx,
     * reused as scratch, so source and destination overlap (issue #94). */
    memmove(outFastK, &tempBuffer[lookbackFastD], ((int)*outNBElement) * sizeof(double));
 
-   /* Don't need K anymore, free it if it was allocated here. */
    if (bufferIsAllocated) { free(tempBuffer); }
 
    /* Note: Keep the outBegIdx relative to the

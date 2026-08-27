@@ -294,8 +294,6 @@ impl Core {
         //
         // If you delete this, delete the clamps and the comments together.
         if maxUsed < minUsed || maxUsed - minUsed > 100000 {
-            if finalIsAllocated != 0 {
-            }
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::BadParam;
@@ -398,8 +396,6 @@ impl Core {
             let _si = (0) as usize;
             outReal[_di.._di + _n].copy_from_slice(&localFinalArray[_si.._si + _n]);
         };
-        }
-        if finalIsAllocated != 0 {
         }
         // Done. Inform the caller of the success.
         (*outBegIdx) = startIdx;

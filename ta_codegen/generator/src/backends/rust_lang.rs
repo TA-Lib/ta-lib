@@ -10,7 +10,7 @@ use crate::ir::{
 use crate::parser::enums::lookup_variant;
 use crate::registry::Registry;
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
-use super::compat_fold;
+use super::ir_cleanup;
 
 /// Words this backend cannot render as an identifier (see [`crate::naming`]):
 /// the strict keywords of every edition through 2024, plus the set reserved for
@@ -565,7 +565,9 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // shared with Java and C#.
     let admits = |f: &str, args: &[Expr]| cross_call_split(f, args, registry).is_some();
     for body in [&mut elected.body, &mut elected.private_body] {
-        *body = compat_fold::drop_answered_cross_call_guards(body, &admits);
+        *body = ir_cleanup::drop_answered_cross_call_guards(body, &admits);
+        *body = ir_cleanup::drop_deallocation(body);
+        *body = ir_cleanup::drop_inert_guards(body);
     }
     let func = &elected;
 
@@ -2886,7 +2888,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         // `retCode = ma(..)` -- a cross-indicator call, which goes to the
         // callee's PUBLIC entry point and answers a range or an `Err` (#267).
         // The assigned code is `Success` by construction, and
-        // `compat_fold::drop_answered_cross_call_guards` folds the guard that
+        // `ir_cleanup::drop_answered_cross_call_guards` folds the guard that
         // follows out of the body. The assignment itself stays: 10 of those
         // guards carry a live `|| count == 0` half that still reads it.
         if !compound {
@@ -5011,8 +5013,14 @@ fn render_func_call(
                 }
             }
             StdlibFn::Free => {
-                // No-op in Rust (Vec/Box drops automatically)
-                String::new()
+                // Deallocation is removed from the IR before rendering, so this
+                // arm is the assertion that it was -- not a second way to make a
+                // `free` vanish, which could disagree with the pass.
+                unreachable!(
+                    "free() reached the Rust renderer: `ir_cleanup::drop_deallocation` \
+                     runs on every body this backend renders, so a `free` here means a \
+                     render path was added without the cleanup sequence"
+                )
             }
             StdlibFn::Memcpy | StdlibFn::Memmove => {
                 // memcpy/memmove(dst, src, count) → slice copy. When src and dst
@@ -5131,7 +5139,7 @@ fn render_func_call(
 /// arm is spelled at every site, as `return _e` there and as `return Err(_e)` at
 /// the three inside a `Result`-returning `<N>_OpenImpl` (`err_returns_result`).
 /// `retCode` is still assigned `Success` afterwards. The guard that used to read
-/// it is folded away by `compat_fold::drop_answered_cross_call_guards`, but 10
+/// it is folded away by `ir_cleanup::drop_answered_cross_call_guards`, but 10
 /// of the sites fold "success with zero output" into the same conditional
 /// (`if retCode != Success || *outNBElement == 0`); the surviving half still
 /// reads the variable, and dropping the store would need a liveness analysis
@@ -5150,8 +5158,8 @@ fn render_func_call(
 /// understood, the call falls through to `render_func_call`, and the caller's
 /// `retCode` then really does carry the callee's code.
 ///
-/// The renderer and [`drop_answered_cross_call_guards`] must agree about that,
-/// which is the only reason this is a function rather than a few lines inline:
+/// The renderer and [`ir_cleanup::drop_answered_cross_call_guards`] must agree
+/// about that, which is the only reason this is a function rather than inline:
 /// a pass that folded a guard the renderer had declined would swallow a live
 /// rejection. The bound is `n_out + 4`, not Java's `n_out + 2` -- do not share
 /// this across backends.
