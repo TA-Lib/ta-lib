@@ -3672,7 +3672,12 @@ fn composed_step_ctx(
         c
     };
     for name in cur_scalars {
-        ctx.real_vars.insert(format!("cur_{name}"));
+        // An integer output's `cur_` scalar is i32, so it must NOT join the
+        // real set: that set is what decides an untyped-integer initializer
+        // gets an `as f64` suffix, which on an i32 target is E0308.
+        if !out_is_int(func, name) {
+            ctx.real_vars.insert(format!("cur_{name}"));
+        }
     }
     for (name, ty) in &cp.map_temps {
         match ty {
@@ -3727,7 +3732,12 @@ fn emit_composed_step(
         o.push_str(&decl_line("        ", name, &rty, default.as_ref()));
     }
     for name in &cur_scalars {
-        let _ = writeln!(o, "        let mut cur_{name}: f64 = 0.0_f64;");
+        // Typed by what the scalar stands for, as in C: an output's own element
+        // type, `f64` for the sub-call intermediates. Unlike C this one cannot
+        // go wrong quietly -- `(*outX) = cur_outX` across f64/i32 is a type
+        // error -- but it is the same rule, so it reads the same way.
+        let (ty, zero) = if out_is_int(func, name) { ("i32", "0_i32") } else { ("f64", "0.0_f64") };
+        let _ = writeln!(o, "        let mut cur_{name}: {ty} = {zero};");
     }
 
     // The cur-map: bar inputs are the step's scalar parameters.
@@ -3913,11 +3923,6 @@ fn emit_composed_open(
     counter: &Cell<usize>,
 ) {
     // The composed fill/scratch path hardcodes f64 Vecs (mirrors C's assert).
-    assert!(
-        func.outputs.iter().all(|out| !out_is_int(func, &out.name)),
-        "composed open assumes real (f64) outputs; {} has an integer output",
-        func.name
-    );
     let handle = stream_type_name(func);
     let state = state_type_name(func);
     let sn = snake(func);
@@ -3943,19 +3948,20 @@ fn emit_composed_open(
     // the owned Vec stays declared (empty, unallocated) in the aliased arm.
     let alias_fill = cp.fill_scratch_may_alias_output(outputs);
     for out in outputs {
+        let (ty, zero) = if out_is_int(func, out) { ("i32", "0_i32") } else { ("f64", "0.0_f64") };
         if alias_fill {
             let _ = writeln!(
                 o,
-                "        let mut owned_sc_{out}: Vec<f64> =\n            if outStride == 1 {{ Vec::new() }} else {{ vec![0.0_f64; historyLen] }};"
+                "        let mut owned_sc_{out}: Vec<{ty}> =\n            if outStride == 1 {{ Vec::new() }} else {{ vec![{zero}; historyLen] }};"
             );
             let _ = writeln!(
                 o,
-                "        let sc_{out}: &mut [f64] =\n            if outStride == 1 {{ &mut *{out} }} else {{ &mut owned_sc_{out} }};"
+                "        let sc_{out}: &mut [{ty}] =\n            if outStride == 1 {{ &mut *{out} }} else {{ &mut owned_sc_{out} }};"
             );
         } else {
             let _ = writeln!(
                 o,
-                "        let mut sc_{out}: Vec<f64> = vec![0.0_f64; historyLen];"
+                "        let mut sc_{out}: Vec<{ty}> = vec![{zero}; historyLen];"
             );
         }
     }
@@ -4294,8 +4300,19 @@ fn emit_composed(
     let models: Vec<&StreamModel> = cp.producer.iter().collect();
     let mut typing = build_typing_from(func, &combined, &models);
     for out in &outputs {
+        // `vec_vars` is about the scratch being a Vec and holds for both element
+        // types; `real_array_vars` is about the ELEMENT, so an integer output's
+        // scratch stays out of it for the same reason its `cur_` scalar does.
         typing.ctx.vec_vars.insert(format!("sc_{out}"));
-        typing.ctx.real_array_vars.insert(format!("sc_{out}"));
+        if out_is_int(func, out) {
+            // The integer counterpart, and it has to be POSITIVE rather than
+            // just an omission: the indexed-assignment coercion decides on a
+            // name heuristic first (`contains("Int")`), which `sc_outSide` does
+            // not trip, so leaving it out of both sets still yields `as f64`.
+            typing.ctx.int_vec_vars.insert(format!("sc_{out}"));
+        } else {
+            typing.ctx.real_array_vars.insert(format!("sc_{out}"));
+        }
     }
 
     // --- handle + state struct ---------------------------------------------
