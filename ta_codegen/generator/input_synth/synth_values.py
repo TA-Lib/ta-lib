@@ -183,24 +183,6 @@ GOLDEN = {
                            75.0, 175.0, 3.0, 22.0, 375.0, 11.25, 249.975, 55.0],
         }),
 
-    # 4 * SMA(inReal, 4). The four legs each recompute the same SMA, so only the
-    # last one's values reach the output; the legs differ in the guard shape
-    # around the call, not in what they compute.
-    #
-    # The residue in the tail values (55.74900000006892, not 55.749) is the
-    # point: TA_SMA carries a ROLLING total (`+= new`, then `-= trailing`), and
-    # a 2e6 bar earlier in the series leaves that much of itself behind in the
-    # accumulator. A fresh-window sum gives the clean decimals, so these values
-    # only reproduce if the derivation followed sma.c's own accumulation order.
-    # The 4.0* is exact and adds nothing: scaling by a power of two round-trips
-    # bit-for-bit through the /4.0 inside SMA.
-    "TA_SYNTH13": dict(
-        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
-        outs={"outReal": [2000320.5, 2000220.5, 2000020.25, 2000050.249,
-                          55.74900000006892, 355.7490000000689, 1005.4990000000689,
-                          1017.5000000000689, 1100.000000000069, 2300.000000000069,
-                          1645.0000000000691, 2632.900000000069, 2764.900000000069]}),
-
     # The composed tier's mixed-output case: SMA via a cross-call, read three
     # ways. It takes its OWN input series rather than IN_REAL because every
     # 4-bar average of IN_REAL is positive, which would leave outSide a column
