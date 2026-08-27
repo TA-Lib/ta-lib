@@ -35,6 +35,7 @@ On failure the worktree is kept for inspection (path printed); remove it with
 `git worktree remove --force <path>`.
 """
 
+import fcntl
 import os
 import re
 import shutil
@@ -42,6 +43,49 @@ import subprocess
 import sys
 
 LANGS = 4  # C, Rust, Java, C# — servers exercised by the stream leg
+
+
+# Held for the life of the process: an flock lives on the descriptor, so this
+# global is what keeps the descriptor -- and the lock -- alive.
+_GATE_LOCK_FD = None
+
+
+def acquire_gate_lock(wt):
+    """Refuse to start when another run already owns this gate worktree.
+
+    The cleanup below force-removes whatever sits at `wt`. That is safe against
+    OUR OWN leftovers and unsafe against a live run, and the path alone cannot
+    tell those apart: it is derived from the caller's worktree, so two sessions
+    sharing one checkout derive the same path. Deleting a running gate's tree
+    out from under it is not a clean failure -- the JVM reports "Could not
+    determine current working directory", or the build is simply killed.
+
+    This lock CANNOT go stale. It lives on an open file descriptor, so the
+    kernel releases it when this process exits -- crash and SIGKILL included.
+    There is no PID file to leave behind and nothing to clean up by hand. And
+    Python opens descriptors non-inheritable (PEP 446), so the build's own
+    children cannot keep it open after we are gone -- which matters, because
+    `dotnet` leaves a VBCSCompiler daemon running long after the build returns.
+
+    Non-blocking on purpose: a second run says so and stops, rather than
+    silently waiting on a gate that takes tens of minutes.
+    """
+    global _GATE_LOCK_FD
+    path = wt + ".lock"
+    fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o644)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        os.close(fd)
+        sys.exit(
+            f"synth_gate: another run already owns {wt}\n"
+            f"       Two sessions sharing one checkout is the usual cause -- the\n"
+            f"       cleanup step would delete the live run's worktree.\n"
+            f"       Wait for it to finish, or run from your own worktree.\n"
+            f"       See who holds it with:  fuser -v {path}"
+        )
+    _GATE_LOCK_FD = fd
+    return fd
 
 
 def synth_worktree_path(root):
@@ -113,9 +157,11 @@ def main():
     print(f"synth_gate: testing tree {sha}")
 
     wt = synth_worktree_path(root)
-    # Clear any stale worktree from a PREVIOUS RUN OF THIS SAME CALLER. The path is
-    # derived from `root`, so this can only ever remove our own leftovers -- never a
-    # concurrent run's tree.
+    # The lock is what makes the removal below safe: the path is derived from
+    # `root`, so it identifies our own leftovers only while one run at a time
+    # owns that `root`.
+    acquire_gate_lock(wt)
+    # Clear the leftovers of a PREVIOUS RUN OF THIS SAME CALLER.
     if os.path.exists(wt):
         subprocess.run(["git", "worktree", "remove", "--force", wt], cwd=root)
         shutil.rmtree(wt, ignore_errors=True)
