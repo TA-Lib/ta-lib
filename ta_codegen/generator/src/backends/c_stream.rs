@@ -1172,6 +1172,13 @@ fn emit_composed_step(
     }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
     for name in &cur_scalars {
+        // Typed by what the scalar STANDS FOR: an output's own element type when
+        // the name is one of this function's outputs, `double` for the sub-call
+        // intermediates that make up the rest. This is the one site here that
+        // would not fail to compile if it stayed `double` — C narrows silently
+        // on the `*{out} = cur_{out}` write, so an integer output would come
+        // back truncated with nothing pointing at the cause.
+        let cur_ty = out_c_type(func, name);
         // Initialized, because a sub-call can now leave one unwritten. Every
         // `cur_*` is filled by the sub-call that produces it, so the initializer
         // is dead on every path where that call succeeds — but `Update`/`Peek`
@@ -1181,7 +1188,8 @@ fn emit_composed_step(
         // its output, and reading an uninitialized double is undefined behaviour
         // — the read happened, and returned different stack garbage on two
         // identical calls. Rust, Java and C# already zero their equivalents.
-        let _ = writeln!(o, "   double cur_{name} = 0.0;");
+        let zero = if cur_ty == "int" { "0" } else { "0.0" };
+        let _ = writeln!(o, "   {cur_ty} cur_{name} = {zero};");
     }
     let _ = writeln!(o);
 
@@ -1573,12 +1581,6 @@ fn emit_composed_open(
     // real-output today; fail LOUD at generation time if that ever changes, so the
     // sc_/memcpy element type gets threaded through out_c_type rather than
     // silently truncating an integer output.
-    assert!(
-        func.outputs.iter().all(|out| out_c_type(func, &out.name) == "double"),
-        "composed OpenAndFill assumes real (double) outputs; {} has a non-double output \
-         — thread out_c_type through the sc_ scratch malloc + memcpy in emit_composed_open",
-        func.name
-    );
     let _ = writeln!(o, "{}\n{{", open_core_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int endIdx;");
@@ -1587,7 +1589,7 @@ fn emit_composed_open(
     let _ = writeln!(o, "   TA_RetCode subRc;");
     let _ = writeln!(o, "   double subOpenDummy;");
     for out in outputs {
-        let _ = writeln!(o, "   double *sc_{out};");
+        let _ = writeln!(o, "   {} *sc_{out};", out_c_type(func, out));
     }
     for (i, sub) in cp.subs.iter().enumerate() {
         let _ = writeln!(o, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
@@ -1626,20 +1628,21 @@ fn emit_composed_open(
                 let _ = write!(s, "TA_Free( sc_{p} ); ");
                 s
             });
+        let ty = out_c_type(func, out);
         if alias_fill {
             let _ = writeln!(o, "   if( {OUT_STRIDE} ) sc_{out} = {out};");
             let _ = writeln!(o, "   else");
             let _ = writeln!(o, "   {{");
             let _ = writeln!(
                 o,
-                "      sc_{out} = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );"
+                "      sc_{out} = ({ty} *)TA_Malloc( sizeof({ty}) * (size_t)historyLen );"
             );
             let _ = writeln!(o, "      if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
             let _ = writeln!(o, "   }}");
         } else {
             let _ = writeln!(
                 o,
-                "   sc_{out} = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );"
+                "   sc_{out} = ({ty} *)TA_Malloc( sizeof({ty}) * (size_t)historyLen );"
             );
             let _ = writeln!(o, "   if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
         }
@@ -1785,7 +1788,8 @@ fn emit_composed_open(
         } else {
             let _ = writeln!(
                 o,
-                "      if( {OUT_STRIDE} ) memcpy( {out}, sc_{out}, sizeof(double) * (size_t)dummyNBElement );"
+                "      if( {OUT_STRIDE} ) memcpy( {out}, sc_{out}, sizeof({}) * (size_t)dummyNBElement );",
+                out_c_type(func, out)
             );
             let _ = writeln!(o, "      else {out}[0] = sc_{out}[dummyNBElement - 1];");
         }

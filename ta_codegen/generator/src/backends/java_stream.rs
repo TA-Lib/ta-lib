@@ -3360,7 +3360,11 @@ fn emit_composed_step(
         let _ = writeln!(o, "      {jty} {name} = {default};");
     }
     for name in &cur_scalars {
-        let _ = writeln!(o, "      double cur_{name} = 0.0;");
+        // Typed by what the scalar stands for, as in C: an output's own element
+        // type, `double` for the sub-call intermediates.
+        let ty = out_java_type(func, name);
+        let zero = if ty == "int" { "0" } else { "0.0" };
+        let _ = writeln!(o, "      {ty} cur_{name} = {zero};");
     }
 
     let empty = HashSet::new();
@@ -3514,11 +3518,6 @@ fn emit_composed_open(
     counter: &Cell<usize>,
 ) {
     // The composed fill/scratch path hardcodes double arrays (mirrors C/Rust).
-    assert!(
-        func.outputs.iter().all(|out| !out_is_int(func, &out.name)),
-        "composed open assumes real (double) outputs; {} has an integer output",
-        func.name
-    );
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
 
@@ -3562,13 +3561,14 @@ fn emit_composed_open(
     // buffer. See `fill_scratch_may_alias_output` for when this is unsound.
     let alias_fill = cp.fill_scratch_may_alias_output(outputs);
     for out in outputs {
+        let ty = out_java_type(func, out);
         if alias_fill {
             let _ = writeln!(
                 o,
-                "      double[] sc_{out} = outStride == 1 ? {out} : new double[historyLen];"
+                "      {ty}[] sc_{out} = outStride == 1 ? {out} : new {ty}[historyLen];"
             );
         } else {
-            let _ = writeln!(o, "      double[] sc_{out} = new double[historyLen];");
+            let _ = writeln!(o, "      {ty}[] sc_{out} = new {ty}[historyLen];");
         }
     }
 

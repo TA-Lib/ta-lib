@@ -88,6 +88,18 @@ GOLDEN = {
                              16187400, 12779533, 12779828, 12780228, 12779540, 16187488,
                              12781028, 12779573, 12649455, 12779748]}),
 
+    # SYNTH13's four legs all recompute the same SMA, so the value is 4x it.
+    # Derived from IN_REAL here rather than read back from the library: a golden
+    # row transcribed from the implementation it checks proves only that the
+    # implementation did not change. The running-window accumulation order is
+    # TA_SMA's own -- a naive sum over each slice differs in the last bits.
+    "TA_SYNTH13": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
+        outs={"outReal": [2000320.5, 2000220.5, 2000020.25, 2000050.249,
+                          55.74900000006892, 355.7490000000689, 1005.4990000000689,
+                          1017.5000000000689, 1100.000000000069, 2300.000000000069,
+                          1645.0000000000691, 2632.900000000069, 2764.900000000069]}),
+
     "TA_SYNTH4": dict(
         params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
         outs={"outInteger": [357, 214, 289, 173, 121, 9, 811, 730, 310, 480, 432, 182, 813]}),
@@ -169,6 +181,23 @@ GOLDEN = {
             "outSign": [1, 1, -1, 1, 0, 1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             "outQuarter": [25.0, 62.625, -7.5, 500000.0, 0.0, 12.5625, -0.00025, 1.375,
                            75.0, 175.0, 3.0, 22.0, 375.0, 11.25, 249.975, 55.0],
+        }),
+
+    # The composed tier's mixed-output case: SMA via a cross-call, read three
+    # ways. It takes its OWN input series rather than IN_REAL because every
+    # 4-bar average of IN_REAL is positive, which would leave outSide a column
+    # of 1s and the integer output's other two arms unexercised. This series
+    # crosses zero and lands on it exactly, so all three of -1/0/1 appear.
+    "TA_SYNTH14": dict(
+        params={"inReal": [100.0, -100.0, 50.0, -50.0, 0.0, -20.0, -30.0, 200.0,
+                           -5.5, 5.5, -1.0, 1.0, 300.0, -300.0, 0.0, 12.0],
+                "optInTimePeriod": PERIOD}, beg=3,
+        outs={
+            "outAvg": [0.0, -12.5, -2.5, -12.5, 18.75, 18.0625, 21.25, 24.875,
+                       0.0, 38.1875, 0.0, 0.125, 1.5],
+            "outSide": [0, -1, -1, -1, 1, 1, 1, 1, 0, 1, 0, 1, 1],
+            "outTwice": [0.0, -50.0, -10.0, -50.0, 75.0, 72.25, 85.0, 99.5,
+                         0.0, 152.75, 0.0, 0.5, 6.0],
         }),
 }
 
