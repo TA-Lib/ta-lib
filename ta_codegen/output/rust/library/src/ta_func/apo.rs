@@ -181,17 +181,11 @@ impl Core {
         fastBeg = _xr0.beg_idx;
         fastNb = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return retCode;
-        }
         // Calculate the slow MA into the output.
         let _xr1 = match self.MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return retCode;
-        }
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -476,17 +470,11 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return Err(retCode);
-        }
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return Err(retCode);
-        }
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.

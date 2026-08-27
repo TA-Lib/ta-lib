@@ -159,11 +159,6 @@
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -362,11 +357,6 @@
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -992,11 +982,6 @@
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {

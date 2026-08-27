@@ -153,7 +153,7 @@
       outBegIdx1.value = _xr0.begIdx();
       outNbElement1.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
+      if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -162,7 +162,7 @@
       outBegIdx2.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -235,7 +235,7 @@
       outBegIdx1.value = _xr0.begIdx();
       outNbElement1.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
+      if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -244,7 +244,7 @@
       outBegIdx2.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -721,7 +721,7 @@
        * sub-call's own startIdx (the seeding point). */
       RSI_Stream sub0 = RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
+      if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -730,7 +730,7 @@
        * sub-call's own startIdx (the seeding point). */
       STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;

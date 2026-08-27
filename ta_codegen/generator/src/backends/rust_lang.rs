@@ -10,6 +10,7 @@ use crate::ir::{
 use crate::parser::enums::lookup_variant;
 use crate::registry::Registry;
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
+use super::compat_fold;
 
 /// Words this backend cannot render as an identifier (see [`crate::naming`]):
 /// the strict keywords of every edition through 2024, plus the set reserved for
@@ -555,7 +556,17 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // Java and C# backends assign the pointer/reference and need no rewrite,
     // and the stream tier keeps the untransformed `func` (it composes its own
     // scratch buffers). See [`ScratchElection`].
-    let elected = elect_output_scratch(func);
+    let mut elected = elect_output_scratch(func);
+    // A cross-call's rejection is answered by the `match` arm the renderer emits
+    // (#267), so the transcribed guard on the code it assigns is dead. Fold it
+    // out here, ahead of everything derived from the body below, so nothing
+    // downstream disagrees about which statements exist. `cross_call_split` is
+    // the same admission test the renderer uses -- see its doc for why it is not
+    // shared with Java and C#.
+    let admits = |f: &str, args: &[Expr]| cross_call_split(f, args, registry).is_some();
+    for body in [&mut elected.body, &mut elected.private_body] {
+        *body = compat_fold::drop_answered_cross_call_guards(body, &admits);
+    }
     let func = &elected;
 
     out.push_str(
@@ -2874,10 +2885,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let pad = " ".repeat(indent);
         // `retCode = ma(..)` -- a cross-indicator call, which goes to the
         // callee's PUBLIC entry point and answers a range or an `Err` (#267).
-        // The assigned code is `Success` by construction; the enclosing
-        // `if( retCode != Success )` is left standing and becomes dead, because
-        // the body stays a literal transcription of its C source and several of
-        // those tests also carry a live `|| count == 0` half.
+        // The assigned code is `Success` by construction, and
+        // `compat_fold::drop_answered_cross_call_guards` folds the guard that
+        // follows out of the body. The assignment itself stays: 10 of those
+        // guards carry a live `|| count == 0` half that still reads it.
         if !compound {
             if let Expr::FuncCall(fname, cargs) = value {
                 if self.registry.contains(fname) {
@@ -5119,9 +5130,12 @@ fn render_func_call(
 /// the 33 sites inside `<N>_Impl`, which returns a bare `RetCode` -- so the error
 /// arm is spelled at every site, as `return _e` there and as `return Err(_e)` at
 /// the three inside a `Result`-returning `<N>_OpenImpl` (`err_returns_result`).
-/// `retCode` is still assigned `Success` afterwards, because 6 of the 36 sites
-/// fold "success with zero output" into the same conditional as the error
-/// (`if retCode != Success || *outNBElement == 0`) and that half is still live.
+/// `retCode` is still assigned `Success` afterwards. The guard that used to read
+/// it is folded away by `compat_fold::drop_answered_cross_call_guards`, but 10
+/// of the sites fold "success with zero output" into the same conditional
+/// (`if retCode != Success || *outNBElement == 0`); the surviving half still
+/// reads the variable, and dropping the store would need a liveness analysis
+/// that `MA`'s ten dispatch arms defeat.
 ///
 /// The two out-parameter arguments are dropped from the call and bound from the
 /// returned [`OutRange`] instead. They are found by ARITHMETIC, as in Java --
@@ -5131,17 +5145,21 @@ fn render_func_call(
 /// between an out-meta pair and a pair of `&scalar` outputs. Returns `None` when
 /// that arithmetic does not hold, so a shape this does not understand falls
 /// through to the old rendering rather than being silently mis-sliced.
-fn render_cross_indicator_call(
+/// Where a cross-indicator call's out-meta pair sits in its argument list, and
+/// the admission test for the whole rewrite: `None` means this shape is not
+/// understood, the call falls through to `render_func_call`, and the caller's
+/// `retCode` then really does carry the callee's code.
+///
+/// The renderer and [`drop_answered_cross_call_guards`] must agree about that,
+/// which is the only reason this is a function rather than a few lines inline:
+/// a pass that folded a guard the renderer had declined would swallow a live
+/// rejection. The bound is `n_out + 4`, not Java's `n_out + 2` -- do not share
+/// this across backends.
+pub(super) fn cross_call_split(
     fname: &str,
     args: &[Expr],
-    indent: usize,
-    err_returns_result: bool,
-    ctx: &RustRenderCtx,
-    opt_real_params: &[String],
     registry: &Registry,
-    helpers: &HelperRegistry,
-    counter: &Cell<usize>,
-) -> Option<String> {
+) -> Option<usize> {
     let n_out = registry.callee_outputs(fname).len();
     if n_out == 0 || args.len() < n_out + 4 {
         return None;
@@ -5156,6 +5174,21 @@ fn render_cross_indicator_call(
     {
         return None;
     }
+    Some(split)
+}
+
+fn render_cross_indicator_call(
+    fname: &str,
+    args: &[Expr],
+    indent: usize,
+    err_returns_result: bool,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Option<String> {
+    let split = cross_call_split(fname, args, registry)?;
 
     let pad = " ".repeat(indent);
     let public = registry.resolve_call(fname, crate::registry::Lang::Rust);

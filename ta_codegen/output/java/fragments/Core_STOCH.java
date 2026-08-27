@@ -298,7 +298,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -313,14 +313,6 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -477,7 +469,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          outBegIdx.value = 0;
@@ -488,13 +480,6 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -1233,7 +1218,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -1248,14 +1233,6 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the

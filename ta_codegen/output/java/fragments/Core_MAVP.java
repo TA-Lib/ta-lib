@@ -261,13 +261,6 @@
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            if( (finalIsAllocated) != 0 ) {
-            }
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
       } else {
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
@@ -316,13 +309,6 @@
                localBegIdx.value = _xr1.begIdx();
                localNbElement.value = _xr1.count();
                retCode = RetCode.Success;
-               if( retCode != RetCode.Success ) {
-                  if( (finalIsAllocated) != 0 ) {
-                  }
-                  outBegIdx.value = 0;
-                  outNBElement.value = 0;
-                  return retCode ;
-               }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
@@ -479,13 +465,6 @@
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            if( (finalIsAllocated) != 0 ) {
-            }
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
       } else {
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
@@ -512,13 +491,6 @@
                localBegIdx.value = _xr1.begIdx();
                localNbElement.value = _xr1.count();
                retCode = RetCode.Success;
-               if( retCode != RetCode.Success ) {
-                  if( (finalIsAllocated) != 0 ) {
-                  }
-                  outBegIdx.value = 0;
-                  outNBElement.value = 0;
-                  return retCode ;
-               }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
                } else {

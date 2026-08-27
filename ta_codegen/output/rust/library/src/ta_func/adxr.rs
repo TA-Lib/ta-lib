@@ -165,9 +165,6 @@ impl Core {
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return retCode;
-        }
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
@@ -450,9 +447,6 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.ADX_OpenAndFillInternal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut adx[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return Err(retCode);
-        }
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.

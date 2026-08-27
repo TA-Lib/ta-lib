@@ -313,13 +313,6 @@ impl Core {
             localBegIdx = _xr0.beg_idx;
             localNbElement = _xr0.count;
             retCode = RetCode::Success;
-            if retCode != RetCode::Success {
-                if finalIsAllocated != 0 {
-                }
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
-                return retCode;
-            }
         } else {
             // Counting sort: sortedIdx ends up holding the output indices ordered
             // by period, one contiguous ascending slice per distinct period, with
@@ -373,13 +366,6 @@ impl Core {
                     localBegIdx = _xr1.beg_idx;
                     localNbElement = _xr1.count;
                     retCode = RetCode::Success;
-                    if retCode != RetCode::Success {
-                        if finalIsAllocated != 0 {
-                        }
-                        (*outBegIdx) = 0;
-                        (*outNBElement) = 0;
-                        return retCode;
-                    }
                     if lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart {
                         // The period's outputs form one contiguous run: block copy.
                         {

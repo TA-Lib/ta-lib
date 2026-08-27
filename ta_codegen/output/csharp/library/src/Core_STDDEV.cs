@@ -140,9 +140,6 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *
@@ -207,9 +204,6 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             outReal[i] = Math.Sqrt(outReal[i]) * optInNbDev;
@@ -573,9 +567,6 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       VAR_Stream sub0 = VAR_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *

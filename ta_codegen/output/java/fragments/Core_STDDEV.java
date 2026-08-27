@@ -91,9 +91,6 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *
@@ -156,9 +153,6 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
@@ -506,9 +500,6 @@
        * sub-call's own startIdx (the seeding point). */
       VAR_Stream sub0 = VAR_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *

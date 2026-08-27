@@ -352,7 +352,7 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -367,14 +367,6 @@ public partial class Core
       outBegIdx = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
-      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -533,7 +525,7 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          outBegIdx = 0;
@@ -544,13 +536,6 @@ public partial class Core
       outBegIdx = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
-      }
       tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(outSlowK.Slice(0));
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -1297,7 +1282,7 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -1315,14 +1300,6 @@ public partial class Core
       tempBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
       MA_Stream sub1 = MA_OpenAndFillInternal(subSrc1_0, 0, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
-      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the

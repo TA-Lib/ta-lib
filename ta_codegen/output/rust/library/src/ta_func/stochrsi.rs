@@ -211,7 +211,7 @@ impl Core {
         outBegIdx1 = _xr0.beg_idx;
         outNbElement1 = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || outNbElement1 == 0 {
+        if outNbElement1 == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return retCode;
@@ -220,7 +220,7 @@ impl Core {
         outBegIdx2 = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return retCode;
@@ -539,7 +539,7 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.RSI_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || outNbElement1 == 0 {
+        if outNbElement1 == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(retCode);
@@ -548,7 +548,7 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.STOCHF_OpenAndFillInternal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(retCode);

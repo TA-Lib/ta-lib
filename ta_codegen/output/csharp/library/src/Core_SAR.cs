@@ -207,11 +207,6 @@ public partial class Core
       tempInt = _xr0.BegIdx;
       tempInt = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -412,11 +407,6 @@ public partial class Core
       tempInt = _xr0.BegIdx;
       tempInt = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1060,11 +1050,6 @@ public partial class Core
       tempInt = _xr0.BegIdx;
       tempInt = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {

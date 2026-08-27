@@ -315,13 +315,6 @@ public partial class Core
          localBegIdx = _xr0.BegIdx;
          localNbElement = _xr0.Count;
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            if( (finalIsAllocated) != 0 ) {
-            }
-            outBegIdx = 0;
-            outNBElement = 0;
-            return retCode ;
-         }
       } else {
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
@@ -370,13 +363,6 @@ public partial class Core
                localBegIdx = _xr1.BegIdx;
                localNbElement = _xr1.Count;
                retCode = RetCode.Success;
-               if( retCode != RetCode.Success ) {
-                  if( (finalIsAllocated) != 0 ) {
-                  }
-                  outBegIdx = 0;
-                  outNBElement = 0;
-                  return retCode ;
-               }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
                   localOutputArray.Slice(firstOccurrence, (bucketEnd - bucketStart) * 1).CopyTo(localFinalArray.Slice(firstOccurrence));
@@ -532,13 +518,6 @@ public partial class Core
          localBegIdx = _xr0.BegIdx;
          localNbElement = _xr0.Count;
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            if( (finalIsAllocated) != 0 ) {
-            }
-            outBegIdx = 0;
-            outNBElement = 0;
-            return retCode ;
-         }
       } else {
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
@@ -565,13 +544,6 @@ public partial class Core
                localBegIdx = _xr1.BegIdx;
                localNbElement = _xr1.Count;
                retCode = RetCode.Success;
-               if( retCode != RetCode.Success ) {
-                  if( (finalIsAllocated) != 0 ) {
-                  }
-                  outBegIdx = 0;
-                  outNBElement = 0;
-                  return retCode ;
-               }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   localOutputArray.Slice(firstOccurrence, (bucketEnd - bucketStart) * 1).CopyTo(localFinalArray.Slice(firstOccurrence));
                } else {

@@ -352,7 +352,7 @@ impl Core {
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
             // Something wrong happen? No further data?
@@ -366,14 +366,6 @@ impl Core {
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            // Something wrong happen while processing %D?
-            if bufferIsAllocated != 0 {
-            }
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -932,7 +924,7 @@ impl Core {
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
             // Something wrong happen? No further data?
@@ -946,14 +938,6 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.MA_OpenAndFillInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            // Something wrong happen while processing %D?
-            if bufferIsAllocated != 0 {
-            }
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the

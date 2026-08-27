@@ -298,11 +298,12 @@ Cross-indicator calls target the **public** wrapper, as in C, Java and C# (#267)
 a `Result`-returning `<N>_OpenImpl` at three of the sites —
 so `render_cross_indicator_call` drops the two out-meta arguments, binds the
 returned range to a `_xrN` local with a `match`, assigns both out-params from it,
-and then sets `retCode = RetCode::Success`. That last line is what keeps the
-transcription literal: 22 of the 36 sites hand the callee the caller's own
-`&mut outBegIdx` / `&mut outNBElement` and read them back, and 6 fold "success
-with zero output" into the same conditional as the error — a half that is still
-live once the error half is dead.
+and then sets `retCode = RetCode::Success`. The `if( retCode != SUCCESS )` that
+followed can no longer be taken and is folded out by
+`compat_fold::drop_answered_cross_call_guards`; 22 of the 36 sites hand the
+callee the caller's own `&mut outBegIdx` / `&mut outNBElement` and read them
+back, and 10 fold "success with zero output" into the same conditional, so that
+half survives alone and keeps the assignment live.
 
 `<N>_Impl` still carries the bounds-assert preamble, and it still takes an
 empty-range escape so a call computing nothing cannot panic. What changed is who

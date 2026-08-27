@@ -1243,6 +1243,107 @@ fn rust_cross_calls_target_the_public_tier() {
     assert!(sites >= 39, "only {sites} cross-call sites scanned");
 }
 
+/// A cross-call's rejection is answered where the call is made, so the guard the
+/// C source puts after it is dead in all three ported backends and must not
+/// reach the output (#269 follow-up). C is exempt: it really does return a code.
+///
+/// Two tiers per backend, because a pin built on the batch emitter alone would
+/// pass while every `_OpenImpl` site stayed dirty -- the miss already recorded
+/// against #267. `assignments` carries a floor because "no dead guard" is
+/// satisfied just as well by an emitter that stopped emitting the assignment.
+///
+/// What this CANNOT see is whether the fold is selective -- whether a guard
+/// whose `|| count == 0` half is live kept that half. Text cannot tell that
+/// survivor from an unrelated `if`. The unit tests on `fold_guard` in
+/// `compat_fold` carry that half, over IR, where it is decidable.
+#[test]
+fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
+    /// `(assignments, dead)` over one rendered body.
+    ///
+    /// `dead` is the defect: an assignment of the success literal followed --
+    /// anywhere before that variable is next written -- by a test of it against
+    /// the same literal. Deliberately NOT an adjacency test: the fold's own
+    /// reason for skipping intervening statements is that `macdext.c` puts two
+    /// `free()` calls between the call and its guard, and an adjacency test is
+    /// blind to exactly the shape the fold exists to handle.
+    fn scan(src: &str, success: &str) -> (usize, usize) {
+        let lines: Vec<&str> = src.lines().collect();
+        let (mut assigns, mut dead) = (0usize, 0usize);
+        for (i, line) in lines.iter().enumerate() {
+            let t = line.trim();
+            let Some(var) = t
+                .strip_suffix(&format!(" = {success};"))
+                .filter(|v| !v.is_empty() && v.chars().all(|c| c.is_alphanumeric() || c == '_'))
+            else {
+                continue;
+            };
+            assigns += 1;
+            let test = format!("{var} != {success}");
+            for later in &lines[i + 1..] {
+                let lt = later.trim();
+                if lt.contains(&test) {
+                    dead += 1;
+                    break;
+                }
+                // Any later write to the variable -- including the declaration
+                // that opens the next function, which is what bounds the window
+                // to one body without parsing one.
+                if lt.contains(var) && lt.contains('=') && !lt.contains("==") && !lt.contains("!=")
+                {
+                    break;
+                }
+            }
+        }
+        (assigns, dead)
+    }
+
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let (mut assigns, mut dead, mut scanned) = (0usize, 0usize, 0usize);
+
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        scanned += 1;
+
+        let mut rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let mut java = backends::java::generate(&func, &enums, &registry, &helpers);
+        let mut csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        if func.streaming {
+            if backends::rust_stream::emits_stream(&func, &registry) {
+                rust.push_str(&backends::rust_stream::generate(&func, &enums, &registry, &helpers));
+            }
+            if backends::java_stream::emits_stream(&func, &registry) {
+                java.push_str(&backends::java_stream::generate(&func, &enums, &registry, &helpers));
+            }
+            if backends::csharp_stream::emits_stream(&func, &registry) {
+                csharp
+                    .push_str(&backends::csharp_stream::generate(&func, &enums, &registry, &helpers));
+            }
+        }
+
+        for (src, success, lang) in [
+            (&rust, "RetCode::Success", "rust"),
+            (&java, "RetCode.Success", "java"),
+            (&csharp, "RetCode.Success", "csharp"),
+        ] {
+            let (a, d) = scan(src, success);
+            assert_eq!(
+                d, 0,
+                "{name}/{lang}: {d} answered cross-call guard(s) still emitted — \
+                 the fold did not reach this tier"
+            );
+            assigns += a;
+            dead += d;
+        }
+    }
+
+    assert_eq!(dead, 0, "{dead} dead guards survived");
+    // Literal floors. Without them an emitter that stopped assigning the literal
+    // would read green on a corpus with nothing left to check.
+    assert!(scanned >= 176, "only {scanned} indicators in the corpus");
+    assert!(assigns >= 100, "only {assigns} success assignments seen — the sweep found nothing");
+}
+
 #[test]
 fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");

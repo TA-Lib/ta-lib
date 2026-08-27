@@ -207,21 +207,11 @@
       outBegIdx1.value = _xr1.begIdx();
       outNbElement1.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the fast MA. */
       OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
       outBegIdx2.value = _xr2.begIdx();
       outNbElement2.value = _xr2.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          outBegIdx.value = 0;
@@ -242,11 +232,6 @@
       outBegIdx2.value = _xr3.begIdx();
       outNbElement2.value = _xr3.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
@@ -354,20 +339,10 @@
       outBegIdx1.value = _xr1.begIdx();
       outNbElement1.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
       outBegIdx2.value = _xr2.begIdx();
       outNbElement2.value = _xr2.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -381,11 +356,6 @@
       outBegIdx2.value = _xr3.begIdx();
       outNbElement2.value = _xr3.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
       }
@@ -935,21 +905,11 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, tempInteger, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the fast MA. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          outBegIdx.value = 0;
@@ -970,11 +930,6 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub2 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];

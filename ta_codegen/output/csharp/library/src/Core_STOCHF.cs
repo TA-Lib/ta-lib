@@ -320,7 +320,7 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -472,7 +472,7 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          outBegIdx = 0;
@@ -1176,7 +1176,7 @@ public partial class Core
       tempBuffer.Slice(0, subLen0).CopyTo(subSrc0_0);
       MA_Stream sub0 = MA_OpenAndFillInternal(subSrc0_0, 0, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, sc_outFastD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */

@@ -151,9 +151,6 @@ impl Core {
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return retCode;
-        }
         // Calculate the square root of each variance, this
         // is the standard deviation.
         //
@@ -420,9 +417,6 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.VAR_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            return Err(retCode);
-        }
         // Calculate the square root of each variance, this
         // is the standard deviation.
         //

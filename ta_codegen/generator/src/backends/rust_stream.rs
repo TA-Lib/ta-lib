@@ -1293,10 +1293,13 @@ fn map_return_code(v: &str) -> String {
         "OUT_OF_RANGE_END_INDEX" | "TA_OUT_OF_RANGE_END_INDEX" => {
             "Err(RetCode::OutOfRangeEndIndex)".to_string()
         }
-        // A RetCode-typed local (`if retCode != SUCCESS { return retCode; }`
-        // error propagation after an internal cross-call, e.g. SAR's MINUS_DM
-        // seed) — wrap it. Success can never reach here: the batch guards the
-        // return on != SUCCESS, and the final top-level return was dropped.
+        // A RetCode-typed local returned from a surviving guard — wrap it. The
+        // pure `!= SUCCESS` guards are folded away before this runs; what
+        // reaches here is the `|| count == 0` half of a composed open's guard
+        // (STOCH, STOCHF, BBANDS, STOCHRSI). So the wrapped value CAN be
+        // `Success` — an opener answering `Err(Success)` when a sub-call yields
+        // nothing. That is a #268-family contract question, not this mapper's:
+        // do not paper over it here.
         local if local.starts_with("retCode") => format!("Err({local})"),
         other => panic!("stream open: unmapped return code `{other}`"),
     }
@@ -1705,6 +1708,13 @@ fn emit_open_region(
     counter: &Cell<usize>,
     inserts: &[(usize, String)],
 ) {
+    // The transcribed guard on a cross-call this tier answers itself is dead
+    // (#267). Fold it before anything below is derived from the body; the pass
+    // is length-preserving, so `inserts` indices into this slice stay valid.
+    let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
+    let folded = super::compat_fold::drop_answered_cross_call_guards(body, &admits);
+    let body: &[Statement] = &folded;
+
     // Scoped to the open body: a declined output's store is wrapped in
     // `if let Some(..) = ..as_deref_mut()`, rule B6a read on this tier. The step
     // body keeps the empty set — a `<N>_StepImpl` writes `&mut f64` scalars, and
@@ -4025,8 +4035,10 @@ fn emit_composed_open(
                 metas.join(", "),
                 dst_args.join(", ")
             );
-            // Keep the assignment the transcribed error handling reads, and keep
-            // `retCode` assigned so its `mut` binding stays justified.
+            // Keep `retCode` assigned: the `?` above answers the rejection, so
+            // `drop_answered_cross_call_guards` folds the guard that followed,
+            // but a guard whose `|| count == 0` half survives still reads it --
+            // and the binding stays justified either way.
             if let Statement::Assign { target, .. } = &tail_stmts[sub.tail_idx] {
                 let _ = writeln!(
                     t,
@@ -4156,6 +4168,12 @@ fn emit_composed_region(
     inserts: &[(usize, String)],
     replaced: &HashSet<usize>,
 ) {
+    // The transcribed guard on a cross-call this tier answers itself is dead
+    // (#267). Fold it before anything below is derived from the body; the pass
+    // is length-preserving, so `inserts` / `replaced` indices into this slice stay valid.
+    let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
+    let folded = super::compat_fold::drop_answered_cross_call_guards(body, &admits);
+    let body: &[Statement] = &folded;
     let ctx = &typing.ctx;
     let for_loop_vars = collect_for_loop_vars(body);
     let output_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();

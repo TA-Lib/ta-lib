@@ -6415,9 +6415,6 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
@@ -6470,9 +6467,6 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       nbElement = outNBElement.value - (optInTimePeriod - 1);
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
          outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
@@ -6856,9 +6850,6 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       ADX_Stream sub0 = ADX_OpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, outBegIdx, outNBElement, adx);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
@@ -7980,17 +7971,11 @@ public final class Core {
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -8053,16 +8038,10 @@ public final class Core {
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       offset = fastNb.value - outNBElement.value;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          outReal[i] = tempBuffer[i + offset] - outReal[i];
@@ -8468,17 +8447,11 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -13477,7 +13450,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
@@ -13488,10 +13461,6 @@ public final class Core {
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
        * begIdx than the moving average did - as with TA_MAType_MAMA (constant
        * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
@@ -13708,7 +13677,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
@@ -13717,10 +13686,6 @@ public final class Core {
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( (int)outBegIdx.value > maBegIdx ) {
          shiftIdx = (int)outBegIdx.value - maBegIdx;
       } else {
@@ -14235,7 +14200,7 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
@@ -14246,10 +14211,6 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       STDDEV_Stream sub1 = STDDEV_OpenAndFillInternal(inReal, (int)outBegIdx.value, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
        * begIdx than the moving average did - as with TA_MAType_MAMA (constant
        * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
@@ -102008,21 +101969,11 @@ public final class Core {
       outBegIdx1.value = _xr1.begIdx();
       outNbElement1.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the fast MA. */
       OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
       outBegIdx2.value = _xr2.begIdx();
       outNbElement2.value = _xr2.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          outBegIdx.value = 0;
@@ -102043,11 +101994,6 @@ public final class Core {
       outBegIdx2.value = _xr3.begIdx();
       outNbElement2.value = _xr3.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
@@ -102155,20 +102101,10 @@ public final class Core {
       outBegIdx1.value = _xr1.begIdx();
       outNbElement1.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
       outBegIdx2.value = _xr2.begIdx();
       outNbElement2.value = _xr2.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -102182,11 +102118,6 @@ public final class Core {
       outBegIdx2.value = _xr3.begIdx();
       outNbElement2.value = _xr3.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
       }
@@ -102736,21 +102667,11 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, tempInteger, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the fast MA. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          outBegIdx.value = 0;
@@ -102771,11 +102692,6 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub2 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];
@@ -106702,13 +106618,6 @@ public final class Core {
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            if( (finalIsAllocated) != 0 ) {
-            }
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
       } else {
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
@@ -106757,13 +106666,6 @@ public final class Core {
                localBegIdx.value = _xr1.begIdx();
                localNbElement.value = _xr1.count();
                retCode = RetCode.Success;
-               if( retCode != RetCode.Success ) {
-                  if( (finalIsAllocated) != 0 ) {
-                  }
-                  outBegIdx.value = 0;
-                  outNBElement.value = 0;
-                  return retCode ;
-               }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
@@ -106920,13 +106822,6 @@ public final class Core {
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            if( (finalIsAllocated) != 0 ) {
-            }
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
       } else {
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
@@ -106953,13 +106848,6 @@ public final class Core {
                localBegIdx.value = _xr1.begIdx();
                localNbElement.value = _xr1.count();
                retCode = RetCode.Success;
-               if( retCode != RetCode.Success ) {
-                  if( (finalIsAllocated) != 0 ) {
-                  }
-                  outBegIdx.value = 0;
-                  outNBElement.value = 0;
-                  return retCode ;
-               }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
                } else {
@@ -124205,17 +124093,11 @@ public final class Core {
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -124284,16 +124166,10 @@ public final class Core {
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       offset = fastNb.value - outNBElement.value;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          tempReal = outReal[i];
@@ -124709,17 +124585,11 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -125548,17 +125418,11 @@ public final class Core {
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       OutRange _xr1 = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -125627,16 +125491,10 @@ public final class Core {
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       OutRange _xr1 = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       offset = fastNb.value - outNBElement.value;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          tempReal = outReal[i];
@@ -126056,17 +125914,11 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inVolume, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(inVolume, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -130488,11 +130340,6 @@ public final class Core {
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -130691,11 +130538,6 @@ public final class Core {
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -131321,11 +131163,6 @@ public final class Core {
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -131839,11 +131676,6 @@ public final class Core {
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -132115,11 +131947,6 @@ public final class Core {
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -132887,11 +132714,6 @@ public final class Core {
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.Success;
-         if( retCode != RetCode.Success ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -136707,9 +136529,6 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *
@@ -136772,9 +136591,6 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
@@ -137122,9 +136938,6 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       VAR_Stream sub0 = VAR_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *
@@ -137541,7 +137354,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -137556,14 +137369,6 @@ public final class Core {
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -137720,7 +137525,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          outBegIdx.value = 0;
@@ -137731,13 +137536,6 @@ public final class Core {
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -138476,7 +138274,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -138491,14 +138289,6 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -138924,7 +138714,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -139076,7 +138866,7 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          outBegIdx.value = 0;
@@ -139768,7 +139558,7 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -140081,7 +139871,7 @@ public final class Core {
       outBegIdx1.value = _xr0.begIdx();
       outNbElement1.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
+      if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -140090,7 +139880,7 @@ public final class Core {
       outBegIdx2.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -140163,7 +139953,7 @@ public final class Core {
       outBegIdx1.value = _xr0.begIdx();
       outNbElement1.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
+      if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -140172,7 +139962,7 @@ public final class Core {
       outBegIdx2.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -140649,7 +140439,7 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       RSI_Stream sub0 = RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
+      if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
@@ -140658,7 +140448,7 @@ public final class Core {
        * sub-call's own startIdx (the seeding point). */
       STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;

@@ -822,6 +822,12 @@ fn gen_func_inner(
         &body_stripped
     };
 
+    // The transcribed guard on a cross-call this backend answers by throwing is
+    // dead (#267). Fold it before anything below is derived from the body.
+    let admits = |f: &str, a: &[Expr]| cross_call_split(f, a, registry).is_some();
+    let folded = super::compat_fold::drop_answered_cross_call_guards(body, &admits);
+    let body: &[Statement] = &folded;
+
     // Pre-scan for variables used in AddressOf contexts. Integer ones stay
     // plain `int` locals (their call sites render `out name`); Real ones need
     // the `double[1]` wrapping because they bind to callee output arrays.
@@ -1702,8 +1708,30 @@ pub(crate) fn render_csharp_switch_label(label: &str, enums: &HashMap<String, En
 /// carries `out int outBegIdx, out int outNBElement` and the public one does
 /// not. So dropping those two arguments IS the switch -- there is nothing to
 /// rename. See `render_cross_indicator_call` in the Java backend for why the
-/// out-parameters are found positionally and why the enclosing
-/// `if( retCode != Success )` is left standing.
+/// out-parameters are found positionally, and
+/// `compat_fold::drop_answered_cross_call_guards` for what becomes of the
+/// `if( retCode != Success )` that follows.
+/// Where a cross-indicator call's out-meta pair sits, and the admission test for
+/// the whole rewrite: `None` means this shape is not understood and the call
+/// falls through to the plain renderer, where the caller's `retCode` really does
+/// carry the callee's code.
+///
+/// The renderer and `drop_answered_cross_call_guards` must agree about that, or
+/// a folded guard would swallow a live rejection. The bound is `n_out + 2` here
+/// and `n_out + 4` in Rust, which also applies a shape check -- an argument list
+/// in the gap is admitted here and declined there, so do not share this.
+pub(super) fn cross_call_split(
+    fname: &str,
+    args: &[Expr],
+    registry: &Registry,
+) -> Option<usize> {
+    let n_out = registry.callee_outputs(fname).len();
+    if n_out == 0 || args.len() < n_out + 2 {
+        return None;
+    }
+    Some(args.len() - n_out - 2)
+}
+
 fn render_cross_indicator_call(
     fname: &str,
     args: &[Expr],
@@ -1712,11 +1740,7 @@ fn render_cross_indicator_call(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> Option<String> {
-    let n_out = registry.callee_outputs(fname).len();
-    if n_out == 0 || args.len() < n_out + 2 {
-        return None;
-    }
-    let split = args.len() - n_out - 2;
+    let split = cross_call_split(fname, args, registry)?;
     let pad = " ".repeat(indent);
     let public = registry.resolve_call(fname, Lang::CSharp);
 

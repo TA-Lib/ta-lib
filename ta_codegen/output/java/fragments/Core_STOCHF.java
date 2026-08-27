@@ -268,7 +268,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */
@@ -420,7 +420,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          outBegIdx.value = 0;
@@ -1112,7 +1112,7 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
          /* Something wrong happen? No further data? */

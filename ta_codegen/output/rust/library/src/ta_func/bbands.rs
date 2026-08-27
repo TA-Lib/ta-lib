@@ -427,7 +427,7 @@ impl Core {
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return retCode;
         }
@@ -438,10 +438,6 @@ impl Core {
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outNBElement) = 0;
-            return retCode;
-        }
         // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
         // begIdx than the moving average did - as with TA_MAType_MAMA (constant
         // lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
@@ -813,7 +809,7 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(retCode);
         }
@@ -824,10 +820,6 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.STDDEV_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
         // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
         // begIdx than the moving average did - as with TA_MAType_MAMA (constant
         // lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts

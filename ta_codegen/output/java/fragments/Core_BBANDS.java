@@ -337,7 +337,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
@@ -348,10 +348,6 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
        * begIdx than the moving average did - as with TA_MAType_MAMA (constant
        * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
@@ -568,7 +564,7 @@
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
@@ -577,10 +573,6 @@
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
       if( (int)outBegIdx.value > maBegIdx ) {
          shiftIdx = (int)outBegIdx.value - maBegIdx;
       } else {
@@ -1095,7 +1087,7 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
+      if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
@@ -1106,10 +1098,6 @@
        * sub-call's own startIdx (the seeding point). */
       STDDEV_Stream sub1 = STDDEV_OpenAndFillInternal(inReal, (int)outBegIdx.value, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
        * begIdx than the moving average did - as with TA_MAType_MAMA (constant
        * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts

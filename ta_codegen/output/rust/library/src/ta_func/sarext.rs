@@ -374,11 +374,6 @@ impl Core {
             tempInt = _xr0.beg_idx;
             tempInt = _xr0.count;
             retCode = RetCode::Success;
-            if retCode != RetCode::Success {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
-                return retCode;
-            }
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -1056,11 +1051,6 @@ impl Core {
             tempInt = _xr0.beg_idx;
             tempInt = _xr0.count;
             retCode = RetCode::Success;
-            if retCode != RetCode::Success {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
-                return Err(retCode);
-            }
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {

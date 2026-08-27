@@ -324,7 +324,7 @@ impl Core {
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
             // Something wrong happen? No further data?
@@ -856,7 +856,7 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.MA_OpenAndFillInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
+        if ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
             // Something wrong happen? No further data?

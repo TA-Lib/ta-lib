@@ -1611,6 +1611,20 @@ fn emit_open_region(
     inserts: &[(usize, String)],
     replaced: &HashSet<usize>,
 ) {
+    // The transcribed guard on a cross-call this backend answers by throwing is
+    // dead (#267). Fold it before anything below is derived from the body; the
+    // pass is length-preserving, so `inserts` / `replaced` indices into this
+    // slice stay valid.
+    //
+    // KNOWN GAP: `emit_body_decls` still derives from the UNFOLDED body, so a
+    // local whose only address-of sits inside a folded guard would be declared
+    // `MInteger` and used as a plain `int` — and in C# an orphaned local is
+    // CS0219 under `TreatWarningsAsErrors`. Neither is reachable today (guard
+    // bodies touch only out-params and flags read elsewhere), and the fix is to
+    // derive both from one body, not to fold twice.
+    let admits = |f: &str, a: &[Expr]| super::java::cross_call_split(f, a, registry).is_some();
+    let folded = super::compat_fold::drop_answered_cross_call_guards(open_body, &admits);
+    let open_body: &[Statement] = &folded;
     let mut address_of_vars = collect_address_of_vars(open_body);
     let matype_params: HashSet<String> = func
         .optional_inputs

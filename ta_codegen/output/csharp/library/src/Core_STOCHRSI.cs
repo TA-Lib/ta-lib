@@ -205,7 +205,7 @@ public partial class Core
       outBegIdx1 = _xr0.BegIdx;
       outNbElement1 = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1 == 0 ) {
+      if( outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -214,7 +214,7 @@ public partial class Core
       outBegIdx2 = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -291,7 +291,7 @@ public partial class Core
       outBegIdx1 = _xr0.BegIdx;
       outNbElement1 = _xr0.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1 == 0 ) {
+      if( outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -300,7 +300,7 @@ public partial class Core
       outBegIdx2 = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -778,7 +778,7 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       RSI_Stream sub0 = RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || outNbElement1 == 0 ) {
+      if( outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -790,7 +790,7 @@ public partial class Core
       tempRSIBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
       STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(subSrc1_0, subSrc1_0, subSrc1_0, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, sc_outFastK, sc_outFastD);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+      if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;

@@ -263,21 +263,11 @@ impl Core {
         outBegIdx1 = _xr1.beg_idx;
         outNbElement1 = _xr1.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
         // Calculate the fast MA.
         let _xr2 = match self.MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut fastMABuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         outBegIdx2 = _xr2.beg_idx;
         outNbElement2 = _xr2.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
         // Parano tests. Will be removed eventually.
         if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
             (*outBegIdx) = 0;
@@ -305,11 +295,6 @@ impl Core {
         outBegIdx2 = _xr3.beg_idx;
         outNbElement2 = _xr3.count;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
         // Calculate the histogram.
         // for( i = 0; i < outNbElement2; i += 1 )
         i = 0;
@@ -680,21 +665,11 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
         // Calculate the fast MA.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
         // Parano tests. Will be removed eventually.
         if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
             (*outBegIdx) = 0;
@@ -722,11 +697,6 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub2 = self.MA_OpenAndFillInternal(&fastMABuffer[..((outNbElement1 - 1) as usize) + 1], ((0) as usize), optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, &mut sc_outMACDSignal[..])?;
         retCode = RetCode::Success;
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
         // Calculate the histogram.
         // for( i = 0; i < outNbElement2; i += 1 )
         i = 0;

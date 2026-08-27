@@ -224,6 +224,9 @@ struct LineScan {
 
 /// Scan a line for brace/paren balance and comment state, masking out the
 /// contents of strings/chars/comments so a `{` inside `"..."` never counts.
+/// The keywords that can own the next line's statement when left dangling.
+const HEADER_KW: [&str; 6] = ["if", "for", "while", "switch", "else", "do"];
+
 fn scan_line(line: &str, mut in_bc: bool) -> LineScan {
     let chars: Vec<char> = line.chars().collect();
     let n = chars.len();
@@ -310,7 +313,6 @@ fn scan_line(line: &str, mut in_bc: bool) -> LineScan {
     // that brace already closed here. `if( c ) { f(); }` owns nothing, while
     // `if( c ) { f(); } else` still owns the next statement. A header with no
     // brace at all is its own tail, so the second test is a no-op on it.
-    const HEADER_KW: [&str; 6] = ["if", "for", "while", "switch", "else", "do"];
     let tail = match code.rfind('}') {
         Some(i) => code[i + 1..].trim(),
         None => code,

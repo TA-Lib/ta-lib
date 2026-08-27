@@ -1936,6 +1936,13 @@ fn emit_open_region(
     inserts: &[(usize, String)],
     replaced: &HashSet<usize>,
 ) {
+    // The transcribed guard on a cross-call this backend answers by throwing is
+    // dead (#267). Fold it before anything below is derived from the body; the
+    // pass is length-preserving, so `inserts` / `replaced` indices into this
+    // slice stay valid.
+    let admits = |f: &str, a: &[Expr]| super::csharp::cross_call_split(f, a, registry).is_some();
+    let folded = super::compat_fold::drop_answered_cross_call_guards(open_body, &admits);
+    let open_body: &[Statement] = &folded;
     let address_of_vars = collect_address_of_vars(open_body);
     let double_address_of_vars = collect_double_address_of_vars(open_body, &address_of_vars);
     let empty = HashSet::new();

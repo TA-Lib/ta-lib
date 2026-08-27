@@ -124,17 +124,11 @@
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -197,16 +191,10 @@
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       offset = fastNb.value - outNBElement.value;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          outReal[i] = tempBuffer[i + offset] - outReal[i];
@@ -612,17 +600,11 @@
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
