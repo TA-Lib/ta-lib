@@ -1408,6 +1408,167 @@ fn deallocation_is_dropped_only_where_the_backend_has_none() {
     assert!(c_guards >= 10, "only {c_guards} free() call(s) left in C — the cleanup reached c.rs");
 }
 
+/// #269: a cross-indicator call's rejection must be answered before the body
+/// uses anything the call was supposed to have written.
+///
+/// STOCH ran its `memmove` into `outSlowK` eight lines ABOVE the `retCode`
+/// test, so a rejected `%D ma()` — which never wrote `*outNBElement` — copied
+/// %K's count and overran the caller's buffer by `lookbackDSlow` doubles while
+/// reporting an empty `OutRange`.
+///
+/// This is checked over the IR, not over one backend's text, because the IR is
+/// what every backend transcribes. **C is the only backend where it can still go
+/// wrong** — Rust, Java and C# answer the rejection at the call site now (#267)
+/// and `ir_cleanup` removes the guard entirely, so their emitted code cannot
+/// carry the defect and cannot witness it either.
+///
+/// The rule is deliberately narrow: only a statement that touches a DECLARED
+/// OUTPUT or an out-param may not sit between the call and its test. Measured
+/// over the corpus, the statements that legitimately sit there are an
+/// `if`/`else` Peek-vs-Update pair, `sp->sub = sub` (MA storing the sub handle
+/// so teardown can close it), and `free()` of a local scratch — none of which
+/// touches an output. Forbidding all of them instead would fail 52 sites that
+/// are correct.
+#[test]
+fn a_cross_call_rejection_is_answered_before_its_result_is_used() {
+    use ta_codegen_lib::streaming::CalleeLookup;
+
+    fn is_cross_call(v: &ir::Expr, reg: &Registry) -> Option<()> {
+        let ir::Expr::FuncCall(name, args) = v else { return None };
+        let sig = reg.callee(name)?;
+        let arity = 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs;
+        (args.len() == arity).then_some(())
+    }
+
+    /// Every name this statement mentions, in any spelling that carries one.
+    fn names(st: &ir::Statement) -> Vec<String> {
+        let mut out = Vec::new();
+        ta_codegen_lib::streaming::walk_stmt_exprs(st, &mut |top| {
+            ta_codegen_lib::streaming::walk_expr(top, &mut |e| match e {
+                ir::Expr::Var(n) | ir::Expr::PointerDeref(n) | ir::Expr::ArrayAccess(n, _) => {
+                    out.push(n.clone());
+                }
+                _ => {}
+            });
+        });
+        out
+    }
+
+    fn is_control_flow(s: &ir::Statement) -> bool {
+        matches!(
+            s,
+            ir::Statement::While { .. }
+                | ir::Statement::DoWhile { .. }
+                | ir::Statement::For { .. }
+                | ir::Statement::ForC { .. }
+                | ir::Statement::Switch { .. }
+                | ir::Statement::If { .. }
+                | ir::Statement::Return { .. }
+                | ir::Statement::Break
+                | ir::Statement::Continue
+        )
+    }
+
+    /// Walk one statement list, then recurse. Returns the offending statements.
+    fn scan(
+        body: &[ir::Statement],
+        outs: &[String],
+        reg: &Registry,
+        bad: &mut Vec<String>,
+    ) {
+        for (i, st) in body.iter().enumerate() {
+            if let ir::Statement::Assign { target: ir::Expr::Var(v), value, .. } = st {
+                if is_cross_call(value, reg).is_some() {
+                    for later in &body[i + 1..] {
+                        let touched = names(later);
+                        // The test itself: an `if` mentioning the code variable.
+                        if let ir::Statement::If { condition, .. } = later {
+                            let mut hit = false;
+                            ta_codegen_lib::streaming::walk_expr(condition, &mut |e| {
+                                if matches!(e, ir::Expr::Var(n) if n == v) {
+                                    hit = true;
+                                }
+                            });
+                            if hit {
+                                break;
+                            }
+                        }
+                        if touched.iter().any(|n| {
+                            outs.contains(n) || n == "outBegIdx" || n == "outNBElement"
+                        }) {
+                            bad.push(format!(
+                                "a statement touching {:?} sits between the call assigning \
+                                 `{v}` and its test",
+                                touched
+                                    .iter()
+                                    .filter(|n| outs.contains(n)
+                                        || *n == "outBegIdx"
+                                        || *n == "outNBElement")
+                                    .collect::<Vec<_>>()
+                            ));
+                            break;
+                        }
+                        if is_control_flow(later) {
+                            break;
+                        }
+                    }
+                }
+            }
+            // Recurse into every nested body.
+            match st {
+                ir::Statement::While { body, .. }
+                | ir::Statement::DoWhile { body, .. }
+                | ir::Statement::For { body, .. }
+                | ir::Statement::ForC { body, .. }
+                | ir::Statement::Block { body } => scan(body, outs, reg, bad),
+                ir::Statement::If { then_body, else_body, .. } => {
+                    scan(then_body, outs, reg, bad);
+                    scan(else_body, outs, reg, bad);
+                }
+                ir::Statement::Switch { cases, default, .. } => {
+                    for (_, b) in cases {
+                        scan(b, outs, reg, bad);
+                    }
+                    scan(default, outs, reg, bad);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let registry = make_registry();
+    let (mut scanned, mut composed) = (0usize, 0usize);
+    for name in discover_indicators() {
+        let (func, _enums) = load_indicator(&name);
+        scanned += 1;
+        let outs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+        let mut bad = Vec::new();
+        for body in [func.body.as_slice(), func.private_body.as_slice(), func.stream_source()] {
+            scan(body, &outs, &registry, &mut bad);
+        }
+        let mut any = false;
+        for body in [func.body.as_slice(), func.stream_source()] {
+            for st in body {
+                if let ir::Statement::Assign { value, .. } = st {
+                    if is_cross_call(value, &registry).is_some() {
+                        any = true;
+                    }
+                }
+            }
+        }
+        if any {
+            composed += 1;
+        }
+        assert!(
+            bad.is_empty(),
+            "{name}: {} — this is #269, and C is the backend it reaches",
+            bad.join("; ")
+        );
+    }
+    assert!(scanned >= 176, "only {scanned} indicators in the corpus");
+    assert!(composed >= 10, "only {composed} composed indicators found — the sweep found nothing");
+}
+
 #[test]
 fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
