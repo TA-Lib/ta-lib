@@ -287,6 +287,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         requireArgument("MEDPRICE updateAndFill", "inHigh", inHigh);
+         requireArgument("MEDPRICE updateAndFill", "inLow", inLow);
+         requireArgument("MEDPRICE updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
             throw new TaLibArgumentException("MEDPRICE updateAndFill: BadParam", RetCode.BadParam);

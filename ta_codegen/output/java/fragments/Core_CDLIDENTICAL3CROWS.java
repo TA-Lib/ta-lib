@@ -543,6 +543,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inLow", inLow);
+         requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inClose", inClose);
+         requireArgument("CDLIDENTICAL3CROWS updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLIDENTICAL3CROWS updateAndFill: BadParam", RetCode.BadParam);

@@ -8646,6 +8646,261 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
     }
 }
 
+/// Rule U6a — the same declination at `UpdateAndFill`, in all four backends
+/// (issue #270). It is a property of the CALL: nothing on the handle records
+/// what the opener was given, so there is no flag to set and none to compare.
+///
+/// Three clauses per ported backend, because two of them can pass while the
+/// feature is broken: the capacity bound must be conditional, the store into the
+/// caller's array must be guarded, and the value must still be COMPUTED — which
+/// in Java and C# means the step's write to the handle's `cur_` field is
+/// untouched, and in Rust means the declined slot is a sink rather than a
+/// skipped call. The last clause is the negative one, and the only thing that
+/// can see "the handle remembers what the opener was given": the number of ways
+/// the fill can reject, which such a comparison would have to add to.
+#[test]
+fn test_mama_nullable_fama_is_declinable_at_update_and_fill_in_every_backend() {
+    let (func, enums) = load_indicator("mama");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    fn method<'a>(src: &'a str, sig: &str, what: &str) -> &'a str {
+        let at = src.find(sig).unwrap_or_else(|| panic!("{what}: `{sig}` not found"));
+        let rest = &src[at..];
+        let open = rest.find('{').unwrap_or_else(|| panic!("{what}: `{sig}` has no body"));
+        let mut depth = 0usize;
+        for (i, ch) in rest[open..].char_indices() {
+            match ch {
+                '{' => depth += 1,
+                '}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return &rest[..open + i + 1];
+                    }
+                }
+                _ => {}
+            }
+        }
+        panic!("{what}: `{sig}` has no body")
+    }
+
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let r = method(
+        &rust,
+        "pub fn update_and_fill(&mut self,",
+        "Rust update_and_fill",
+    );
+    assert!(
+        r.contains("mut outFAMA: Option<&mut [f64]>"),
+        "Rust: the fill takes Option, as the opener does"
+    );
+    assert!(
+        r.contains("outFAMA.as_deref().is_some_and(|o| o.len() < barCount)"),
+        "Rust: U6 bounds a nullable output only where it was supplied"
+    );
+    assert!(
+        r.contains("let mut sink_outFAMA: f64 = 0.0_f64;")
+            && r.contains("let slot_outFAMA = match outFAMA.as_deref_mut() { Some(_s) => &mut _s[i], None => &mut sink_outFAMA };")
+            && r.contains(", &mut outMAMA[i], slot_outFAMA);"),
+        "Rust: a declined output still gets a slot, so the step still computes it"
+    );
+
+    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    let j = method(
+        &java,
+        "public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] )",
+        "Java updateAndFill",
+    );
+    assert!(
+        j.contains("(outFAMA != null && outFAMA.length < barCount)"),
+        "Java: U6 bounds a nullable output only where it was supplied"
+    );
+    assert!(
+        j.contains("if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;"),
+        "Java: the store into a declined output is guarded"
+    );
+    assert!(
+        j.contains("core.MAMA_StepImpl(this, inReal[i]);") && !j.contains("if( outFAMA != null ) core."),
+        "Java: the step runs unconditionally — declining suppresses the write, not the computation"
+    );
+    // U2 is what makes U6a mean something here: a DECLINED output is accepted, an
+    // ABSENT required one is `BadParam` naming it — and the presence test has to
+    // precede the length, which is the thing that reads off a null array.
+    let at_present = j
+        .find("requireArgument(\"MAMA updateAndFill\", \"outMAMA\", outMAMA);")
+        .expect("Java: the required output is checked for presence");
+    assert!(
+        j.contains("requireArgument(\"MAMA updateAndFill\", \"inReal\", inReal);")
+            && !j.contains("requireArgument(\"MAMA updateAndFill\", \"outFAMA\""),
+        "Java: every required array is checked, and the declinable one is not"
+    );
+    assert!(
+        at_present < j.find("final int barCount").expect("Java: the bar count"),
+        "Java: presence precedes the length that would read off a null array"
+    );
+
+    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let c_sharp = method(
+        &csharp,
+        "public void UpdateAndFill( ReadOnlySpan<double> inReal, Span<double> outMAMA, Span<double> outFAMA )",
+        "C# UpdateAndFill",
+    );
+    assert!(
+        c_sharp.contains("(!outFAMA.IsEmpty && outFAMA.Length < barCount)"),
+        "C#: U6 bounds a nullable output only where it was supplied"
+    );
+    assert!(
+        c_sharp.contains("if( !outFAMA.IsEmpty ) outFAMA[i] = cur_outFAMA;"),
+        "C#: the store into a declined output is guarded"
+    );
+    assert!(
+        c_sharp.contains("core.MAMA_StepImpl(this, inReal[i]);")
+            && !c_sharp.contains("if( !outFAMA.IsEmpty ) core."),
+        "C#: the step runs unconditionally — declining suppresses the write, not the computation"
+    );
+
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let c_fill = method(
+        &c,
+        "TA_RetCode TA_MAMA_UpdateAndFill( TA_MAMA_Stream *stream,",
+        "C UpdateAndFill",
+    );
+    assert!(
+        c_fill.contains("if( !stream || !inReal || !outMAMA ) return TA_BAD_PARAM;"),
+        "C: a declined output is not an absent argument, and the required one still is"
+    );
+    assert!(
+        c_fill.contains("outFAMA ? &outFAMA[i] : NULL"),
+        "C: the declined slot is NULL rather than arithmetic on a NULL pointer"
+    );
+
+    // U6a meets U7: a declined output aliases nothing, so every alias term whose
+    // operand can be absent guards it first — two declined outputs would
+    // otherwise compare equal and reject a legal call. Emitted, never probed at
+    // run time (a declining call has no second buffer to alias with).
+    for (lang, body, term) in [
+        ("Java", j, "(outFAMA != null && (Object)outMAMA == (Object)outFAMA)"),
+        ("C", c_fill, "(outFAMA != NULL && (const void *)outMAMA == (const void *)outFAMA)"),
+    ] {
+        assert!(
+            body.contains(term),
+            "{lang}: the alias term guards the declinable operand"
+        );
+    }
+    assert!(
+        c_sharp.contains("outMAMA.Overlaps(outFAMA)") && !c_sharp.contains("outFAMA.IsEmpty || outMAMA.Overlaps"),
+        "C#: `Overlaps` already answers false for an empty span, so the term needs no guard"
+    );
+
+    // The declination is a property of the CALL, so there is no third rejection:
+    // a fill that compared its output set against the opener's would need one,
+    // and counting the exits is what would catch it. The counts are the rules
+    // this tier has and no more — the capacity bound and the per-bar finite test
+    // everywhere, plus C's absent-argument, negative-count and aliasing guards,
+    // which the other three cannot express.
+    for (lang, body, exit, want) in [
+        ("Rust", r, "return Err(RetCode::BadParam);", 2),
+        ("Java", j, "throw new TaLibArgumentException(\"MAMA updateAndFill: BadParam\", RetCode.BadParam);", 2),
+        ("C#", c_sharp, "throw Core.StreamFailure(\"MAMA\", \"updateAndFill\", RetCode.BadParam);", 2),
+        ("C", c_fill, "return TA_BAD_PARAM;", 4),
+    ] {
+        assert_eq!(
+            body.matches(exit).count(),
+            want,
+            "{lang}: `UpdateAndFill` rejects on {want} conditions — a third would be \
+             the handle remembering what the opener was given, which this design does not do"
+        );
+    }
+}
+
+/// Rule U6a over the arrangement `MAMA` cannot reach: `SYNTH10` declares three
+/// outputs with the FIRST and THIRD `nullable` (issue #262's fixture). Two
+/// things only it can show — that the guards are per output rather than one
+/// blanket branch, and that a nullable output at index 0 does not displace the
+/// cursor or the required output's own bound.
+///
+/// `scripts/synth_gate.py` drives the same fixture end to end, but only
+/// nightly; this is the PR gate's view of it.
+#[test]
+fn test_synth10_two_nullable_outputs_are_declinable_at_update_and_fill() {
+    let (func, enums) = load_synth("synth10");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        rust.contains("mut outFirstOptional: Option<&mut [f64]>, outRequired: &mut [f64], mut outSecondOptional: Option<&mut [f64]>) -> Result<(), RetCode>"),
+        "Rust: each nullable output takes its own Option, the required one stays a slice"
+    );
+    for name in ["outFirstOptional", "outSecondOptional"] {
+        assert!(
+            rust.contains(&format!("let mut sink_{name}: f64 = 0.0_f64;")),
+            "Rust: {name} gets its own sink"
+        );
+    }
+    assert!(
+        rust.contains("SYNTH10_step_impl(&mut self.state, inReal[i], slot_outFirstOptional, &mut outRequired[i], slot_outSecondOptional);"),
+        "Rust: the step takes a slot per declinable output and the array for the required one"
+    );
+
+    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    for (lang, src, guarded, plain) in [
+        (
+            "Java",
+            &java,
+            vec![
+                "if( outFirstOptional != null ) outFirstOptional[i] = this.cur_outFirstOptional;",
+                "if( outSecondOptional != null ) outSecondOptional[i] = this.cur_outSecondOptional;",
+            ],
+            "outRequired[i] = this.cur_outRequired;",
+        ),
+        (
+            "C#",
+            &csharp,
+            vec![
+                "if( !outFirstOptional.IsEmpty ) outFirstOptional[i] = cur_outFirstOptional;",
+                "if( !outSecondOptional.IsEmpty ) outSecondOptional[i] = cur_outSecondOptional;",
+            ],
+            "outRequired[i] = cur_outRequired;",
+        ),
+        (
+            "C",
+            &c,
+            vec![
+                "outFirstOptional ? &outFirstOptional[i] : NULL",
+                "outSecondOptional ? &outSecondOptional[i] : NULL",
+            ],
+            "&outRequired[i]",
+        ),
+    ] {
+        for g in &guarded {
+            assert!(src.contains(g), "{lang}: `{g}` — each declinable output is guarded on its own");
+        }
+        assert!(src.contains(plain), "{lang}: the required output is written unconditionally");
+    }
+
+    // The required output's bound is NOT made conditional by its declinable
+    // neighbours, and the required output is still an absent-argument fault in C.
+    assert!(
+        java.contains("|| outRequired.length < barCount ||"),
+        "Java: the required output keeps an unconditional bound"
+    );
+    assert!(
+        csharp.contains("|| outRequired.Length < barCount ||"),
+        "C#: the required output keeps an unconditional bound"
+    );
+    assert!(
+        rust.contains("|| outRequired.len() < barCount ||"),
+        "Rust: the required output keeps an unconditional bound"
+    );
+    assert!(
+        c.contains("if( !stream || !inReal || !outRequired ) return TA_BAD_PARAM;"),
+        "C: the required output is the only one an absent-argument guard names"
+    );
+}
+
 /// FAMA is a nullable output (issue #125). In the BATCH C: `Output::is_nullable`
 /// is set from the `nullable` flag, the guarded function skips its NULL-check but
 /// keeps outMAMA's, the distinctness check guards the nullable operand, and every
@@ -12612,3 +12867,4 @@ fn every_declared_input_is_checked_in_every_backend() {
     }
     assert_eq!(pairs, 7, "the seven never-indexed legs of #260");
 }
+

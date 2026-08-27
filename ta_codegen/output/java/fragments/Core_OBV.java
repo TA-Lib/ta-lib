@@ -304,6 +304,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
+         requireArgument("OBV updateAndFill", "inReal", inReal);
+         requireArgument("OBV updateAndFill", "inVolume", inVolume);
+         requireArgument("OBV updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("OBV updateAndFill: BadParam", RetCode.BadParam);

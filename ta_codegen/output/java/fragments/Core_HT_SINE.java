@@ -1225,6 +1225,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outSine[], double outLeadSine[] ) {
+         requireArgument("HT_SINE updateAndFill", "inReal", inReal);
+         requireArgument("HT_SINE updateAndFill", "outSine", outSine);
+         requireArgument("HT_SINE updateAndFill", "outLeadSine", outLeadSine);
          final int barCount = inReal.length;
          if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
             throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);

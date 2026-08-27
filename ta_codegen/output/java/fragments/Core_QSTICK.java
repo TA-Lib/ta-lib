@@ -423,6 +423,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
+         requireArgument("QSTICK updateAndFill", "inOpen", inOpen);
+         requireArgument("QSTICK updateAndFill", "inClose", inClose);
+         requireArgument("QSTICK updateAndFill", "outReal", outReal);
          final int barCount = inOpen.length;
          if( inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("QSTICK updateAndFill: BadParam", RetCode.BadParam);

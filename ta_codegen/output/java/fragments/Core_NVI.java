@@ -363,6 +363,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+         requireArgument("NVI updateAndFill", "inClose", inClose);
+         requireArgument("NVI updateAndFill", "inVolume", inVolume);
+         requireArgument("NVI updateAndFill", "outReal", outReal);
          final int barCount = inClose.length;
          if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("NVI updateAndFill: BadParam", RetCode.BadParam);

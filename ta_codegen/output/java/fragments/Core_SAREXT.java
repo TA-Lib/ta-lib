@@ -967,6 +967,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         requireArgument("SAREXT updateAndFill", "inHigh", inHigh);
+         requireArgument("SAREXT updateAndFill", "inLow", inLow);
+         requireArgument("SAREXT updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
             throw new TaLibArgumentException("SAREXT updateAndFill: BadParam", RetCode.BadParam);

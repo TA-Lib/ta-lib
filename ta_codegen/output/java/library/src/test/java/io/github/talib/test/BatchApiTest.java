@@ -55,6 +55,7 @@ import io.github.talib.InsufficientHistoryException;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.RetCode;
+import io.github.talib.TaLibArgumentException;
 import io.github.talib.TaLibFailure;
 
 import java.util.Arrays;
@@ -91,6 +92,8 @@ public class BatchApiTest {
     private static int s5Reject = 0;
     /** Rule B6a at the opener — a declined output, counted apart from S5's. */
     private static int b6aOpen = 0;
+    /** Rule U6a at {@code updateAndFill} — counted apart from the opener's. */
+    private static int u6aFill = 0;
 
     private static void check(boolean condition, String what) {
         checks++;
@@ -1149,6 +1152,166 @@ public class BatchApiTest {
         b6aOpen++;
     }
 
+    /**
+     * Rule U6a: {@code updateAndFill} declines a nullable output exactly as the
+     * opener does, and the choice is the CALL's — the four open/fill
+     * combinations are all accepted and all compute the same numbers.
+     *
+     * <p>Non-vacuous in the same directions as the opener's probe, plus the one
+     * this rule adds. The supplied run is the oracle, and the comparison a
+     * backend that stopped computing FAMA cannot satisfy is the handle's own
+     * {@code value()} after the fill, not the arrays. The mixed combinations are
+     * the point of the rule: declining at {@code openAndFill} and supplying here
+     * — and the reverse — must be as ordinary as either matching pair. A
+     * declining call must still bound {@code outMAMA}, and still bound
+     * {@code outFAMA} where it IS supplied.
+     */
+    private static final double U6A_CANARY = -1.2345678901234e300;
+
+    private static double[] canaryFilled(int n) {
+        double[] a = new double[n];
+        java.util.Arrays.fill(a, U6A_CANARY);
+        return a;
+    }
+
+    private static boolean wasWritten(double[] a) {
+        for (double v : a) {
+            if (v == U6A_CANARY) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void aDeclinedOutputAtUpdateAndFillIsAPropertyOfTheCall() {
+        final double[] in = closes(252);
+        final int produced = in.length - Core.DEFAULT.MAMA_Lookback(0.5, 0.05);
+        final double[] bars = new double[8];
+        for (int i = 0; i < bars.length; i++) {
+            bars[i] = in[in.length - 1] + 1.0 + i * 0.25;
+        }
+
+        // The oracle: supplied at open, supplied here.
+        Core.MAMA_Stream oracle =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        // Canary-filled, not zero-filled: comparing two arrays the fill never
+        // wrote would otherwise pass on their shared initial value, which is
+        // exactly the break the supplied/supplied leg below is meant to catch.
+        double[] refMama = canaryFilled(bars.length);
+        double[] refFama = canaryFilled(bars.length);
+        oracle.updateAndFill(bars, refMama, refFama);
+        u6aFill++;
+        check(wasWritten(refMama) && wasWritten(refFama), "the oracle fill wrote both outputs");
+        long oracleFama = Double.doubleToRawLongBits(oracle.value().fama());
+        long oracleMama = Double.doubleToRawLongBits(oracle.value().mama());
+
+        for (boolean declinedAtOpen : new boolean[] { false, true }) {
+            String what = declinedAtOpen ? "declined at open" : "supplied at open";
+
+            Core.MAMA_Stream h = declinedAtOpen
+                ? Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], null)
+                : Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced],
+                        new double[produced]);
+            double[] mama = canaryFilled(bars.length);
+            h.updateAndFill(bars, mama, null);
+            u6aFill++;
+            check(wasWritten(mama) && java.util.Arrays.equals(refMama, mama),
+                what + ", declined here: outMAMA");
+            u6aFill++;
+            check(h.outRange().begIdx() == oracle.outRange().begIdx()
+                    && h.outRange().count() == oracle.outRange().count(),
+                what + ", declined here: the range");
+            // The state, not the write: FAMA feeds the next bar.
+            u6aFill++;
+            check(Double.doubleToRawLongBits(h.value().fama()) == oracleFama,
+                what + ", declined here: a declined outFAMA is still computed");
+            u6aFill++;
+            check(Double.doubleToRawLongBits(h.value().mama()) == oracleMama,
+                what + ", declined here: the handle's outMAMA");
+
+            Core.MAMA_Stream h2 = declinedAtOpen
+                ? Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], null)
+                : Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced],
+                        new double[produced]);
+            double[] mama2 = canaryFilled(bars.length);
+            double[] fama2 = canaryFilled(bars.length);
+            h2.updateAndFill(bars, mama2, fama2);
+            u6aFill++;
+            check(wasWritten(mama2) && wasWritten(fama2)
+                    && java.util.Arrays.equals(refMama, mama2)
+                    && java.util.Arrays.equals(refFama, fama2),
+                what + ", supplied here: both outputs");
+        }
+
+        // "May differ again on the NEXT call" — the sentence the whole rule rests
+        // on. One handle, three fills, alternating; each has to agree with an
+        // oracle driven the same way with everything supplied.
+        Core.MAMA_Stream alt =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        Core.MAMA_Stream altRef =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        boolean[] plan = { true, false, true };
+        for (int k = 0; k < plan.length; k++) {
+            double[] leg = new double[bars.length];
+            for (int i = 0; i < bars.length; i++) {
+                leg[i] = bars[i] + k;
+            }
+            double[] wantM = canaryFilled(leg.length);
+            double[] wantF = canaryFilled(leg.length);
+            altRef.updateAndFill(leg, wantM, wantF);
+            double[] gotM = canaryFilled(leg.length);
+            double[] gotF = canaryFilled(leg.length);
+            if (plan[k]) {
+                alt.updateAndFill(leg, gotM, null);
+            } else {
+                alt.updateAndFill(leg, gotM, gotF);
+                u6aFill++;
+                check(wasWritten(gotF) && java.util.Arrays.equals(wantF, gotF),
+                    "alternating leg " + k + ": outFAMA");
+            }
+            u6aFill++;
+            check(wasWritten(gotM) && java.util.Arrays.equals(wantM, gotM)
+                    && alt.outRange().count() == altRef.outRange().count(),
+                "alternating leg " + k + ": outMAMA and the range");
+        }
+        u6aFill++;
+        check(Double.doubleToRawLongBits(alt.value().fama())
+                == Double.doubleToRawLongBits(altRef.value().fama()),
+            "alternating the declined set left the handle's FAMA identical");
+
+        // A DECLINED output is not an absent one: the required arrays are still
+        // rule U2, and the fault has to be the documented exception naming the
+        // argument, not the raw NullPointerException reading a length off a null
+        // array used to produce.
+        Core.MAMA_Stream named =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        checkThrows(TaLibArgumentException.class,
+            () -> named.updateAndFill(bars, null, new double[bars.length]),
+            "an absent required output names itself", "MAMA updateAndFill", "outMAMA");
+        u6aFill++;
+        checkThrows(TaLibArgumentException.class,
+            () -> named.updateAndFill(null, new double[bars.length], null),
+            "an absent input series names itself", "MAMA updateAndFill", "inReal");
+        u6aFill++;
+
+        // Declining one output disarms neither the other's bound nor its own
+        // where it IS supplied, and a rejected fill commits nothing.
+        Core.MAMA_Stream guarded =
+            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        int before = guarded.outRange().count();
+        checkThrows(IllegalArgumentException.class,
+            () -> guarded.updateAndFill(bars, new double[bars.length - 1], null),
+            "an undersized outMAMA is still rejected when outFAMA is declined");
+        u6aFill++;
+        checkThrows(IllegalArgumentException.class,
+            () -> guarded.updateAndFill(bars, new double[bars.length],
+                    new double[bars.length - 1]),
+            "a supplied outFAMA is still bounded");
+        u6aFill++;
+        check(guarded.outRange().count() == before, "a rejected fill commits nothing");
+        u6aFill++;
+    }
+
     private static void streamAccepts(Runnable body, String what) {
         s4Accept++;
         checks++;
@@ -1310,13 +1473,15 @@ public class BatchApiTest {
         anEmptyHistoryOutranksAnAbsentArgument();
         theFillOutputBoundFromBothSides();
         theFillOutputBoundHoldsOnEveryTier();
+        aDeclinedOutputAtUpdateAndFillIsAPropertyOfTheCall();
 
         // Literal floors, not derived from the calls above: a count computed
         // from the cases would move with a deleted one and still "pass".
         // s4Reject is 11, not 12: the twelfth was `MAMA_OpenAndFill(outFAMA=null)`,
         // which is no longer an absent argument but a declined output — rule B6a,
         // and it has its own counter and its own probe.
-        if (s4Reject < 11 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5 || b6aOpen < 6) {
+        if (s4Reject < 11 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5 || b6aOpen < 6
+                || u6aFill < 21) {
             failures++;
             System.out.println("  FAIL: the streaming-opener gate ran fewer checks"
                 + " than it was written with");

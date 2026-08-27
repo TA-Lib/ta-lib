@@ -542,6 +542,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("TEMA updateAndFill", "inReal", inReal);
+         requireArgument("TEMA updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("TEMA updateAndFill: BadParam", RetCode.BadParam);

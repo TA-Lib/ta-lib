@@ -310,6 +310,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         requireArgument("BOP updateAndFill", "inOpen", inOpen);
+         requireArgument("BOP updateAndFill", "inHigh", inHigh);
+         requireArgument("BOP updateAndFill", "inLow", inLow);
+         requireArgument("BOP updateAndFill", "inClose", inClose);
+         requireArgument("BOP updateAndFill", "outReal", outReal);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("BOP updateAndFill: BadParam", RetCode.BadParam);

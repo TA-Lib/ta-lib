@@ -507,6 +507,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+         requireArgument("EFI updateAndFill", "inClose", inClose);
+         requireArgument("EFI updateAndFill", "inVolume", inVolume);
+         requireArgument("EFI updateAndFill", "outReal", outReal);
          final int barCount = inClose.length;
          if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("EFI updateAndFill: BadParam", RetCode.BadParam);

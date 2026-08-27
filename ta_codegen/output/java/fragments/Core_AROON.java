@@ -538,6 +538,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outAroonDown[], double outAroonUp[] ) {
+         requireArgument("AROON updateAndFill", "inHigh", inHigh);
+         requireArgument("AROON updateAndFill", "inLow", inLow);
+         requireArgument("AROON updateAndFill", "outAroonDown", outAroonDown);
+         requireArgument("AROON updateAndFill", "outAroonUp", outAroonUp);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
             throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);

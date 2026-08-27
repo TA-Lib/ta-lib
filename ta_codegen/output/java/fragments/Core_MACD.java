@@ -716,6 +716,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+         requireArgument("MACD updateAndFill", "inReal", inReal);
+         requireArgument("MACD updateAndFill", "outMACD", outMACD);
+         requireArgument("MACD updateAndFill", "outMACDSignal", outMACDSignal);
+         requireArgument("MACD updateAndFill", "outMACDHist", outMACDHist);
          final int barCount = inReal.length;
          if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
             throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);

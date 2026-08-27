@@ -388,6 +388,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
+         requireArgument("IMI updateAndFill", "inOpen", inOpen);
+         requireArgument("IMI updateAndFill", "inClose", inClose);
+         requireArgument("IMI updateAndFill", "outReal", outReal);
          final int barCount = inOpen.length;
          if( inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("IMI updateAndFill: BadParam", RetCode.BadParam);

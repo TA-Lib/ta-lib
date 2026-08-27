@@ -6540,7 +6540,8 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     let seed_boundary = func_has_seed_boundary(func, funcs);
     emit_rust_sv_prefix_sweep(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, seed_boundary);
-    emit_rust_sv_update_and_fill_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
+    let out_nullable: Vec<bool> = func.outputs.iter().map(crate::ir::Output::is_nullable).collect();
+    emit_rust_sv_update_and_fill_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, &out_nullable);
 
     // Short-history reject leg: at `lb` bars no output is defined for ANY
     // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
@@ -6658,6 +6659,21 @@ fn emit_rust_sv_prefix_sweep(
     s.push_str("                }\n            }\n        }\n");
 }
 
+/// Which output the "too short for the run" probe undersizes: the first one that
+/// is NOT `nullable`.
+///
+/// Zero length is how C# spells "declined", so undersizing a declinable output
+/// there asserts a declination is accepted, not that a short buffer is rejected
+/// — the opposite of the rule the probe is standing in for. Java and Rust would
+/// still reject it, so the choice only has to be right for C#; making it the
+/// same everywhere keeps the harness from depending on that.
+fn short_probe_index(out_nullable: &[bool]) -> usize {
+    out_nullable
+        .iter()
+        .position(|n| !n)
+        .expect("every function has a required output (backends::common's guardable-store assert)")
+}
+
 /// UpdateAndFill leg (#246): the same `Open(p)` the prefix sweep uses, then ONE
 /// call over the tail instead of `svN - p` separate updates. Rust has no
 /// aliasing probe (`&[f64]` and `&mut [f64]` cannot alias) and no negative
@@ -6671,6 +6687,7 @@ fn emit_rust_sv_update_and_fill_leg(
     pfx_ins: &str,
     opts_tail: &str,
     out_is_int: &[bool],
+    out_nullable: &[bool],
 ) {
     s.push_str("        if let Some(&p) = pcs.first() {\n");
     let _ = writeln!(s, "            match c2.{fname}_Open({pfx_ins}{opts_tail}) {{");
@@ -6686,8 +6703,17 @@ fn emit_rust_sv_update_and_fill_leg(
         };
         let _ = writeln!(s, "                    let mut u{i}: Vec<{ty}> = vec![{canary}; svN];");
     }
+    // A nullable output takes `Option<&mut [T]>` at this tier too (rule U6a);
+    // this harness compares values, so it always supplies one.
+    let ubuf = |i: usize| {
+        if out_nullable.get(i).copied().unwrap_or(false) {
+            format!("Some(&mut u{i})")
+        } else {
+            format!("&mut u{i}")
+        }
+    };
     let uargs: String = (0..out_is_int.len()).fold(String::new(), |mut acc, i| {
-        let _ = write!(acc, ", &mut u{i}");
+        let _ = write!(acc, ", {}", ubuf(i));
         acc
     });
     let tail_ins = arrays
@@ -6708,8 +6734,14 @@ fn emit_rust_sv_update_and_fill_leg(
         "                    if stu.update_and_fill({empty_ins}{uargs}).is_err() {{ ufill_ok = false; }}"
     );
     {
+        // The undersized buffer rides the first output that is NOT nullable.
+        // Empty is how C# spells "declined", so a zero-length nullable output is
+        // an accepted call there, not the U6 rejection this probe is asserting;
+        // every function has at least one required output (the guardable-store
+        // assert in `backends::common`), so there is always somewhere to put it.
+        let short_idx = short_probe_index(out_nullable);
         let short: String = (0..out_is_int.len())
-            .map(|i| if i == 0 { format!(", &mut u{i}[..0]") } else { format!(", &mut u{i}") })
+            .map(|i| if i == short_idx { format!(", &mut u{i}[..0]") } else { format!(", {}", ubuf(i)) })
             .collect();
         let _ = writeln!(
             s,
@@ -7266,11 +7298,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "                        stu.updateAndFill({empty_ins}{uargs});"
     );
     {
+        let short_idx =
+            short_probe_index(&func.outputs.iter().map(crate::ir::Output::is_nullable).collect::<Vec<_>>());
         let short: String = out_is_int
             .iter()
             .enumerate()
             .map(|(i, is_int)| {
-                if i == 0 {
+                if i == short_idx {
                     format!(", new {}[0]", if *is_int { "int" } else { "double" })
                 } else {
                     format!(", u{i}")
@@ -8600,11 +8634,13 @@ fn emit_csharp_sv_func(
     });
     let _ = writeln!(s, "                        stu.UpdateAndFill({empty_ins}{uargs});");
     {
+        let short_idx =
+            short_probe_index(&func.outputs.iter().map(crate::ir::Output::is_nullable).collect::<Vec<_>>());
         let short: String = out_is_int
             .iter()
             .enumerate()
             .map(|(i, is_int)| {
-                if i == 0 {
+                if i == short_idx {
                     format!(", new {}[0]", if *is_int { "int" } else { "double" })
                 } else {
                     format!(", u{i}")

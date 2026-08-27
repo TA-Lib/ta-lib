@@ -1582,6 +1582,10 @@ impl MAMA_Stream {
     /// argument checks instead of `n`. `n` is `inReal.len()`; the outputs must
     /// hold at least that many. Never allocates.
     ///
+    /// `outFAMA` may be declined with `None`, per call and independently of
+    /// what the opener was given: the value is still computed —
+    /// [`Self::update`] reports it — and nothing is written out.
+    ///
     /// [`Self::out_range`] counts what was committed, which is what makes the
     /// rejection below readable: there is no second out-parameter for it.
     ///
@@ -1594,16 +1598,18 @@ impl MAMA_Stream {
     /// and everything after it is not, and `out_range().count` has advanced by
     /// `k`.
     #[doc(alias = "TA_MAMA_UpdateAndFill")]
-    pub fn update_and_fill(&mut self, inReal: &[f64], outMAMA: &mut [f64], outFAMA: &mut [f64]) -> Result<(), RetCode> {
+    pub fn update_and_fill(&mut self, inReal: &[f64], outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>) -> Result<(), RetCode> {
         let barCount = inReal.len();
-        if outMAMA.len() < barCount || outFAMA.len() < barCount {
+        if outMAMA.len() < barCount || outFAMA.as_deref().is_some_and(|o| o.len() < barCount) {
             return Err(RetCode::BadParam);
         }
+        let mut sink_outFAMA: f64 = 0.0_f64;
         for i in 0..barCount {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MAMA_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], &mut outFAMA[i]);
+            let slot_outFAMA = match outFAMA.as_deref_mut() { Some(_s) => &mut _s[i], None => &mut sink_outFAMA };
+            self.core.MAMA_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

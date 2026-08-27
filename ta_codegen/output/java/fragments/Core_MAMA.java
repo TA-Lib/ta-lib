@@ -1225,6 +1225,9 @@
        * set of argument checks instead of {@code n}. {@code n} is
        * {@code inReal.length}; the outputs must hold at least that many, and must
        * not be the same array as an input or as each other.
+       * <p>{@code outFAMA} may be declined with {@code null}, per call and
+       * independently of what the opener was given: the value is still
+       * computed — {@link #value()} reports it — and nothing is written out.
        * <p>{@link #outRange()} counts what was committed, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
@@ -1232,8 +1235,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] ) {
+         requireArgument("MAMA updateAndFill", "inReal", inReal);
+         requireArgument("MAMA updateAndFill", "outMAMA", outMAMA);
          final int barCount = inReal.length;
-         if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
+         if( outMAMA.length < barCount || (outFAMA != null && outFAMA.length < barCount) || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
             throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
          int done = 0;
          try {
@@ -1242,7 +1247,7 @@
                   throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
                core.MAMA_StepImpl(this, inReal[i]);
                outMAMA[i] = this.cur_outMAMA;
-               outFAMA[i] = this.cur_outFAMA;
+               if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                done = i + 1;
             }

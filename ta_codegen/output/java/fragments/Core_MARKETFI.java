@@ -342,6 +342,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] ) {
+         requireArgument("MARKETFI updateAndFill", "inHigh", inHigh);
+         requireArgument("MARKETFI updateAndFill", "inLow", inLow);
+         requireArgument("MARKETFI updateAndFill", "inVolume", inVolume);
+         requireArgument("MARKETFI updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("MARKETFI updateAndFill: BadParam", RetCode.BadParam);

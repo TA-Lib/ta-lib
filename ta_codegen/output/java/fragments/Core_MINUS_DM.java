@@ -609,6 +609,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         requireArgument("MINUS_DM updateAndFill", "inHigh", inHigh);
+         requireArgument("MINUS_DM updateAndFill", "inLow", inLow);
+         requireArgument("MINUS_DM updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
             throw new TaLibArgumentException("MINUS_DM updateAndFill: BadParam", RetCode.BadParam);

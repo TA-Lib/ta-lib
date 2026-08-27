@@ -271,6 +271,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("ACOS updateAndFill", "inReal", inReal);
+         requireArgument("ACOS updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("ACOS updateAndFill: BadParam", RetCode.BadParam);

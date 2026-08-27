@@ -494,6 +494,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLHOMINGPIGEON updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLHOMINGPIGEON updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLHOMINGPIGEON updateAndFill", "inLow", inLow);
+         requireArgument("CDLHOMINGPIGEON updateAndFill", "inClose", inClose);
+         requireArgument("CDLHOMINGPIGEON updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLHOMINGPIGEON updateAndFill: BadParam", RetCode.BadParam);

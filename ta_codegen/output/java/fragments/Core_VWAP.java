@@ -463,6 +463,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+         requireArgument("VWAP updateAndFill", "inHigh", inHigh);
+         requireArgument("VWAP updateAndFill", "inLow", inLow);
+         requireArgument("VWAP updateAndFill", "inClose", inClose);
+         requireArgument("VWAP updateAndFill", "inVolume", inVolume);
+         requireArgument("VWAP updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("VWAP updateAndFill: BadParam", RetCode.BadParam);

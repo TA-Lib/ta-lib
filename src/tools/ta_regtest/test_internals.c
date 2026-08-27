@@ -555,6 +555,7 @@ static ErrorNumber testStreamShortHistory( void )
  */
 static int bacReject, bacAccept;
 static int s4Reject, s4Accept;
+static int u6aFill;
 
 #define BAC_REJECT( name, call )                                               \
    do {                                                                        \
@@ -624,6 +625,7 @@ static ErrorNumber testBatchArgumentContract( void )
 
    bacReject = bacAccept = 0;
    s4Reject = s4Accept = 0;
+   u6aFill = 0;
 
    for( i = 0; i < 512; i++ )
    {
@@ -825,6 +827,269 @@ static ErrorNumber testBatchArgumentContract( void )
       if( cst ) { TA_CDL3OUTSIDE_Close( cst ); cst = NULL; }
    }
 
+   /* Rule U6a: a nullable output may be declined at UpdateAndFill too, and the
+    * choice is the CALL's -- neither matching the opener's nor recorded on the
+    * handle. All four open/fill combinations compute the same numbers.
+    *
+    * The comparison a fill that stopped computing FAMA cannot satisfy is the
+    * PEEK after it, which reads the handle's state rather than anything that was
+    * written out. C is the reference shape here, so this block is a pin rather
+    * than a fix -- the three ported backends are what #270 changed. */
+   {
+      static double fillBars[8];
+      static double refM[8], refF[8], gotM[8], gotF[8];
+      TA_MAMA_Stream *st = NULL;
+      double pm = 0.0, pf = 0.0, rpm = 0.0, rpf = 0.0;
+      int declinedAtOpen, k;
+      int beg2 = 0, nb2 = 0, begRef = 0, nbRef = 0, nbBefore = 0;
+
+      for( k = 0; k < 8; k++ )
+         fillBars[k] = bars[251] + 1.0 + (double)k * 0.25;
+
+      /* Canary-filled, not zero-filled: comparing two arrays the fill never
+       * wrote would otherwise pass on their shared initial value, which is
+       * exactly the break the supplied/supplied leg is meant to catch. */
+      #define U6A_CANARY (-1.2345678901234e300)
+      for( k = 0; k < 8; k++ )
+      {
+         refM[k] = refF[k] = gotM[k] = gotF[k] = U6A_CANARY;
+      }
+
+      /* The oracle: supplied at open, supplied at the fill. */
+      if( TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS ||
+          TA_MAMA_UpdateAndFill( st, fillBars, 8, refM, refF ) != TA_SUCCESS ||
+          TA_StreamOutRange( st, &begRef, &nbRef ) != TA_SUCCESS ||
+          TA_MAMA_Peek( st, bars[251], &rpm, &rpf ) != TA_SUCCESS )
+      {
+         printf( "\nFailed: the U6a oracle did not run\n" );
+         return TA_BATCH_ARG_CONTROL;
+      }
+      TA_MAMA_Close( st );
+      st = NULL;
+      for( k = 0; k < 8; k++ )
+      {
+         if( refM[k] == U6A_CANARY || refF[k] == U6A_CANARY )
+         {
+            printf( "\nFailed: the U6a oracle fill did not write [%d]\n", k );
+            return TA_BATCH_ARG_CONTROL;
+         }
+      }
+      u6aFill++;
+
+      for( declinedAtOpen = 0; declinedAtOpen < 2; declinedAtOpen++ )
+      {
+         /* Declined at the fill, whatever the opener was given. */
+         for( k = 0; k < 8; k++ ) gotM[k] = gotF[k] = U6A_CANARY;
+         if( TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA,
+                                  declinedAtOpen ? NULL : outB ) != TA_SUCCESS ||
+             TA_MAMA_UpdateAndFill( st, fillBars, 8, gotM, NULL ) != TA_SUCCESS ||
+             TA_StreamOutRange( st, &beg2, &nb2 ) != TA_SUCCESS ||
+             TA_MAMA_Peek( st, bars[251], &pm, &pf ) != TA_SUCCESS )
+         {
+            printf( "\nFailed: declining outFAMA at UpdateAndFill was rejected "
+                    "(declinedAtOpen=%d)\n", declinedAtOpen );
+            if( st ) TA_MAMA_Close( st );
+            return TA_BATCH_ARG_CONTROL;
+         }
+         TA_MAMA_Close( st );
+         st = NULL;
+         u6aFill++;
+         for( k = 0; k < 8; k++ )
+         {
+            if( gotM[k] == U6A_CANARY )
+            {
+               printf( "\nFailed: the declining fill did not write outMAMA[%d]\n", k );
+               return TA_BATCH_ARG_WRONG_CODE;
+            }
+            if( memcmp( &gotM[k], &refM[k], sizeof(double) ) != 0 )
+            {
+               printf( "\nFailed: declining outFAMA changed outMAMA[%d] "
+                       "(declinedAtOpen=%d)\n", k, declinedAtOpen );
+               return TA_BATCH_ARG_WRONG_CODE;
+            }
+         }
+         u6aFill++;
+         if( beg2 != begRef || nb2 != nbRef )
+         {
+            printf( "\nFailed: declining outFAMA moved the reported range\n" );
+            return TA_BATCH_ARG_WRONG_CODE;
+         }
+         u6aFill++;
+         if( memcmp( &pm, &rpm, sizeof(double) ) != 0 ||
+             memcmp( &pf, &rpf, sizeof(double) ) != 0 )
+         {
+            printf( "\nFailed: a declined outFAMA is not still computed "
+                    "(declinedAtOpen=%d)\n", declinedAtOpen );
+            return TA_BATCH_ARG_WRONG_CODE;
+         }
+         u6aFill++;
+
+         /* ...and supplying it at the fill, whatever the opener was given. */
+         for( k = 0; k < 8; k++ ) gotM[k] = gotF[k] = U6A_CANARY;
+         if( TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA,
+                                  declinedAtOpen ? NULL : outB ) != TA_SUCCESS ||
+             TA_MAMA_UpdateAndFill( st, fillBars, 8, gotM, gotF ) != TA_SUCCESS )
+         {
+            printf( "\nFailed: supplying outFAMA at UpdateAndFill was rejected "
+                    "(declinedAtOpen=%d)\n", declinedAtOpen );
+            if( st ) TA_MAMA_Close( st );
+            return TA_BATCH_ARG_CONTROL;
+         }
+         TA_MAMA_Close( st );
+         st = NULL;
+         for( k = 0; k < 8; k++ )
+         {
+            if( gotM[k] == U6A_CANARY || gotF[k] == U6A_CANARY )
+            {
+               printf( "\nFailed: the supplying fill did not write [%d]\n", k );
+               return TA_BATCH_ARG_WRONG_CODE;
+            }
+         }
+         if( memcmp( gotM, refM, sizeof(refM) ) != 0 ||
+             memcmp( gotF, refF, sizeof(refF) ) != 0 )
+         {
+            printf( "\nFailed: the open's declination changed what the fill wrote "
+                    "(declinedAtOpen=%d)\n", declinedAtOpen );
+            return TA_BATCH_ARG_WRONG_CODE;
+         }
+         u6aFill++;
+      }
+
+      /* "May differ again on the NEXT call" -- the sentence the whole rule rests
+       * on. One handle, three fills, alternating; each has to agree with an
+       * oracle driven the same way with everything supplied. */
+      {
+         TA_MAMA_Stream *alt = NULL, *altRef = NULL;
+         static double legBars[8], wantM[8], wantF[8];
+         int leg, declineLeg;
+         int altBeg = 0, altNb = 0, refBeg = 0, refNb = 0;
+
+         if( TA_MAMA_OpenAndFill( &alt, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS ||
+             TA_MAMA_OpenAndFill( &altRef, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS )
+         {
+            printf( "\nFailed: the alternating U6a opens did not run\n" );
+            if( alt ) TA_MAMA_Close( alt );
+            if( altRef ) TA_MAMA_Close( altRef );
+            return TA_BATCH_ARG_CONTROL;
+         }
+         for( leg = 0; leg < 3; leg++ )
+         {
+            declineLeg = ( leg != 1 );
+            for( k = 0; k < 8; k++ )
+            {
+               legBars[k] = fillBars[k] + (double)leg;
+               wantM[k] = wantF[k] = gotM[k] = gotF[k] = U6A_CANARY;
+            }
+            if( TA_MAMA_UpdateAndFill( altRef, legBars, 8, wantM, wantF ) != TA_SUCCESS ||
+                TA_MAMA_UpdateAndFill( alt, legBars, 8, gotM, declineLeg ? NULL : gotF ) != TA_SUCCESS )
+            {
+               printf( "\nFailed: an alternating leg was rejected (leg %d)\n", leg );
+               TA_MAMA_Close( alt );
+               TA_MAMA_Close( altRef );
+               return TA_BATCH_ARG_CONTROL;
+            }
+            if( memcmp( gotM, wantM, sizeof(wantM) ) != 0 ||
+                ( !declineLeg && memcmp( gotF, wantF, sizeof(wantF) ) != 0 ) )
+            {
+               printf( "\nFailed: an alternating leg diverged (leg %d)\n", leg );
+               TA_MAMA_Close( alt );
+               TA_MAMA_Close( altRef );
+               return TA_BATCH_ARG_WRONG_CODE;
+            }
+            TA_StreamOutRange( alt, &altBeg, &altNb );
+            TA_StreamOutRange( altRef, &refBeg, &refNb );
+            if( altBeg != refBeg || altNb != refNb )
+            {
+               printf( "\nFailed: an alternating leg moved the range (leg %d)\n", leg );
+               TA_MAMA_Close( alt );
+               TA_MAMA_Close( altRef );
+               return TA_BATCH_ARG_WRONG_CODE;
+            }
+         }
+         if( TA_MAMA_Peek( alt, bars[251], &pm, &pf ) != TA_SUCCESS ||
+             TA_MAMA_Peek( altRef, bars[251], &rpm, &rpf ) != TA_SUCCESS ||
+             memcmp( &pf, &rpf, sizeof(double) ) != 0 ||
+             memcmp( &pm, &rpm, sizeof(double) ) != 0 )
+         {
+            printf( "\nFailed: alternating the declined set changed the handle\n" );
+            TA_MAMA_Close( alt );
+            TA_MAMA_Close( altRef );
+            return TA_BATCH_ARG_WRONG_CODE;
+         }
+         TA_MAMA_Close( alt );
+         TA_MAMA_Close( altRef );
+         u6aFill++;
+      }
+
+      /* C alone can decline at the SCALAR entry points: Update and Peek take an
+       * out-parameter per output, where the other three return the value. Same
+       * rule, same per-call reading. */
+      {
+         double bothM = 0.0, bothF = 0.0, soloM = 0.0, peekBothM = 0.0, peekBothF = 0.0, peekSoloM = 0.0;
+         TA_MAMA_Stream *ref2 = NULL;
+
+         if( TA_MAMA_OpenAndFill( &ref2, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS ||
+             TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS )
+         {
+            printf( "\nFailed: the scalar U6a opens did not run\n" );
+            if( ref2 ) TA_MAMA_Close( ref2 );
+            if( st ) TA_MAMA_Close( st );
+            return TA_BATCH_ARG_CONTROL;
+         }
+         if( TA_MAMA_Update( ref2, fillBars[0], &bothM, &bothF ) != TA_SUCCESS ||
+             TA_MAMA_Peek( ref2, fillBars[1], &peekBothM, &peekBothF ) != TA_SUCCESS ||
+             TA_MAMA_Update( st, fillBars[0], &soloM, NULL ) != TA_SUCCESS ||
+             TA_MAMA_Peek( st, fillBars[1], &peekSoloM, NULL ) != TA_SUCCESS )
+         {
+            printf( "\nFailed: declining outFAMA at Update or Peek was rejected\n" );
+            TA_MAMA_Close( ref2 );
+            TA_MAMA_Close( st );
+            return TA_BATCH_ARG_CONTROL;
+         }
+         /* Not merely accepted: the supplied output is the same value, and the
+          * NEXT bar is too -- which is what fails if declining stopped the
+          * computation FAMA feeds back. */
+         if( memcmp( &soloM, &bothM, sizeof(double) ) != 0 ||
+             memcmp( &peekSoloM, &peekBothM, sizeof(double) ) != 0 )
+         {
+            printf( "\nFailed: declining outFAMA at Update changed outMAMA\n" );
+            TA_MAMA_Close( ref2 );
+            TA_MAMA_Close( st );
+            return TA_BATCH_ARG_WRONG_CODE;
+         }
+         TA_MAMA_Close( ref2 );
+         TA_MAMA_Close( st );
+         st = NULL;
+         u6aFill++;
+      }
+
+      /* Declining the nullable output did not make the REQUIRED one optional. */
+      if( TA_MAMA_OpenAndFill( &st, bars, 252, 0.5, 0.05, &beg, &nb, outA, outB ) != TA_SUCCESS )
+      {
+         printf( "\nFailed: the U6a control open did not run\n" );
+         return TA_BATCH_ARG_CONTROL;
+      }
+      TA_StreamOutRange( st, &beg2, &nbBefore );
+      if( TA_MAMA_UpdateAndFill( st, fillBars, 8, NULL, NULL ) != TA_BAD_PARAM )
+      {
+         printf( "\nFailed: an absent outMAMA is still an absent argument\n" );
+         TA_MAMA_Close( st );
+         return TA_BATCH_ARG_WRONG_CODE;
+      }
+      u6aFill++;
+      TA_StreamOutRange( st, &beg2, &nb2 );
+      TA_MAMA_Close( st );
+      st = NULL;
+      if( nb2 != nbBefore )
+      {
+         printf( "\nFailed: a rejected UpdateAndFill committed bars (%d)\n", nb2 );
+         return TA_BATCH_ARG_WRONG_CODE;
+      }
+      u6aFill++;
+   }
+
+   printf( "  Declined output at UpdateAndFill (U6a): %d check(s)\n", u6aFill );
+
    printf( "  Batch argument contract (B4): %d rejection(s), %d control(s)\n",
            bacReject, bacAccept );
 
@@ -843,6 +1108,12 @@ static ErrorNumber testBatchArgumentContract( void )
    {
       printf( "\nFailed: the streaming argument gate ran fewer checks than it "
               "was written with\n" );
+      return TA_BATCH_ARG_VACUOUS;
+   }
+   if( u6aFill < 15 )
+   {
+      printf( "\nFailed: the declined-at-UpdateAndFill gate ran fewer checks "
+              "than it was written with\n" );
       return TA_BATCH_ARG_VACUOUS;
    }
 

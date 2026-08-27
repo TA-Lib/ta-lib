@@ -542,6 +542,144 @@ public static class StreamApiTest
         _b6a++;
     }
 
+    /// <summary>Rule U6a: <c>UpdateAndFill</c> declines a nullable output exactly
+    /// as the opener does, and the choice is the CALL's — the four open/fill
+    /// combinations are all accepted and all compute the same numbers.</summary>
+    /// <remarks>Non-vacuous in the same directions as the opener's probe, plus the
+    /// one this rule adds. The supplied run is the oracle, and the comparison a
+    /// backend that stopped computing FAMA cannot satisfy is the handle's own
+    /// <c>Value</c> after the fill, not the arrays. The mixed combinations are the
+    /// point of the rule: declining at <c>OpenAndFill</c> and supplying here — and
+    /// the reverse — must be as ordinary as either matching pair. A declining call
+    /// must still bound <c>outMAMA</c>, and still bound <c>outFAMA</c> where it IS
+    /// supplied.</remarks>
+    private const double U6aCanary = -1.2345678901234e300;
+
+    private static double[] CanaryFilled(int n)
+    {
+        var a = new double[n];
+        Array.Fill(a, U6aCanary);
+        return a;
+    }
+
+    private static bool WasWritten(double[] a)
+    {
+        foreach (double v in a) if (v == U6aCanary) return false;
+        return true;
+    }
+
+    private static void ADeclinedOutputAtUpdateAndFillIsAPropertyOfTheCall()
+    {
+        var core = new Core();
+        double[] closes = Closes(252);
+        int produced = closes.Length - core.MAMA_Lookback(0.5, 0.05);
+        var bars = new double[8];
+        for (int i = 0; i < bars.Length; i++) bars[i] = closes[closes.Length - 1] + 1.0 + i * 0.25;
+
+        Core.MAMA_Stream Opened(bool declinedAtOpen) =>
+            declinedAtOpen
+                ? core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced], default)
+                : core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced], new double[produced]);
+
+        // The oracle: supplied at open, supplied here.
+        Core.MAMA_Stream oracle = Opened(false);
+        // Canary-filled, not zero-filled: comparing two arrays the fill never
+        // wrote would otherwise pass on their shared initial value, which is
+        // exactly the break the supplied/supplied leg below is meant to catch.
+        double[] refMama = CanaryFilled(bars.Length);
+        double[] refFama = CanaryFilled(bars.Length);
+        oracle.UpdateAndFill(bars, refMama, refFama);
+        _u6a++;
+        Check(WasWritten(refMama) && WasWritten(refFama), "the oracle fill wrote both outputs");
+        double oracleFama = oracle.Value.FAMA;
+        double oracleMama = oracle.Value.MAMA;
+
+        foreach (bool declinedAtOpen in new[] { false, true })
+        {
+            string what = declinedAtOpen ? "declined at open" : "supplied at open";
+
+            Core.MAMA_Stream h = Opened(declinedAtOpen);
+            double[] mama = CanaryFilled(bars.Length);
+            h.UpdateAndFill(bars, mama, default);
+            _u6a++;
+            Check(WasWritten(mama) && refMama.AsSpan().SequenceEqual(mama),
+                what + ", declined here: outMAMA");
+            _u6a++;
+            Check(h.OutRange.BegIdx == oracle.OutRange.BegIdx
+                  && h.OutRange.Count == oracle.OutRange.Count,
+                what + ", declined here: the range");
+            // The state, not the write: FAMA feeds the next bar.
+            _u6a++;
+            Check(BitConverter.DoubleToInt64Bits(h.Value.FAMA)
+                  == BitConverter.DoubleToInt64Bits(oracleFama),
+                what + ", declined here: a declined outFAMA is still computed");
+            _u6a++;
+            Check(BitConverter.DoubleToInt64Bits(h.Value.MAMA)
+                  == BitConverter.DoubleToInt64Bits(oracleMama),
+                what + ", declined here: the handle's outMAMA");
+
+            Core.MAMA_Stream h2 = Opened(declinedAtOpen);
+            double[] mama2 = CanaryFilled(bars.Length);
+            double[] fama2 = CanaryFilled(bars.Length);
+            h2.UpdateAndFill(bars, mama2, fama2);
+            _u6a++;
+            Check(WasWritten(mama2) && WasWritten(fama2)
+                  && refMama.AsSpan().SequenceEqual(mama2) && refFama.AsSpan().SequenceEqual(fama2),
+                what + ", supplied here: both outputs");
+        }
+
+        // "May differ again on the NEXT call" — the sentence the whole rule rests
+        // on. One handle, three fills, alternating; each has to agree with an
+        // oracle driven the same way with everything supplied.
+        Core.MAMA_Stream alt = Opened(false);
+        Core.MAMA_Stream altRef = Opened(false);
+        bool[] plan = { true, false, true };
+        for (int k = 0; k < plan.Length; k++)
+        {
+            var leg = new double[bars.Length];
+            for (int i = 0; i < bars.Length; i++) leg[i] = bars[i] + k;
+            double[] wantM = CanaryFilled(leg.Length);
+            double[] wantF = CanaryFilled(leg.Length);
+            altRef.UpdateAndFill(leg, wantM, wantF);
+            double[] gotM = CanaryFilled(leg.Length);
+            double[] gotF = CanaryFilled(leg.Length);
+            if (plan[k])
+            {
+                alt.UpdateAndFill(leg, gotM, default);
+            }
+            else
+            {
+                alt.UpdateAndFill(leg, gotM, gotF);
+                _u6a++;
+                Check(WasWritten(gotF) && wantF.AsSpan().SequenceEqual(gotF),
+                    $"alternating leg {k}: outFAMA");
+            }
+            _u6a++;
+            Check(WasWritten(gotM) && wantM.AsSpan().SequenceEqual(gotM)
+                  && alt.OutRange.Count == altRef.OutRange.Count,
+                $"alternating leg {k}: outMAMA and the range");
+        }
+        _u6a++;
+        Check(BitConverter.DoubleToInt64Bits(alt.Value.FAMA)
+              == BitConverter.DoubleToInt64Bits(altRef.Value.FAMA),
+            "alternating the declined set left the handle's FAMA identical");
+
+        // Declining one output disarms neither the other's bound nor its own
+        // where it IS supplied, and a rejected fill commits nothing.
+        Core.MAMA_Stream guarded = Opened(false);
+        int before = guarded.OutRange.Count;
+        CheckThrows<ArgumentException>(
+            () => guarded.UpdateAndFill(bars, new double[bars.Length - 1], default),
+            "an undersized outMAMA is still rejected when outFAMA is declined");
+        _u6a++;
+        CheckThrows<ArgumentException>(
+            () => guarded.UpdateAndFill(bars, new double[bars.Length], new double[bars.Length - 1]),
+            "a supplied outFAMA is still bounded");
+        _u6a++;
+        Check(guarded.OutRange.Count == before, "a rejected fill commits nothing");
+        _u6a++;
+    }
+
     /// <summary>Rule S5, from both sides. The bound is
     /// <c>historyLen - lookback</c> — the count the fill actually writes, not
     /// the width of the history — so an exactly-sized output has to be ACCEPTED
@@ -843,6 +981,8 @@ public static class StreamApiTest
     private static int _s5;
     /* Rule B6a at the opener — a declined output, counted apart from S5's. */
     private static int _b6a;
+    /* Rule U6a at UpdateAndFill — counted apart from the opener's. */
+    private static int _u6a;
 
     private static int _nfOpen;
     private static int _nfBar;
@@ -1315,11 +1455,13 @@ public static class StreamApiTest
         NullArgumentsAreNamed();
         TheFillOutputBoundFromBothSides();
         ADeclinedFillOutputIsStillComputed();
+        ADeclinedOutputAtUpdateAndFillIsAPropertyOfTheCall();
         TheFillOutputBoundHoldsOnEveryTier();
         // Literal floors, HERE and not inside the methods above: a floor that
         // rides its own method is deleted along with the call it guards.
         Check(_s5 >= 5, $"the fill-capacity gate ran fewer checks than it was written with ({_s5})");
         Check(_b6a >= 6, $"the declined-output gate ran fewer checks than it was written with ({_b6a})");
+        Check(_u6a >= 19, $"the declined-at-updateAndFill gate ran fewer checks than it was written with ({_u6a})");
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();
         UpdateDoesNotAllocate();

@@ -36018,10 +36018,10 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                     let r0 = stu.out_range();
                     let mut u0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
                     let mut u1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-                    if stu.update_and_fill(&fz_c[p..p], &mut u0, &mut u1).is_err() { ufill_ok = false; }
-                    if stu.update_and_fill(&fz_c[p..], &mut u0[..0], &mut u1).is_ok() { ufill_ok = false; }
+                    if stu.update_and_fill(&fz_c[p..p], &mut u0, Some(&mut u1)).is_err() { ufill_ok = false; }
+                    if stu.update_and_fill(&fz_c[p..], &mut u0[..0], Some(&mut u1)).is_ok() { ufill_ok = false; }
                     if stu.out_range() != r0 { ufill_ok = false; }
-                    match stu.update_and_fill(&fz_c[p..], &mut u0, &mut u1) {
+                    match stu.update_and_fill(&fz_c[p..], &mut u0, Some(&mut u1)) {
                         Err(_) => { ufill_ok = false; }
                         Ok(()) => {
                             for t in p..svN { if sv_xtier_ne(u0[t - p], b0[t - beg], &mut zsign) { ufill_ok = false; } }

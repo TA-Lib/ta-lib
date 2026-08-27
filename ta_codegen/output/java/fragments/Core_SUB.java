@@ -272,6 +272,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         requireArgument("SUB updateAndFill", "inReal0", inReal0);
+         requireArgument("SUB updateAndFill", "inReal1", inReal1);
+         requireArgument("SUB updateAndFill", "outReal", outReal);
          final int barCount = inReal0.length;
          if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
             throw new TaLibArgumentException("SUB updateAndFill: BadParam", RetCode.BadParam);

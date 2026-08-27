@@ -505,6 +505,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLCOUNTERATTACK updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLCOUNTERATTACK updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLCOUNTERATTACK updateAndFill", "inLow", inLow);
+         requireArgument("CDLCOUNTERATTACK updateAndFill", "inClose", inClose);
+         requireArgument("CDLCOUNTERATTACK updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLCOUNTERATTACK updateAndFill: BadParam", RetCode.BadParam);

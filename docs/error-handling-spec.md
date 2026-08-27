@@ -233,7 +233,8 @@ stay armed on that call: an undersized `outMAMA` beside a declined `outFAMA` is
 still rejected, and so is an undersized `outFAMA` that WAS supplied.
 `test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend` pins the
 emitted shape in all four on the PR gate, because the three runtime probes are
-nightly.
+nightly. What the opener declines binds nothing later: rule U6a in 2.4 is the
+same choice, made again per call.
 
 [4] **The one check that precedes the pair** is not the same in each backend,
 and in each it is a precondition for evaluating the pair rather than an argument
@@ -320,11 +321,12 @@ borrow checker rejects the call at compile time.
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
-| U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
+| U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | —<br>&nbsp; |
 | U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[10] | n/a<br>[10] | n/a<br>[10] |
 | U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ⚠️<br>[11] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ⚠️<br>[11] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U6a | (`UpdateAndFill`) an output is **declined** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[12] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
@@ -340,6 +342,39 @@ the handle where it was, and a zero bar count is a success that does nothing.
 Reading the `n` bars as an input array instead — never scanned, `count += n`
 unconditionally — was considered and rejected; `docs/streaming-api-design.md`,
 "Catching up n bars at once", says why.
+
+**A declination is a property of the call.** U6a is S6a at this tier, and the two
+are independent: the set an `UpdateAndFill` declines may differ from the set the
+opener was given, in either direction, and may differ again on the next call.
+Nothing on the handle records it, and no call is rejected for presenting a set
+that differs from the one before it. What declining suppresses is the *write*,
+never the *computation* — a declined output is still computed and still reported
+by the handle, which is what `MAMA` needs: FAMA feeds the next bar. So
+`UpdateAndFill` with every `nullable` output declined is an `Update`.
+
+**A declined output is not an absent one**, and U6a only means anything where the
+tier can tell them apart. `UpdateAndFill` is the only place U2 has arguments to
+check in Java, and it now checks them — the same `requireArgument` the openers
+use, ahead of every length, so an absent array is a `BadParam` naming it rather
+than a length read off `null`. Rust and C# still answer `—`: a slice cannot be
+absent, and in C# a null array is an empty span, which the length bound rejects.
+
+C alone can decline at the **scalar** entry points as well — `Update` and `Peek`
+take an out-parameter per output, where the other three return the value and so
+have nothing to decline. It holds wherever the step's write to that output is
+guarded, which is every transcribed body; the two hand-rolled tiers (`Dispatch`,
+`PeriodBank`) copy the bar through an unguarded assignment and so require every
+output, declared `nullable` or not. Nothing shipped combines the two, and marking
+an output `nullable` on one of those tiers is the thing that would.
+
+No cross-language gate reaches U6a — every server binds every output — so each
+backend carries its own probe beside S6a's (`testBatchArgumentContract` in C,
+`tests/stream_open_contract.rs` in Rust, `BatchApiTest` in Java, `StreamApiTest`
+in C#), and the four are held to the same emitted shape on the PR gate by
+`test_mama_nullable_fama_is_declinable_at_update_and_fill_in_every_backend`. Each
+probe drives all four open/fill combinations and reads the declined value back
+through the handle, which is what a backend that "supported" declining by not
+computing would fail.
 
 **There is no value accessor in C or Rust**, so "read the current value" is a
 rule only two backends could carry, and it has no error surface in either: Java's
@@ -809,8 +844,10 @@ handle caches what the guarded store would have written, so `value()` is the
 same whether the output was supplied or not. `MA`'s `MAMA` arm is the caller
 that proves it: it declines `outFAMA` outright in all four backends, where three
 of them used to allocate a `historyLen`-sized buffer per open and throw it away.
-`UpdateAndFill` is not covered: only C accepts a declined output there, and
-nothing in this document claims otherwise.
+**`UpdateAndFill` honours it on the same terms** (rule U6a): U6's capacity bound
+is skipped for a declined output, the fill's store to it is guarded, and the
+value is still computed and still on the handle. The choice is the call's — see
+2.4 — so the four open/fill combinations are all ordinary calls.
 
 **How a caller spells "omitted" is not the same in every language.** Three of the
 four can say it outright; C# cannot, and does not need to:
@@ -845,8 +882,9 @@ closed the divergence in Appendix D item 11.
 every declared output and floor its length at one, so a backend that went back to
 requiring `outFAMA` — or to rejecting distinct empty buffers — would stay green in
 `--codegen`, `--xlang-hash` and `--fuzz-064` alike. Each backend therefore carries
-its own probe: `testBatchArgumentContract` (C), `tests/nullable_outputs.rs`
-(Rust), and `BatchApiTest` (Java and C#). Each compares a declining call against
+its own probe: `testBatchArgumentContract` (C), `tests/nullable_outputs.rs` and
+`tests/stream_open_contract.rs` (Rust), `BatchApiTest` (Java) and `BatchApiTest`
+plus `StreamApiTest` (C#). Each compares a declining call against
 the same call with the output supplied, rather than only asserting that it was
 accepted — a body that stopped computing the value, or took a different path
 without it, would pass the weaker check.

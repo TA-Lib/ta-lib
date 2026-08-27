@@ -910,6 +910,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         requireArgument("BETA updateAndFill", "inReal0", inReal0);
+         requireArgument("BETA updateAndFill", "inReal1", inReal1);
+         requireArgument("BETA updateAndFill", "outReal", outReal);
          final int barCount = inReal0.length;
          if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
             throw new TaLibArgumentException("BETA updateAndFill: BadParam", RetCode.BadParam);

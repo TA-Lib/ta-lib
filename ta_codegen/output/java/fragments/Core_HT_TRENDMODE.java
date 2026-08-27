@@ -1362,6 +1362,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], int outInteger[] ) {
+         requireArgument("HT_TRENDMODE updateAndFill", "inReal", inReal);
+         requireArgument("HT_TRENDMODE updateAndFill", "outInteger", outInteger);
          final int barCount = inReal.length;
          if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
             throw new TaLibArgumentException("HT_TRENDMODE updateAndFill: BadParam", RetCode.BadParam);

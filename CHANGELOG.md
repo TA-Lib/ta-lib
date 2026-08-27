@@ -45,7 +45,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
-- (#262) API (Rust, Java, C#): an output the library marks *nullable* can now be declined, as C has always allowed. `MAMA`'s `outFAMA` is the only one — pass `None` in Rust (its parameter is now `Option<&mut [f64]>`), `null` in Java, an empty span in C#. Declining skips the write, not the calculation: the other outputs are unchanged. It also removes the throwaway buffer those three languages allocated on every `MA` (and `BBANDS`, `STOCH`, …) call with an MA type of MAMA.
+- (#262) API (Rust, Java, C#): an output the library marks *nullable* can now be declined, as C has always allowed. `MAMA`'s `outFAMA` is the only one — pass `None` in Rust (its parameter is now `Option<&mut [f64]>`), `null` in Java, an empty span in C#. Declining skips the write, not the calculation: the other outputs are unchanged. It also removes the throwaway buffer those three languages allocated on every `MA` (and `BBANDS`, `STOCH`, …) call with an MA type of MAMA. (#270) The streaming API honours the same declination, at `OpenAndFill` and at `UpdateAndFill`, and the choice is made per call — it need not match what the handle was opened with. In Rust a nullable output is `Option<&mut [f64]>` at both, as it is in the batch API.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.

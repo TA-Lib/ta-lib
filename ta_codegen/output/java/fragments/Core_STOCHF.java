@@ -767,6 +767,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outFastK[], double outFastD[] ) {
+         requireArgument("STOCHF updateAndFill", "inHigh", inHigh);
+         requireArgument("STOCHF updateAndFill", "inLow", inLow);
+         requireArgument("STOCHF updateAndFill", "inClose", inClose);
+         requireArgument("STOCHF updateAndFill", "outFastK", outFastK);
+         requireArgument("STOCHF updateAndFill", "outFastD", outFastD);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
             throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);

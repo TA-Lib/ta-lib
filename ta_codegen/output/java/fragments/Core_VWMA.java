@@ -492,6 +492,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
+         requireArgument("VWMA updateAndFill", "inReal", inReal);
+         requireArgument("VWMA updateAndFill", "inVolume", inVolume);
+         requireArgument("VWMA updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("VWMA updateAndFill: BadParam", RetCode.BadParam);

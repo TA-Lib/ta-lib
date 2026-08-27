@@ -472,6 +472,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inVolume[], double outReal[] ) {
+         requireArgument("PVO updateAndFill", "inVolume", inVolume);
+         requireArgument("PVO updateAndFill", "outReal", outReal);
          final int barCount = inVolume.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inVolume )
             throw new TaLibArgumentException("PVO updateAndFill: BadParam", RetCode.BadParam);

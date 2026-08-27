@@ -495,6 +495,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("TRIX updateAndFill", "inReal", inReal);
+         requireArgument("TRIX updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("TRIX updateAndFill: BadParam", RetCode.BadParam);

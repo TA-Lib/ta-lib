@@ -1079,6 +1079,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outInPhase[], double outQuadrature[] ) {
+         requireArgument("HT_PHASOR updateAndFill", "inReal", inReal);
+         requireArgument("HT_PHASOR updateAndFill", "outInPhase", outInPhase);
+         requireArgument("HT_PHASOR updateAndFill", "outQuadrature", outQuadrature);
          final int barCount = inReal.length;
          if( outInPhase.length < barCount || outQuadrature.length < barCount || (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature )
             throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);

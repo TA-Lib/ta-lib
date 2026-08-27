@@ -929,6 +929,47 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
 // --- updateAndFill ---------------------------------------------------------------
 // One emitter for every tier: each owns a `<base>_StepImpl` with the same
 // surface, so the n-bar filler is that step in a loop (issue #246).
+/// `updateAndFill`'s javadoc — hoisted so the emitter itself stays readable.
+fn update_and_fill_doc(func: &FuncDef, count_src: &str) -> String {
+    let mut o = String::new();
+    // Rule U6a reads the same as S6a, and a caller of this tier needs telling in
+    // the same place a caller of the opener is told.
+    let declinable = {
+        let names = super::common::nullable_output_list(func);
+        if names.is_empty() {
+            String::new()
+        } else {
+            let list = names
+                .iter()
+                .map(|n| format!("{{@code {n}}}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!(
+                "\x20      * <p>{list} may be declined with {{@code null}}, per call and\n\
+                 \x20      * independently of what the opener was given: the value is still\n\
+                 \x20      * computed — {{@link #value()}} reports it — and nothing is written out.\n"
+            )
+        }
+    };
+    let _ = writeln!(
+        &mut o,
+        "\n      /**\n\
+         \x20      * Commit {{@code n}} closed bars and write their {{@code n}} values, in one\n\
+         \x20      * call — exactly {{@code n}} back-to-back {{@code update}} calls, with one\n\
+         \x20      * set of argument checks instead of {{@code n}}. {{@code n}} is\n\
+         \x20      * {{@code {count_src}}}; the outputs must hold at least that many, and must\n\
+         \x20      * not be the same array as an input or as each other.\n\
+         {declinable}\
+         \x20      * <p>{{@link #outRange()}} counts what was committed, which is what makes a\n\
+         \x20      * rejection readable: a non-finite bar {{@code k}} throws\n\
+         \x20      * {{@link IllegalArgumentException}} exactly as {{@code update}} would, with\n\
+         \x20      * bars {{@code 0..k}} committed and written, bar {{@code k}} and everything\n\
+         \x20      * after it not, and the count advanced by {{@code k}}.\n\
+         \x20      */"
+    );
+    o
+}
+
 fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     let base = base_name(func);
     let inputs = streaming::input_array_names(func);
@@ -946,30 +987,40 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     let reject = format!(
         "throw new TaLibArgumentException(\"{base} updateAndFill: BadParam\", RetCode.BadParam);"
     );
-    let _ = writeln!(
-        o,
-        "\n      /**\n\
-         \x20      * Commit {{@code n}} closed bars and write their {{@code n}} values, in one\n\
-         \x20      * call — exactly {{@code n}} back-to-back {{@code update}} calls, with one\n\
-         \x20      * set of argument checks instead of {{@code n}}. {{@code n}} is\n\
-         \x20      * {{@code {count_src}}}; the outputs must hold at least that many, and must\n\
-         \x20      * not be the same array as an input or as each other.\n\
-         \x20      * <p>{{@link #outRange()}} counts what was committed, which is what makes a\n\
-         \x20      * rejection readable: a non-finite bar {{@code k}} throws\n\
-         \x20      * {{@link IllegalArgumentException}} exactly as {{@code update}} would, with\n\
-         \x20      * bars {{@code 0..k}} committed and written, bar {{@code k}} and everything\n\
-         \x20      * after it not, and the count advanced by {{@code k}}.\n\
-         \x20      */"
-    );
+    o.push_str(&update_and_fill_doc(func, &count_src));
     let _ = writeln!(o, "      public void updateAndFill( {sig} ) {{");
+    // Rule U2, ahead of every length: a required array that is absent has no
+    // length to read, so without this the tier answered a raw
+    // `NullPointerException` naming neither the function nor the argument —
+    // where the contract is `RetCode.BadParam`, which in Java is a
+    // `TaLibArgumentException` that names both. It is `requireArgument`, the
+    // same helper the openers use, so the two tiers reject alike.
+    let nullable = super::common::nullable_output_names(func);
+    for name in inputs
+        .iter()
+        .cloned()
+        .chain(func.outputs.iter().map(|o| o.name.clone()).filter(|n| !nullable.contains(n)))
+    {
+        let _ = writeln!(
+            o,
+            "         requireArgument(\"{base} updateAndFill\", \"{name}\", {name});"
+        );
+    }
     let _ = writeln!(o, "         final int barCount = {count_src};");
     let mut checks: Vec<String> = inputs
         .iter()
         .skip(1)
         .map(|a| format!("{a}.length != barCount"))
         .collect();
+    // A `nullable` output may be declined here exactly as at the opener (rule
+    // U6a), per call: bounded only where it was supplied, and its store guarded.
+    // Nothing recorded at `Open` constrains what this call presents.
     for out in &func.outputs {
-        checks.push(format!("{}.length < barCount", out.name));
+        if nullable.contains(&out.name) {
+            checks.push(format!("({0} != null && {0}.length < barCount)", out.name));
+        } else {
+            checks.push(format!("{}.length < barCount", out.name));
+        }
     }
     if let Some(alias) = alias_condition(func) {
         checks.push(alias);
@@ -1014,7 +1065,8 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "{pad}   core.{base}_StepImpl(this, {});", idx_bars.join(", "));
     for out in &func.outputs {
         let name = &out.name;
-        let _ = writeln!(o, "{pad}   {name}[i] = this.cur_{name};");
+        let guard = if nullable.contains(name) { format!("if( {name} != null ) ") } else { String::new() };
+        let _ = writeln!(o, "{pad}   {guard}{name}[i] = this.cur_{name};");
     }
     let _ = writeln!(o, "{pad}   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;");
     if cached {

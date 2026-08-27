@@ -510,6 +510,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLHARAMICROSS updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLHARAMICROSS updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLHARAMICROSS updateAndFill", "inLow", inLow);
+         requireArgument("CDLHARAMICROSS updateAndFill", "inClose", inClose);
+         requireArgument("CDLHARAMICROSS updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLHARAMICROSS updateAndFill: BadParam", RetCode.BadParam);

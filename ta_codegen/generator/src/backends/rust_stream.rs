@@ -2429,11 +2429,25 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
             len_checks.push(format!("{a}.len() != {}.len()", inputs[0]));
         }
     }
+    // A `nullable` output may be declined here exactly as at the opener (rule
+    // U6a): `Option<&mut [T]>`, bounded only where it was supplied, and its
+    // slot for the bar swapped for a throwaway sink so the step still computes
+    // it. The choice is the CALL's, not the handle's — nothing recorded at
+    // `Open` constrains what this call presents.
+    let nullable = super::common::nullable_output_names(func);
     let mut out_sig = String::new();
+    let mut sink_decls = String::new();
     for out in &func.outputs {
-        let t = if out_is_int(func, &out.name) { "i32" } else { "f64" };
-        let _ = write!(out_sig, "{}: &mut [{t}], ", out.name);
-        len_checks.push(format!("{}.len() < barCount", out.name));
+        let (t, z) = if out_is_int(func, &out.name) { ("i32", "0_i32") } else { ("f64", "0.0_f64") };
+        let name = &out.name;
+        if nullable.contains(name) {
+            let _ = write!(out_sig, "mut {name}: Option<&mut [{t}]>, ");
+            len_checks.push(format!("{name}.as_deref().is_some_and(|o| o.len() < barCount)"));
+            let _ = writeln!(sink_decls, "        let mut sink_{name}: {t} = {z};");
+        } else {
+            let _ = write!(out_sig, "{name}: &mut [{t}], ");
+            len_checks.push(format!("{name}.len() < barCount"));
+        }
     }
     let count_src = inputs
         .first()
@@ -2446,7 +2460,13 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     let idx_outs: String = func
         .outputs
         .iter()
-        .map(|out| format!("&mut {}[i]", out.name))
+        .map(|out| {
+            if nullable.contains(&out.name) {
+                format!("slot_{}", out.name)
+            } else {
+                format!("&mut {}[i]", out.name)
+            }
+        })
         .collect::<Vec<_>>()
         .join(", ");
     let step_args = if idx_bars.is_empty() {
@@ -2454,12 +2474,30 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     } else {
         format!("{idx_bars}, {idx_outs}")
     };
+    // Rule U6a reads the same as S6a, and a caller of this tier needs telling in
+    // the same place a caller of the opener is told.
+    let declinable = if nullable.is_empty() {
+        String::new()
+    } else {
+        let list = super::common::nullable_output_list(func)
+            .iter()
+            .map(|n| format!("`{n}`"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!(
+            "\x20   ///\n\
+             \x20   /// {list} may be declined with `None`, per call and independently of\n\
+             \x20   /// what the opener was given: the value is still computed —\n\
+             \x20   /// [`Self::update`] reports it — and nothing is written out.\n"
+        )
+    };
     let _ = writeln!(
         o,
         "    /// Commit `n` closed bars and write their `n` values, in one call —\n\
          \x20   /// exactly `n` back-to-back [`Self::update`] calls, with one set of\n\
          \x20   /// argument checks instead of `n`. `n` is `{count_src}`; the outputs must\n\
          \x20   /// hold at least that many. Never allocates.\n\
+         {declinable}\
          \x20   ///\n\
          \x20   /// [`Self::out_range`] counts what was committed, which is what makes the\n\
          \x20   /// rejection below readable: there is no second out-parameter for it.\n\
@@ -2487,6 +2525,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
             len_checks.join(" || ")
         );
     }
+    o.push_str(&sink_decls);
     let _ = writeln!(o, "        for i in 0..barCount {{");
     if !inputs.is_empty() {
         let conds: Vec<String> = inputs.iter().map(|a| format!("!{a}[i].is_finite()")).collect();
@@ -2495,6 +2534,15 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
             "            if {} {{\n                return Err(RetCode::BadParam);\n            }}",
             conds.join(" || ")
         );
+    }
+    for out in &func.outputs {
+        let name = &out.name;
+        if nullable.contains(name) {
+            let _ = writeln!(
+                o,
+                "            let slot_{name} = match {name}.as_deref_mut() {{ Some(_s) => &mut _s[i], None => &mut sink_{name} }};"
+            );
+        }
     }
     let _ = writeln!(
         o,

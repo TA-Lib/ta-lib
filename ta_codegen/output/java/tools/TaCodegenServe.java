@@ -840,6 +840,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("AC updateAndFill", "inHigh", inHigh);
+             requireArgument("AC updateAndFill", "inLow", inLow);
+             requireArgument("AC updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("AC updateAndFill: BadParam", RetCode.BadParam);
@@ -1845,6 +1848,12 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+             requireArgument("ACCBANDS updateAndFill", "inHigh", inHigh);
+             requireArgument("ACCBANDS updateAndFill", "inLow", inLow);
+             requireArgument("ACCBANDS updateAndFill", "inClose", inClose);
+             requireArgument("ACCBANDS updateAndFill", "outRealUpperBand", outRealUpperBand);
+             requireArgument("ACCBANDS updateAndFill", "outRealMiddleBand", outRealMiddleBand);
+             requireArgument("ACCBANDS updateAndFill", "outRealLowerBand", outRealLowerBand);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
                 throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
@@ -2480,6 +2489,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ACOS updateAndFill", "inReal", inReal);
+             requireArgument("ACOS updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ACOS updateAndFill: BadParam", RetCode.BadParam);
@@ -2989,6 +3000,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("AD updateAndFill", "inHigh", inHigh);
+             requireArgument("AD updateAndFill", "inLow", inLow);
+             requireArgument("AD updateAndFill", "inClose", inClose);
+             requireArgument("AD updateAndFill", "inVolume", inVolume);
+             requireArgument("AD updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("AD updateAndFill: BadParam", RetCode.BadParam);
@@ -3476,6 +3492,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+             requireArgument("ADD updateAndFill", "inReal0", inReal0);
+             requireArgument("ADD updateAndFill", "inReal1", inReal1);
+             requireArgument("ADD updateAndFill", "outReal", outReal);
              final int barCount = inReal0.length;
              if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
                 throw new TaLibArgumentException("ADD updateAndFill: BadParam", RetCode.BadParam);
@@ -4197,6 +4216,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("ADOSC updateAndFill", "inHigh", inHigh);
+             requireArgument("ADOSC updateAndFill", "inLow", inLow);
+             requireArgument("ADOSC updateAndFill", "inClose", inClose);
+             requireArgument("ADOSC updateAndFill", "inVolume", inVolume);
+             requireArgument("ADOSC updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("ADOSC updateAndFill: BadParam", RetCode.BadParam);
@@ -5405,6 +5429,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("ADX updateAndFill", "inHigh", inHigh);
+             requireArgument("ADX updateAndFill", "inLow", inLow);
+             requireArgument("ADX updateAndFill", "inClose", inClose);
+             requireArgument("ADX updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("ADX updateAndFill: BadParam", RetCode.BadParam);
@@ -6400,6 +6428,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("ADXR updateAndFill", "inHigh", inHigh);
+             requireArgument("ADXR updateAndFill", "inLow", inLow);
+             requireArgument("ADXR updateAndFill", "inClose", inClose);
+             requireArgument("ADXR updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("ADXR updateAndFill: BadParam", RetCode.BadParam);
@@ -7178,6 +7210,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("AO updateAndFill", "inHigh", inHigh);
+             requireArgument("AO updateAndFill", "inLow", inLow);
+             requireArgument("AO updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("AO updateAndFill: BadParam", RetCode.BadParam);
@@ -7984,6 +8019,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("APO updateAndFill", "inReal", inReal);
+             requireArgument("APO updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("APO updateAndFill: BadParam", RetCode.BadParam);
@@ -8769,6 +8806,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outAroonDown[], double outAroonUp[] ) {
+             requireArgument("AROON updateAndFill", "inHigh", inHigh);
+             requireArgument("AROON updateAndFill", "inLow", inLow);
+             requireArgument("AROON updateAndFill", "outAroonDown", outAroonDown);
+             requireArgument("AROON updateAndFill", "outAroonUp", outAroonUp);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
                 throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
@@ -9636,6 +9677,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("AROONOSC updateAndFill", "inHigh", inHigh);
+             requireArgument("AROONOSC updateAndFill", "inLow", inLow);
+             requireArgument("AROONOSC updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("AROONOSC updateAndFill: BadParam", RetCode.BadParam);
@@ -10269,6 +10313,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ASIN updateAndFill", "inReal", inReal);
+             requireArgument("ASIN updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ASIN updateAndFill: BadParam", RetCode.BadParam);
@@ -10691,6 +10737,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ATAN updateAndFill", "inReal", inReal);
+             requireArgument("ATAN updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ATAN updateAndFill: BadParam", RetCode.BadParam);
@@ -11402,6 +11450,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("ATR updateAndFill", "inHigh", inHigh);
+             requireArgument("ATR updateAndFill", "inLow", inLow);
+             requireArgument("ATR updateAndFill", "inClose", inClose);
+             requireArgument("ATR updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("ATR updateAndFill: BadParam", RetCode.BadParam);
@@ -12099,6 +12151,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("AVGDEV updateAndFill", "inReal", inReal);
+             requireArgument("AVGDEV updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("AVGDEV updateAndFill: BadParam", RetCode.BadParam);
@@ -12613,6 +12667,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("AVGPRICE updateAndFill", "inOpen", inOpen);
+             requireArgument("AVGPRICE updateAndFill", "inHigh", inHigh);
+             requireArgument("AVGPRICE updateAndFill", "inLow", inLow);
+             requireArgument("AVGPRICE updateAndFill", "inClose", inClose);
+             requireArgument("AVGPRICE updateAndFill", "outReal", outReal);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("AVGPRICE updateAndFill: BadParam", RetCode.BadParam);
@@ -13707,6 +13766,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+             requireArgument("BBANDS updateAndFill", "inReal", inReal);
+             requireArgument("BBANDS updateAndFill", "outRealUpperBand", outRealUpperBand);
+             requireArgument("BBANDS updateAndFill", "outRealMiddleBand", outRealMiddleBand);
+             requireArgument("BBANDS updateAndFill", "outRealLowerBand", outRealLowerBand);
              final int barCount = inReal.length;
              if( outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
                 throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
@@ -14929,6 +14992,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+             requireArgument("BETA updateAndFill", "inReal0", inReal0);
+             requireArgument("BETA updateAndFill", "inReal1", inReal1);
+             requireArgument("BETA updateAndFill", "outReal", outReal);
              final int barCount = inReal0.length;
              if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
                 throw new TaLibArgumentException("BETA updateAndFill: BadParam", RetCode.BadParam);
@@ -15962,6 +16028,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("BOP updateAndFill", "inOpen", inOpen);
+             requireArgument("BOP updateAndFill", "inHigh", inHigh);
+             requireArgument("BOP updateAndFill", "inLow", inLow);
+             requireArgument("BOP updateAndFill", "inClose", inClose);
+             requireArgument("BOP updateAndFill", "outReal", outReal);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("BOP updateAndFill: BadParam", RetCode.BadParam);
@@ -16654,6 +16725,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("CCI updateAndFill", "inHigh", inHigh);
+             requireArgument("CCI updateAndFill", "inLow", inLow);
+             requireArgument("CCI updateAndFill", "inClose", inClose);
+             requireArgument("CCI updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("CCI updateAndFill: BadParam", RetCode.BadParam);
@@ -17415,6 +17490,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL2CROWS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL2CROWS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL2CROWS updateAndFill", "inLow", inLow);
+             requireArgument("CDL2CROWS updateAndFill", "inClose", inClose);
+             requireArgument("CDL2CROWS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL2CROWS updateAndFill: BadParam", RetCode.BadParam);
@@ -18188,6 +18268,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL3BLACKCROWS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL3BLACKCROWS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL3BLACKCROWS updateAndFill", "inLow", inLow);
+             requireArgument("CDL3BLACKCROWS updateAndFill", "inClose", inClose);
+             requireArgument("CDL3BLACKCROWS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL3BLACKCROWS updateAndFill: BadParam", RetCode.BadParam);
@@ -19018,6 +19103,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL3INSIDE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL3INSIDE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL3INSIDE updateAndFill", "inLow", inLow);
+             requireArgument("CDL3INSIDE updateAndFill", "inClose", inClose);
+             requireArgument("CDL3INSIDE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL3INSIDE updateAndFill: BadParam", RetCode.BadParam);
@@ -19833,6 +19923,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL3LINESTRIKE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL3LINESTRIKE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL3LINESTRIKE updateAndFill", "inLow", inLow);
+             requireArgument("CDL3LINESTRIKE updateAndFill", "inClose", inClose);
+             requireArgument("CDL3LINESTRIKE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL3LINESTRIKE updateAndFill: BadParam", RetCode.BadParam);
@@ -20517,6 +20612,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL3OUTSIDE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL3OUTSIDE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL3OUTSIDE updateAndFill", "inLow", inLow);
+             requireArgument("CDL3OUTSIDE updateAndFill", "inClose", inClose);
+             requireArgument("CDL3OUTSIDE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL3OUTSIDE updateAndFill: BadParam", RetCode.BadParam);
@@ -21393,6 +21493,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL3STARSINSOUTH updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL3STARSINSOUTH updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL3STARSINSOUTH updateAndFill", "inLow", inLow);
+             requireArgument("CDL3STARSINSOUTH updateAndFill", "inClose", inClose);
+             requireArgument("CDL3STARSINSOUTH updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL3STARSINSOUTH updateAndFill: BadParam", RetCode.BadParam);
@@ -22515,6 +22620,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDL3WHITESOLDIERS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDL3WHITESOLDIERS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDL3WHITESOLDIERS updateAndFill", "inLow", inLow);
+             requireArgument("CDL3WHITESOLDIERS updateAndFill", "inClose", inClose);
+             requireArgument("CDL3WHITESOLDIERS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDL3WHITESOLDIERS updateAndFill: BadParam", RetCode.BadParam);
@@ -23566,6 +23676,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLABANDONEDBABY updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLABANDONEDBABY updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLABANDONEDBABY updateAndFill", "inLow", inLow);
+             requireArgument("CDLABANDONEDBABY updateAndFill", "inClose", inClose);
+             requireArgument("CDLABANDONEDBABY updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLABANDONEDBABY updateAndFill: BadParam", RetCode.BadParam);
@@ -24697,6 +24812,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLADVANCEBLOCK updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLADVANCEBLOCK updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLADVANCEBLOCK updateAndFill", "inLow", inLow);
+             requireArgument("CDLADVANCEBLOCK updateAndFill", "inClose", inClose);
+             requireArgument("CDLADVANCEBLOCK updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLADVANCEBLOCK updateAndFill: BadParam", RetCode.BadParam);
@@ -25672,6 +25792,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLBELTHOLD updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLBELTHOLD updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLBELTHOLD updateAndFill", "inLow", inLow);
+             requireArgument("CDLBELTHOLD updateAndFill", "inClose", inClose);
+             requireArgument("CDLBELTHOLD updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLBELTHOLD updateAndFill: BadParam", RetCode.BadParam);
@@ -26452,6 +26577,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLBREAKAWAY updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLBREAKAWAY updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLBREAKAWAY updateAndFill", "inLow", inLow);
+             requireArgument("CDLBREAKAWAY updateAndFill", "inClose", inClose);
+             requireArgument("CDLBREAKAWAY updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLBREAKAWAY updateAndFill: BadParam", RetCode.BadParam);
@@ -27227,6 +27357,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inLow", inLow);
+             requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inClose", inClose);
+             requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLCLOSINGMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
@@ -28017,6 +28152,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLCONCEALBABYSWALL updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLCONCEALBABYSWALL updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLCONCEALBABYSWALL updateAndFill", "inLow", inLow);
+             requireArgument("CDLCONCEALBABYSWALL updateAndFill", "inClose", inClose);
+             requireArgument("CDLCONCEALBABYSWALL updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLCONCEALBABYSWALL updateAndFill: BadParam", RetCode.BadParam);
@@ -28849,6 +28989,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLCOUNTERATTACK updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLCOUNTERATTACK updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLCOUNTERATTACK updateAndFill", "inLow", inLow);
+             requireArgument("CDLCOUNTERATTACK updateAndFill", "inClose", inClose);
+             requireArgument("CDLCOUNTERATTACK updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLCOUNTERATTACK updateAndFill: BadParam", RetCode.BadParam);
@@ -29642,6 +29787,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLDARKCLOUDCOVER updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLDARKCLOUDCOVER updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLDARKCLOUDCOVER updateAndFill", "inLow", inLow);
+             requireArgument("CDLDARKCLOUDCOVER updateAndFill", "inClose", inClose);
+             requireArgument("CDLDARKCLOUDCOVER updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLDARKCLOUDCOVER updateAndFill: BadParam", RetCode.BadParam);
@@ -30330,6 +30480,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLDOJI updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLDOJI updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLDOJI updateAndFill", "inLow", inLow);
+             requireArgument("CDLDOJI updateAndFill", "inClose", inClose);
+             requireArgument("CDLDOJI updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLDOJI updateAndFill: BadParam", RetCode.BadParam);
@@ -31088,6 +31243,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLDOJISTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLDOJISTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLDOJISTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLDOJISTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLDOJISTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -31893,6 +32053,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLDRAGONFLYDOJI updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLDRAGONFLYDOJI updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLDRAGONFLYDOJI updateAndFill", "inLow", inLow);
+             requireArgument("CDLDRAGONFLYDOJI updateAndFill", "inClose", inClose);
+             requireArgument("CDLDRAGONFLYDOJI updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLDRAGONFLYDOJI updateAndFill: BadParam", RetCode.BadParam);
@@ -32576,6 +32741,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLENGULFING updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLENGULFING updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLENGULFING updateAndFill", "inLow", inLow);
+             requireArgument("CDLENGULFING updateAndFill", "inClose", inClose);
+             requireArgument("CDLENGULFING updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLENGULFING updateAndFill: BadParam", RetCode.BadParam);
@@ -33395,6 +33565,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLEVENINGDOJISTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLEVENINGDOJISTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLEVENINGDOJISTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLEVENINGDOJISTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLEVENINGDOJISTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLEVENINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -34332,6 +34507,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLEVENINGSTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLEVENINGSTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLEVENINGSTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLEVENINGSTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLEVENINGSTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLEVENINGSTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -35190,6 +35370,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLGAPSIDESIDEWHITE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLGAPSIDESIDEWHITE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLGAPSIDESIDEWHITE updateAndFill", "inLow", inLow);
+             requireArgument("CDLGAPSIDESIDEWHITE updateAndFill", "inClose", inClose);
+             requireArgument("CDLGAPSIDESIDEWHITE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE updateAndFill: BadParam", RetCode.BadParam);
@@ -36007,6 +36192,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLGRAVESTONEDOJI updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLGRAVESTONEDOJI updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLGRAVESTONEDOJI updateAndFill", "inLow", inLow);
+             requireArgument("CDLGRAVESTONEDOJI updateAndFill", "inClose", inClose);
+             requireArgument("CDLGRAVESTONEDOJI updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLGRAVESTONEDOJI updateAndFill: BadParam", RetCode.BadParam);
@@ -36911,6 +37101,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHAMMER updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHAMMER updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHAMMER updateAndFill", "inLow", inLow);
+             requireArgument("CDLHAMMER updateAndFill", "inClose", inClose);
+             requireArgument("CDLHAMMER updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHAMMER updateAndFill: BadParam", RetCode.BadParam);
@@ -37918,6 +38113,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHANGINGMAN updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHANGINGMAN updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHANGINGMAN updateAndFill", "inLow", inLow);
+             requireArgument("CDLHANGINGMAN updateAndFill", "inClose", inClose);
+             requireArgument("CDLHANGINGMAN updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHANGINGMAN updateAndFill: BadParam", RetCode.BadParam);
@@ -38838,6 +39038,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHARAMI updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHARAMI updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHARAMI updateAndFill", "inLow", inLow);
+             requireArgument("CDLHARAMI updateAndFill", "inClose", inClose);
+             requireArgument("CDLHARAMI updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHARAMI updateAndFill: BadParam", RetCode.BadParam);
@@ -39701,6 +39906,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHARAMICROSS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHARAMICROSS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHARAMICROSS updateAndFill", "inLow", inLow);
+             requireArgument("CDLHARAMICROSS updateAndFill", "inClose", inClose);
+             requireArgument("CDLHARAMICROSS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHARAMICROSS updateAndFill: BadParam", RetCode.BadParam);
@@ -40529,6 +40739,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHIGHWAVE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHIGHWAVE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHIGHWAVE updateAndFill", "inLow", inLow);
+             requireArgument("CDLHIGHWAVE updateAndFill", "inClose", inClose);
+             requireArgument("CDLHIGHWAVE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHIGHWAVE updateAndFill: BadParam", RetCode.BadParam);
@@ -41292,6 +41507,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHIKKAKE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHIKKAKE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHIKKAKE updateAndFill", "inLow", inLow);
+             requireArgument("CDLHIKKAKE updateAndFill", "inClose", inClose);
+             requireArgument("CDLHIKKAKE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHIKKAKE updateAndFill: BadParam", RetCode.BadParam);
@@ -42126,6 +42346,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHIKKAKEMOD updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHIKKAKEMOD updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHIKKAKEMOD updateAndFill", "inLow", inLow);
+             requireArgument("CDLHIKKAKEMOD updateAndFill", "inClose", inClose);
+             requireArgument("CDLHIKKAKEMOD updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHIKKAKEMOD updateAndFill: BadParam", RetCode.BadParam);
@@ -42973,6 +43198,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLHOMINGPIGEON updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLHOMINGPIGEON updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLHOMINGPIGEON updateAndFill", "inLow", inLow);
+             requireArgument("CDLHOMINGPIGEON updateAndFill", "inClose", inClose);
+             requireArgument("CDLHOMINGPIGEON updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLHOMINGPIGEON updateAndFill: BadParam", RetCode.BadParam);
@@ -43843,6 +44073,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inLow", inLow);
+             requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inClose", inClose);
+             requireArgument("CDLIDENTICAL3CROWS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLIDENTICAL3CROWS updateAndFill: BadParam", RetCode.BadParam);
@@ -44709,6 +44944,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLINNECK updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLINNECK updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLINNECK updateAndFill", "inLow", inLow);
+             requireArgument("CDLINNECK updateAndFill", "inClose", inClose);
+             requireArgument("CDLINNECK updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLINNECK updateAndFill: BadParam", RetCode.BadParam);
@@ -45568,6 +45808,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLINVERTEDHAMMER updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLINVERTEDHAMMER updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLINVERTEDHAMMER updateAndFill", "inLow", inLow);
+             requireArgument("CDLINVERTEDHAMMER updateAndFill", "inClose", inClose);
+             requireArgument("CDLINVERTEDHAMMER updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLINVERTEDHAMMER updateAndFill: BadParam", RetCode.BadParam);
@@ -46444,6 +46689,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLKICKING updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLKICKING updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLKICKING updateAndFill", "inLow", inLow);
+             requireArgument("CDLKICKING updateAndFill", "inClose", inClose);
+             requireArgument("CDLKICKING updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLKICKING updateAndFill: BadParam", RetCode.BadParam);
@@ -47290,6 +47540,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLKICKINGBYLENGTH updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLKICKINGBYLENGTH updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLKICKINGBYLENGTH updateAndFill", "inLow", inLow);
+             requireArgument("CDLKICKINGBYLENGTH updateAndFill", "inClose", inClose);
+             requireArgument("CDLKICKINGBYLENGTH updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLKICKINGBYLENGTH updateAndFill: BadParam", RetCode.BadParam);
@@ -48089,6 +48344,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLLADDERBOTTOM updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLLADDERBOTTOM updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLLADDERBOTTOM updateAndFill", "inLow", inLow);
+             requireArgument("CDLLADDERBOTTOM updateAndFill", "inClose", inClose);
+             requireArgument("CDLLADDERBOTTOM updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLLADDERBOTTOM updateAndFill: BadParam", RetCode.BadParam);
@@ -48865,6 +49125,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLLONGLEGGEDDOJI updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLLONGLEGGEDDOJI updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLLONGLEGGEDDOJI updateAndFill", "inLow", inLow);
+             requireArgument("CDLLONGLEGGEDDOJI updateAndFill", "inClose", inClose);
+             requireArgument("CDLLONGLEGGEDDOJI updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLLONGLEGGEDDOJI updateAndFill: BadParam", RetCode.BadParam);
@@ -49628,6 +49893,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLLONGLINE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLLONGLINE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLLONGLINE updateAndFill", "inLow", inLow);
+             requireArgument("CDLLONGLINE updateAndFill", "inClose", inClose);
+             requireArgument("CDLLONGLINE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLLONGLINE updateAndFill: BadParam", RetCode.BadParam);
@@ -50402,6 +50672,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLMARUBOZU updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLMARUBOZU updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLMARUBOZU updateAndFill", "inLow", inLow);
+             requireArgument("CDLMARUBOZU updateAndFill", "inClose", inClose);
+             requireArgument("CDLMARUBOZU updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
@@ -51138,6 +51413,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLMATCHINGLOW updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLMATCHINGLOW updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLMATCHINGLOW updateAndFill", "inLow", inLow);
+             requireArgument("CDLMATCHINGLOW updateAndFill", "inClose", inClose);
+             requireArgument("CDLMATCHINGLOW updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLMATCHINGLOW updateAndFill: BadParam", RetCode.BadParam);
@@ -52000,6 +52280,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLMATHOLD updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLMATHOLD updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLMATHOLD updateAndFill", "inLow", inLow);
+             requireArgument("CDLMATHOLD updateAndFill", "inClose", inClose);
+             requireArgument("CDLMATHOLD updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLMATHOLD updateAndFill: BadParam", RetCode.BadParam);
@@ -52989,6 +53274,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLMORNINGDOJISTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLMORNINGDOJISTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLMORNINGDOJISTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLMORNINGDOJISTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLMORNINGDOJISTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLMORNINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -53934,6 +54224,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLMORNINGSTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLMORNINGSTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLMORNINGSTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLMORNINGSTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLMORNINGSTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLMORNINGSTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -54786,6 +55081,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLONNECK updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLONNECK updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLONNECK updateAndFill", "inLow", inLow);
+             requireArgument("CDLONNECK updateAndFill", "inClose", inClose);
+             requireArgument("CDLONNECK updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLONNECK updateAndFill: BadParam", RetCode.BadParam);
@@ -55560,6 +55860,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLPIERCING updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLPIERCING updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLPIERCING updateAndFill", "inLow", inLow);
+             requireArgument("CDLPIERCING updateAndFill", "inClose", inClose);
+             requireArgument("CDLPIERCING updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLPIERCING updateAndFill: BadParam", RetCode.BadParam);
@@ -56381,6 +56686,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLRICKSHAWMAN updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLRICKSHAWMAN updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLRICKSHAWMAN updateAndFill", "inLow", inLow);
+             requireArgument("CDLRICKSHAWMAN updateAndFill", "inClose", inClose);
+             requireArgument("CDLRICKSHAWMAN updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLRICKSHAWMAN updateAndFill: BadParam", RetCode.BadParam);
@@ -57307,6 +57617,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLRISEFALL3METHODS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLRISEFALL3METHODS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLRISEFALL3METHODS updateAndFill", "inLow", inLow);
+             requireArgument("CDLRISEFALL3METHODS updateAndFill", "inClose", inClose);
+             requireArgument("CDLRISEFALL3METHODS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLRISEFALL3METHODS updateAndFill: BadParam", RetCode.BadParam);
@@ -58244,6 +58559,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLSEPARATINGLINES updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLSEPARATINGLINES updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLSEPARATINGLINES updateAndFill", "inLow", inLow);
+             requireArgument("CDLSEPARATINGLINES updateAndFill", "inClose", inClose);
+             requireArgument("CDLSEPARATINGLINES updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLSEPARATINGLINES updateAndFill: BadParam", RetCode.BadParam);
@@ -59148,6 +59468,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLSHOOTINGSTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLSHOOTINGSTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLSHOOTINGSTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLSHOOTINGSTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLSHOOTINGSTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLSHOOTINGSTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -59984,6 +60309,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLSHORTLINE updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLSHORTLINE updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLSHORTLINE updateAndFill", "inLow", inLow);
+             requireArgument("CDLSHORTLINE updateAndFill", "inClose", inClose);
+             requireArgument("CDLSHORTLINE updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLSHORTLINE updateAndFill: BadParam", RetCode.BadParam);
@@ -60693,6 +61023,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLSPINNINGTOP updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLSPINNINGTOP updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLSPINNINGTOP updateAndFill", "inLow", inLow);
+             requireArgument("CDLSPINNINGTOP updateAndFill", "inClose", inClose);
+             requireArgument("CDLSPINNINGTOP updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLSPINNINGTOP updateAndFill: BadParam", RetCode.BadParam);
@@ -61605,6 +61940,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLSTALLEDPATTERN updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLSTALLEDPATTERN updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLSTALLEDPATTERN updateAndFill", "inLow", inLow);
+             requireArgument("CDLSTALLEDPATTERN updateAndFill", "inClose", inClose);
+             requireArgument("CDLSTALLEDPATTERN updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLSTALLEDPATTERN updateAndFill: BadParam", RetCode.BadParam);
@@ -62492,6 +62832,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLSTICKSANDWICH updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLSTICKSANDWICH updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLSTICKSANDWICH updateAndFill", "inLow", inLow);
+             requireArgument("CDLSTICKSANDWICH updateAndFill", "inClose", inClose);
+             requireArgument("CDLSTICKSANDWICH updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLSTICKSANDWICH updateAndFill: BadParam", RetCode.BadParam);
@@ -63304,6 +63649,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLTAKURI updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLTAKURI updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLTAKURI updateAndFill", "inLow", inLow);
+             requireArgument("CDLTAKURI updateAndFill", "inClose", inClose);
+             requireArgument("CDLTAKURI updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLTAKURI updateAndFill: BadParam", RetCode.BadParam);
@@ -64102,6 +64452,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLTASUKIGAP updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLTASUKIGAP updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLTASUKIGAP updateAndFill", "inLow", inLow);
+             requireArgument("CDLTASUKIGAP updateAndFill", "inClose", inClose);
+             requireArgument("CDLTASUKIGAP updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLTASUKIGAP updateAndFill: BadParam", RetCode.BadParam);
@@ -64901,6 +65256,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLTHRUSTING updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLTHRUSTING updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLTHRUSTING updateAndFill", "inLow", inLow);
+             requireArgument("CDLTHRUSTING updateAndFill", "inClose", inClose);
+             requireArgument("CDLTHRUSTING updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLTHRUSTING updateAndFill: BadParam", RetCode.BadParam);
@@ -65684,6 +66044,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLTRISTAR updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLTRISTAR updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLTRISTAR updateAndFill", "inLow", inLow);
+             requireArgument("CDLTRISTAR updateAndFill", "inClose", inClose);
+             requireArgument("CDLTRISTAR updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLTRISTAR updateAndFill: BadParam", RetCode.BadParam);
@@ -66488,6 +66853,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLUNIQUE3RIVER updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLUNIQUE3RIVER updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLUNIQUE3RIVER updateAndFill", "inLow", inLow);
+             requireArgument("CDLUNIQUE3RIVER updateAndFill", "inClose", inClose);
+             requireArgument("CDLUNIQUE3RIVER updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLUNIQUE3RIVER updateAndFill: BadParam", RetCode.BadParam);
@@ -67336,6 +67706,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inLow", inLow);
+             requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inClose", inClose);
+             requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS updateAndFill: BadParam", RetCode.BadParam);
@@ -68057,6 +68432,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+             requireArgument("CDLXSIDEGAP3METHODS updateAndFill", "inOpen", inOpen);
+             requireArgument("CDLXSIDEGAP3METHODS updateAndFill", "inHigh", inHigh);
+             requireArgument("CDLXSIDEGAP3METHODS updateAndFill", "inLow", inLow);
+             requireArgument("CDLXSIDEGAP3METHODS updateAndFill", "inClose", inClose);
+             requireArgument("CDLXSIDEGAP3METHODS updateAndFill", "outInteger", outInteger);
              final int barCount = inOpen.length;
              if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
                 throw new TaLibArgumentException("CDLXSIDEGAP3METHODS updateAndFill: BadParam", RetCode.BadParam);
@@ -68557,6 +68937,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("CEIL updateAndFill", "inReal", inReal);
+             requireArgument("CEIL updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("CEIL updateAndFill: BadParam", RetCode.BadParam);
@@ -69297,6 +69679,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("CMF updateAndFill", "inHigh", inHigh);
+             requireArgument("CMF updateAndFill", "inLow", inLow);
+             requireArgument("CMF updateAndFill", "inClose", inClose);
+             requireArgument("CMF updateAndFill", "inVolume", inVolume);
+             requireArgument("CMF updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("CMF updateAndFill: BadParam", RetCode.BadParam);
@@ -70178,6 +70565,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("CMO updateAndFill", "inReal", inReal);
+             requireArgument("CMO updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("CMO updateAndFill: BadParam", RetCode.BadParam);
@@ -71074,6 +71463,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("CMOU updateAndFill", "inReal", inReal);
+             requireArgument("CMOU updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("CMOU updateAndFill: BadParam", RetCode.BadParam);
@@ -72163,6 +72554,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+             requireArgument("CORREL updateAndFill", "inReal0", inReal0);
+             requireArgument("CORREL updateAndFill", "inReal1", inReal1);
+             requireArgument("CORREL updateAndFill", "outReal", outReal);
              final int barCount = inReal0.length;
              if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
                 throw new TaLibArgumentException("CORREL updateAndFill: BadParam", RetCode.BadParam);
@@ -73023,6 +73417,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("COS updateAndFill", "inReal", inReal);
+             requireArgument("COS updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("COS updateAndFill: BadParam", RetCode.BadParam);
@@ -73444,6 +73840,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("COSH updateAndFill", "inReal", inReal);
+             requireArgument("COSH updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("COSH updateAndFill: BadParam", RetCode.BadParam);
@@ -74101,6 +74499,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("DEMA updateAndFill", "inReal", inReal);
+             requireArgument("DEMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("DEMA updateAndFill: BadParam", RetCode.BadParam);
@@ -74682,6 +75082,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+             requireArgument("DIV updateAndFill", "inReal0", inReal0);
+             requireArgument("DIV updateAndFill", "inReal1", inReal1);
+             requireArgument("DIV updateAndFill", "outReal", outReal);
              final int barCount = inReal0.length;
              if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
                 throw new TaLibArgumentException("DIV updateAndFill: BadParam", RetCode.BadParam);
@@ -75649,6 +76052,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("DX updateAndFill", "inHigh", inHigh);
+             requireArgument("DX updateAndFill", "inLow", inLow);
+             requireArgument("DX updateAndFill", "inClose", inClose);
+             requireArgument("DX updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("DX updateAndFill: BadParam", RetCode.BadParam);
@@ -76674,6 +77081,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("EFI updateAndFill", "inClose", inClose);
+             requireArgument("EFI updateAndFill", "inVolume", inVolume);
+             requireArgument("EFI updateAndFill", "outReal", outReal);
              final int barCount = inClose.length;
              if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("EFI updateAndFill: BadParam", RetCode.BadParam);
@@ -77466,6 +77876,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("EMA updateAndFill", "inReal", inReal);
+             requireArgument("EMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("EMA updateAndFill: BadParam", RetCode.BadParam);
@@ -77975,6 +78387,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("EXP updateAndFill", "inReal", inReal);
+             requireArgument("EXP updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("EXP updateAndFill: BadParam", RetCode.BadParam);
@@ -78394,6 +78808,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("FLOOR updateAndFill", "inReal", inReal);
+             requireArgument("FLOOR updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("FLOOR updateAndFill: BadParam", RetCode.BadParam);
@@ -79598,6 +80014,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("HMA updateAndFill", "inReal", inReal);
+             requireArgument("HMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("HMA updateAndFill: BadParam", RetCode.BadParam);
@@ -81535,6 +81953,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("HT_DCPERIOD updateAndFill", "inReal", inReal);
+             requireArgument("HT_DCPERIOD updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("HT_DCPERIOD updateAndFill: BadParam", RetCode.BadParam);
@@ -83409,6 +83829,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("HT_DCPHASE updateAndFill", "inReal", inReal);
+             requireArgument("HT_DCPHASE updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("HT_DCPHASE updateAndFill: BadParam", RetCode.BadParam);
@@ -85309,6 +85731,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outInPhase[], double outQuadrature[] ) {
+             requireArgument("HT_PHASOR updateAndFill", "inReal", inReal);
+             requireArgument("HT_PHASOR updateAndFill", "outInPhase", outInPhase);
+             requireArgument("HT_PHASOR updateAndFill", "outQuadrature", outQuadrature);
              final int barCount = inReal.length;
              if( outInPhase.length < barCount || outQuadrature.length < barCount || (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature )
                 throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
@@ -87239,6 +87664,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outSine[], double outLeadSine[] ) {
+             requireArgument("HT_SINE updateAndFill", "inReal", inReal);
+             requireArgument("HT_SINE updateAndFill", "outSine", outSine);
+             requireArgument("HT_SINE updateAndFill", "outLeadSine", outLeadSine);
              final int barCount = inReal.length;
              if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
                 throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
@@ -89205,6 +89633,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("HT_TRENDLINE updateAndFill", "inReal", inReal);
+             requireArgument("HT_TRENDLINE updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("HT_TRENDLINE updateAndFill: BadParam", RetCode.BadParam);
@@ -91345,6 +91775,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], int outInteger[] ) {
+             requireArgument("HT_TRENDMODE updateAndFill", "inReal", inReal);
+             requireArgument("HT_TRENDMODE updateAndFill", "outInteger", outInteger);
              final int barCount = inReal.length;
              if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
                 throw new TaLibArgumentException("HT_TRENDMODE updateAndFill: BadParam", RetCode.BadParam);
@@ -92713,6 +93145,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
+             requireArgument("IMI updateAndFill", "inOpen", inOpen);
+             requireArgument("IMI updateAndFill", "inClose", inClose);
+             requireArgument("IMI updateAndFill", "outReal", outReal);
              final int barCount = inOpen.length;
              if( inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("IMI updateAndFill: BadParam", RetCode.BadParam);
@@ -93651,6 +94086,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("KAMA updateAndFill", "inReal", inReal);
+             requireArgument("KAMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("KAMA updateAndFill: BadParam", RetCode.BadParam);
@@ -94684,6 +95121,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("LINEARREG updateAndFill", "inReal", inReal);
+             requireArgument("LINEARREG updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("LINEARREG updateAndFill: BadParam", RetCode.BadParam);
@@ -95722,6 +96161,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("LINEARREG_ANGLE updateAndFill", "inReal", inReal);
+             requireArgument("LINEARREG_ANGLE updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("LINEARREG_ANGLE updateAndFill: BadParam", RetCode.BadParam);
@@ -96754,6 +97195,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("LINEARREG_INTERCEPT updateAndFill", "inReal", inReal);
+             requireArgument("LINEARREG_INTERCEPT updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("LINEARREG_INTERCEPT updateAndFill: BadParam", RetCode.BadParam);
@@ -97782,6 +98225,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("LINEARREG_SLOPE updateAndFill", "inReal", inReal);
+             requireArgument("LINEARREG_SLOPE updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("LINEARREG_SLOPE updateAndFill: BadParam", RetCode.BadParam);
@@ -98495,6 +98940,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("LN updateAndFill", "inReal", inReal);
+             requireArgument("LN updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("LN updateAndFill: BadParam", RetCode.BadParam);
@@ -98922,6 +99369,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("LOG10 updateAndFill", "inReal", inReal);
+             requireArgument("LOG10 updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("LOG10 updateAndFill: BadParam", RetCode.BadParam);
@@ -99788,6 +100237,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("MA updateAndFill", "inReal", inReal);
+             requireArgument("MA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("MA updateAndFill: BadParam", RetCode.BadParam);
@@ -101063,6 +101514,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+             requireArgument("MACD updateAndFill", "inReal", inReal);
+             requireArgument("MACD updateAndFill", "outMACD", outMACD);
+             requireArgument("MACD updateAndFill", "outMACDSignal", outMACDSignal);
+             requireArgument("MACD updateAndFill", "outMACDHist", outMACDHist);
              final int barCount = inReal.length;
              if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
                 throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
@@ -102153,6 +102608,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+             requireArgument("MACDEXT updateAndFill", "inReal", inReal);
+             requireArgument("MACDEXT updateAndFill", "outMACD", outMACD);
+             requireArgument("MACDEXT updateAndFill", "outMACDSignal", outMACDSignal);
+             requireArgument("MACDEXT updateAndFill", "outMACDHist", outMACDHist);
              final int barCount = inReal.length;
              if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
                 throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
@@ -103106,6 +103565,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+             requireArgument("MACDFIX updateAndFill", "inReal", inReal);
+             requireArgument("MACDFIX updateAndFill", "outMACD", outMACD);
+             requireArgument("MACDFIX updateAndFill", "outMACDSignal", outMACDSignal);
+             requireArgument("MACDFIX updateAndFill", "outMACDHist", outMACDHist);
              final int barCount = inReal.length;
              if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
                 throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
@@ -104677,6 +105140,9 @@ class Core {
            * set of argument checks instead of {@code n}. {@code n} is
            * {@code inReal.length}; the outputs must hold at least that many, and must
            * not be the same array as an input or as each other.
+           * <p>{@code outFAMA} may be declined with {@code null}, per call and
+           * independently of what the opener was given: the value is still
+           * computed — {@link #value()} reports it — and nothing is written out.
            * <p>{@link #outRange()} counts what was committed, which is what makes a
            * rejection readable: a non-finite bar {@code k} throws
            * {@link IllegalArgumentException} exactly as {@code update} would, with
@@ -104684,8 +105150,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] ) {
+             requireArgument("MAMA updateAndFill", "inReal", inReal);
+             requireArgument("MAMA updateAndFill", "outMAMA", outMAMA);
              final int barCount = inReal.length;
-             if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
+             if( outMAMA.length < barCount || (outFAMA != null && outFAMA.length < barCount) || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
                 throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
              int done = 0;
              try {
@@ -104694,7 +105162,7 @@ class Core {
                       throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
                    core.MAMA_StepImpl(this, inReal[i]);
                    outMAMA[i] = this.cur_outMAMA;
-                   outFAMA[i] = this.cur_outFAMA;
+                   if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                    done = i + 1;
                 }
@@ -105819,6 +106287,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] ) {
+             requireArgument("MARKETFI updateAndFill", "inHigh", inHigh);
+             requireArgument("MARKETFI updateAndFill", "inLow", inLow);
+             requireArgument("MARKETFI updateAndFill", "inVolume", inVolume);
+             requireArgument("MARKETFI updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("MARKETFI updateAndFill: BadParam", RetCode.BadParam);
@@ -106799,6 +107271,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double inPeriods[], double outReal[] ) {
+             requireArgument("MAVP updateAndFill", "inReal", inReal);
+             requireArgument("MAVP updateAndFill", "inPeriods", inPeriods);
+             requireArgument("MAVP updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( inPeriods.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inPeriods )
                 throw new TaLibArgumentException("MAVP updateAndFill: BadParam", RetCode.BadParam);
@@ -107604,6 +108079,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("MAX updateAndFill", "inReal", inReal);
+             requireArgument("MAX updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("MAX updateAndFill: BadParam", RetCode.BadParam);
@@ -108301,6 +108778,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], int outInteger[] ) {
+             requireArgument("MAXINDEX updateAndFill", "inReal", inReal);
+             requireArgument("MAXINDEX updateAndFill", "outInteger", outInteger);
              final int barCount = inReal.length;
              if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
                 throw new TaLibArgumentException("MAXINDEX updateAndFill: BadParam", RetCode.BadParam);
@@ -108851,6 +109330,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("MEDPRICE updateAndFill", "inHigh", inHigh);
+             requireArgument("MEDPRICE updateAndFill", "inLow", inLow);
+             requireArgument("MEDPRICE updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("MEDPRICE updateAndFill: BadParam", RetCode.BadParam);
@@ -109654,6 +110136,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("MFI updateAndFill", "inHigh", inHigh);
+             requireArgument("MFI updateAndFill", "inLow", inLow);
+             requireArgument("MFI updateAndFill", "inClose", inClose);
+             requireArgument("MFI updateAndFill", "inVolume", inVolume);
+             requireArgument("MFI updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("MFI updateAndFill: BadParam", RetCode.BadParam);
@@ -110650,6 +111137,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("MIDPOINT updateAndFill", "inReal", inReal);
+             requireArgument("MIDPOINT updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("MIDPOINT updateAndFill: BadParam", RetCode.BadParam);
@@ -111609,6 +112098,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("MIDPRICE updateAndFill", "inHigh", inHigh);
+             requireArgument("MIDPRICE updateAndFill", "inLow", inLow);
+             requireArgument("MIDPRICE updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("MIDPRICE updateAndFill: BadParam", RetCode.BadParam);
@@ -112474,6 +112966,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("MIN updateAndFill", "inReal", inReal);
+             requireArgument("MIN updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("MIN updateAndFill: BadParam", RetCode.BadParam);
@@ -113169,6 +113663,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], int outInteger[] ) {
+             requireArgument("MININDEX updateAndFill", "inReal", inReal);
+             requireArgument("MININDEX updateAndFill", "outInteger", outInteger);
              final int barCount = inReal.length;
              if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
                 throw new TaLibArgumentException("MININDEX updateAndFill: BadParam", RetCode.BadParam);
@@ -114075,6 +114571,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outMin[], double outMax[] ) {
+             requireArgument("MINMAX updateAndFill", "inReal", inReal);
+             requireArgument("MINMAX updateAndFill", "outMin", outMin);
+             requireArgument("MINMAX updateAndFill", "outMax", outMax);
              final int barCount = inReal.length;
              if( outMin.length < barCount || outMax.length < barCount || (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax )
                 throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
@@ -114921,6 +115420,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], int outMinIdx[], int outMaxIdx[] ) {
+             requireArgument("MINMAXINDEX updateAndFill", "inReal", inReal);
+             requireArgument("MINMAXINDEX updateAndFill", "outMinIdx", outMinIdx);
+             requireArgument("MINMAXINDEX updateAndFill", "outMaxIdx", outMaxIdx);
              final int barCount = inReal.length;
              if( outMinIdx.length < barCount || outMaxIdx.length < barCount || (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx )
                 throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
@@ -116065,6 +116567,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("MINUS_DI updateAndFill", "inHigh", inHigh);
+             requireArgument("MINUS_DI updateAndFill", "inLow", inLow);
+             requireArgument("MINUS_DI updateAndFill", "inClose", inClose);
+             requireArgument("MINUS_DI updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("MINUS_DI updateAndFill: BadParam", RetCode.BadParam);
@@ -117359,6 +117865,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("MINUS_DM updateAndFill", "inHigh", inHigh);
+             requireArgument("MINUS_DM updateAndFill", "inLow", inLow);
+             requireArgument("MINUS_DM updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("MINUS_DM updateAndFill: BadParam", RetCode.BadParam);
@@ -118227,6 +118736,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("MOM updateAndFill", "inReal", inReal);
+             requireArgument("MOM updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("MOM updateAndFill: BadParam", RetCode.BadParam);
@@ -118740,6 +119251,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+             requireArgument("MULT updateAndFill", "inReal0", inReal0);
+             requireArgument("MULT updateAndFill", "inReal1", inReal1);
+             requireArgument("MULT updateAndFill", "outReal", outReal);
              final int barCount = inReal0.length;
              if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
                 throw new TaLibArgumentException("MULT updateAndFill: BadParam", RetCode.BadParam);
@@ -119532,6 +120046,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("NATR updateAndFill", "inHigh", inHigh);
+             requireArgument("NATR updateAndFill", "inLow", inLow);
+             requireArgument("NATR updateAndFill", "inClose", inClose);
+             requireArgument("NATR updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("NATR updateAndFill: BadParam", RetCode.BadParam);
@@ -120288,6 +120806,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("NVI updateAndFill", "inClose", inClose);
+             requireArgument("NVI updateAndFill", "inVolume", inVolume);
+             requireArgument("NVI updateAndFill", "outReal", outReal);
              final int barCount = inClose.length;
              if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("NVI updateAndFill: BadParam", RetCode.BadParam);
@@ -120827,6 +121348,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
+             requireArgument("OBV updateAndFill", "inReal", inReal);
+             requireArgument("OBV updateAndFill", "inVolume", inVolume);
+             requireArgument("OBV updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("OBV updateAndFill: BadParam", RetCode.BadParam);
@@ -121848,6 +122372,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("PLUS_DI updateAndFill", "inHigh", inHigh);
+             requireArgument("PLUS_DI updateAndFill", "inLow", inLow);
+             requireArgument("PLUS_DI updateAndFill", "inClose", inClose);
+             requireArgument("PLUS_DI updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("PLUS_DI updateAndFill: BadParam", RetCode.BadParam);
@@ -123141,6 +123669,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("PLUS_DM updateAndFill", "inHigh", inHigh);
+             requireArgument("PLUS_DM updateAndFill", "inLow", inLow);
+             requireArgument("PLUS_DM updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("PLUS_DM updateAndFill: BadParam", RetCode.BadParam);
@@ -124107,6 +124638,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("PPO updateAndFill", "inReal", inReal);
+             requireArgument("PPO updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("PPO updateAndFill: BadParam", RetCode.BadParam);
@@ -124729,6 +125262,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("PVI updateAndFill", "inClose", inClose);
+             requireArgument("PVI updateAndFill", "inVolume", inVolume);
+             requireArgument("PVI updateAndFill", "outReal", outReal);
              final int barCount = inClose.length;
              if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("PVI updateAndFill: BadParam", RetCode.BadParam);
@@ -125436,6 +125972,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inVolume[], double outReal[] ) {
+             requireArgument("PVO updateAndFill", "inVolume", inVolume);
+             requireArgument("PVO updateAndFill", "outReal", outReal);
              final int barCount = inVolume.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("PVO updateAndFill: BadParam", RetCode.BadParam);
@@ -126118,6 +126656,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
+             requireArgument("QSTICK updateAndFill", "inOpen", inOpen);
+             requireArgument("QSTICK updateAndFill", "inClose", inClose);
+             requireArgument("QSTICK updateAndFill", "outReal", outReal);
              final int barCount = inOpen.length;
              if( inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("QSTICK updateAndFill: BadParam", RetCode.BadParam);
@@ -126763,6 +127304,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ROC updateAndFill", "inReal", inReal);
+             requireArgument("ROC updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ROC updateAndFill: BadParam", RetCode.BadParam);
@@ -127394,6 +127937,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ROCP updateAndFill", "inReal", inReal);
+             requireArgument("ROCP updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ROCP updateAndFill: BadParam", RetCode.BadParam);
@@ -128028,6 +128573,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ROCR updateAndFill", "inReal", inReal);
+             requireArgument("ROCR updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ROCR updateAndFill: BadParam", RetCode.BadParam);
@@ -128664,6 +129211,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("ROCR100 updateAndFill", "inReal", inReal);
+             requireArgument("ROCR100 updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("ROCR100 updateAndFill: BadParam", RetCode.BadParam);
@@ -129499,6 +130048,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("RSI updateAndFill", "inReal", inReal);
+             requireArgument("RSI updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("RSI updateAndFill: BadParam", RetCode.BadParam);
@@ -130552,6 +131103,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("SAR updateAndFill", "inHigh", inHigh);
+             requireArgument("SAR updateAndFill", "inLow", inLow);
+             requireArgument("SAR updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("SAR updateAndFill: BadParam", RetCode.BadParam);
@@ -132033,6 +132587,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+             requireArgument("SAREXT updateAndFill", "inHigh", inHigh);
+             requireArgument("SAREXT updateAndFill", "inLow", inLow);
+             requireArgument("SAREXT updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
                 throw new TaLibArgumentException("SAREXT updateAndFill: BadParam", RetCode.BadParam);
@@ -132911,6 +133468,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("SIN updateAndFill", "inReal", inReal);
+             requireArgument("SIN updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("SIN updateAndFill: BadParam", RetCode.BadParam);
@@ -133330,6 +133889,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("SINH updateAndFill", "inReal", inReal);
+             requireArgument("SINH updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("SINH updateAndFill: BadParam", RetCode.BadParam);
@@ -133883,6 +134444,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("SMA updateAndFill", "inReal", inReal);
+             requireArgument("SMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("SMA updateAndFill: BadParam", RetCode.BadParam);
@@ -135110,6 +135673,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSMI[], double outSMISignal[] ) {
+             requireArgument("SMI updateAndFill", "inHigh", inHigh);
+             requireArgument("SMI updateAndFill", "inLow", inLow);
+             requireArgument("SMI updateAndFill", "inClose", inClose);
+             requireArgument("SMI updateAndFill", "outSMI", outSMI);
+             requireArgument("SMI updateAndFill", "outSMISignal", outSMISignal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
                 throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
@@ -135944,6 +136512,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("SQRT updateAndFill", "inReal", inReal);
+             requireArgument("SQRT updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("SQRT updateAndFill: BadParam", RetCode.BadParam);
@@ -136495,6 +137065,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("STDDEV updateAndFill", "inReal", inReal);
+             requireArgument("STDDEV updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("STDDEV updateAndFill: BadParam", RetCode.BadParam);
@@ -137577,6 +138149,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSlowK[], double outSlowD[] ) {
+             requireArgument("STOCH updateAndFill", "inHigh", inHigh);
+             requireArgument("STOCH updateAndFill", "inLow", inLow);
+             requireArgument("STOCH updateAndFill", "inClose", inClose);
+             requireArgument("STOCH updateAndFill", "outSlowK", outSlowK);
+             requireArgument("STOCH updateAndFill", "outSlowD", outSlowD);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outSlowK.length < barCount || outSlowD.length < barCount || (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD )
                 throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
@@ -138863,6 +139440,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outFastK[], double outFastD[] ) {
+             requireArgument("STOCHF updateAndFill", "inHigh", inHigh);
+             requireArgument("STOCHF updateAndFill", "inLow", inLow);
+             requireArgument("STOCHF updateAndFill", "inClose", inClose);
+             requireArgument("STOCHF updateAndFill", "outFastK", outFastK);
+             requireArgument("STOCHF updateAndFill", "outFastD", outFastD);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
                 throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
@@ -139910,6 +140492,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outFastK[], double outFastD[] ) {
+             requireArgument("STOCHRSI updateAndFill", "inReal", inReal);
+             requireArgument("STOCHRSI updateAndFill", "outFastK", outFastK);
+             requireArgument("STOCHRSI updateAndFill", "outFastD", outFastD);
              final int barCount = inReal.length;
              if( outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD )
                 throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
@@ -140464,6 +141049,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+             requireArgument("SUB updateAndFill", "inReal0", inReal0);
+             requireArgument("SUB updateAndFill", "inReal1", inReal1);
+             requireArgument("SUB updateAndFill", "outReal", outReal);
              final int barCount = inReal0.length;
              if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
                 throw new TaLibArgumentException("SUB updateAndFill: BadParam", RetCode.BadParam);
@@ -140999,6 +141587,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("SUM updateAndFill", "inReal", inReal);
+             requireArgument("SUM updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("SUM updateAndFill: BadParam", RetCode.BadParam);
@@ -141858,6 +142448,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("T3 updateAndFill", "inReal", inReal);
+             requireArgument("T3 updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("T3 updateAndFill: BadParam", RetCode.BadParam);
@@ -142471,6 +143063,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TAN updateAndFill", "inReal", inReal);
+             requireArgument("TAN updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("TAN updateAndFill: BadParam", RetCode.BadParam);
@@ -142892,6 +143486,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TANH updateAndFill", "inReal", inReal);
+             requireArgument("TANH updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("TANH updateAndFill: BadParam", RetCode.BadParam);
@@ -143592,6 +144188,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TEMA updateAndFill", "inReal", inReal);
+             requireArgument("TEMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("TEMA updateAndFill: BadParam", RetCode.BadParam);
@@ -144295,6 +144893,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("TRANGE updateAndFill", "inHigh", inHigh);
+             requireArgument("TRANGE updateAndFill", "inLow", inLow);
+             requireArgument("TRANGE updateAndFill", "inClose", inClose);
+             requireArgument("TRANGE updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("TRANGE updateAndFill: BadParam", RetCode.BadParam);
@@ -145238,6 +145840,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TRIMA updateAndFill", "inReal", inReal);
+             requireArgument("TRIMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("TRIMA updateAndFill: BadParam", RetCode.BadParam);
@@ -146386,6 +146990,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TRIX updateAndFill", "inReal", inReal);
+             requireArgument("TRIX updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("TRIX updateAndFill: BadParam", RetCode.BadParam);
@@ -147250,6 +147856,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TSF updateAndFill", "inReal", inReal);
+             requireArgument("TSF updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("TSF updateAndFill: BadParam", RetCode.BadParam);
@@ -147990,6 +148598,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("TYPPRICE updateAndFill", "inHigh", inHigh);
+             requireArgument("TYPPRICE updateAndFill", "inLow", inLow);
+             requireArgument("TYPPRICE updateAndFill", "inClose", inClose);
+             requireArgument("TYPPRICE updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("TYPPRICE updateAndFill: BadParam", RetCode.BadParam);
@@ -149043,6 +149655,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("ULTOSC updateAndFill", "inHigh", inHigh);
+             requireArgument("ULTOSC updateAndFill", "inLow", inLow);
+             requireArgument("ULTOSC updateAndFill", "inClose", inClose);
+             requireArgument("ULTOSC updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("ULTOSC updateAndFill: BadParam", RetCode.BadParam);
@@ -150203,6 +150819,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("VAR updateAndFill", "inReal", inReal);
+             requireArgument("VAR updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("VAR updateAndFill: BadParam", RetCode.BadParam);
@@ -151133,6 +151751,11 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+             requireArgument("VWAP updateAndFill", "inHigh", inHigh);
+             requireArgument("VWAP updateAndFill", "inLow", inLow);
+             requireArgument("VWAP updateAndFill", "inClose", inClose);
+             requireArgument("VWAP updateAndFill", "inVolume", inVolume);
+             requireArgument("VWAP updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("VWAP updateAndFill: BadParam", RetCode.BadParam);
@@ -151991,6 +152614,9 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
+             requireArgument("VWMA updateAndFill", "inReal", inReal);
+             requireArgument("VWMA updateAndFill", "inVolume", inVolume);
+             requireArgument("VWMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume )
                 throw new TaLibArgumentException("VWMA updateAndFill: BadParam", RetCode.BadParam);
@@ -152728,6 +153354,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("WAD updateAndFill", "inHigh", inHigh);
+             requireArgument("WAD updateAndFill", "inLow", inLow);
+             requireArgument("WAD updateAndFill", "inClose", inClose);
+             requireArgument("WAD updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("WAD updateAndFill: BadParam", RetCode.BadParam);
@@ -153263,6 +153893,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("WCLPRICE updateAndFill", "inHigh", inHigh);
+             requireArgument("WCLPRICE updateAndFill", "inLow", inLow);
+             requireArgument("WCLPRICE updateAndFill", "inClose", inClose);
+             requireArgument("WCLPRICE updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("WCLPRICE updateAndFill: BadParam", RetCode.BadParam);
@@ -154100,6 +154734,10 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+             requireArgument("WILLR updateAndFill", "inHigh", inHigh);
+             requireArgument("WILLR updateAndFill", "inLow", inLow);
+             requireArgument("WILLR updateAndFill", "inClose", inClose);
+             requireArgument("WILLR updateAndFill", "outReal", outReal);
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
                 throw new TaLibArgumentException("WILLR updateAndFill: BadParam", RetCode.BadParam);
@@ -155062,6 +155700,8 @@ class Core {
            * after it not, and the count advanced by {@code k}.
            */
           public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("WMA updateAndFill", "inReal", inReal);
+             requireArgument("WMA updateAndFill", "outReal", outReal);
              final int barCount = inReal.length;
              if( outReal.length < barCount || (Object)outReal == (Object)inReal )
                 throw new TaLibArgumentException("WMA updateAndFill: BadParam", RetCode.BadParam);

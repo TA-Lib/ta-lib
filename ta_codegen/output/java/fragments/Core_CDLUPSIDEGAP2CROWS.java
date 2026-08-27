@@ -505,6 +505,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inLow", inLow);
+         requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inClose", inClose);
+         requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS updateAndFill: BadParam", RetCode.BadParam);

@@ -770,6 +770,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double inPeriods[], double outReal[] ) {
+         requireArgument("MAVP updateAndFill", "inReal", inReal);
+         requireArgument("MAVP updateAndFill", "inPeriods", inPeriods);
+         requireArgument("MAVP updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( inPeriods.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inPeriods )
             throw new TaLibArgumentException("MAVP updateAndFill: BadParam", RetCode.BadParam);

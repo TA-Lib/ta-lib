@@ -424,6 +424,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], int outInteger[] ) {
+         requireArgument("MAXINDEX updateAndFill", "inReal", inReal);
+         requireArgument("MAXINDEX updateAndFill", "outInteger", outInteger);
          final int barCount = inReal.length;
          if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
             throw new TaLibArgumentException("MAXINDEX updateAndFill: BadParam", RetCode.BadParam);

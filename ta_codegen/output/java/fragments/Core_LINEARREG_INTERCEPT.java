@@ -585,6 +585,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("LINEARREG_INTERCEPT updateAndFill", "inReal", inReal);
+         requireArgument("LINEARREG_INTERCEPT updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("LINEARREG_INTERCEPT updateAndFill: BadParam", RetCode.BadParam);

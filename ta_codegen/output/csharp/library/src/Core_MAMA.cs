@@ -1312,6 +1312,9 @@ public partial class Core
       /// <see cref="System.ArgumentException"/> exactly as <see cref="Update"/>
       /// would, with bars <c>0..k</c> committed and written, bar <c>k</c> and
       /// everything after it not, and the count advanced by <c>k</c>.</para>
+      /// <para><c>outFAMA</c> may be declined with an empty span, per call and
+      /// independently of what the opener was given: the value is still computed —
+      /// <see cref="Value"/> reports it — and nothing is written out.</para>
       /// </remarks>
       /// <param name="inReal">Closed bars for <c>inReal</c>, oldest first.</param>
       /// <param name="outMAMA">Receives one <c>outMAMA</c> value per bar committed.</param>
@@ -1319,13 +1322,13 @@ public partial class Core
       public void UpdateAndFill( ReadOnlySpan<double> inReal, Span<double> outMAMA, Span<double> outFAMA )
       {
          int barCount = inReal.Length;
-         if( outMAMA.Length < barCount || outFAMA.Length < barCount || outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) throw Core.StreamFailure("MAMA", "updateAndFill", RetCode.BadParam);
+         if( outMAMA.Length < barCount || (!outFAMA.IsEmpty && outFAMA.Length < barCount) || outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) throw Core.StreamFailure("MAMA", "updateAndFill", RetCode.BadParam);
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MAMA", "updateAndFill", RetCode.BadParam);
             core.MAMA_StepImpl(this, inReal[i]);
             outMAMA[i] = cur_outMAMA;
-            outFAMA[i] = cur_outFAMA;
+            if( !outFAMA.IsEmpty ) outFAMA[i] = cur_outFAMA;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
       }

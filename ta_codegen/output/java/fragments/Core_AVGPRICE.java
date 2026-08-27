@@ -298,6 +298,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         requireArgument("AVGPRICE updateAndFill", "inOpen", inOpen);
+         requireArgument("AVGPRICE updateAndFill", "inHigh", inHigh);
+         requireArgument("AVGPRICE updateAndFill", "inLow", inLow);
+         requireArgument("AVGPRICE updateAndFill", "inClose", inClose);
+         requireArgument("AVGPRICE updateAndFill", "outReal", outReal);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("AVGPRICE updateAndFill: BadParam", RetCode.BadParam);

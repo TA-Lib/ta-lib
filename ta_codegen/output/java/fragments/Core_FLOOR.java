@@ -261,6 +261,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("FLOOR updateAndFill", "inReal", inReal);
+         requireArgument("FLOOR updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("FLOOR updateAndFill: BadParam", RetCode.BadParam);

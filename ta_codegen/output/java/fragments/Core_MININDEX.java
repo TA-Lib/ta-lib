@@ -424,6 +424,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], int outInteger[] ) {
+         requireArgument("MININDEX updateAndFill", "inReal", inReal);
+         requireArgument("MININDEX updateAndFill", "outInteger", outInteger);
          final int barCount = inReal.length;
          if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
             throw new TaLibArgumentException("MININDEX updateAndFill: BadParam", RetCode.BadParam);

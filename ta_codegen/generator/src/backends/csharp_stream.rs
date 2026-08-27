@@ -1236,6 +1236,55 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
 }
 
 // --- UpdateAndFill ---------------------------------------------------------------
+/// `UpdateAndFill`'s XML doc — hoisted so the emitter itself stays readable.
+fn update_and_fill_doc(func: &FuncDef, inputs: &[String]) -> XmlDoc {
+    let mut d = XmlDoc::new();
+    d.summary(
+        "Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.",
+    );
+    d.open("remarks");
+    d.para(
+        "Exactly <c>n</c> back-to-back <see cref=\"Update\"/> calls, with one set of \
+         argument checks instead of <c>n</c>. The outputs must hold at least <c>n</c> \
+         values and must not overlap an input or each other.",
+    );
+    d.para(
+        "<see cref=\"OutRange\"/> counts what was committed, which is what makes a \
+         rejection readable: a non-finite bar <c>k</c> throws \
+         <see cref=\"System.ArgumentException\"/> exactly as <see cref=\"Update\"/> would, \
+         with bars <c>0..k</c> committed and written, bar <c>k</c> and everything after it \
+         not, and the count advanced by <c>k</c>.",
+    );
+    // Rule U6a reads the same as S6a, and a caller of this tier needs telling in
+    // the same place a caller of the opener is told.
+    {
+        let names = super::common::nullable_output_list(func);
+        if !names.is_empty() {
+            let list = names
+                .iter()
+                .map(|n| format!("<c>{n}</c>"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            d.para(&format!(
+                "{list} may be declined with an empty span, per call and independently of \
+                 what the opener was given: the value is still computed — \
+                 <see cref=\"Value\"/> reports it — and nothing is written out."
+            ));
+        }
+    }
+    d.close("remarks");
+    for input in inputs {
+        d.param(input, &format!("Closed bars for <c>{input}</c>, oldest first."));
+    }
+    for out in &func.outputs {
+        d.param(
+            &out.name,
+            &format!("Receives one <c>{}</c> value per bar committed.", out.name),
+        );
+    }
+    d
+}
+
 fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     let base = base_name(func);
     let inputs = streaming::input_array_names(func);
@@ -1256,35 +1305,8 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     let count_src = inputs
         .first()
         .map_or_else(|| "0".to_string(), |a| format!("{a}.Length"));
-    let mut d = XmlDoc::new();
-    d.summary(
-        "Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.",
-    );
-    d.open("remarks");
-    d.para(
-        "Exactly <c>n</c> back-to-back <see cref=\"Update\"/> calls, with one set of \
-         argument checks instead of <c>n</c>. The outputs must hold at least <c>n</c> \
-         values and must not overlap an input or each other.",
-    );
-    d.para(
-        "<see cref=\"OutRange\"/> counts what was committed, which is what makes a \
-         rejection readable: a non-finite bar <c>k</c> throws \
-         <see cref=\"System.ArgumentException\"/> exactly as <see cref=\"Update\"/> would, \
-         with bars <c>0..k</c> committed and written, bar <c>k</c> and everything after it \
-         not, and the count advanced by <c>k</c>.",
-    );
-    d.close("remarks");
-    for input in &inputs {
-        d.param(input, &format!("Closed bars for <c>{input}</c>, oldest first."));
-    }
-    for out in &func.outputs {
-        d.param(
-            &out.name,
-            &format!("Receives one <c>{}</c> value per bar committed.", out.name),
-        );
-    }
     o.push('\n');
-    o.push_str(&d.render(6));
+    o.push_str(&update_and_fill_doc(func, &inputs).render(6));
     let _ = writeln!(o, "      public void UpdateAndFill( {sig} )");
     let _ = writeln!(o, "      {{");
     let _ = writeln!(o, "         int barCount = {count_src};");
@@ -1293,8 +1315,17 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         .skip(1)
         .map(|a| format!("{a}.Length != barCount"))
         .collect();
+    // A `nullable` output may be declined here exactly as at the opener (rule
+    // U6a), per call: bounded only where it was supplied, and its store guarded.
+    // Nothing recorded at `Open` constrains what this call presents. An empty
+    // span IS the declination, as it is at the opener — a span cannot be null.
+    let nullable = super::common::nullable_output_names(func);
     for out in &func.outputs {
-        checks.push(format!("{}.Length < barCount", out.name));
+        if nullable.contains(&out.name) {
+            checks.push(format!("(!{0}.IsEmpty && {0}.Length < barCount)", out.name));
+        } else {
+            checks.push(format!("{}.Length < barCount", out.name));
+        }
     }
     if let Some(alias) = alias_condition(func, &inputs) {
         checks.push(alias);
@@ -1323,7 +1354,8 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "            core.{base}_StepImpl(this, {});", idx_bars.join(", "));
     for out in &func.outputs {
         let name = &out.name;
-        let _ = writeln!(o, "            {name}[i] = cur_{name};");
+        let guard = if nullable.contains(name) { format!("if( !{name}.IsEmpty ) ") } else { String::new() };
+        let _ = writeln!(o, "            {guard}{name}[i] = cur_{name};");
     }
     let _ = writeln!(o, "            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;");
     let _ = writeln!(o, "         }}");

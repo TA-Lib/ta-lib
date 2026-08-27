@@ -584,6 +584,12 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+         requireArgument("ACCBANDS updateAndFill", "inHigh", inHigh);
+         requireArgument("ACCBANDS updateAndFill", "inLow", inLow);
+         requireArgument("ACCBANDS updateAndFill", "inClose", inClose);
+         requireArgument("ACCBANDS updateAndFill", "outRealUpperBand", outRealUpperBand);
+         requireArgument("ACCBANDS updateAndFill", "outRealMiddleBand", outRealMiddleBand);
+         requireArgument("ACCBANDS updateAndFill", "outRealLowerBand", outRealLowerBand);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);

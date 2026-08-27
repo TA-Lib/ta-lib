@@ -884,6 +884,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         requireArgument("ULTOSC updateAndFill", "inHigh", inHigh);
+         requireArgument("ULTOSC updateAndFill", "inLow", inLow);
+         requireArgument("ULTOSC updateAndFill", "inClose", inClose);
+         requireArgument("ULTOSC updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("ULTOSC updateAndFill: BadParam", RetCode.BadParam);

@@ -1029,6 +1029,8 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("HT_DCPERIOD updateAndFill", "inReal", inReal);
+         requireArgument("HT_DCPERIOD updateAndFill", "outReal", outReal);
          final int barCount = inReal.length;
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("HT_DCPERIOD updateAndFill: BadParam", RetCode.BadParam);

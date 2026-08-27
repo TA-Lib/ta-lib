@@ -643,6 +643,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outMin[], double outMax[] ) {
+         requireArgument("MINMAX updateAndFill", "inReal", inReal);
+         requireArgument("MINMAX updateAndFill", "outMin", outMin);
+         requireArgument("MINMAX updateAndFill", "outMax", outMax);
          final int barCount = inReal.length;
          if( outMin.length < barCount || outMax.length < barCount || (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax )
             throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);

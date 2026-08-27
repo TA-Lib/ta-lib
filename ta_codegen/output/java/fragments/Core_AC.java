@@ -683,6 +683,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         requireArgument("AC updateAndFill", "inHigh", inHigh);
+         requireArgument("AC updateAndFill", "inLow", inLow);
+         requireArgument("AC updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
             throw new TaLibArgumentException("AC updateAndFill: BadParam", RetCode.BadParam);

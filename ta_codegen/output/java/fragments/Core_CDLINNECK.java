@@ -501,6 +501,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLINNECK updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLINNECK updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLINNECK updateAndFill", "inLow", inLow);
+         requireArgument("CDLINNECK updateAndFill", "inClose", inClose);
+         requireArgument("CDLINNECK updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLINNECK updateAndFill: BadParam", RetCode.BadParam);

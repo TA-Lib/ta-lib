@@ -473,6 +473,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inOpen", inOpen);
+         requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inHigh", inHigh);
+         requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inLow", inLow);
+         requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inClose", inClose);
+         requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "outInteger", outInteger);
          final int barCount = inOpen.length;
          if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
             throw new TaLibArgumentException("CDLCLOSINGMARUBOZU updateAndFill: BadParam", RetCode.BadParam);

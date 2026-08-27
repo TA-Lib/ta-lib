@@ -556,6 +556,9 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outFastK[], double outFastD[] ) {
+         requireArgument("STOCHRSI updateAndFill", "inReal", inReal);
+         requireArgument("STOCHRSI updateAndFill", "outFastK", outFastK);
+         requireArgument("STOCHRSI updateAndFill", "outFastD", outFastD);
          final int barCount = inReal.length;
          if( outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD )
             throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);

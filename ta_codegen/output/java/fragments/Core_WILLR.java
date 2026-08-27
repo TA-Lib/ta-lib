@@ -668,6 +668,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         requireArgument("WILLR updateAndFill", "inHigh", inHigh);
+         requireArgument("WILLR updateAndFill", "inLow", inLow);
+         requireArgument("WILLR updateAndFill", "inClose", inClose);
+         requireArgument("WILLR updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("WILLR updateAndFill: BadParam", RetCode.BadParam);

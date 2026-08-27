@@ -922,6 +922,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inReal[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+         requireArgument("BBANDS updateAndFill", "inReal", inReal);
+         requireArgument("BBANDS updateAndFill", "outRealUpperBand", outRealUpperBand);
+         requireArgument("BBANDS updateAndFill", "outRealMiddleBand", outRealMiddleBand);
+         requireArgument("BBANDS updateAndFill", "outRealLowerBand", outRealLowerBand);
          final int barCount = inReal.length;
          if( outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);

@@ -899,6 +899,10 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         requireArgument("ADX updateAndFill", "inHigh", inHigh);
+         requireArgument("ADX updateAndFill", "inLow", inLow);
+         requireArgument("ADX updateAndFill", "inClose", inClose);
+         requireArgument("ADX updateAndFill", "outReal", outReal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
             throw new TaLibArgumentException("ADX updateAndFill: BadParam", RetCode.BadParam);

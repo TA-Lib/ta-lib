@@ -997,6 +997,11 @@
        * after it not, and the count advanced by {@code k}.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSMI[], double outSMISignal[] ) {
+         requireArgument("SMI updateAndFill", "inHigh", inHigh);
+         requireArgument("SMI updateAndFill", "inLow", inLow);
+         requireArgument("SMI updateAndFill", "inClose", inClose);
+         requireArgument("SMI updateAndFill", "outSMI", outSMI);
+         requireArgument("SMI updateAndFill", "outSMISignal", outSMISignal);
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
             throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
