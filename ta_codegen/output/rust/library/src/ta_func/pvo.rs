@@ -340,7 +340,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PVO_Stream")]
 pub struct PVO_Stream {
-    core: Core,
     state: PVO_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -351,7 +350,6 @@ impl PVO_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `PVO_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -387,7 +385,7 @@ impl PVO_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PVO_step_impl(&self, sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn PVO_step_impl(sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
@@ -520,7 +518,7 @@ impl Core {
             let last_sc_outReal = sc_outReal[*outNBElement - 1];
             outReal[0] = last_sc_outReal;
         }
-        Ok(PVO_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(PVO_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::PVO_Open`] (composition seam).
@@ -635,7 +633,7 @@ impl PVO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.PVO_step_impl(&mut self.state, inVolume, &mut outReal)?;
+        Core::PVO_step_impl(&mut self.state, inVolume, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -668,7 +666,7 @@ impl PVO_Stream {
             if !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.PVO_step_impl(&mut self.state, inVolume[i], &mut outReal[i])?;
+            Core::PVO_step_impl(&mut self.state, inVolume[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

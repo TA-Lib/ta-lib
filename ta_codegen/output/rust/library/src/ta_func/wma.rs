@@ -409,7 +409,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WMA_Stream")]
 pub struct WMA_Stream {
-    core: Core,
     state: WMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -420,7 +419,6 @@ impl WMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `WMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -472,7 +470,7 @@ impl WMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn WMA_step_impl(&self, sp: &mut WMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn WMA_step_impl(sp: &mut WMA_StreamState, inReal: f64, outReal: &mut f64) {
         let mut j: usize = 0_usize;
         let mut rw: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
@@ -627,7 +625,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(WMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(WMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -811,7 +809,7 @@ impl Core {
             winCap_j: cap_j as usize,
             win_j_inReal,
         };
-        Ok(WMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(WMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::WMA_Open`] (composition seam).
@@ -924,7 +922,7 @@ impl WMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.WMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::WMA_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -957,7 +955,7 @@ impl WMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.WMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::WMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

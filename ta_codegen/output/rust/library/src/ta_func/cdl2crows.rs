@@ -358,7 +358,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDL2CROWS_Stream")]
 pub struct CDL2CROWS_Stream {
-    core: Core,
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
     state: CDL2CROWS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -369,7 +370,7 @@ impl CDL2CROWS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDL2CROWS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
+        self.cs_body_long = src.cs_body_long;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -419,13 +420,13 @@ impl CDL2CROWS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDL2CROWS_step_impl(&self, sp: &mut CDL2CROWS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL2CROWS_step_impl(sp: &mut CDL2CROWS_StreamState, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        let BodyLong_factor: f64 = cs_body_long.factor;
         if sp.ringCap_BodyLongTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyLong_rangeType {
@@ -675,7 +676,7 @@ impl Core {
             ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
             ring_BodyLongTrailingIdx_derived,
         };
-        Ok(CDL2CROWS_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDL2CROWS_Stream { cs_body_long: self.candle_settings.body_long, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDL2CROWS_Open`] (composition seam).
@@ -790,7 +791,7 @@ impl CDL2CROWS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDL2CROWS_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDL2CROWS_step_impl(&mut self.state, &self.cs_body_long, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -823,7 +824,7 @@ impl CDL2CROWS_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CDL2CROWS_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDL2CROWS_step_impl(&mut self.state, &self.cs_body_long, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

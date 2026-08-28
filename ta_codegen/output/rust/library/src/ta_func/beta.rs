@@ -580,7 +580,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BETA_Stream")]
 pub struct BETA_Stream {
-    core: Core,
     state: BETA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -591,7 +590,6 @@ impl BETA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `BETA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -661,7 +659,7 @@ impl BETA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BETA_step_impl(&self, sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn BETA_step_impl(sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut tmp_real: f64 = 0.0_f64;
         let mut denom: f64 = 0.0_f64;
         let mut denom_scale: f64 = 0.0_f64;
@@ -1252,7 +1250,7 @@ impl Core {
             x_inReal0,
             x_inReal1,
         };
-        Ok(BETA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BETA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::BETA_Open`] (composition seam).
@@ -1371,7 +1369,7 @@ impl BETA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.BETA_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::BETA_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1404,7 +1402,7 @@ impl BETA_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.BETA_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::BETA_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

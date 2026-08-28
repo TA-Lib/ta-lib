@@ -460,7 +460,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MFI_Stream")]
 pub struct MFI_Stream {
-    core: Core,
     state: MFI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -471,7 +470,6 @@ impl MFI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MFI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -517,7 +515,7 @@ impl MFI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MFI_step_impl(&self, sp: &mut MFI_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn MFI_step_impl(sp: &mut MFI_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         let mut tempValue3: f64 = 0.0_f64;
@@ -763,7 +761,7 @@ impl Core {
             cb_mflow_positive: mflow_positive,
             cb_mflow_negative: mflow_negative,
         };
-        Ok(MFI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MFI_Open`] (composition seam).
@@ -886,7 +884,7 @@ impl MFI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MFI_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        Core::MFI_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -919,7 +917,7 @@ impl MFI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MFI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
+            Core::MFI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

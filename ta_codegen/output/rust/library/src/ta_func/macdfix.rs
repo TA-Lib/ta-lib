@@ -464,7 +464,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MACDFIX_Stream")]
 pub struct MACDFIX_Stream {
-    core: Core,
     state: MACDFIX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -475,7 +474,6 @@ impl MACDFIX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MACDFIX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -515,7 +513,7 @@ impl MACDFIX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACDFIX_step_impl(&self, sp: &mut MACDFIX_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
+    fn MACDFIX_step_impl(sp: &mut MACDFIX_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
@@ -732,7 +730,7 @@ impl Core {
             fastK,
             signalK,
         };
-        Ok(MACDFIX_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MACDFIX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MACDFIX_Open`] (composition seam).
@@ -858,7 +856,7 @@ impl MACDFIX_Stream {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.MACDFIX_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
+        Core::MACDFIX_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -891,7 +889,7 @@ impl MACDFIX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MACDFIX_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i]);
+            Core::MACDFIX_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

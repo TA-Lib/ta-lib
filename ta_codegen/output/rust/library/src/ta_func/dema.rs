@@ -411,7 +411,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_DEMA_Stream")]
 pub struct DEMA_Stream {
-    core: Core,
     state: DEMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -422,7 +421,6 @@ impl DEMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `DEMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -456,7 +454,7 @@ impl DEMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn DEMA_step_impl(&self, sp: &mut DEMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn DEMA_step_impl(sp: &mut DEMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
@@ -515,7 +513,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(DEMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(DEMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
@@ -643,7 +641,7 @@ impl Core {
             prevEMA2,
             optInK_1,
         };
-        Ok(DEMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(DEMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::DEMA_Open`] (composition seam).
@@ -748,7 +746,7 @@ impl DEMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.DEMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::DEMA_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -781,7 +779,7 @@ impl DEMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.DEMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::DEMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

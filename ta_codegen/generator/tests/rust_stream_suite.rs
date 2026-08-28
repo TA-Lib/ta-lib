@@ -71,7 +71,10 @@ fn test_rust_sma_ring_stream_section() {
     let s = rust_stream_section("sma");
     // Handle + state struct shapes.
     assert!(s.contains("pub struct SMA_Stream {"));
-    assert!(s.contains("core: Core,"));
+    // No `Core` on the handle: SMA's step reads no candle setting, so it
+    // carries none (#274). `backend_suite`'s handle gate owns that claim
+    // across the tiers that do read one.
+    assert!(!s.contains("core: Core,"));
     assert!(s.contains("state: SMA_StreamState,"));
     assert!(s.contains("struct SMA_StreamState {"));
     assert!(s.contains("ring_trailingIdx_inReal: Vec<f64>,"));
@@ -81,7 +84,7 @@ fn test_rust_sma_ring_stream_section() {
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
     // Step: ring read-old-then-push order, `(*outReal)` write.
-    assert!(s.contains("fn SMA_step_impl(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
+    assert!(s.contains("fn SMA_step_impl(sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
     // `tempReal` is step-local scratch, not a handle field (#252).
     assert!(s.contains("(*outReal) = tempReal / (sp.optInTimePeriod as f64);"));
     assert!(!s.contains("tempReal: f64,"), "no scratch field on the state struct");
@@ -425,7 +428,7 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
     assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
     assert!(!fill.contains("outBegIdx"), "the public fill carries no out-meta pair:\n{fill}");
     assert!(
-        fill.contains("Ok((MA_Stream { core: self.clone(), state, out: fillRange }, fillRange))"),
+        fill.contains("Ok((MA_Stream { state, out: fillRange }, fillRange))"),
         "the public fill returns the arm's own range beside the handle, and keeps it \
          on the handle too (#241):\n{fill}"
     );

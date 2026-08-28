@@ -226,7 +226,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_DIV_Stream")]
 pub struct DIV_Stream {
-    core: Core,
     state: DIV_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -237,7 +236,6 @@ impl DIV_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `DIV_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -263,7 +261,7 @@ impl DIV_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn DIV_step_impl(&self, sp: &mut DIV_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn DIV_step_impl(sp: &mut DIV_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 / inReal1;
     }
 
@@ -307,7 +305,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = DIV_StreamState {
         };
-        Ok(DIV_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(DIV_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::DIV_Open`] (composition seam).
@@ -418,7 +416,7 @@ impl DIV_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.DIV_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::DIV_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -451,7 +449,7 @@ impl DIV_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.DIV_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::DIV_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

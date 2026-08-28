@@ -352,7 +352,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_VWMA_Stream")]
 pub struct VWMA_Stream {
-    core: Core,
     state: VWMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -363,7 +362,6 @@ impl VWMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `VWMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -403,7 +401,7 @@ impl VWMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn VWMA_step_impl(&self, sp: &mut VWMA_StreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
+    fn VWMA_step_impl(sp: &mut VWMA_StreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempPV: f64 = 0.0_f64;
         let mut tempV: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -492,7 +490,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(VWMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(VWMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut sumPV: f64 = 0.0_f64;
         let mut sumV: f64 = 0.0_f64;
@@ -583,7 +581,7 @@ impl Core {
             ring_trailingIdx_inReal,
             ring_trailingIdx_inVolume,
         };
-        Ok(VWMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(VWMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::VWMA_Open`] (composition seam).
@@ -702,7 +700,7 @@ impl VWMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.VWMA_step_impl(&mut self.state, inReal, inVolume, &mut outReal);
+        Core::VWMA_step_impl(&mut self.state, inReal, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -735,7 +733,7 @@ impl VWMA_Stream {
             if !inReal[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.VWMA_step_impl(&mut self.state, inReal[i], inVolume[i], &mut outReal[i]);
+            Core::VWMA_step_impl(&mut self.state, inReal[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

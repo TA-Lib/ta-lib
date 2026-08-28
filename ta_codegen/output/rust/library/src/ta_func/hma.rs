@@ -603,7 +603,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HMA_Stream")]
 pub struct HMA_Stream {
-    core: Core,
     state: HMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -614,7 +613,6 @@ impl HMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `HMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -714,7 +712,7 @@ impl HMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HMA_step_impl(&self, sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn HMA_step_impl(sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
@@ -972,7 +970,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(HMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         if optInTimePeriod == 2 || optInTimePeriod == 3 {
             let mut lookbackTotal: usize = 0_usize;
@@ -1164,7 +1162,7 @@ impl Core {
                 cbSize_dRing: 0_usize,
                 cb_dRing: Vec::new(),
             };
-            Ok(HMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut lookbackTotal: usize = 0_usize;
             let mut lookbackSqrt: usize = 0_usize;
@@ -1518,7 +1516,7 @@ impl Core {
                 cbSize_dRing: cbSize_dRing,
                 cb_dRing: dRing,
             };
-            Ok(HMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
@@ -1632,7 +1630,7 @@ impl HMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.HMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::HMA_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1665,7 +1663,7 @@ impl HMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.HMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::HMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

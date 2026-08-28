@@ -716,7 +716,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_TRENDMODE_Stream")]
 pub struct HT_TRENDMODE_Stream {
-    core: Core,
     state: HT_TRENDMODE_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -727,7 +726,6 @@ impl HT_TRENDMODE_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `HT_TRENDMODE_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -875,7 +873,7 @@ impl HT_TRENDMODE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_TRENDMODE_step_impl(&self, sp: &mut HT_TRENDMODE_StreamState, inReal: f64, outInteger: &mut i32) {
+    fn HT_TRENDMODE_step_impl(sp: &mut HT_TRENDMODE_StreamState, inReal: f64, outInteger: &mut i32) {
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
@@ -1723,7 +1721,7 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok(HT_TRENDMODE_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(HT_TRENDMODE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::HT_TRENDMODE_Open`] (composition seam).
@@ -1836,7 +1834,7 @@ impl HT_TRENDMODE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.HT_TRENDMODE_step_impl(&mut self.state, inReal, &mut outInteger);
+        Core::HT_TRENDMODE_step_impl(&mut self.state, inReal, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1869,7 +1867,7 @@ impl HT_TRENDMODE_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.HT_TRENDMODE_step_impl(&mut self.state, inReal[i], &mut outInteger[i]);
+            Core::HT_TRENDMODE_step_impl(&mut self.state, inReal[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

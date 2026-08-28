@@ -688,7 +688,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SAREXT_Stream")]
 pub struct SAREXT_Stream {
-    core: Core,
     state: SAREXT_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -699,7 +698,6 @@ impl SAREXT_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `SAREXT_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -755,7 +753,7 @@ impl SAREXT_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SAREXT_step_impl(&self, sp: &mut SAREXT_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn SAREXT_step_impl(sp: &mut SAREXT_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         prevLow = sp.newLow;
@@ -1227,7 +1225,7 @@ impl Core {
             ep,
             sar,
         };
-        Ok(SAREXT_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SAREXT_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SAREXT_Open`] (composition seam).
@@ -1336,7 +1334,7 @@ impl SAREXT_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.SAREXT_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::SAREXT_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1369,7 +1367,7 @@ impl SAREXT_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.SAREXT_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::SAREXT_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

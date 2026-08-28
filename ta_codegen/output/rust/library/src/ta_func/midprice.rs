@@ -436,7 +436,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MIDPRICE_Stream")]
 pub struct MIDPRICE_Stream {
-    core: Core,
     state: MIDPRICE_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -447,7 +446,6 @@ impl MIDPRICE_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MIDPRICE_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -495,7 +493,7 @@ impl MIDPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MIDPRICE_step_impl(&self, sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn MIDPRICE_step_impl(sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmpLow: f64 = 0.0_f64;
         let mut tmpHigh: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -705,7 +703,7 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok(MIDPRICE_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MIDPRICE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MIDPRICE_Open`] (composition seam).
@@ -822,7 +820,7 @@ impl MIDPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MIDPRICE_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::MIDPRICE_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -855,7 +853,7 @@ impl MIDPRICE_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MIDPRICE_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::MIDPRICE_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

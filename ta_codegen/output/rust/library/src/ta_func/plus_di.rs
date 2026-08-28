@@ -585,7 +585,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PLUS_DI_Stream")]
 pub struct PLUS_DI_Stream {
-    core: Core,
     state: PLUS_DI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -596,7 +595,6 @@ impl PLUS_DI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `PLUS_DI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -634,7 +632,7 @@ impl PLUS_DI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PLUS_DI_step_impl(&self, sp: &mut PLUS_DI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn PLUS_DI_step_impl(sp: &mut PLUS_DI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         if sp.optInTimePeriod <= 1 {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
@@ -921,7 +919,7 @@ impl Core {
                 prevPlusDM,
                 prevTR,
             };
-            Ok(PLUS_DI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(PLUS_DI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -1187,7 +1185,7 @@ impl Core {
                 prevPlusDM,
                 prevTR,
             };
-            Ok(PLUS_DI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(PLUS_DI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
@@ -1300,7 +1298,7 @@ impl PLUS_DI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.PLUS_DI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::PLUS_DI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1333,7 +1331,7 @@ impl PLUS_DI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.PLUS_DI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::PLUS_DI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

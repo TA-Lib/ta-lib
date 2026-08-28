@@ -616,7 +616,14 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSTALLEDPATTERN_Stream")]
 pub struct CDLSTALLEDPATTERN_Stream {
-    core: Core,
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
+    /// The `Near` setting this stream was opened with.
+    cs_near: CandleSetting,
+    /// The `ShadowVeryShort` setting this stream was opened with.
+    cs_shadow_very_short: CandleSetting,
     state: CDLSTALLEDPATTERN_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -627,7 +634,10 @@ impl CDLSTALLEDPATTERN_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLSTALLEDPATTERN_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
+        self.cs_body_long = src.cs_body_long;
+        self.cs_body_short = src.cs_body_short;
+        self.cs_near = src.cs_near;
+        self.cs_shadow_very_short = src.cs_shadow_very_short;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -707,32 +717,32 @@ impl CDLSTALLEDPATTERN_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSTALLEDPATTERN_step_impl(&self, sp: &mut CDLSTALLEDPATTERN_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSTALLEDPATTERN_step_impl(sp: &mut CDLSTALLEDPATTERN_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, cs_near: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
+        let BodyLong_factor: f64 = cs_body_long.factor;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
+        let BodyShort_factor: f64 = cs_body_short.factor;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
+        let Near_rangeType: i32 = cs_near.range_type as i32;
         #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
+        let Near_avgPeriod: i32 = cs_near.avg_period;
         #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
+        let Near_factor: f64 = cs_near.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
+        let ShadowVeryShort_rangeType: i32 = cs_shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
+        let ShadowVeryShort_avgPeriod: i32 = cs_shadow_very_short.avg_period;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
+        let ShadowVeryShort_factor: f64 = cs_shadow_very_short.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -1360,7 +1370,7 @@ impl Core {
             ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLSTALLEDPATTERN_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLSTALLEDPATTERN_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, cs_near: self.candle_settings.near, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLSTALLEDPATTERN_Open`] (composition seam).
@@ -1483,7 +1493,7 @@ impl CDLSTALLEDPATTERN_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLSTALLEDPATTERN_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLSTALLEDPATTERN_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, &self.cs_near, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1516,7 +1526,7 @@ impl CDLSTALLEDPATTERN_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CDLSTALLEDPATTERN_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLSTALLEDPATTERN_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, &self.cs_near, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

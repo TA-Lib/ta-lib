@@ -324,7 +324,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WAD_Stream")]
 pub struct WAD_Stream {
-    core: Core,
     state: WAD_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -335,7 +334,6 @@ impl WAD_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `WAD_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -365,7 +363,7 @@ impl WAD_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn WAD_step_impl(&self, sp: &mut WAD_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn WAD_step_impl(sp: &mut WAD_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut close: f64 = 0.0_f64;
         let mut trueExtreme: f64 = 0.0_f64;
         close = inClose;
@@ -483,7 +481,7 @@ impl Core {
             sum,
             prevClose,
         };
-        Ok(WAD_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(WAD_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::WAD_Open`] (composition seam).
@@ -595,7 +593,7 @@ impl WAD_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.WAD_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::WAD_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -628,7 +626,7 @@ impl WAD_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.WAD_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::WAD_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

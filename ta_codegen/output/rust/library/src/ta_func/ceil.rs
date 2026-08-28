@@ -215,7 +215,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CEIL_Stream")]
 pub struct CEIL_Stream {
-    core: Core,
     state: CEIL_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -226,7 +225,6 @@ impl CEIL_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CEIL_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -252,7 +250,7 @@ impl CEIL_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CEIL_step_impl(&self, sp: &mut CEIL_StreamState, inReal: f64, outReal: &mut f64) {
+    fn CEIL_step_impl(sp: &mut CEIL_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).ceil();
     }
 
@@ -293,7 +291,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = CEIL_StreamState {
         };
-        Ok(CEIL_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CEIL_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CEIL_Open`] (composition seam).
@@ -398,7 +396,7 @@ impl CEIL_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.CEIL_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::CEIL_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -431,7 +429,7 @@ impl CEIL_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CEIL_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::CEIL_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

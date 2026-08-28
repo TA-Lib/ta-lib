@@ -9535,8 +9535,11 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
         (
             "rust",
             &rust,
-            "fn SMA_step_impl(&self, sp: &mut SMA_StreamState,",
-            &["self.core.SMA_step_impl(&mut self.state,"],
+            // No `&self`: SMA's step reads nothing from `Core`, and a step that
+            // does reads only the `cs_<setting>` parameters its handle carries
+            // (issue #274).
+            "fn SMA_step_impl(sp: &mut SMA_StreamState,",
+            &["Core::SMA_step_impl(&mut self.state,"],
             "step_internal",
         ),
         (
@@ -13136,3 +13139,113 @@ fn every_declared_input_is_checked_in_every_backend() {
     assert_eq!(pairs, 7, "the seven never-indexed legs of #260");
 }
 
+
+/// A stream handle carries exactly the candlestick settings its own step reads,
+/// and no `Core` (issue #274).
+///
+/// The three rows are the three cases, and each is a control on the others: a
+/// step that reads one setting, a step that reads five, and a step that reads
+/// none. A handle that went back to embedding `Core` fails all three; one that
+/// widened to "every setting" fails the first two on the count; one that
+/// narrowed to nothing fails them on the field itself.
+#[test]
+fn a_stream_handle_carries_only_the_settings_its_step_reads() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    // (indicator, handle, the settings its step reads, in field order)
+    let cases: [(&str, &str, &[&str]); 3] = [
+        ("cdldoji", "CDLDOJI_Stream", &["cs_body_doji"]),
+        (
+            "cdladvanceblock",
+            "CDLADVANCEBLOCK_Stream",
+            &[
+                "cs_body_long",
+                "cs_far",
+                "cs_near",
+                "cs_shadow_long",
+                "cs_shadow_short",
+            ],
+        ),
+        ("sma", "SMA_Stream", &[]),
+    ];
+
+    for (name, handle, settings) in cases {
+        let (func, enums) = load_indicator(name);
+        assert!(func.streaming, "{name} must carry the `stream` flag");
+        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+
+        let start = rust
+            .find(&format!("pub struct {handle} {{"))
+            .unwrap_or_else(|| panic!("{name}: no {handle} definition"));
+        let body = &rust[start..start + rust[start..].find("\n}").expect("struct end")];
+
+        assert!(
+            !body.contains("core: Core,"),
+            "{name}: {handle} still embeds a whole Core"
+        );
+        assert_eq!(
+            body.matches(": CandleSetting,").count(),
+            settings.len(),
+            "{name}: {handle} carries the wrong number of settings\n{body}"
+        );
+        for field in settings {
+            assert!(
+                body.contains(&format!("{field}: CandleSetting,")),
+                "{name}: {handle} is missing {field}"
+            );
+        }
+
+        // The step takes them as parameters — it has no receiver to read them
+        // through — and the call site hands over the handle's own fields.
+        let params: String = settings
+            .iter()
+            .map(|f| format!(", {f}: &CandleSetting"))
+            .collect();
+        let args: String = settings.iter().map(|f| format!("&self.{f}, ")).collect();
+        let upper = name.to_uppercase();
+        assert!(
+            rust.contains(&format!(
+                "fn {upper}_step_impl(sp: &mut {upper}_StreamState{params},"
+            )),
+            "{name}: step signature does not take exactly its settings"
+        );
+        assert!(
+            rust.contains(&format!(
+                "Core::{upper}_step_impl(&mut self.state, {args}"
+            )),
+            "{name}: `update` does not hand the step its settings"
+        );
+    }
+}
+
+/// A step unpacks its candle settings from its own parameters; only the batch
+/// and `Open` tiers, which run on a `Core` receiver, read `self.candle_settings`
+/// (issue #274).
+#[test]
+fn a_stream_step_reads_candle_settings_from_its_parameters() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let (func, enums) = load_indicator("cdldoji");
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+
+    let step = rust
+        .find("fn CDLDOJI_step_impl(")
+        .expect("cdldoji renders a step");
+    let step_body = &rust[step..step + rust[step..].find("\n    }").expect("step end")];
+
+    assert!(
+        step_body.contains("let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;"),
+        "the step must unpack from its parameter\n{step_body}"
+    );
+    assert!(
+        !step_body.contains("self.candle_settings"),
+        "the step has no Core receiver to read through\n{step_body}"
+    );
+    // The control: the batch tier still does, and is the reason the unpacking
+    // emitter keeps both spellings.
+    assert!(
+        rust.contains("let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;"),
+        "the batch tier must still read the Core it runs on"
+    );
+}

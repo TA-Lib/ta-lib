@@ -277,7 +277,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PVI_Stream")]
 pub struct PVI_Stream {
-    core: Core,
     state: PVI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -288,7 +287,6 @@ impl PVI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `PVI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -320,7 +318,7 @@ impl PVI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PVI_step_impl(&self, sp: &mut PVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn PVI_step_impl(sp: &mut PVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
         let mut tempPVI: f64 = 0.0_f64;
@@ -426,7 +424,7 @@ impl Core {
             prevClose,
             prevVolume,
         };
-        Ok(PVI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(PVI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::PVI_Open`] (composition seam).
@@ -539,7 +537,7 @@ impl PVI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.PVI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
+        Core::PVI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -572,7 +570,7 @@ impl PVI_Stream {
             if !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.PVI_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
+            Core::PVI_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

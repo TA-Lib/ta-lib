@@ -220,7 +220,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LOG10_Stream")]
 pub struct LOG10_Stream {
-    core: Core,
     state: LOG10_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -231,7 +230,6 @@ impl LOG10_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `LOG10_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -257,7 +255,7 @@ impl LOG10_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LOG10_step_impl(&self, sp: &mut LOG10_StreamState, inReal: f64, outReal: &mut f64) {
+    fn LOG10_step_impl(sp: &mut LOG10_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).log10();
     }
 
@@ -298,7 +296,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = LOG10_StreamState {
         };
-        Ok(LOG10_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(LOG10_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::LOG10_Open`] (composition seam).
@@ -403,7 +401,7 @@ impl LOG10_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.LOG10_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::LOG10_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -436,7 +434,7 @@ impl LOG10_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.LOG10_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::LOG10_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
