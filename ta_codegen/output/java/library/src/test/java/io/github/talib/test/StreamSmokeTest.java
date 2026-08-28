@@ -59,8 +59,10 @@ import io.github.talib.RangeType;
 public class StreamSmokeTest {
 
     private static int failures = 0;
+    private static int checks = 0;
 
     private static void check(boolean cond, String what) {
+        checks++;
         if (!cond) {
             System.out.println("FAIL: " + what);
             failures++;
@@ -563,6 +565,417 @@ public class StreamSmokeTest {
         ufSlots++;
     }
 
+    /* ---- the registry-wide peek/copy sweep (#172 C4) --------------------- */
+
+    /** The order the emitter expands a PRICE bundle into {@code double[]} params. */
+    private static final int[] PRICE_BITS = {
+        io.github.talib.metadata.InputFlags.PRICE_OPEN,
+        io.github.talib.metadata.InputFlags.PRICE_HIGH,
+        io.github.talib.metadata.InputFlags.PRICE_LOW,
+        io.github.talib.metadata.InputFlags.PRICE_CLOSE,
+        io.github.talib.metadata.InputFlags.PRICE_VOLUME,
+        io.github.talib.metadata.InputFlags.PRICE_OPENINTEREST,
+    };
+
+    private static final String[] PRICE_SLOTS = {
+        "open", "high", "low", "close", "volume", "openinterest",
+    };
+
+    /** Counters for the sweep's non-vacuity floors, incremented at the assertion. */
+    private static int swNonCommit = 0;
+    private static int swCopy = 0;
+    private static int swMoved = 0;
+
+    /**
+     * Bar {@code i} of the series feeding one input slot.
+     *
+     * <p>Shaped so the OHLC relation holds bar by bar — {@code high} above both
+     * ends of the body, {@code low} below both — because a handle fed
+     * high &lt; low is not exercising the algorithm, it is exercising whatever
+     * the algorithm does with nonsense. Volume is positive for the same reason
+     * (MARKETFI, and every other divisor of volume). The two unnamed real
+     * series are given different phases so a two-series function (BETA, CORREL)
+     * is not silently correlating a series with itself.
+     */
+    private static double slotBar(String slot, int i, boolean unitDomain) {
+        if (unitDomain) {
+            /* ACOS/ASIN are defined on [-1, 1] and return NaN outside it, so a
+             * price series makes every assertion below compare NaN to NaN —
+             * true, and vacuous. Measured: with a price series ACOS, ASIN and
+             * TANH are the three handles the peek control below cannot catch. */
+            return slot.equals("inReal1") ? 0.5 * Math.cos(0.07 * i)
+                                          : 0.6 * Math.sin(0.1 * i);
+        }
+        double close = 100.0 + 10.0 * Math.sin(0.1 * i) + 0.013 * i;
+        if (slot.equals("open")) {
+            /* The real body VARIES bar to bar. A fixed offset makes close-open
+             * a constant, which leaves QSTICK — an average of exactly that —
+             * flat over the whole corpus, and a flat series proves nothing. */
+            return close - 0.4 - 0.3 * Math.sin(0.23 * i);
+        } else if (slot.equals("high")) {
+            return close + Math.abs(Math.sin(1.3 * i)) + 0.9;
+        } else if (slot.equals("low")) {
+            return close - Math.abs(Math.sin(1.7 * i)) - 0.9;
+        } else if (slot.equals("volume")) {
+            return 1000.0 + 10.0 * i;
+        } else if (slot.equals("openinterest")) {
+            return 500.0 + i;
+        } else if (slot.equals("inPeriods")) {
+            return 5.0 + (i % 20);          // MAVP: a period, not a price
+        } else if (slot.equals("inReal1")) {
+            return 95.0 + 8.0 * Math.cos(0.07 * i) + 0.01 * i;
+        }
+        return close;                        // close, inReal, inReal0
+    }
+
+    /**
+     * A bar far off the series, used only to probe that {@code peek} commits
+     * nothing.
+     *
+     * <p>An in-series bar is a weak probe for that: it leaves a rolling
+     * extremum's window where it was, so a {@code peek} that committed would be
+     * invisible there. A gap moves it — in ONE direction only, which is why the
+     * sweep probes with {@code up} both ways: a gap up never moves MIN, a gap
+     * down never moves MAX. Still a legal bar — finite, {@code high} above the
+     * body, {@code low} below, volume positive — because the point is to move
+     * the state, not to test rejection.
+     *
+     * <p>The other direction the gap has to flip is the BODY: a fixed
+     * {@code close - open} offset leaves a bullish bar bullish however far it
+     * gaps, and a candlestick pattern reads the direction, not the level.
+     */
+    private static double outlierBar(String slot, int i, boolean up, boolean unitDomain) {
+        if (unitDomain) {
+            return up ? 0.98 : -0.98;
+        }
+        double base = (up ? 1.4 : 0.6) * (100.0 + 10.0 * Math.sin(0.1 * i) + 0.013 * i);
+        if (slot.equals("open")) {
+            return up ? base - 2.0 : base + 2.0;   // a body, and it flips direction
+        } else if (slot.equals("high")) {
+            return base + 3.0;
+        } else if (slot.equals("low")) {
+            return base - 3.0;
+        } else if (slot.equals("volume")) {
+            return up ? 9000.0 : 40.0;
+        } else if (slot.equals("openinterest")) {
+            return up ? 900.0 : 40.0;
+        } else if (slot.equals("inPeriods")) {
+            return up ? 27.0 : 3.0;
+        } else if (slot.equals("inReal1")) {
+            return 0.9 * base;
+        }
+        return base;
+    }
+
+    /**
+     * One slot label per {@code double[]} parameter the opener takes, derived
+     * from the registry rather than from the method signature — so that the
+     * count the registry declares and the count the emitter emitted are two
+     * independent facts this sweep can compare.
+     */
+    private static java.util.List<String> declaredSlots(
+            io.github.talib.metadata.FunctionInfo f, java.util.List<String> unhandled) {
+        java.util.List<String> slots = new java.util.ArrayList<String>();
+        for (io.github.talib.metadata.InputInfo in : f.inputs()) {
+            switch (in.type()) {
+                case PRICE:
+                    for (int b = 0; b < PRICE_BITS.length; b++) {
+                        if ((in.flags() & PRICE_BITS[b]) != 0) {
+                            slots.add(PRICE_SLOTS[b]);
+                        }
+                    }
+                    break;
+                case REAL:
+                    slots.add(in.paramName());
+                    break;
+                default:
+                    unhandled.add(f.name() + ": input type " + in.type() + " not handled here");
+                    break;
+            }
+        }
+        return slots;
+    }
+
+    /**
+     * A handle's current value as raw components — one element for a
+     * single-output handle, one per batch output for a {@code Value} record.
+     *
+     * <p>Boxing through {@link Number} is lossless for both shapes the
+     * generator emits ({@code double} and {@code int}), so the callers can
+     * still compare bit for bit.
+     */
+    private static double[] components(Object v) {
+        if (v instanceof Number) {
+            return new double[] { ((Number) v).doubleValue() };
+        }
+        java.lang.reflect.RecordComponent[] rc = v.getClass().getRecordComponents();
+        if (rc == null) {
+            throw new AssertionError("not a value: " + v.getClass());
+        }
+        double[] out = new double[rc.length];
+        for (int i = 0; i < rc.length; i++) {
+            try {
+                out[i] = ((Number) rc[i].getAccessor().invoke(v)).doubleValue();
+            } catch (ReflectiveOperationException e) {
+                throw new AssertionError(e);
+            }
+        }
+        return out;
+    }
+
+    /** Component-wise {@link #bitEq(double, double)}; a length mismatch is a
+     *  mismatch, never an exception. */
+    private static boolean allBitEq(double[] a, double[] b) {
+        if (a.length != b.length) {
+            return false;
+        }
+        for (int i = 0; i < a.length; i++) {
+            if (!bitEq(a[i], b[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The one method {@code c} declares under {@code name}, taking the
+     * {@code double} shape.
+     *
+     * <p>There is exactly one opener per function today (176 methods, no
+     * {@code float[]} overload). The filter is there so that adding one later
+     * makes this sweep keep testing the {@code double} API rather than picking
+     * whichever overload {@code getMethods()} happened to return first — an
+     * order the JLS does not specify, which is the difference between a gate
+     * that fails and a gate that flakes.
+     */
+    private static java.lang.reflect.Method methodNamed(Class<?> c, String name) {
+        for (java.lang.reflect.Method m : c.getMethods()) {
+            if (!m.getName().equals(name) || m.getDeclaringClass() != c) {
+                continue;
+            }
+            boolean floatShape = false;
+            for (Class<?> p : m.getParameterTypes()) {
+                floatShape |= p == float[].class || p == float.class;
+            }
+            if (!floatShape) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * {@code peek} does not commit and {@code copy} forks — on EVERY handle the
+     * registry publishes, not on the handful they were proven on (#172 C4).
+     *
+     * <p>These two are the Java-specific half of the streaming contract. The
+     * numerics are covered exhaustively elsewhere ({@code ta_regtest --codegen}
+     * driving the server's {@code stream_verify}), and that gate would stay
+     * green if {@code copy()} returned {@code this}: it never forks a handle.
+     * What is asserted here is per function, so a tier that forgot to deep-copy
+     * one field is a named failure rather than a coverage gap.
+     *
+     * <p>Four properties, each one a defect if it fails:
+     * <ol>
+     *   <li>{@code peek} leaves {@code value()} and {@code outRange()} where
+     *       they were, and returns what the {@code update} that follows returns;
+     *   <li>{@code update} advances {@code outRange().count()} by exactly one;
+     *   <li>a fresh {@code copy()} carries the range and the value; and
+     *   <li>updating the copy moves NOTHING on the original, and feeding the
+     *       original that same bar afterwards reproduces the copy bit for bit.
+     * </ol>
+     *
+     * <p>Property 4 is what a shared-state {@code copy()} fails: the original's
+     * count moves with the copy's update. It is checked on the count as well as
+     * on the value because a count always moves, where a value need not — a CDL
+     * pattern returning 0 on both bars would hide a shared handle behind a
+     * coincidence.
+     *
+     * <p><b>Both halves sabotage-proved, and the miss recorded rather than
+     * rounded off.</b> With every generated {@code copy()} rewritten to
+     * {@code return this}, this sweep names all 176 handles — and the count
+     * assertion is what does it: the value assertion alone names 105, so 71
+     * handles would have shared their state silently. With every {@code peek}
+     * rewritten to step the handle instead of a scratch copy (95 of the 176
+     * handles are emitted in that shape), it names 81 of the 95. The 14 it does
+     * not are candlestick patterns whose output is 0 on both sides of the
+     * corruption; making them observable needs bars that trigger the pattern,
+     * which is what the MC/DC suites (#219) are for, not a corpus this sweep
+     * can carry. Every other handle in the corpus is caught.
+     */
+    private static void peekAndCopyHoldOnEveryHandle(Core core) {
+        java.util.List<String> unhandled = new java.util.ArrayList<String>();
+        int swept = 0;
+
+        for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
+            String name = f.name();
+            Class<?> handle = null;
+            for (Class<?> nested : Core.class.getDeclaredClasses()) {
+                if (nested.getSimpleName().equals(name + "_Stream")) {
+                    handle = nested;
+                    break;
+                }
+            }
+            if (handle == null) {
+                unhandled.add(name + ": no " + name + "_Stream");
+                continue;
+            }
+            java.lang.reflect.Method open = methodNamed(Core.class, name + "_Open");
+            java.lang.reflect.Method update = methodNamed(handle, "update");
+            java.lang.reflect.Method peek = methodNamed(handle, "peek");
+            java.lang.reflect.Method copy = methodNamed(handle, "copy");
+            java.lang.reflect.Method value = methodNamed(handle, "value");
+            java.lang.reflect.Method range = methodNamed(handle, "outRange");
+            if (open == null || update == null || peek == null
+                    || copy == null || value == null || range == null) {
+                unhandled.add(name + ": handle is missing one of open/update/peek/copy/value/outRange");
+                continue;
+            }
+
+            java.util.List<String> slots = declaredSlots(f, unhandled);
+            boolean unitDomain = f.group().equals("Math Transform");
+            int lookback = f.newCall(core).lookback();
+            int n = lookback + 4;            // enough produced values for a count to be wrong in
+            Class<?>[] pt = open.getParameterTypes();
+            Object[] args = new Object[pt.length];
+            int slot = 0;
+            boolean skip = false;
+            for (int i = 0; i < pt.length; i++) {
+                if (pt[i] == double[].class) {
+                    if (slot >= slots.size()) {
+                        unhandled.add(name + ": the opener takes more series than the registry declares ("
+                                      + slots.size() + ")");
+                        skip = true;
+                        break;
+                    }
+                    double[] a = new double[n];
+                    for (int k = 0; k < n; k++) {
+                        a[k] = slotBar(slots.get(slot), k, unitDomain);
+                    }
+                    args[i] = a;
+                    slot++;
+                } else if (pt[i] == int.class) {
+                    args[i] = Integer.MIN_VALUE;       // documented default
+                } else if (pt[i] == double.class) {
+                    args[i] = Core.REAL_DEFAULT;
+                } else if (pt[i] == MAType.class) {
+                    args[i] = MAType.SMA;
+                } else {
+                    unhandled.add(name + ": unhandled opener parameter " + pt[i].getName());
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) {
+                continue;
+            }
+            if (slot != slots.size()) {
+                unhandled.add(name + ": the registry declares " + slots.size()
+                              + " series, the opener takes " + slot);
+                continue;
+            }
+            if (update.getParameterCount() != slots.size()
+                    || peek.getParameterCount() != slots.size()) {
+                unhandled.add(name + ": update/peek take " + update.getParameterCount() + "/"
+                              + peek.getParameterCount() + " bars, the opener " + slots.size()
+                              + " series");
+                continue;
+            }
+
+            Object[] barA = new Object[slots.size()];
+            Object[] barB = new Object[slots.size()];
+            Object[] barUp = new Object[slots.size()];
+            Object[] barDown = new Object[slots.size()];
+            for (int j = 0; j < slots.size(); j++) {
+                barA[j] = Double.valueOf(slotBar(slots.get(j), n, unitDomain));
+                barB[j] = Double.valueOf(slotBar(slots.get(j), n + 1, unitDomain));
+                barUp[j] = Double.valueOf(outlierBar(slots.get(j), n, true, unitDomain));
+                barDown[j] = Double.valueOf(outlierBar(slots.get(j), n, false, unitDomain));
+            }
+
+            try {
+                Object h = open.invoke(core, args);
+                Object ref = open.invoke(core, args);   // the same handle, never peeked
+                double[] v0 = components(value.invoke(h));
+                OutRange r0 = (OutRange) range.invoke(h);
+
+                /* 1 — peek commits nothing, probed with a bar far enough off
+                 * the series to move a window or reclassify a candle. */
+                peek.invoke(h, barUp);
+                peek.invoke(h, barDown);
+                check(allBitEq(v0, components(value.invoke(h))),
+                      name + ": peek must not commit value()");
+                check(r0.equals(range.invoke(h)),
+                      name + ": peek must not move outRange()");
+                swNonCommit++;
+
+                /* 1b/2 — and it predicts the update that follows. */
+                double[] peeked = components(peek.invoke(h, barA));
+                double[] updated = components(update.invoke(h, barA));
+                check(allBitEq(peeked, updated), name + ": peek == the update that follows");
+                /* ...having left nothing of the two peeks behind. value() alone
+                 * cannot see that: a handle whose ring was corrupted by a
+                 * committed peek still reports whatever its output is for the
+                 * bar just fed, and for a candlestick pattern that is 0 either
+                 * way. The reference handle is what makes the corruption
+                 * visible — same opener, same bar, never peeked. */
+                check(allBitEq(updated, components(update.invoke(ref, barA))),
+                      name + ": peek left state behind (the next update differs from a handle that never peeked)");
+                check(allBitEq(updated, components(value.invoke(h))),
+                      name + ": value() == the last update");
+                OutRange r1 = (OutRange) range.invoke(h);
+                check(r1.equals(new OutRange(r0.begIdx(), r0.count() + 1)),
+                      name + ": update adds one to outRange.count (" + r0 + " -> " + r1 + ")");
+                if (!allBitEq(v0, updated)) {
+                    swMoved++;
+                }
+
+                /* 3 — a fresh copy carries the range and the value. */
+                Object c = copy.invoke(h);
+                check(r1.equals(range.invoke(c)), name + ": copy carries the range");
+                check(allBitEq(updated, components(value.invoke(c))),
+                      name + ": copy carries the value");
+
+                /* 4 — and forks: the copy's update moves only the copy. */
+                double[] onCopy = components(update.invoke(c, barB));
+                check(r1.equals(range.invoke(h)),
+                      name + ": the copy's update moved the original's outRange");
+                check(allBitEq(updated, components(value.invoke(h))),
+                      name + ": the copy's update moved the original's value()");
+                double[] onOriginal = components(update.invoke(h, barB));
+                check(allBitEq(onCopy, onOriginal),
+                      name + ": copy is equivalent (same bar, same bits)");
+                check(range.invoke(h).equals(range.invoke(c)),
+                      name + ": copy and original agree on the range after the same bar");
+                swCopy++;
+                swept++;
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                unhandled.add(name + " -> " + e.getCause().getClass().getSimpleName()
+                              + ": " + e.getCause().getMessage());
+            } catch (IllegalAccessException e) {
+                unhandled.add(name + ": " + e);
+            }
+        }
+
+        for (String u : unhandled) {
+            System.out.println("  (not swept: " + u + ")");
+        }
+        check(unhandled.isEmpty(), "every registered handle is reachable and opens on its own lookback");
+        int registered = io.github.talib.metadata.Functions.all().size();
+        check(swept == registered,
+              "the peek/copy sweep covered every registered handle (" + swept + "/" + registered + ")");
+        /* Non-vacuity. The counters are incremented at their assertions, and
+         * swMoved is the one that says the corpus discriminates at all: a series
+         * that left every handle's value where the open put it would satisfy
+         * every property above without exercising one of them. */
+        check(swNonCommit == registered && swCopy == registered,
+              "both halves ran on every handle (" + swNonCommit + " peek, " + swCopy + " copy of "
+              + registered + ")");
+        check(swMoved > registered / 2,
+              "the sweep's bars move most handles off their open value (" + swMoved + "/"
+              + registered + ")");
+    }
+
     public static void main(String[] args) {
         final int n = 300;
         double[] close = new double[n];
@@ -828,10 +1241,11 @@ public class StreamSmokeTest {
 
         nonFiniteInputsAreRejected(core, open, high, low, close);
         updateAndFillCommitsThePrefix(core, open, high, low, close);
+        peekAndCopyHoldOnEveryHandle(core);
 
 
         if (failures == 0) {
-            System.out.println("StreamSmokeTest: ALL PASS");
+            System.out.println("StreamSmokeTest: ALL PASS (" + checks + " checks)");
         } else {
             System.out.println("StreamSmokeTest: " + failures + " FAILURES");
             System.exit(1);
