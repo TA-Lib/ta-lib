@@ -418,6 +418,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLDRAGONFLYDOJI was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLDRAGONFLYDOJI_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLDRAGONFLYDOJI_StreamConfig {
+    /// The `BodyDoji` setting this stream was opened with.
+    cs_body_doji: CandleSetting,
+    /// The `ShadowVeryShort` setting this stream was opened with.
+    cs_shadow_very_short: CandleSetting,
+}
+
 /// Live CDLDRAGONFLYDOJI stream: one value per closed bar, bit-identical to [`Core::CDLDRAGONFLYDOJI`]
 /// over the same series. Open with [`Core::CDLDRAGONFLYDOJI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -427,10 +439,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDRAGONFLYDOJI_Stream")]
 pub struct CDLDRAGONFLYDOJI_Stream {
-    /// The `BodyDoji` setting this stream was opened with.
-    cs_body_doji: CandleSetting,
-    /// The `ShadowVeryShort` setting this stream was opened with.
-    cs_shadow_very_short: CandleSetting,
+    /// What this stream was opened with — see `CDLDRAGONFLYDOJI_StreamConfig`.
+    config: CDLDRAGONFLYDOJI_StreamConfig,
     state: CDLDRAGONFLYDOJI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -441,8 +451,7 @@ impl CDLDRAGONFLYDOJI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLDRAGONFLYDOJI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_doji = src.cs_body_doji;
-        self.cs_shadow_very_short = src.cs_shadow_very_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -484,19 +493,19 @@ impl CDLDRAGONFLYDOJI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLDRAGONFLYDOJI_step_impl(sp: &mut CDLDRAGONFLYDOJI_StreamState, cs_body_doji: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLDRAGONFLYDOJI_step_impl(cfg: &CDLDRAGONFLYDOJI_StreamConfig, sp: &mut CDLDRAGONFLYDOJI_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
+        let BodyDoji_rangeType: i32 = cfg.cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyDoji_avgPeriod: i32 = cs_body_doji.avg_period;
+        let BodyDoji_avgPeriod: i32 = cfg.cs_body_doji.avg_period;
         #[allow(non_snake_case)]
-        let BodyDoji_factor: f64 = cs_body_doji.factor;
+        let BodyDoji_factor: f64 = cfg.cs_body_doji.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = cs_shadow_very_short.range_type as i32;
+        let ShadowVeryShort_rangeType: i32 = cfg.cs_shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = cs_shadow_very_short.avg_period;
+        let ShadowVeryShort_avgPeriod: i32 = cfg.cs_shadow_very_short.avg_period;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = cs_shadow_very_short.factor;
+        let ShadowVeryShort_factor: f64 = cfg.cs_shadow_very_short.factor;
         if sp.ringCap_BodyDojiTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyDoji_rangeType {
@@ -843,7 +852,7 @@ impl Core {
             ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLDRAGONFLYDOJI_Stream { cs_body_doji: self.candle_settings.body_doji, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLDRAGONFLYDOJI_Stream { config: CDLDRAGONFLYDOJI_StreamConfig { cs_body_doji: self.candle_settings.body_doji, cs_shadow_very_short: self.candle_settings.shadow_very_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLDRAGONFLYDOJI_Open`] (composition seam).
@@ -939,10 +948,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLDRAGONFLYDOJI_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLDRAGONFLYDOJI_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLDRAGONFLYDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLDRAGONFLYDOJI_Stream>>> =
+    static CDLDRAGONFLYDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLDRAGONFLYDOJI_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -966,7 +975,7 @@ impl CDLDRAGONFLYDOJI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLDRAGONFLYDOJI_step_impl(&mut self.state, &self.cs_body_doji, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLDRAGONFLYDOJI_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -999,7 +1008,7 @@ impl CDLDRAGONFLYDOJI_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLDRAGONFLYDOJI_step_impl(&mut self.state, &self.cs_body_doji, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLDRAGONFLYDOJI_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1023,11 +1032,12 @@ impl CDLDRAGONFLYDOJI_Stream {
             return Err(RetCode::BadParam);
         }
         CDLDRAGONFLYDOJI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLDRAGONFLYDOJI_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

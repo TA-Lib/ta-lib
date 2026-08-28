@@ -281,6 +281,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MININDEX was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MININDEX_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MININDEX_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live MININDEX stream: one value per closed bar, bit-identical to [`Core::MININDEX`]
 /// over the same series. Open with [`Core::MININDEX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -290,6 +299,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MININDEX_Stream")]
 pub struct MININDEX_Stream {
+    /// What this stream was opened with — see `MININDEX_StreamConfig`.
+    config: MININDEX_StreamConfig,
     state: MININDEX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -300,6 +311,7 @@ impl MININDEX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MININDEX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -308,7 +320,6 @@ impl MININDEX_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MININDEX_StreamState {
-    optInTimePeriod: i32,
     lowest: f64,
     trailingIdx: i32,
     lowestIdx: i32,
@@ -323,7 +334,6 @@ impl MININDEX_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.lowest = src.lowest;
         self.trailingIdx = src.trailingIdx;
         self.lowestIdx = src.lowestIdx;
@@ -341,7 +351,7 @@ impl MININDEX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MININDEX_step_impl(sp: &mut MININDEX_StreamState, inReal: f64, outInteger: &mut i32) {
+    fn MININDEX_step_impl(cfg: &MININDEX_StreamConfig, sp: &mut MININDEX_StreamState, inReal: f64, outInteger: &mut i32) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -473,7 +483,6 @@ impl Core {
             }
         }
         let state = MININDEX_StreamState {
-            optInTimePeriod,
             lowest,
             trailingIdx: (trailingIdx) as i32,
             lowestIdx: (lowestIdx) as i32,
@@ -482,7 +491,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(MININDEX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MININDEX_Stream { config: MININDEX_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MININDEX_Open`] (composition seam).
@@ -587,7 +596,7 @@ impl MININDEX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::MININDEX_step_impl(&mut self.state, inReal, &mut outInteger);
+        Core::MININDEX_step_impl(&self.config, &mut self.state, inReal, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -620,7 +629,7 @@ impl MININDEX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MININDEX_step_impl(&mut self.state, inReal[i], &mut outInteger[i]);
+            Core::MININDEX_step_impl(&self.config, &mut self.state, inReal[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

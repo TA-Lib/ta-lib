@@ -1538,10 +1538,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `HT_DCPHASE_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `HT_DCPHASE_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static HT_DCPHASE_PEEK_SCRATCH: std::cell::Cell<Option<Box<HT_DCPHASE_Stream>>> =
+    static HT_DCPHASE_PEEK_SCRATCH: std::cell::Cell<Option<Box<HT_DCPHASE_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1622,11 +1622,12 @@ impl HT_DCPHASE_Stream {
             return Err(RetCode::BadParam);
         }
         HT_DCPHASE_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::HT_DCPHASE_step_impl(&mut scratch, inReal, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

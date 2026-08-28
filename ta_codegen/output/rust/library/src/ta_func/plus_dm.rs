@@ -432,6 +432,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What PLUS_DM was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&PLUS_DM_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct PLUS_DM_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live PLUS_DM stream: one value per closed bar, bit-identical to [`Core::PLUS_DM`]
 /// over the same series. Open with [`Core::PLUS_DM_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -441,6 +450,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PLUS_DM_Stream")]
 pub struct PLUS_DM_Stream {
+    /// What this stream was opened with — see `PLUS_DM_StreamConfig`.
+    config: PLUS_DM_StreamConfig,
     state: PLUS_DM_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -451,6 +462,7 @@ impl PLUS_DM_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `PLUS_DM_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -459,7 +471,6 @@ impl PLUS_DM_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct PLUS_DM_StreamState {
-    optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
     prevPlusDM: f64,
@@ -470,7 +481,6 @@ impl PLUS_DM_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevHigh = src.prevHigh;
         self.prevLow = src.prevLow;
         self.prevPlusDM = src.prevPlusDM;
@@ -484,8 +494,8 @@ impl PLUS_DM_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PLUS_DM_step_impl(sp: &mut PLUS_DM_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod <= 1 {
+    fn PLUS_DM_step_impl(cfg: &PLUS_DM_StreamConfig, sp: &mut PLUS_DM_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+        if cfg.optInTimePeriod <= 1 {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
@@ -517,10 +527,10 @@ impl Core {
             sp.prevLow = tempReal;
             if diffP > 0_f64 && diffP > diffM {
                 // Case 1 and 3: +DM=diffP,-DM=0
-                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + diffP;
+                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((cfg.optInTimePeriod) as f64) + diffP;
             } else {
                 // Case 2,4,5 and 7
-                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
+                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((cfg.optInTimePeriod) as f64);
             }
             (*outReal) = sp.prevPlusDM;
         }
@@ -676,12 +686,11 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let state = PLUS_DM_StreamState {
-                optInTimePeriod,
                 prevHigh,
                 prevLow,
                 prevPlusDM,
             };
-            Ok(PLUS_DM_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(PLUS_DM_Stream { config: PLUS_DM_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -846,12 +855,11 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let state = PLUS_DM_StreamState {
-                optInTimePeriod,
                 prevHigh,
                 prevLow,
                 prevPlusDM,
             };
-            Ok(PLUS_DM_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(PLUS_DM_Stream { config: PLUS_DM_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
@@ -961,7 +969,7 @@ impl PLUS_DM_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::PLUS_DM_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::PLUS_DM_step_impl(&self.config, &mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -994,7 +1002,7 @@ impl PLUS_DM_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::PLUS_DM_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::PLUS_DM_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

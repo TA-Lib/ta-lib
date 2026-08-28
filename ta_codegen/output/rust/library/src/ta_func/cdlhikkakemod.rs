@@ -435,6 +435,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLHIKKAKEMOD was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLHIKKAKEMOD_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLHIKKAKEMOD_StreamConfig {
+    /// The `Near` setting this stream was opened with.
+    cs_near: CandleSetting,
+}
+
 /// Live CDLHIKKAKEMOD stream: one value per closed bar, bit-identical to [`Core::CDLHIKKAKEMOD`]
 /// over the same series. Open with [`Core::CDLHIKKAKEMOD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -444,8 +454,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHIKKAKEMOD_Stream")]
 pub struct CDLHIKKAKEMOD_Stream {
-    /// The `Near` setting this stream was opened with.
-    cs_near: CandleSetting,
+    /// What this stream was opened with — see `CDLHIKKAKEMOD_StreamConfig`.
+    config: CDLHIKKAKEMOD_StreamConfig,
     state: CDLHIKKAKEMOD_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -456,7 +466,7 @@ impl CDLHIKKAKEMOD_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLHIKKAKEMOD_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_near = src.cs_near;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -520,13 +530,13 @@ impl CDLHIKKAKEMOD_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLHIKKAKEMOD_step_impl(sp: &mut CDLHIKKAKEMOD_StreamState, cs_near: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHIKKAKEMOD_step_impl(cfg: &CDLHIKKAKEMOD_StreamConfig, sp: &mut CDLHIKKAKEMOD_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = cs_near.range_type as i32;
+        let Near_rangeType: i32 = cfg.cs_near.range_type as i32;
         #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = cs_near.avg_period;
+        let Near_avgPeriod: i32 = cfg.cs_near.avg_period;
         #[allow(non_snake_case)]
-        let Near_factor: f64 = cs_near.factor;
+        let Near_factor: f64 = cfg.cs_near.factor;
         let mut _candlerange_0: f64;
         match Near_rangeType {
             0 => {
@@ -851,7 +861,7 @@ impl Core {
             ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
             ring_NearTrailingIdx_derived,
         };
-        Ok(CDLHIKKAKEMOD_Stream { cs_near: self.candle_settings.near, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLHIKKAKEMOD_Stream { config: CDLHIKKAKEMOD_StreamConfig { cs_near: self.candle_settings.near, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLHIKKAKEMOD_Open`] (composition seam).
@@ -966,7 +976,7 @@ impl CDLHIKKAKEMOD_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLHIKKAKEMOD_step_impl(&mut self.state, &self.cs_near, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLHIKKAKEMOD_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -999,7 +1009,7 @@ impl CDLHIKKAKEMOD_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLHIKKAKEMOD_step_impl(&mut self.state, &self.cs_near, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLHIKKAKEMOD_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

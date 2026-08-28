@@ -332,6 +332,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLDOJI was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLDOJI_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLDOJI_StreamConfig {
+    /// The `BodyDoji` setting this stream was opened with.
+    cs_body_doji: CandleSetting,
+}
+
 /// Live CDLDOJI stream: one value per closed bar, bit-identical to [`Core::CDLDOJI`]
 /// over the same series. Open with [`Core::CDLDOJI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -341,8 +351,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDOJI_Stream")]
 pub struct CDLDOJI_Stream {
-    /// The `BodyDoji` setting this stream was opened with.
-    cs_body_doji: CandleSetting,
+    /// What this stream was opened with — see `CDLDOJI_StreamConfig`.
+    config: CDLDOJI_StreamConfig,
     state: CDLDOJI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -353,7 +363,7 @@ impl CDLDOJI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLDOJI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_doji = src.cs_body_doji;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -387,13 +397,13 @@ impl CDLDOJI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLDOJI_step_impl(sp: &mut CDLDOJI_StreamState, cs_body_doji: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLDOJI_step_impl(cfg: &CDLDOJI_StreamConfig, sp: &mut CDLDOJI_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
+        let BodyDoji_rangeType: i32 = cfg.cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyDoji_avgPeriod: i32 = cs_body_doji.avg_period;
+        let BodyDoji_avgPeriod: i32 = cfg.cs_body_doji.avg_period;
         #[allow(non_snake_case)]
-        let BodyDoji_factor: f64 = cs_body_doji.factor;
+        let BodyDoji_factor: f64 = cfg.cs_body_doji.factor;
         if sp.ringCap_BodyDojiTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyDoji_rangeType {
@@ -605,7 +615,7 @@ impl Core {
             ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
             ring_BodyDojiTrailingIdx_derived,
         };
-        Ok(CDLDOJI_Stream { cs_body_doji: self.candle_settings.body_doji, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLDOJI_Stream { config: CDLDOJI_StreamConfig { cs_body_doji: self.candle_settings.body_doji, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLDOJI_Open`] (composition seam).
@@ -720,7 +730,7 @@ impl CDLDOJI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLDOJI_step_impl(&mut self.state, &self.cs_body_doji, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLDOJI_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -753,7 +763,7 @@ impl CDLDOJI_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLDOJI_step_impl(&mut self.state, &self.cs_body_doji, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLDOJI_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

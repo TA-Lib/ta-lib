@@ -9535,11 +9535,11 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
         (
             "rust",
             &rust,
-            // No `&self`: SMA's step reads nothing from `Core`, and a step that
-            // does reads only the `cs_<setting>` parameters its handle carries
-            // (issue #274).
-            "fn SMA_step_impl(sp: &mut SMA_StreamState,",
-            &["Core::SMA_step_impl(&mut self.state,"],
+            // No `&self`: SMA's step reads nothing from `Core` (#274), and
+            // what it was opened with arrives as one read-only `&Config`
+            // ahead of the state (#276).
+            "fn SMA_step_impl(cfg: &SMA_StreamConfig, sp: &mut SMA_StreamState,",
+            &["Core::SMA_step_impl(&self.config, &mut self.state,"],
             "step_internal",
         ),
         (
@@ -13175,6 +13175,7 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
         assert!(func.streaming, "{name} must carry the `stream` flag");
         let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
+        let upper = name.to_uppercase();
         let start = rust
             .find(&format!("pub struct {handle} {{"))
             .unwrap_or_else(|| panic!("{name}: no {handle} definition"));
@@ -13184,44 +13185,51 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
             !body.contains("core: Core,"),
             "{name}: {handle} still embeds a whole Core"
         );
+        // #276 moved the settings one level in, from the handle to its config.
+        // The handle names neither `CandleSetting` nor any `optIn*` now.
         assert_eq!(
             body.matches(": CandleSetting,").count(),
+            0,
+            "{name}: {handle} holds settings directly instead of in its config\n{body}"
+        );
+
+        let cstart = rust
+            .find(&format!("struct {upper}_StreamConfig {{"))
+            .unwrap_or_else(|| panic!("{name}: no {upper}_StreamConfig definition"));
+        let cbody = &rust[cstart..cstart + rust[cstart..].find("\n}").expect("struct end")];
+        assert_eq!(
+            cbody.matches(": CandleSetting,").count(),
             settings.len(),
-            "{name}: {handle} carries the wrong number of settings\n{body}"
+            "{name}: {upper}_StreamConfig carries the wrong number of settings\n{cbody}"
         );
         for field in settings {
             assert!(
-                body.contains(&format!("{field}: CandleSetting,")),
-                "{name}: {handle} is missing {field}"
+                cbody.contains(&format!("{field}: CandleSetting,")),
+                "{name}: {upper}_StreamConfig is missing {field}"
             );
         }
 
-        // The step takes them as parameters — it has no receiver to read them
-        // through — and the call site hands over the handle's own fields.
-        let params: String = settings
-            .iter()
-            .map(|f| format!(", {f}: &CandleSetting"))
-            .collect();
-        let args: String = settings.iter().map(|f| format!("&self.{f}, ")).collect();
-        let upper = name.to_uppercase();
+        // The step takes them through its read-only config — it has no
+        // receiver to read them through — and the call site hands over the
+        // handle's own field.
         assert!(
             rust.contains(&format!(
-                "fn {upper}_step_impl(sp: &mut {upper}_StreamState{params},"
+                "fn {upper}_step_impl(cfg: &{upper}_StreamConfig, sp: &mut {upper}_StreamState,"
             )),
-            "{name}: step signature does not take exactly its settings"
+            "{name}: step signature does not take its config by reference"
         );
         assert!(
             rust.contains(&format!(
-                "Core::{upper}_step_impl(&mut self.state, {args}"
+                "Core::{upper}_step_impl(&self.config, &mut self.state, "
             )),
-            "{name}: `update` does not hand the step its settings"
+            "{name}: `update` does not hand the step its config"
         );
     }
 }
 
-/// A step unpacks its candle settings from its own parameters; only the batch
-/// and `Open` tiers, which run on a `Core` receiver, read `self.candle_settings`
-/// (issue #274).
+/// A step unpacks its candle settings from its own read-only config; only the
+/// batch and `Open` tiers, which run on a `Core` receiver, read
+/// `self.candle_settings` (#274, moved into the config by #276).
 #[test]
 fn a_stream_step_reads_candle_settings_from_its_parameters() {
     let registry = make_registry();
@@ -13235,8 +13243,8 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
     let step_body = &rust[step..step + rust[step..].find("\n    }").expect("step end")];
 
     assert!(
-        step_body.contains("let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;"),
-        "the step must unpack from its parameter\n{step_body}"
+        step_body.contains("let BodyDoji_rangeType: i32 = cfg.cs_body_doji.range_type as i32;"),
+        "the step must unpack from its config\n{step_body}"
     );
     assert!(
         !step_body.contains("self.candle_settings"),
@@ -13248,4 +13256,142 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
         rust.contains("let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;"),
         "the batch tier must still read the Core it runs on"
     );
+}
+
+/// A stream handle splits into `config` (what `Open` fixed) and `state` (what a
+/// bar writes), and the step takes the first by reference (issue #276).
+///
+/// Four rows, each a control on the others:
+///
+/// * `SMA` — one `optIn*` and no setting. Its param must be ON the config and
+///   OFF the state; asserting only the first half would pass on a generator
+///   that copied the param into both, which is the shape this change exists to
+///   remove.
+/// * `BBANDS` — four config fields AND a `peek` scratch. Pins the second half
+///   of the change: the scratch is a bare `<F>_StreamState`, the step is called
+///   on it directly with the live handle's `&config`, and neither the second
+///   `is_finite` nor the `out.count` bookkeeping that `update` would have run
+///   survives in `peek`.
+/// * `CDLCOUNTERATTACK` — settings and no param, so the config is what #274
+///   put on the handle, one level in.
+/// * `TRANGE` — neither. It must emit NO config struct, NO config field and NO
+///   `cfg` parameter. This is the row that fails a generator which emits the
+///   struct unconditionally, and it is why the 38 functions in its position are
+///   byte-identical across this change and can serve as the benchmark control.
+#[test]
+fn a_stream_handle_splits_into_open_time_config_and_per_bar_state() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    // (indicator, config fields in order, has a peek scratch)
+    let cases: [(&str, &[&str], bool); 4] = [
+        ("sma", &["optInTimePeriod: i32,"], false),
+        (
+            "bbands",
+            &[
+                "optInTimePeriod: i32,",
+                "optInNbDevUp: f64,",
+                "optInNbDevDn: f64,",
+                "optInMAType: MAType,",
+            ],
+            true,
+        ),
+        (
+            "cdlcounterattack",
+            &["cs_body_long: CandleSetting,", "cs_equal: CandleSetting,"],
+            false,
+        ),
+        ("trange", &[], false),
+    ];
+
+    for (name, fields, has_scratch) in cases {
+        let (func, enums) = load_indicator(name);
+        assert!(func.streaming, "{name} must carry the `stream` flag");
+        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let up = name.to_uppercase();
+
+        let state_body = {
+            let at = rust
+                .find(&format!("struct {up}_StreamState {{"))
+                .unwrap_or_else(|| panic!("{name}: no {up}_StreamState"));
+            &rust[at..at + rust[at..].find("\n}").expect("struct end")]
+        };
+
+        if fields.is_empty() {
+            // The control row: nothing to carry, so nothing is emitted.
+            assert!(
+                !rust.contains(&format!("struct {up}_StreamConfig")),
+                "{name} has no Open-time invariant and must emit no config struct"
+            );
+            assert!(
+                !rust.contains("config:"),
+                "{name} must carry no config field"
+            );
+            assert!(
+                rust.contains(&format!("fn {up}_step_impl(sp: &mut {up}_StreamState")),
+                "{name}'s step must take no config parameter"
+            );
+            continue;
+        }
+
+        let cfg_body = {
+            let at = rust
+                .find(&format!("struct {up}_StreamConfig {{"))
+                .unwrap_or_else(|| panic!("{name}: no {up}_StreamConfig"));
+            &rust[at..at + rust[at..].find("\n}").expect("struct end")]
+        };
+        for f in fields {
+            assert!(cfg_body.contains(f), "{name}: config is missing `{f}`\n{cfg_body}");
+            // The half that makes it a MOVE rather than a copy.
+            let bare = f.split(':').next().expect("field name");
+            assert!(
+                !state_body.contains(bare),
+                "{name}: `{bare}` is on the state as well as the config\n{state_body}"
+            );
+        }
+        assert!(
+            rust.contains(&format!(
+                "fn {up}_step_impl(cfg: &{up}_StreamConfig, sp: &mut {up}_StreamState"
+            )),
+            "{name}: the step must take its config first, by reference"
+        );
+        assert!(
+            rust.contains(&format!("    config: {up}_StreamConfig,")),
+            "{name}: the handle must carry the config beside the state"
+        );
+
+        if has_scratch {
+            assert!(
+                rust.contains(&format!(
+                    "static {up}_PEEK_SCRATCH: std::cell::Cell<Option<Box<{up}_StreamState>>>"
+                )),
+                "{name}: the reused scratch holds a bare state, not a whole handle"
+            );
+            let peek = {
+                let at = rust
+                    .find("    pub fn peek(&self")
+                    .unwrap_or_else(|| panic!("{name}: no peek"));
+                &rust[at..at + rust[at..].find("\n    }").expect("peek end")]
+            };
+            assert!(
+                peek.contains(&format!("Core::{up}_step_impl(&self.config, &mut scratch,")),
+                "{name}: peek runs the step on the scratch with the LIVE handle's config\n{peek}"
+            );
+            // What that buys, stated as the two things `update` does that
+            // `peek` no longer repeats.
+            assert!(
+                !peek.contains("scratch.update("),
+                "{name}: peek must not re-enter `update`, which re-checks the bar\n{peek}"
+            );
+            assert!(
+                !peek.contains("out.count"),
+                "{name}: peek commits nothing, so it does no range bookkeeping\n{peek}"
+            );
+            assert_eq!(
+                peek.matches("is_finite").count(),
+                1,
+                "{name}: the bar is checked once, not twice\n{peek}"
+            );
+        }
+    }
 }

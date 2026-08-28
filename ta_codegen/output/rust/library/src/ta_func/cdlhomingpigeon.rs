@@ -421,6 +421,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLHOMINGPIGEON was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLHOMINGPIGEON_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLHOMINGPIGEON_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
+}
+
 /// Live CDLHOMINGPIGEON stream: one value per closed bar, bit-identical to [`Core::CDLHOMINGPIGEON`]
 /// over the same series. Open with [`Core::CDLHOMINGPIGEON_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -430,10 +442,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHOMINGPIGEON_Stream")]
 pub struct CDLHOMINGPIGEON_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `BodyShort` setting this stream was opened with.
-    cs_body_short: CandleSetting,
+    /// What this stream was opened with — see `CDLHOMINGPIGEON_StreamConfig`.
+    config: CDLHOMINGPIGEON_StreamConfig,
     state: CDLHOMINGPIGEON_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -444,8 +454,7 @@ impl CDLHOMINGPIGEON_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLHOMINGPIGEON_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_body_short = src.cs_body_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -497,19 +506,19 @@ impl CDLHOMINGPIGEON_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLHOMINGPIGEON_step_impl(sp: &mut CDLHOMINGPIGEON_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHOMINGPIGEON_step_impl(cfg: &CDLHOMINGPIGEON_StreamConfig, sp: &mut CDLHOMINGPIGEON_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cfg.cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cfg.cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = cs_body_short.factor;
+        let BodyShort_factor: f64 = cfg.cs_body_short.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -860,7 +869,7 @@ impl Core {
             ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLHOMINGPIGEON_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLHOMINGPIGEON_Stream { config: CDLHOMINGPIGEON_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLHOMINGPIGEON_Open`] (composition seam).
@@ -956,10 +965,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLHOMINGPIGEON_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLHOMINGPIGEON_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLHOMINGPIGEON_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLHOMINGPIGEON_Stream>>> =
+    static CDLHOMINGPIGEON_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLHOMINGPIGEON_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -983,7 +992,7 @@ impl CDLHOMINGPIGEON_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLHOMINGPIGEON_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLHOMINGPIGEON_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1016,7 +1025,7 @@ impl CDLHOMINGPIGEON_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLHOMINGPIGEON_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLHOMINGPIGEON_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1040,11 +1049,12 @@ impl CDLHOMINGPIGEON_Stream {
             return Err(RetCode::BadParam);
         }
         CDLHOMINGPIGEON_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLHOMINGPIGEON_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

@@ -430,6 +430,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What TEMA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&TEMA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct TEMA_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live TEMA stream: one value per closed bar, bit-identical to [`Core::TEMA`]
 /// over the same series. Open with [`Core::TEMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -439,6 +448,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TEMA_Stream")]
 pub struct TEMA_Stream {
+    /// What this stream was opened with — see `TEMA_StreamConfig`.
+    config: TEMA_StreamConfig,
     state: TEMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -449,6 +460,7 @@ impl TEMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `TEMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -457,7 +469,6 @@ impl TEMA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct TEMA_StreamState {
-    optInTimePeriod: i32,
     prevEMA1: f64,
     prevEMA2: f64,
     prevEMA3: f64,
@@ -469,7 +480,6 @@ impl TEMA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevEMA1 = src.prevEMA1;
         self.prevEMA2 = src.prevEMA2;
         self.prevEMA3 = src.prevEMA3;
@@ -484,8 +494,8 @@ impl TEMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TEMA_step_impl(sp: &mut TEMA_StreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 {
+    fn TEMA_step_impl(cfg: &TEMA_StreamConfig, sp: &mut TEMA_StreamState, inReal: f64, outReal: &mut f64) {
+        if cfg.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
         }
@@ -528,7 +538,6 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = TEMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
                 prevEMA1: 0.0_f64,
                 prevEMA2: 0.0_f64,
                 prevEMA3: 0.0_f64,
@@ -545,7 +554,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(TEMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(TEMA_Stream { config: TEMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
@@ -696,13 +705,12 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = TEMA_StreamState {
-            optInTimePeriod,
             prevEMA1,
             prevEMA2,
             prevEMA3,
             optInK_1,
         };
-        Ok(TEMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TEMA_Stream { config: TEMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::TEMA_Open`] (composition seam).
@@ -807,7 +815,7 @@ impl TEMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::TEMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::TEMA_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -840,7 +848,7 @@ impl TEMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::TEMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::TEMA_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

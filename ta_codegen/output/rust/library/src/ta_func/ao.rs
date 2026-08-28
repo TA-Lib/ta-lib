@@ -370,6 +370,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What AO was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&AO_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct AO_StreamConfig {
+    optInFastPeriod: i32,
+    optInSlowPeriod: i32,
+}
+
 /// Live AO stream: one value per closed bar, bit-identical to [`Core::AO`]
 /// over the same series. Open with [`Core::AO_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -379,6 +389,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AO_Stream")]
 pub struct AO_Stream {
+    /// What this stream was opened with — see `AO_StreamConfig`.
+    config: AO_StreamConfig,
     state: AO_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -389,6 +401,7 @@ impl AO_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `AO_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -397,8 +410,6 @@ impl AO_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct AO_StreamState {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
     sumFast: f64,
     sumSlow: f64,
     ringPos_trailingFastIdx: usize,
@@ -414,8 +425,6 @@ impl AO_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInSlowPeriod = src.optInSlowPeriod;
         self.sumFast = src.sumFast;
         self.sumSlow = src.sumSlow;
         self.ringPos_trailingFastIdx = src.ringPos_trailingFastIdx;
@@ -434,7 +443,7 @@ impl AO_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AO_step_impl(sp: &mut AO_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn AO_step_impl(cfg: &AO_StreamConfig, sp: &mut AO_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingFastIdx == 0 {
@@ -448,7 +457,7 @@ impl Core {
         sp.sumSlow += medianPrice;
         // Snapshot the oscillator before either total drops its trailing bar,
         // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
-        tempReal = sp.sumFast / (sp.optInFastPeriod as f64) - sp.sumSlow / (sp.optInSlowPeriod as f64);
+        tempReal = sp.sumFast / (cfg.optInFastPeriod as f64) - sp.sumSlow / (cfg.optInSlowPeriod as f64);
         // Read both trailing bars before writing the output. When startIdx is
         // clamped to the lookback the longer window's trailing index equals
         // outIdx exactly, so a store hoisted above this would read back the
@@ -630,8 +639,6 @@ impl Core {
             }
         }
         let state = AO_StreamState {
-            optInFastPeriod,
-            optInSlowPeriod,
             sumFast,
             sumSlow,
             ringPos_trailingFastIdx: 0_usize,
@@ -641,7 +648,7 @@ impl Core {
             ringCap_trailingSlowIdx: cap_trailingSlowIdx as usize,
             ring_trailingSlowIdx_derived,
         };
-        Ok(AO_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(AO_Stream { config: AO_StreamConfig { optInFastPeriod, optInSlowPeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::AO_Open`] (composition seam).
@@ -731,10 +738,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `AO_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `AO_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static AO_PEEK_SCRATCH: std::cell::Cell<Option<Box<AO_Stream>>> =
+    static AO_PEEK_SCRATCH: std::cell::Cell<Option<Box<AO_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -758,7 +765,7 @@ impl AO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::AO_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::AO_step_impl(&self.config, &mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -791,7 +798,7 @@ impl AO_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::AO_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::AO_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -815,11 +822,12 @@ impl AO_Stream {
             return Err(RetCode::BadParam);
         }
         AO_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::AO_step_impl(&self.config, &mut scratch, inHigh, inLow, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

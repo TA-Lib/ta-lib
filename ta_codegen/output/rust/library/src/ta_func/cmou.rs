@@ -375,6 +375,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CMOU was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CMOU_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CMOU_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live CMOU stream: one value per closed bar, bit-identical to [`Core::CMOU`]
 /// over the same series. Open with [`Core::CMOU_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -384,6 +393,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CMOU_Stream")]
 pub struct CMOU_Stream {
+    /// What this stream was opened with — see `CMOU_StreamConfig`.
+    config: CMOU_StreamConfig,
     state: CMOU_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -394,6 +405,7 @@ impl CMOU_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CMOU_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -402,7 +414,6 @@ impl CMOU_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CMOU_StreamState {
-    optInTimePeriod: i32,
     nullRun: usize,
     upSum: f64,
     downSum: f64,
@@ -418,7 +429,6 @@ impl CMOU_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.nullRun = src.nullRun;
         self.upSum = src.upSum;
         self.downSum = src.downSum;
@@ -437,7 +447,7 @@ impl CMOU_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CMOU_step_impl(sp: &mut CMOU_StreamState, inReal: f64, outReal: &mut f64) {
+    fn CMOU_step_impl(cfg: &CMOU_StreamConfig, sp: &mut CMOU_StreamState, inReal: f64, outReal: &mut f64) {
         let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -473,8 +483,8 @@ impl Core {
         } else {
             sp.nullRun = 0;
         }
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+        if sp.nullRun >= ((cfg.optInTimePeriod) as usize) {
+            sp.nullRun = (cfg.optInTimePeriod) as usize;
             sp.upSum = 0.0;
             sp.downSum = 0.0;
         }
@@ -662,7 +672,6 @@ impl Core {
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
         let state = CMOU_StreamState {
-            optInTimePeriod,
             nullRun,
             upSum,
             downSum,
@@ -672,7 +681,7 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(CMOU_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CMOU_Stream { config: CMOU_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CMOU_Open`] (composition seam).
@@ -777,7 +786,7 @@ impl CMOU_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::CMOU_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::CMOU_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -810,7 +819,7 @@ impl CMOU_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CMOU_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::CMOU_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

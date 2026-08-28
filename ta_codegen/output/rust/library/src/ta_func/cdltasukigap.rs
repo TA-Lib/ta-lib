@@ -358,6 +358,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLTASUKIGAP was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLTASUKIGAP_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLTASUKIGAP_StreamConfig {
+    /// The `Near` setting this stream was opened with.
+    cs_near: CandleSetting,
+}
+
 /// Live CDLTASUKIGAP stream: one value per closed bar, bit-identical to [`Core::CDLTASUKIGAP`]
 /// over the same series. Open with [`Core::CDLTASUKIGAP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -367,8 +377,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLTASUKIGAP_Stream")]
 pub struct CDLTASUKIGAP_Stream {
-    /// The `Near` setting this stream was opened with.
-    cs_near: CandleSetting,
+    /// What this stream was opened with — see `CDLTASUKIGAP_StreamConfig`.
+    config: CDLTASUKIGAP_StreamConfig,
     state: CDLTASUKIGAP_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -379,7 +389,7 @@ impl CDLTASUKIGAP_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLTASUKIGAP_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_near = src.cs_near;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -427,13 +437,13 @@ impl CDLTASUKIGAP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLTASUKIGAP_step_impl(sp: &mut CDLTASUKIGAP_StreamState, cs_near: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLTASUKIGAP_step_impl(cfg: &CDLTASUKIGAP_StreamConfig, sp: &mut CDLTASUKIGAP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = cs_near.range_type as i32;
+        let Near_rangeType: i32 = cfg.cs_near.range_type as i32;
         #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = cs_near.avg_period;
+        let Near_avgPeriod: i32 = cfg.cs_near.avg_period;
         #[allow(non_snake_case)]
-        let Near_factor: f64 = cs_near.factor;
+        let Near_factor: f64 = cfg.cs_near.factor;
         let mut _candlerange_0: f64;
         match Near_rangeType {
             0 => {
@@ -674,7 +684,7 @@ impl Core {
             ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
             ring_NearTrailingIdx_derived,
         };
-        Ok(CDLTASUKIGAP_Stream { cs_near: self.candle_settings.near, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLTASUKIGAP_Stream { config: CDLTASUKIGAP_StreamConfig { cs_near: self.candle_settings.near, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLTASUKIGAP_Open`] (composition seam).
@@ -789,7 +799,7 @@ impl CDLTASUKIGAP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLTASUKIGAP_step_impl(&mut self.state, &self.cs_near, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLTASUKIGAP_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -822,7 +832,7 @@ impl CDLTASUKIGAP_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLTASUKIGAP_step_impl(&mut self.state, &self.cs_near, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLTASUKIGAP_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

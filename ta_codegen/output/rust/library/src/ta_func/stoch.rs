@@ -538,6 +538,19 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What STOCH was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&STOCH_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct STOCH_StreamConfig {
+    optInFastK_Period: i32,
+    optInSlowK_Period: i32,
+    optInSlowK_MAType: MAType,
+    optInSlowD_Period: i32,
+    optInSlowD_MAType: MAType,
+}
+
 /// Live STOCH stream: one value per closed bar, bit-identical to [`Core::STOCH`]
 /// over the same series. Open with [`Core::STOCH_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -547,6 +560,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCH_Stream")]
 pub struct STOCH_Stream {
+    /// What this stream was opened with — see `STOCH_StreamConfig`.
+    config: STOCH_StreamConfig,
     state: STOCH_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -557,6 +572,7 @@ impl STOCH_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `STOCH_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -565,11 +581,6 @@ impl STOCH_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct STOCH_StreamState {
-    optInFastK_Period: i32,
-    optInSlowK_Period: i32,
-    optInSlowK_MAType: MAType,
-    optInSlowD_Period: i32,
-    optInSlowD_MAType: MAType,
     lowest: f64,
     highest: f64,
     diff: f64,
@@ -591,11 +602,6 @@ impl STOCH_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInFastK_Period = src.optInFastK_Period;
-        self.optInSlowK_Period = src.optInSlowK_Period;
-        self.optInSlowK_MAType = src.optInSlowK_MAType;
-        self.optInSlowD_Period = src.optInSlowD_Period;
-        self.optInSlowD_MAType = src.optInSlowD_MAType;
         self.lowest = src.lowest;
         self.highest = src.highest;
         self.diff = src.diff;
@@ -620,7 +626,7 @@ impl STOCH_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCH_step_impl(sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
+    fn STOCH_step_impl(cfg: &STOCH_StreamConfig, sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outSlowD: f64 = 0.0_f64;
@@ -970,11 +976,6 @@ impl Core {
             }
         }
         let state = STOCH_StreamState {
-            optInFastK_Period,
-            optInSlowK_Period,
-            optInSlowK_MAType,
-            optInSlowD_Period,
-            optInSlowD_MAType,
             lowest,
             highest,
             diff,
@@ -998,7 +999,7 @@ impl Core {
             let last_sc_outSlowD = sc_outSlowD[*outNBElement - 1];
             outSlowD[0] = last_sc_outSlowD;
         }
-        Ok(STOCH_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(STOCH_Stream { config: STOCH_StreamConfig { optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
@@ -1099,10 +1100,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `STOCH_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `STOCH_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static STOCH_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCH_Stream>>> =
+    static STOCH_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCH_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1127,7 +1128,7 @@ impl STOCH_Stream {
         }
         let mut outSlowK: f64 = 0.0_f64;
         let mut outSlowD: f64 = 0.0_f64;
-        Core::STOCH_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
+        Core::STOCH_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1160,7 +1161,7 @@ impl STOCH_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STOCH_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
+            Core::STOCH_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1184,11 +1185,14 @@ impl STOCH_Stream {
             return Err(RetCode::BadParam);
         }
         STOCH_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outSlowK: f64 = 0.0_f64;
+            let mut outSlowD: f64 = 0.0_f64;
+            let stepped = Core::STOCH_step_impl(&self.config, &mut scratch, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outSlowK, outSlowD))
         })
     }
 

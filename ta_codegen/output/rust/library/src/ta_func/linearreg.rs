@@ -426,6 +426,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What LINEARREG was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&LINEARREG_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct LINEARREG_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live LINEARREG stream: one value per closed bar, bit-identical to [`Core::LINEARREG`]
 /// over the same series. Open with [`Core::LINEARREG_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -435,6 +444,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LINEARREG_Stream")]
 pub struct LINEARREG_Stream {
+    /// What this stream was opened with — see `LINEARREG_StreamConfig`.
+    config: LINEARREG_StreamConfig,
     state: LINEARREG_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -445,6 +456,7 @@ impl LINEARREG_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `LINEARREG_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -453,7 +465,6 @@ impl LINEARREG_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct LINEARREG_StreamState {
-    optInTimePeriod: i32,
     lookbackTotal: usize,
     trailingIdx: i32,
     SumX: f64,
@@ -474,7 +485,6 @@ impl LINEARREG_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.lookbackTotal = src.lookbackTotal;
         self.trailingIdx = src.trailingIdx;
         self.SumX = src.SumX;
@@ -498,7 +508,7 @@ impl LINEARREG_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LINEARREG_step_impl(sp: &mut LINEARREG_StreamState, inReal: f64, outReal: &mut f64) {
+    fn LINEARREG_step_impl(cfg: &LINEARREG_StreamConfig, sp: &mut LINEARREG_StreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut b: f64 = 0.0_f64;
         let mut windowStart: usize = 0_usize;
@@ -512,7 +522,7 @@ impl Core {
             sp.j -= rebaseShift;
         }
         sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
-        weightedTrailing = (sp.optInTimePeriod as f64) * sp.trailingValue;
+        weightedTrailing = (cfg.optInTimePeriod as f64) * sp.trailingValue;
         sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;
         sp.SumY = sp.SumY - sp.trailingValue + sp.x_inReal[(sp.today & sp.xMask) as usize];
         sp.sumAbs = sp.sumAbs - (sp.trailingValue).abs() + (sp.x_inReal[(sp.today & sp.xMask) as usize]).abs();
@@ -576,7 +586,7 @@ impl Core {
         // to at least lookbackTotal.
         sp.barsSinceReseed -= 1;
         if sp.barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sp.sumAbs {
-            sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
+            sp.barsSinceReseed = (32 * cfg.optInTimePeriod) as usize;
             windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
             sp.SumY = 0.0;
             sp.SumXY = 0.0;
@@ -593,11 +603,11 @@ impl Core {
                 sp.j += 1;
             }
         }
-        m = (((sp.optInTimePeriod) as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
-        b = (sp.SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
+        m = (((cfg.optInTimePeriod) as f64) * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+        b = (sp.SumY - m * sp.SumX) / (cfg.optInTimePeriod as f64);
         sp.trailingValue = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize];
         sp.trailingIdx += 1;
-        (*outReal) = (m as f64).mul_add((sp.optInTimePeriod - 1) as f64, b);
+        (*outReal) = (m as f64).mul_add((cfg.optInTimePeriod - 1) as f64, b);
         sp.today += 1;
     }
 
@@ -818,7 +828,6 @@ impl Core {
             }
         }
         let state = LINEARREG_StreamState {
-            optInTimePeriod,
             lookbackTotal,
             trailingIdx: (trailingIdx) as i32,
             SumX,
@@ -833,7 +842,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(LINEARREG_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(LINEARREG_Stream { config: LINEARREG_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::LINEARREG_Open`] (composition seam).
@@ -938,7 +947,7 @@ impl LINEARREG_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::LINEARREG_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::LINEARREG_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -971,7 +980,7 @@ impl LINEARREG_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::LINEARREG_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::LINEARREG_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

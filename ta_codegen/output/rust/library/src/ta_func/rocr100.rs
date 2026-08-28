@@ -285,6 +285,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What ROCR100 was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&ROCR100_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct ROCR100_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live ROCR100 stream: one value per closed bar, bit-identical to [`Core::ROCR100`]
 /// over the same series. Open with [`Core::ROCR100_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -294,6 +303,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ROCR100_Stream")]
 pub struct ROCR100_Stream {
+    /// What this stream was opened with — see `ROCR100_StreamConfig`.
+    config: ROCR100_StreamConfig,
     state: ROCR100_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -304,6 +315,7 @@ impl ROCR100_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `ROCR100_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -312,7 +324,6 @@ impl ROCR100_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ROCR100_StreamState {
-    optInTimePeriod: i32,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
@@ -323,7 +334,6 @@ impl ROCR100_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
         self.ringCap_trailingIdx = src.ringCap_trailingIdx;
         self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);
@@ -337,7 +347,7 @@ impl ROCR100_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ROCR100_step_impl(sp: &mut ROCR100_StreamState, inReal: f64, outReal: &mut f64) {
+    fn ROCR100_step_impl(cfg: &ROCR100_StreamConfig, sp: &mut ROCR100_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
@@ -453,12 +463,11 @@ impl Core {
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
         let state = ROCR100_StreamState {
-            optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(ROCR100_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(ROCR100_Stream { config: ROCR100_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::ROCR100_Open`] (composition seam).
@@ -563,7 +572,7 @@ impl ROCR100_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::ROCR100_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::ROCR100_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -596,7 +605,7 @@ impl ROCR100_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::ROCR100_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::ROCR100_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

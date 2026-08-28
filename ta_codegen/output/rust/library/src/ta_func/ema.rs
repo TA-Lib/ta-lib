@@ -345,6 +345,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What EMA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&EMA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct EMA_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live EMA stream: one value per closed bar, bit-identical to [`Core::EMA`]
 /// over the same series. Open with [`Core::EMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -354,6 +363,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_EMA_Stream")]
 pub struct EMA_Stream {
+    /// What this stream was opened with — see `EMA_StreamConfig`.
+    config: EMA_StreamConfig,
     state: EMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -364,6 +375,7 @@ impl EMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `EMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -372,7 +384,6 @@ impl EMA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct EMA_StreamState {
-    optInTimePeriod: i32,
     optInK_1: f64,
     prevMA: f64,
 }
@@ -382,7 +393,6 @@ impl EMA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.optInK_1 = src.optInK_1;
         self.prevMA = src.prevMA;
     }
@@ -395,8 +405,8 @@ impl EMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn EMA_step_impl(sp: &mut EMA_StreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 {
+    fn EMA_step_impl(cfg: &EMA_StreamConfig, sp: &mut EMA_StreamState, inReal: f64, outReal: &mut f64) {
+        if cfg.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
         }
@@ -437,7 +447,6 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = EMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
                 optInK_1: 0.0_f64,
                 prevMA: 0.0_f64,
             };
@@ -452,7 +461,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(EMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(EMA_Stream { config: EMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -522,11 +531,10 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = EMA_StreamState {
-            optInTimePeriod,
             optInK_1,
             prevMA,
         };
-        Ok(EMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(EMA_Stream { config: EMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::EMA_Open`] (composition seam).
@@ -631,7 +639,7 @@ impl EMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::EMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::EMA_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -664,7 +672,7 @@ impl EMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::EMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::EMA_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

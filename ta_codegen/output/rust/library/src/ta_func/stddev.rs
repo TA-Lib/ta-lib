@@ -295,6 +295,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What STDDEV was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&STDDEV_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct STDDEV_StreamConfig {
+    optInTimePeriod: i32,
+    optInNbDev: f64,
+}
+
 /// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::STDDEV`]
 /// over the same series. Open with [`Core::STDDEV_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -304,6 +314,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STDDEV_Stream")]
 pub struct STDDEV_Stream {
+    /// What this stream was opened with — see `STDDEV_StreamConfig`.
+    config: STDDEV_StreamConfig,
     state: STDDEV_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -314,6 +326,7 @@ impl STDDEV_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `STDDEV_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -322,8 +335,6 @@ impl STDDEV_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct STDDEV_StreamState {
-    optInTimePeriod: i32,
-    optInNbDev: f64,
     sub0: VAR_Stream,
 }
 
@@ -332,8 +343,6 @@ impl STDDEV_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInNbDev = src.optInNbDev;
         self.sub0.restore_from(&src.sub0);
     }
 }
@@ -345,14 +354,14 @@ impl STDDEV_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STDDEV_step_impl(sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn STDDEV_step_impl(cfg: &STDDEV_StreamConfig, sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cur_outReal: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_outReal = sp.sub0.update(inReal)?;
         // Combine map (batch tail, per bar).
-        if sp.optInNbDev != 1.0 {
-            cur_outReal = (cur_outReal).sqrt() * sp.optInNbDev;
+        if cfg.optInNbDev != 1.0 {
+            cur_outReal = (cur_outReal).sqrt() * cfg.optInNbDev;
         } else {
             cur_outReal = (cur_outReal).sqrt();
         }
@@ -450,15 +459,13 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         let state = STDDEV_StreamState {
-            optInTimePeriod,
-            optInNbDev,
             sub0,
         };
         if outStride != 1 && *outNBElement > 0 {
             let last_sc_outReal = sc_outReal[*outNBElement - 1];
             outReal[0] = last_sc_outReal;
         }
-        Ok(STDDEV_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(STDDEV_Stream { config: STDDEV_StreamConfig { optInTimePeriod, optInNbDev, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::STDDEV_Open`] (composition seam).
@@ -563,7 +570,7 @@ impl STDDEV_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::STDDEV_step_impl(&mut self.state, inReal, &mut outReal)?;
+        Core::STDDEV_step_impl(&self.config, &mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -596,7 +603,7 @@ impl STDDEV_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STDDEV_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            Core::STDDEV_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

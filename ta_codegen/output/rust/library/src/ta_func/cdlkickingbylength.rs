@@ -452,6 +452,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLKICKINGBYLENGTH was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLKICKINGBYLENGTH_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLKICKINGBYLENGTH_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `ShadowVeryShort` setting this stream was opened with.
+    cs_shadow_very_short: CandleSetting,
+}
+
 /// Live CDLKICKINGBYLENGTH stream: one value per closed bar, bit-identical to [`Core::CDLKICKINGBYLENGTH`]
 /// over the same series. Open with [`Core::CDLKICKINGBYLENGTH_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -461,10 +473,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLKICKINGBYLENGTH_Stream")]
 pub struct CDLKICKINGBYLENGTH_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `ShadowVeryShort` setting this stream was opened with.
-    cs_shadow_very_short: CandleSetting,
+    /// What this stream was opened with — see `CDLKICKINGBYLENGTH_StreamConfig`.
+    config: CDLKICKINGBYLENGTH_StreamConfig,
     state: CDLKICKINGBYLENGTH_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -475,8 +485,7 @@ impl CDLKICKINGBYLENGTH_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLKICKINGBYLENGTH_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_shadow_very_short = src.cs_shadow_very_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -530,20 +539,20 @@ impl CDLKICKINGBYLENGTH_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLKICKINGBYLENGTH_step_impl(sp: &mut CDLKICKINGBYLENGTH_StreamState, cs_body_long: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLKICKINGBYLENGTH_step_impl(cfg: &CDLKICKINGBYLENGTH_StreamConfig, sp: &mut CDLKICKINGBYLENGTH_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = cs_shadow_very_short.range_type as i32;
+        let ShadowVeryShort_rangeType: i32 = cfg.cs_shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = cs_shadow_very_short.avg_period;
+        let ShadowVeryShort_avgPeriod: i32 = cfg.cs_shadow_very_short.avg_period;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = cs_shadow_very_short.factor;
+        let ShadowVeryShort_factor: f64 = cfg.cs_shadow_very_short.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -899,7 +908,7 @@ impl Core {
             ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLKICKINGBYLENGTH_Stream { cs_body_long: self.candle_settings.body_long, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLKICKINGBYLENGTH_Stream { config: CDLKICKINGBYLENGTH_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_shadow_very_short: self.candle_settings.shadow_very_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLKICKINGBYLENGTH_Open`] (composition seam).
@@ -995,10 +1004,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLKICKINGBYLENGTH_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLKICKINGBYLENGTH_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLKICKINGBYLENGTH_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLKICKINGBYLENGTH_Stream>>> =
+    static CDLKICKINGBYLENGTH_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLKICKINGBYLENGTH_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1022,7 +1031,7 @@ impl CDLKICKINGBYLENGTH_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLKICKINGBYLENGTH_step_impl(&mut self.state, &self.cs_body_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLKICKINGBYLENGTH_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1055,7 +1064,7 @@ impl CDLKICKINGBYLENGTH_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLKICKINGBYLENGTH_step_impl(&mut self.state, &self.cs_body_long, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLKICKINGBYLENGTH_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1079,11 +1088,12 @@ impl CDLKICKINGBYLENGTH_Stream {
             return Err(RetCode::BadParam);
         }
         CDLKICKINGBYLENGTH_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLKICKINGBYLENGTH_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

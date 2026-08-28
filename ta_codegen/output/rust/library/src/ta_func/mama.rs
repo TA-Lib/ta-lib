@@ -672,6 +672,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MAMA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MAMA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MAMA_StreamConfig {
+    optInFastLimit: f64,
+    optInSlowLimit: f64,
+}
+
 /// Live MAMA stream: one value per closed bar, bit-identical to [`Core::MAMA`]
 /// over the same series. Open with [`Core::MAMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -681,6 +691,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAMA_Stream")]
 pub struct MAMA_Stream {
+    /// What this stream was opened with — see `MAMA_StreamConfig`.
+    config: MAMA_StreamConfig,
     state: MAMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -691,6 +703,7 @@ impl MAMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MAMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -699,8 +712,6 @@ impl MAMA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MAMA_StreamState {
-    optInFastLimit: f64,
-    optInSlowLimit: f64,
     period: f64,
     periodWMASum: f64,
     periodWMASub: f64,
@@ -755,8 +766,6 @@ impl MAMA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInFastLimit = src.optInFastLimit;
-        self.optInSlowLimit = src.optInSlowLimit;
         self.period = src.period;
         self.periodWMASum = src.periodWMASum;
         self.periodWMASub = src.periodWMASub;
@@ -814,7 +823,7 @@ impl MAMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAMA_step_impl(sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
+    fn MAMA_step_impl(cfg: &MAMA_StreamConfig, sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
@@ -956,12 +965,12 @@ impl Core {
         }
         // Put Alpha into tempReal
         if tempReal > 1.0 {
-            tempReal = sp.optInFastLimit / tempReal;
-            if tempReal < sp.optInSlowLimit {
-                tempReal = sp.optInSlowLimit;
+            tempReal = cfg.optInFastLimit / tempReal;
+            if tempReal < cfg.optInSlowLimit {
+                tempReal = cfg.optInSlowLimit;
             }
         } else {
-            tempReal = sp.optInFastLimit;
+            tempReal = cfg.optInFastLimit;
         }
         // Calculate MAMA, FAMA
         sp.mama = (1_f64 - tempReal as f64).mul_add(sp.mama, tempReal * todayValue);
@@ -1402,8 +1411,6 @@ impl Core {
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
         let state = MAMA_StreamState {
-            optInFastLimit,
-            optInSlowLimit,
             period,
             periodWMASum,
             periodWMASub,
@@ -1452,7 +1459,7 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(MAMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MAMA_Stream { config: MAMA_StreamConfig { optInFastLimit, optInSlowLimit, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MAMA_Open`] (composition seam).
@@ -1568,7 +1575,7 @@ impl MAMA_Stream {
         }
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
-        Core::MAMA_step_impl(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
+        Core::MAMA_step_impl(&self.config, &mut self.state, inReal, &mut outMAMA, &mut outFAMA);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1607,7 +1614,7 @@ impl MAMA_Stream {
                 return Err(RetCode::BadParam);
             }
             let slot_outFAMA = match outFAMA.as_deref_mut() { Some(_s) => &mut _s[i], None => &mut sink_outFAMA };
-            Core::MAMA_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
+            Core::MAMA_step_impl(&self.config, &mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

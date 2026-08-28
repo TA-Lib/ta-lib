@@ -526,6 +526,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLRISEFALL3METHODS was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLRISEFALL3METHODS_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLRISEFALL3METHODS_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
+}
+
 /// Live CDLRISEFALL3METHODS stream: one value per closed bar, bit-identical to [`Core::CDLRISEFALL3METHODS`]
 /// over the same series. Open with [`Core::CDLRISEFALL3METHODS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -535,10 +547,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLRISEFALL3METHODS_Stream")]
 pub struct CDLRISEFALL3METHODS_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `BodyShort` setting this stream was opened with.
-    cs_body_short: CandleSetting,
+    /// What this stream was opened with — see `CDLRISEFALL3METHODS_StreamConfig`.
+    config: CDLRISEFALL3METHODS_StreamConfig,
     state: CDLRISEFALL3METHODS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -549,8 +559,7 @@ impl CDLRISEFALL3METHODS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLRISEFALL3METHODS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_body_short = src.cs_body_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -626,20 +635,20 @@ impl CDLRISEFALL3METHODS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLRISEFALL3METHODS_step_impl(sp: &mut CDLRISEFALL3METHODS_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLRISEFALL3METHODS_step_impl(cfg: &CDLRISEFALL3METHODS_StreamConfig, sp: &mut CDLRISEFALL3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cfg.cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cfg.cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = cs_body_short.factor;
+        let BodyShort_factor: f64 = cfg.cs_body_short.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -1120,7 +1129,7 @@ impl Core {
             ringLag_BodyShortTrailingIdx: capLag_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLRISEFALL3METHODS_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLRISEFALL3METHODS_Stream { config: CDLRISEFALL3METHODS_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLRISEFALL3METHODS_Open`] (composition seam).
@@ -1216,10 +1225,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLRISEFALL3METHODS_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLRISEFALL3METHODS_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLRISEFALL3METHODS_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLRISEFALL3METHODS_Stream>>> =
+    static CDLRISEFALL3METHODS_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLRISEFALL3METHODS_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1243,7 +1252,7 @@ impl CDLRISEFALL3METHODS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLRISEFALL3METHODS_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLRISEFALL3METHODS_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1276,7 +1285,7 @@ impl CDLRISEFALL3METHODS_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLRISEFALL3METHODS_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLRISEFALL3METHODS_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1300,11 +1309,12 @@ impl CDLRISEFALL3METHODS_Stream {
             return Err(RetCode::BadParam);
         }
         CDLRISEFALL3METHODS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLRISEFALL3METHODS_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

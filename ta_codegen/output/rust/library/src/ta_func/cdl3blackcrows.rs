@@ -394,6 +394,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDL3BLACKCROWS was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDL3BLACKCROWS_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDL3BLACKCROWS_StreamConfig {
+    /// The `ShadowVeryShort` setting this stream was opened with.
+    cs_shadow_very_short: CandleSetting,
+}
+
 /// Live CDL3BLACKCROWS stream: one value per closed bar, bit-identical to [`Core::CDL3BLACKCROWS`]
 /// over the same series. Open with [`Core::CDL3BLACKCROWS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -403,8 +413,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDL3BLACKCROWS_Stream")]
 pub struct CDL3BLACKCROWS_Stream {
-    /// The `ShadowVeryShort` setting this stream was opened with.
-    cs_shadow_very_short: CandleSetting,
+    /// What this stream was opened with — see `CDL3BLACKCROWS_StreamConfig`.
+    config: CDL3BLACKCROWS_StreamConfig,
     state: CDL3BLACKCROWS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -415,7 +425,7 @@ impl CDL3BLACKCROWS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDL3BLACKCROWS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_shadow_very_short = src.cs_shadow_very_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -473,14 +483,14 @@ impl CDL3BLACKCROWS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDL3BLACKCROWS_step_impl(sp: &mut CDL3BLACKCROWS_StreamState, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL3BLACKCROWS_step_impl(cfg: &CDL3BLACKCROWS_StreamConfig, sp: &mut CDL3BLACKCROWS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = cs_shadow_very_short.range_type as i32;
+        let ShadowVeryShort_rangeType: i32 = cfg.cs_shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = cs_shadow_very_short.avg_period;
+        let ShadowVeryShort_avgPeriod: i32 = cfg.cs_shadow_very_short.avg_period;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = cs_shadow_very_short.factor;
+        let ShadowVeryShort_factor: f64 = cfg.cs_shadow_very_short.factor;
         let mut _candlerange_0: f64;
         match ShadowVeryShort_rangeType {
             0 => {
@@ -762,7 +772,7 @@ impl Core {
             ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDL3BLACKCROWS_Stream { cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDL3BLACKCROWS_Stream { config: CDL3BLACKCROWS_StreamConfig { cs_shadow_very_short: self.candle_settings.shadow_very_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDL3BLACKCROWS_Open`] (composition seam).
@@ -877,7 +887,7 @@ impl CDL3BLACKCROWS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDL3BLACKCROWS_step_impl(&mut self.state, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDL3BLACKCROWS_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -910,7 +920,7 @@ impl CDL3BLACKCROWS_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDL3BLACKCROWS_step_impl(&mut self.state, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDL3BLACKCROWS_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

@@ -574,6 +574,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MINUS_DI was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MINUS_DI_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MINUS_DI_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live MINUS_DI stream: one value per closed bar, bit-identical to [`Core::MINUS_DI`]
 /// over the same series. Open with [`Core::MINUS_DI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -583,6 +592,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MINUS_DI_Stream")]
 pub struct MINUS_DI_Stream {
+    /// What this stream was opened with — see `MINUS_DI_StreamConfig`.
+    config: MINUS_DI_StreamConfig,
     state: MINUS_DI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -593,6 +604,7 @@ impl MINUS_DI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MINUS_DI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -601,7 +613,6 @@ impl MINUS_DI_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MINUS_DI_StreamState {
-    optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
     prevClose: f64,
@@ -614,7 +625,6 @@ impl MINUS_DI_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevHigh = src.prevHigh;
         self.prevLow = src.prevLow;
         self.prevClose = src.prevClose;
@@ -630,8 +640,8 @@ impl MINUS_DI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MINUS_DI_step_impl(sp: &mut MINUS_DI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod <= 1 {
+    fn MINUS_DI_step_impl(cfg: &MINUS_DI_StreamConfig, sp: &mut MINUS_DI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+        if cfg.optInTimePeriod <= 1 {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
@@ -681,10 +691,10 @@ impl Core {
             sp.prevLow = tempReal;
             if diffM > 0_f64 && diffP < diffM {
                 // Case 2 and 4: +DM=0,-DM=diffM
-                sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / ((sp.optInTimePeriod) as f64) + diffM;
+                sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / ((cfg.optInTimePeriod) as f64) + diffM;
             } else {
                 // Case 1,3,5 and 7
-                sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / ((sp.optInTimePeriod) as f64);
+                sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / ((cfg.optInTimePeriod) as f64);
             }
             // Calculate the prevTR
             let mut _true_range_1: f64;
@@ -699,7 +709,7 @@ impl Core {
             }
             _true_range_1 = range_1;
             tempReal = _true_range_1;
-            sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
+            sp.prevTR = sp.prevTR - sp.prevTR / ((cfg.optInTimePeriod) as f64) + tempReal;
             sp.prevClose = inClose;
             // Calculate the DI. The value is rounded (see Wilder book).
             if sp.prevTR > 0.0 {
@@ -910,14 +920,13 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let state = MINUS_DI_StreamState {
-                optInTimePeriod,
                 prevHigh,
                 prevLow,
                 prevClose,
                 prevMinusDM,
                 prevTR,
             };
-            Ok(MINUS_DI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(MINUS_DI_Stream { config: MINUS_DI_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -1176,14 +1185,13 @@ impl Core {
 
             // Capture the live batch state into the handle.
             let state = MINUS_DI_StreamState {
-                optInTimePeriod,
                 prevHigh,
                 prevLow,
                 prevClose,
                 prevMinusDM,
                 prevTR,
             };
-            Ok(MINUS_DI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(MINUS_DI_Stream { config: MINUS_DI_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
@@ -1296,7 +1304,7 @@ impl MINUS_DI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MINUS_DI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::MINUS_DI_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1329,7 +1337,7 @@ impl MINUS_DI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MINUS_DI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::MINUS_DI_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

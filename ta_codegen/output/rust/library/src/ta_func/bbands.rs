@@ -634,6 +634,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What BBANDS was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&BBANDS_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct BBANDS_StreamConfig {
+    optInTimePeriod: i32,
+    optInNbDevUp: f64,
+    optInNbDevDn: f64,
+    optInMAType: MAType,
+}
+
 /// Live BBANDS stream: one value per closed bar, bit-identical to [`Core::BBANDS`]
 /// over the same series. Open with [`Core::BBANDS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -643,6 +655,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BBANDS_Stream")]
 pub struct BBANDS_Stream {
+    /// What this stream was opened with — see `BBANDS_StreamConfig`.
+    config: BBANDS_StreamConfig,
     state: BBANDS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -653,6 +667,7 @@ impl BBANDS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `BBANDS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -661,10 +676,6 @@ impl BBANDS_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct BBANDS_StreamState {
-    optInTimePeriod: i32,
-    optInNbDevUp: f64,
-    optInNbDevDn: f64,
-    optInMAType: MAType,
     sub0: MA_Stream,
     sub1: STDDEV_Stream,
 }
@@ -674,10 +685,6 @@ impl BBANDS_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInNbDevUp = src.optInNbDevUp;
-        self.optInNbDevDn = src.optInNbDevDn;
-        self.optInMAType = src.optInMAType;
         self.sub0.restore_from(&src.sub0);
         self.sub1.restore_from(&src.sub1);
     }
@@ -690,7 +697,7 @@ impl BBANDS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BBANDS_step_impl(sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
+    fn BBANDS_step_impl(cfg: &BBANDS_StreamConfig, sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut cur_tempBuffer1: f64 = 0.0_f64;
@@ -702,15 +709,15 @@ impl Core {
         cur_tempBuffer1 = sp.sub0.update(inReal)?;
         cur_tempBuffer2 = sp.sub1.update(inReal)?;
         // Combine map (batch tail, per bar).
-        if sp.optInNbDevUp == sp.optInNbDevDn {
-            tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+        if cfg.optInNbDevUp == cfg.optInNbDevDn {
+            tempReal = cur_tempBuffer2 * cfg.optInNbDevUp;
             tempReal2 = cur_tempBuffer1;
             cur_outRealUpperBand = tempReal2 + tempReal;
             cur_outRealLowerBand = tempReal2 - tempReal;
         } else {
             tempReal2 = cur_tempBuffer1;
-            cur_outRealUpperBand = (cur_tempBuffer2 as f64).mul_add(sp.optInNbDevUp, tempReal2);
-            cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
+            cur_outRealUpperBand = (cur_tempBuffer2 as f64).mul_add(cfg.optInNbDevUp, tempReal2);
+            cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * cfg.optInNbDevDn;
         }
         (*outRealUpperBand) = cur_outRealUpperBand;
         (*outRealMiddleBand) = cur_tempBuffer1;
@@ -864,10 +871,6 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         let state = BBANDS_StreamState {
-            optInTimePeriod,
-            optInNbDevUp,
-            optInNbDevDn,
-            optInMAType,
             sub0,
             sub1,
         };
@@ -883,7 +886,7 @@ impl Core {
             let last_sc_outRealLowerBand = sc_outRealLowerBand[*outNBElement - 1];
             outRealLowerBand[0] = last_sc_outRealLowerBand;
         }
-        Ok(BBANDS_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BBANDS_Stream { config: BBANDS_StreamConfig { optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::BBANDS_Open`] (composition seam).
@@ -988,10 +991,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `BBANDS_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `BBANDS_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BBANDS_Stream>>> =
+    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BBANDS_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1017,7 +1020,7 @@ impl BBANDS_Stream {
         let mut outRealUpperBand: f64 = 0.0_f64;
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
-        Core::BBANDS_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
+        Core::BBANDS_step_impl(&self.config, &mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1050,7 +1053,7 @@ impl BBANDS_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::BBANDS_step_impl(&mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
+            Core::BBANDS_step_impl(&self.config, &mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1074,11 +1077,15 @@ impl BBANDS_Stream {
             return Err(RetCode::BadParam);
         }
         BBANDS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outRealUpperBand: f64 = 0.0_f64;
+            let mut outRealMiddleBand: f64 = 0.0_f64;
+            let mut outRealLowerBand: f64 = 0.0_f64;
+            let stepped = Core::BBANDS_step_impl(&self.config, &mut scratch, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
         })
     }
 

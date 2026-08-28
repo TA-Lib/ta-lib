@@ -400,6 +400,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What WMA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&WMA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct WMA_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live WMA stream: one value per closed bar, bit-identical to [`Core::WMA`]
 /// over the same series. Open with [`Core::WMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -409,6 +418,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WMA_Stream")]
 pub struct WMA_Stream {
+    /// What this stream was opened with — see `WMA_StreamConfig`.
+    config: WMA_StreamConfig,
     state: WMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -419,6 +430,7 @@ impl WMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `WMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -427,7 +439,6 @@ impl WMA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct WMA_StreamState {
-    optInTimePeriod: i32,
     lookbackWin: usize,
     barsSinceReseed: usize,
     periodSum: f64,
@@ -447,7 +458,6 @@ impl WMA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.lookbackWin = src.lookbackWin;
         self.barsSinceReseed = src.barsSinceReseed;
         self.periodSum = src.periodSum;
@@ -470,11 +480,11 @@ impl WMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn WMA_step_impl(sp: &mut WMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn WMA_step_impl(cfg: &WMA_StreamConfig, sp: &mut WMA_StreamState, inReal: f64, outReal: &mut f64) {
         let mut j: usize = 0_usize;
         let mut rw: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
-        if sp.optInTimePeriod == 1 {
+        if cfg.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
         }
@@ -487,7 +497,7 @@ impl Core {
         tempReal = inReal;
         sp.periodSub += tempReal;
         sp.periodSub -= sp.trailingValue;
-        sp.periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+        sp.periodSum += tempReal * ((cfg.optInTimePeriod) as f64);
         // Re-anchor: rebuild both totals from the window itself.
         //
         // periodSum and periodSub were running totals that were never
@@ -532,7 +542,7 @@ impl Core {
         // startIdx-lookbackTotal+outIdx, which is >= outIdx.
         sp.barsSinceReseed -= 1;
         if sp.barsSinceReseed <= 0 {
-            sp.barsSinceReseed = (8 * sp.optInTimePeriod) as usize;
+            sp.barsSinceReseed = (8 * cfg.optInTimePeriod) as usize;
             sp.periodSub = 0.0 as f64;
             sp.periodSum = 0.0 as f64;
             rw = 1;
@@ -600,7 +610,6 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = WMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
                 lookbackWin: 0_usize,
                 barsSinceReseed: 0_usize,
                 periodSum: 0.0_f64,
@@ -625,7 +634,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(WMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(WMA_Stream { config: WMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -795,7 +804,6 @@ impl Core {
         let mut win_j_inReal: Vec<f64> = vec![0.0_f64; cap_j as usize];
         win_j_inReal.copy_from_slice(&inReal[historyLen - cap_j as usize..]);
         let state = WMA_StreamState {
-            optInTimePeriod,
             lookbackWin,
             barsSinceReseed,
             periodSum,
@@ -809,7 +817,7 @@ impl Core {
             winCap_j: cap_j as usize,
             win_j_inReal,
         };
-        Ok(WMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(WMA_Stream { config: WMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::WMA_Open`] (composition seam).
@@ -895,10 +903,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `WMA_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `WMA_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static WMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<WMA_Stream>>> =
+    static WMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<WMA_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -922,7 +930,7 @@ impl WMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::WMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::WMA_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -955,7 +963,7 @@ impl WMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::WMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::WMA_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -979,11 +987,12 @@ impl WMA_Stream {
             return Err(RetCode::BadParam);
         }
         WMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::WMA_step_impl(&self.config, &mut scratch, inReal, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

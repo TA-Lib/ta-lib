@@ -492,6 +492,17 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What STOCHF was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&STOCHF_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct STOCHF_StreamConfig {
+    optInFastK_Period: i32,
+    optInFastD_Period: i32,
+    optInFastD_MAType: MAType,
+}
+
 /// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::STOCHF`]
 /// over the same series. Open with [`Core::STOCHF_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -501,6 +512,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCHF_Stream")]
 pub struct STOCHF_Stream {
+    /// What this stream was opened with — see `STOCHF_StreamConfig`.
+    config: STOCHF_StreamConfig,
     state: STOCHF_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -511,6 +524,7 @@ impl STOCHF_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `STOCHF_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -519,9 +533,6 @@ impl STOCHF_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct STOCHF_StreamState {
-    optInFastK_Period: i32,
-    optInFastD_Period: i32,
-    optInFastD_MAType: MAType,
     lowest: f64,
     highest: f64,
     diff: f64,
@@ -542,9 +553,6 @@ impl STOCHF_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInFastK_Period = src.optInFastK_Period;
-        self.optInFastD_Period = src.optInFastD_Period;
-        self.optInFastD_MAType = src.optInFastD_MAType;
         self.lowest = src.lowest;
         self.highest = src.highest;
         self.diff = src.diff;
@@ -568,7 +576,7 @@ impl STOCHF_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCHF_step_impl(sp: &mut STOCHF_StreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
+    fn STOCHF_step_impl(cfg: &STOCHF_StreamConfig, sp: &mut STOCHF_StreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
@@ -896,9 +904,6 @@ impl Core {
             }
         }
         let state = STOCHF_StreamState {
-            optInFastK_Period,
-            optInFastD_Period,
-            optInFastD_MAType,
             lowest,
             highest,
             diff,
@@ -921,7 +926,7 @@ impl Core {
             let last_sc_outFastD = sc_outFastD[*outNBElement - 1];
             outFastD[0] = last_sc_outFastD;
         }
-        Ok(STOCHF_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(STOCHF_Stream { config: STOCHF_StreamConfig { optInFastK_Period, optInFastD_Period, optInFastD_MAType, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::STOCHF_Open`] (composition seam).
@@ -1022,10 +1027,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `STOCHF_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `STOCHF_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static STOCHF_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCHF_Stream>>> =
+    static STOCHF_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCHF_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1050,7 +1055,7 @@ impl STOCHF_Stream {
         }
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        Core::STOCHF_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD)?;
+        Core::STOCHF_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1083,7 +1088,7 @@ impl STOCHF_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STOCHF_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outFastK[i], &mut outFastD[i])?;
+            Core::STOCHF_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outFastK[i], &mut outFastD[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1107,11 +1112,14 @@ impl STOCHF_Stream {
             return Err(RetCode::BadParam);
         }
         STOCHF_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outFastK: f64 = 0.0_f64;
+            let mut outFastD: f64 = 0.0_f64;
+            let stepped = Core::STOCHF_step_impl(&self.config, &mut scratch, inHigh, inLow, inClose, &mut outFastK, &mut outFastD);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outFastK, outFastD))
         })
     }
 

@@ -427,6 +427,15 @@ impl Core {
 
 /* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
+/// What MIDPRICE was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MIDPRICE_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MIDPRICE_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live MIDPRICE stream: one value per closed bar, bit-identical to [`Core::MIDPRICE`]
 /// over the same series. Open with [`Core::MIDPRICE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -436,6 +445,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MIDPRICE_Stream")]
 pub struct MIDPRICE_Stream {
+    /// What this stream was opened with — see `MIDPRICE_StreamConfig`.
+    config: MIDPRICE_StreamConfig,
     state: MIDPRICE_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -446,6 +457,7 @@ impl MIDPRICE_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MIDPRICE_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -454,7 +466,6 @@ impl MIDPRICE_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MIDPRICE_StreamState {
-    optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
     trailingIdx: i32,
@@ -472,7 +483,6 @@ impl MIDPRICE_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.lowest = src.lowest;
         self.highest = src.highest;
         self.trailingIdx = src.trailingIdx;
@@ -493,7 +503,7 @@ impl MIDPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MIDPRICE_step_impl(sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn MIDPRICE_step_impl(cfg: &MIDPRICE_StreamConfig, sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmpLow: f64 = 0.0_f64;
         let mut tmpHigh: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -691,7 +701,6 @@ impl Core {
             }
         }
         let state = MIDPRICE_StreamState {
-            optInTimePeriod,
             lowest,
             highest,
             trailingIdx: (trailingIdx) as i32,
@@ -703,7 +712,7 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok(MIDPRICE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MIDPRICE_Stream { config: MIDPRICE_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MIDPRICE_Open`] (composition seam).
@@ -793,10 +802,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MIDPRICE_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `MIDPRICE_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MIDPRICE_PEEK_SCRATCH: std::cell::Cell<Option<Box<MIDPRICE_Stream>>> =
+    static MIDPRICE_PEEK_SCRATCH: std::cell::Cell<Option<Box<MIDPRICE_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -820,7 +829,7 @@ impl MIDPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MIDPRICE_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::MIDPRICE_step_impl(&self.config, &mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -853,7 +862,7 @@ impl MIDPRICE_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MIDPRICE_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::MIDPRICE_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -877,11 +886,12 @@ impl MIDPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         MIDPRICE_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::MIDPRICE_step_impl(&self.config, &mut scratch, inHigh, inLow, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

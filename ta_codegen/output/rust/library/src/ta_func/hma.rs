@@ -594,6 +594,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What HMA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&HMA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct HMA_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live HMA stream: one value per closed bar, bit-identical to [`Core::HMA`]
 /// over the same series. Open with [`Core::HMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -603,6 +612,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HMA_Stream")]
 pub struct HMA_Stream {
+    /// What this stream was opened with — see `HMA_StreamConfig`.
+    config: HMA_StreamConfig,
     state: HMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -613,6 +624,7 @@ impl HMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `HMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -621,7 +633,6 @@ impl HMA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct HMA_StreamState {
-    optInTimePeriod: i32,
     dividerFull: f64,
     periodSubFull: f64,
     periodSumFull: f64,
@@ -665,7 +676,6 @@ impl HMA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.dividerFull = src.dividerFull;
         self.periodSubFull = src.periodSubFull;
         self.periodSumFull = src.periodSumFull;
@@ -712,12 +722,12 @@ impl HMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HMA_step_impl(sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 {
+    fn HMA_step_impl(cfg: &HMA_StreamConfig, sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
+        if cfg.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
         }
-        if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
+        if cfg.optInTimePeriod == 2 || cfg.optInTimePeriod == 3 {
             let mut tempReal: f64 = 0.0_f64;
             let mut fullOut: f64 = 0.0_f64;
             let mut jFull: usize = 0_usize;
@@ -730,10 +740,10 @@ impl Core {
             tempReal = inReal;
             sp.periodSubFull += tempReal;
             sp.periodSubFull -= sp.trailingFull;
-            sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+            sp.periodSumFull += tempReal * ((cfg.optInTimePeriod) as f64);
             sp.barsSinceReseedFull -= 1;
             if sp.barsSinceReseedFull <= 0 {
-                sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                sp.barsSinceReseedFull = (8 * cfg.optInTimePeriod) as usize;
                 sp.periodSubFull = 0.0;
                 sp.periodSumFull = 0.0;
                 rw = 1;
@@ -783,10 +793,10 @@ impl Core {
             tempReal = inReal;
             sp.periodSubFull += tempReal;
             sp.periodSubFull -= sp.trailingFull;
-            sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+            sp.periodSumFull += tempReal * ((cfg.optInTimePeriod) as f64);
             sp.barsSinceReseedFull -= 1;
             if sp.barsSinceReseedFull <= 0 {
-                sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                sp.barsSinceReseedFull = (8 * cfg.optInTimePeriod) as usize;
                 sp.periodSubFull = 0.0;
                 sp.periodSumFull = 0.0;
                 rw = 1;
@@ -921,7 +931,6 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = HMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
                 dividerFull: 0.0_f64,
                 periodSubFull: 0.0_f64,
                 periodSumFull: 0.0_f64,
@@ -970,7 +979,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(HMA_Stream { config: HMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         if optInTimePeriod == 2 || optInTimePeriod == 3 {
             let mut lookbackTotal: usize = 0_usize;
@@ -1124,7 +1133,6 @@ impl Core {
             let mut win_jFull_inReal: Vec<f64> = vec![0.0_f64; cap_jFull as usize];
             win_jFull_inReal.copy_from_slice(&inReal[historyLen - cap_jFull as usize..]);
             let state = HMA_StreamState {
-                optInTimePeriod,
                 dividerFull,
                 periodSubFull,
                 periodSumFull,
@@ -1162,7 +1170,7 @@ impl Core {
                 cbSize_dRing: 0_usize,
                 cb_dRing: Vec::new(),
             };
-            Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(HMA_Stream { config: HMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut lookbackTotal: usize = 0_usize;
             let mut lookbackSqrt: usize = 0_usize;
@@ -1478,7 +1486,6 @@ impl Core {
                 return Err(RetCode::InternalError);
             }
             let state = HMA_StreamState {
-                optInTimePeriod,
                 dividerFull,
                 periodSubFull,
                 periodSumFull,
@@ -1516,7 +1523,7 @@ impl Core {
                 cbSize_dRing: cbSize_dRing,
                 cb_dRing: dRing,
             };
-            Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(HMA_Stream { config: HMA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
@@ -1603,10 +1610,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `HMA_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `HMA_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HMA_Stream>>> =
+    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HMA_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1630,7 +1637,7 @@ impl HMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::HMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::HMA_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1663,7 +1670,7 @@ impl HMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::HMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::HMA_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1687,11 +1694,12 @@ impl HMA_Stream {
             return Err(RetCode::BadParam);
         }
         HMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::HMA_step_impl(&self.config, &mut scratch, inReal, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

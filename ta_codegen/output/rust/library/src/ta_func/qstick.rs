@@ -313,6 +313,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What QSTICK was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&QSTICK_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct QSTICK_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live QSTICK stream: one value per closed bar, bit-identical to [`Core::QSTICK`]
 /// over the same series. Open with [`Core::QSTICK_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -322,6 +331,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_QSTICK_Stream")]
 pub struct QSTICK_Stream {
+    /// What this stream was opened with — see `QSTICK_StreamConfig`.
+    config: QSTICK_StreamConfig,
     state: QSTICK_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -332,6 +343,7 @@ impl QSTICK_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `QSTICK_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -340,7 +352,6 @@ impl QSTICK_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct QSTICK_StreamState {
-    optInTimePeriod: i32,
     periodTotal: f64,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
@@ -352,7 +363,6 @@ impl QSTICK_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.periodTotal = src.periodTotal;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
         self.ringCap_trailingIdx = src.ringCap_trailingIdx;
@@ -367,7 +377,7 @@ impl QSTICK_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn QSTICK_step_impl(sp: &mut QSTICK_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
+    fn QSTICK_step_impl(cfg: &QSTICK_StreamConfig, sp: &mut QSTICK_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_derived[0] = (inClose - inOpen) as f64;
@@ -375,7 +385,7 @@ impl Core {
         sp.periodTotal += (inClose - inOpen) as f64;
         tempReal = sp.periodTotal;
         sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
-        (*outReal) = tempReal / (sp.optInTimePeriod as f64);
+        (*outReal) = tempReal / (cfg.optInTimePeriod as f64);
         sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (inClose - inOpen) as f64;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
         if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
@@ -492,13 +502,12 @@ impl Core {
             }
         }
         let state = QSTICK_StreamState {
-            optInTimePeriod,
             periodTotal,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_derived,
         };
-        Ok(QSTICK_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(QSTICK_Stream { config: QSTICK_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::QSTICK_Open`] (composition seam).
@@ -611,7 +620,7 @@ impl QSTICK_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::QSTICK_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
+        Core::QSTICK_step_impl(&self.config, &mut self.state, inOpen, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -644,7 +653,7 @@ impl QSTICK_Stream {
             if !inOpen[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::QSTICK_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
+            Core::QSTICK_step_impl(&self.config, &mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

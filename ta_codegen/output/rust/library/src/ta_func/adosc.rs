@@ -433,6 +433,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What ADOSC was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&ADOSC_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct ADOSC_StreamConfig {
+    optInFastPeriod: i32,
+    optInSlowPeriod: i32,
+}
+
 /// Live ADOSC stream: one value per closed bar, bit-identical to [`Core::ADOSC`]
 /// over the same series. Open with [`Core::ADOSC_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -442,6 +452,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ADOSC_Stream")]
 pub struct ADOSC_Stream {
+    /// What this stream was opened with — see `ADOSC_StreamConfig`.
+    config: ADOSC_StreamConfig,
     state: ADOSC_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -452,6 +464,7 @@ impl ADOSC_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `ADOSC_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -460,8 +473,6 @@ impl ADOSC_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ADOSC_StreamState {
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
     slowEMA: f64,
     slowk: f64,
     one_minus_slowk: f64,
@@ -476,8 +487,6 @@ impl ADOSC_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInSlowPeriod = src.optInSlowPeriod;
         self.slowEMA = src.slowEMA;
         self.slowk = src.slowk;
         self.one_minus_slowk = src.one_minus_slowk;
@@ -495,7 +504,7 @@ impl ADOSC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ADOSC_step_impl(sp: &mut ADOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn ADOSC_step_impl(cfg: &ADOSC_StreamConfig, sp: &mut ADOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut high: f64 = 0.0_f64;
         let mut low: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
@@ -659,8 +668,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = ADOSC_StreamState {
-            optInFastPeriod,
-            optInSlowPeriod,
             slowEMA,
             slowk,
             one_minus_slowk,
@@ -669,7 +676,7 @@ impl Core {
             one_minus_fastk,
             ad,
         };
-        Ok(ADOSC_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(ADOSC_Stream { config: ADOSC_StreamConfig { optInFastPeriod, optInSlowPeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::ADOSC_Open`] (composition seam).
@@ -784,7 +791,7 @@ impl ADOSC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::ADOSC_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        Core::ADOSC_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -817,7 +824,7 @@ impl ADOSC_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::ADOSC_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
+            Core::ADOSC_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

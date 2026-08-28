@@ -356,6 +356,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLLADDERBOTTOM was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLLADDERBOTTOM_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLLADDERBOTTOM_StreamConfig {
+    /// The `ShadowVeryShort` setting this stream was opened with.
+    cs_shadow_very_short: CandleSetting,
+}
+
 /// Live CDLLADDERBOTTOM stream: one value per closed bar, bit-identical to [`Core::CDLLADDERBOTTOM`]
 /// over the same series. Open with [`Core::CDLLADDERBOTTOM_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -365,8 +375,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLLADDERBOTTOM_Stream")]
 pub struct CDLLADDERBOTTOM_Stream {
-    /// The `ShadowVeryShort` setting this stream was opened with.
-    cs_shadow_very_short: CandleSetting,
+    /// What this stream was opened with — see `CDLLADDERBOTTOM_StreamConfig`.
+    config: CDLLADDERBOTTOM_StreamConfig,
     state: CDLLADDERBOTTOM_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -377,7 +387,7 @@ impl CDLLADDERBOTTOM_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLLADDERBOTTOM_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_shadow_very_short = src.cs_shadow_very_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -433,13 +443,13 @@ impl CDLLADDERBOTTOM_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLLADDERBOTTOM_step_impl(sp: &mut CDLLADDERBOTTOM_StreamState, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLLADDERBOTTOM_step_impl(cfg: &CDLLADDERBOTTOM_StreamConfig, sp: &mut CDLLADDERBOTTOM_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = cs_shadow_very_short.range_type as i32;
+        let ShadowVeryShort_rangeType: i32 = cfg.cs_shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = cs_shadow_very_short.avg_period;
+        let ShadowVeryShort_avgPeriod: i32 = cfg.cs_shadow_very_short.avg_period;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = cs_shadow_very_short.factor;
+        let ShadowVeryShort_factor: f64 = cfg.cs_shadow_very_short.factor;
         let mut _candlerange_0: f64;
         match ShadowVeryShort_rangeType {
             0 => {
@@ -682,7 +692,7 @@ impl Core {
             ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLLADDERBOTTOM_Stream { cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLLADDERBOTTOM_Stream { config: CDLLADDERBOTTOM_StreamConfig { cs_shadow_very_short: self.candle_settings.shadow_very_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLLADDERBOTTOM_Open`] (composition seam).
@@ -797,7 +807,7 @@ impl CDLLADDERBOTTOM_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLLADDERBOTTOM_step_impl(&mut self.state, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLLADDERBOTTOM_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -830,7 +840,7 @@ impl CDLLADDERBOTTOM_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLLADDERBOTTOM_step_impl(&mut self.state, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLLADDERBOTTOM_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

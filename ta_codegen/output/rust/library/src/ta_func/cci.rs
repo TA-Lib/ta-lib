@@ -367,6 +367,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CCI was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CCI_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CCI_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live CCI stream: one value per closed bar, bit-identical to [`Core::CCI`]
 /// over the same series. Open with [`Core::CCI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -376,6 +385,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CCI_Stream")]
 pub struct CCI_Stream {
+    /// What this stream was opened with — see `CCI_StreamConfig`.
+    config: CCI_StreamConfig,
     state: CCI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -386,6 +397,7 @@ impl CCI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CCI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -394,7 +406,6 @@ impl CCI_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CCI_StreamState {
-    optInTimePeriod: i32,
     circBuffer_Idx: usize,
     maxIdx_circBuffer: usize,
     cbSize_circBuffer: usize,
@@ -406,7 +417,6 @@ impl CCI_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.circBuffer_Idx = src.circBuffer_Idx;
         self.maxIdx_circBuffer = src.maxIdx_circBuffer;
         self.cbSize_circBuffer = src.cbSize_circBuffer;
@@ -421,7 +431,7 @@ impl CCI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CCI_step_impl(sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn CCI_step_impl(cfg: &CCI_StreamConfig, sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempReal3: f64 = 0.0_f64;
@@ -432,23 +442,23 @@ impl Core {
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
         // Calculate the average for the whole period.
         theAverage = 0.0;
-        // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        // for( j = 0; j < ((cfg.optInTimePeriod) as usize); j += 1 )
         j = 0;
-        while j < ((sp.optInTimePeriod) as usize) {
+        while j < ((cfg.optInTimePeriod) as usize) {
             theAverage += sp.cb_circBuffer[j];
             j += 1;
         }
-        theAverage /= ((sp.optInTimePeriod) as f64);
+        theAverage /= ((cfg.optInTimePeriod) as f64);
         // Do the summation of the ABS(TypePrice-average)
         // for the whole period, then its mean.
         tempReal2 = 0.0;
-        // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        // for( j = 0; j < ((cfg.optInTimePeriod) as usize); j += 1 )
         j = 0;
-        while j < ((sp.optInTimePeriod) as usize) {
+        while j < ((cfg.optInTimePeriod) as usize) {
             tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
             j += 1;
         }
-        tempReal2 /= ((sp.optInTimePeriod) as f64);
+        tempReal2 /= ((cfg.optInTimePeriod) as f64);
         // And finally, the CCI...
         tempReal = lastValue - theAverage;
         // Both tests are relative to the window's own price level (issue #253).
@@ -606,13 +616,12 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = CCI_StreamState {
-            optInTimePeriod,
             circBuffer_Idx,
             maxIdx_circBuffer,
             cbSize_circBuffer: cbSize_circBuffer,
             cb_circBuffer: circBuffer,
         };
-        Ok(CCI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CCI_Stream { config: CCI_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CCI_Open`] (composition seam).
@@ -724,7 +733,7 @@ impl CCI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::CCI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::CCI_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -757,7 +766,7 @@ impl CCI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CCI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::CCI_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

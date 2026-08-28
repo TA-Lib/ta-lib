@@ -530,6 +530,17 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MAVP was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MAVP_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MAVP_StreamConfig {
+    optInMinPeriod: i32,
+    optInMaxPeriod: i32,
+    optInMAType: MAType,
+}
+
 /// Live MAVP stream: one value per closed bar, bit-identical to [`Core::MAVP`]
 /// over the same series. Open with [`Core::MAVP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -539,6 +550,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAVP_Stream")]
 pub struct MAVP_Stream {
+    /// What this stream was opened with — see `MAVP_StreamConfig`.
+    config: MAVP_StreamConfig,
     state: MAVP_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -549,6 +562,7 @@ impl MAVP_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MAVP_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -557,9 +571,6 @@ impl MAVP_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MAVP_StreamState {
-    optInMinPeriod: i32,
-    optInMaxPeriod: i32,
-    optInMAType: MAType,
     // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
     bank: Vec<MA_Stream>,
 }
@@ -569,9 +580,6 @@ impl MAVP_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInMinPeriod = src.optInMinPeriod;
-        self.optInMaxPeriod = src.optInMaxPeriod;
-        self.optInMAType = src.optInMAType;
         if self.bank.len() == src.bank.len() {
             for (dst, s) in self.bank.iter_mut().zip(src.bank.iter()) {
                 dst.restore_from(s);
@@ -589,14 +597,14 @@ impl MAVP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAVP_step_impl(sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn MAVP_step_impl(cfg: &MAVP_StreamConfig, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cp: i32 = inPeriods as i32;
-        if cp < sp.optInMinPeriod {
-            cp = sp.optInMinPeriod;
-        } else if cp > sp.optInMaxPeriod {
-            cp = sp.optInMaxPeriod;
+        if cp < cfg.optInMinPeriod {
+            cp = cfg.optInMinPeriod;
+        } else if cp > cfg.optInMaxPeriod {
+            cp = cfg.optInMaxPeriod;
         }
-        let slot: usize = (cp - sp.optInMinPeriod) as usize;
+        let slot: usize = (cp - cfg.optInMinPeriod) as usize;
         for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {
             let subValue = sub.update(inReal)?;
             if bankIdx == slot {
@@ -663,8 +671,8 @@ impl Core {
             cp = optInMaxPeriod;
         }
         let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
-        let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MAVP_Stream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
+        let state = MAVP_StreamState { bank };
+        Ok((MAVP_Stream { config: MAVP_StreamConfig { optInMinPeriod, optInMaxPeriod, optInMAType, }, state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
     }
 
     /// Open a live MAVP stream over the warm-up history; returns the handle and
@@ -779,17 +787,17 @@ impl Core {
             outReal[t - lookbackTotal] = scratch[(cp - optInMinPeriod) as usize];
             t += 1;
         }
-        let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MAVP_Stream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
+        let state = MAVP_StreamState { bank };
+        Ok((MAVP_Stream { config: MAVP_StreamConfig { optInMinPeriod, optInMaxPeriod, optInMAType, }, state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MAVP_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `MAVP_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MAVP_Stream>>> =
+    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MAVP_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -813,7 +821,7 @@ impl MAVP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MAVP_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
+        Core::MAVP_step_impl(&self.config, &mut self.state, inReal, inPeriods, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -846,7 +854,7 @@ impl MAVP_Stream {
             if !inReal[i].is_finite() || !inPeriods[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MAVP_step_impl(&mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
+            Core::MAVP_step_impl(&self.config, &mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -870,11 +878,13 @@ impl MAVP_Stream {
             return Err(RetCode::BadParam);
         }
         MAVP_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal, inPeriods);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            let stepped = Core::MAVP_step_impl(&self.config, &mut scratch, inReal, inPeriods, &mut outReal);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok(outReal)
         })
     }
 

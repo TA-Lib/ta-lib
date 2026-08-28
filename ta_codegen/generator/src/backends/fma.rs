@@ -154,6 +154,7 @@ fn stream_base(name: &str) -> &str {
     let n = name
         .strip_prefix("sp->")
         .or_else(|| name.strip_prefix("sp.")) // Rust/Java stream state prefix
+        .or_else(|| name.strip_prefix("cfg.")) // Rust stream config prefix (#276)
         .unwrap_or(name);
     // Java stream output fields are `sp.cur_<out>` — both prefixes at once.
     n.strip_prefix("cur_").unwrap_or(n)

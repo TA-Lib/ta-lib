@@ -406,6 +406,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MA_StreamConfig {
+    optInTimePeriod: i32,
+    optInMAType: MAType,
+}
+
 /// Live MA stream: one value per closed bar, bit-identical to [`Core::MA`]
 /// over the same series. Open with [`Core::MA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -415,6 +425,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MA_Stream")]
 pub struct MA_Stream {
+    /// What this stream was opened with — see `MA_StreamConfig`.
+    config: MA_StreamConfig,
     state: MA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -425,6 +437,7 @@ impl MA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -433,8 +446,6 @@ impl MA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MA_StreamState {
-    optInTimePeriod: i32,
-    optInMAType: MAType,
     // Sub-stream, tagged by optInMAType; `MA_Sub::Identity` on the identity path.
     sub: MA_Sub,
 }
@@ -444,8 +455,6 @@ impl MA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInMAType = src.optInMAType;
         self.sub.restore_from(&src.sub);
     }
 }
@@ -496,8 +505,8 @@ impl MA_Sub {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MA_step_impl(sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
-        if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
+    fn MA_step_impl(cfg: &MA_StreamConfig, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+        if cfg.optInTimePeriod == 1 || cfg.optInMAType == MAType::DISABLED {
             (*outReal) = inReal;
             return Ok(());
         }
@@ -568,8 +577,8 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
+            let state = MA_StreamState { sub: MA_Sub::Identity };
+            return Ok((MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
         }
         let (sub, value, subRange) = match optInMAType {
             MAType::SMA => {
@@ -624,8 +633,8 @@ impl Core {
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { state, out: subRange }, value))
+        let state = MA_StreamState { sub };
+        Ok((MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: subRange }, value))
     }
 
     /// Open a live MA stream over the warm-up history; returns the handle and
@@ -702,8 +711,8 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
+            let state = MA_StreamState { sub: MA_Sub::Identity };
+            return Ok((MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
         }
         let (sub, fillRange) = match optInMAType {
             MAType::SMA => {
@@ -748,8 +757,8 @@ impl Core {
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { state, out: fillRange }, fillRange))
+        let state = MA_StreamState { sub };
+        Ok((MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: fillRange }, fillRange))
     }
 
     /// [`Core::MA_OpenAndFill`] anchored at `startIdx` — the composed-open
@@ -788,8 +797,8 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok(MA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            let state = MA_StreamState { sub: MA_Sub::Identity };
+            return Ok(MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let sub = match optInMAType {
             MAType::SMA => MA_Sub::SMA(
@@ -824,8 +833,8 @@ impl Core {
             ),
             _ => return Err(RetCode::BadParam),
         };
-        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok(MA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        let state = MA_StreamState { sub };
+        Ok(MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
 }
@@ -850,7 +859,7 @@ impl MA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MA_step_impl(&mut self.state, inReal, &mut outReal)?;
+        Core::MA_step_impl(&self.config, &mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -883,7 +892,7 @@ impl MA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MA_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            Core::MA_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

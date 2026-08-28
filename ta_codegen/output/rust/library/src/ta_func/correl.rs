@@ -473,6 +473,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CORREL was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CORREL_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CORREL_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live CORREL stream: one value per closed bar, bit-identical to [`Core::CORREL`]
 /// over the same series. Open with [`Core::CORREL_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -482,6 +491,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CORREL_Stream")]
 pub struct CORREL_Stream {
+    /// What this stream was opened with — see `CORREL_StreamConfig`.
+    config: CORREL_StreamConfig,
     state: CORREL_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -492,6 +503,7 @@ impl CORREL_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CORREL_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -500,7 +512,6 @@ impl CORREL_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CORREL_StreamState {
-    optInTimePeriod: i32,
     sumXY: f64,
     sumX: f64,
     sumY: f64,
@@ -526,7 +537,6 @@ impl CORREL_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.sumXY = src.sumXY;
         self.sumX = src.sumX;
         self.sumY = src.sumY;
@@ -555,7 +565,7 @@ impl CORREL_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CORREL_step_impl(sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn CORREL_step_impl(cfg: &CORREL_StreamConfig, sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut x: f64 = 0.0_f64;
         let mut y: f64 = 0.0_f64;
         let mut trailingX: f64 = 0.0_f64;
@@ -611,7 +621,7 @@ impl Core {
         // startIdx-lookbackTotal+outIdx, which is >= outIdx.
         sp.barsSinceReseed -= 1;
         if ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 {
-            sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
+            sp.barsSinceReseed = (32 * cfg.optInTimePeriod) as usize;
             windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
             // Both means in one pass over the window: the rebuild below is the
             // only O(period) work on this function's hot path, so it is walked
@@ -998,7 +1008,6 @@ impl Core {
             }
         }
         let state = CORREL_StreamState {
-            optInTimePeriod,
             sumXY,
             sumX,
             sumY,
@@ -1018,7 +1027,7 @@ impl Core {
             x_inReal0,
             x_inReal1,
         };
-        Ok(CORREL_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CORREL_Stream { config: CORREL_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CORREL_Open`] (composition seam).
@@ -1110,10 +1119,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CORREL_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CORREL_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CORREL_PEEK_SCRATCH: std::cell::Cell<Option<Box<CORREL_Stream>>> =
+    static CORREL_PEEK_SCRATCH: std::cell::Cell<Option<Box<CORREL_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1137,7 +1146,7 @@ impl CORREL_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::CORREL_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::CORREL_step_impl(&self.config, &mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1170,7 +1179,7 @@ impl CORREL_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CORREL_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::CORREL_step_impl(&self.config, &mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1194,11 +1203,12 @@ impl CORREL_Stream {
             return Err(RetCode::BadParam);
         }
         CORREL_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal0, inReal1);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::CORREL_step_impl(&self.config, &mut scratch, inReal0, inReal1, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

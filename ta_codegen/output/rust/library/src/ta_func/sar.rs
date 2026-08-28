@@ -512,6 +512,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What SAR was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&SAR_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct SAR_StreamConfig {
+    optInAcceleration: f64,
+    optInMaximum: f64,
+}
+
 /// Live SAR stream: one value per closed bar, bit-identical to [`Core::SAR`]
 /// over the same series. Open with [`Core::SAR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -521,6 +531,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SAR_Stream")]
 pub struct SAR_Stream {
+    /// What this stream was opened with — see `SAR_StreamConfig`.
+    config: SAR_StreamConfig,
     state: SAR_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -531,6 +543,7 @@ impl SAR_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `SAR_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -539,8 +552,6 @@ impl SAR_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SAR_StreamState {
-    optInAcceleration: f64,
-    optInMaximum: f64,
     isLong: usize,
     newHigh: f64,
     newLow: f64,
@@ -554,8 +565,6 @@ impl SAR_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInAcceleration = src.optInAcceleration;
-        self.optInMaximum = src.optInMaximum;
         self.isLong = src.isLong;
         self.newHigh = src.newHigh;
         self.newLow = src.newLow;
@@ -572,7 +581,7 @@ impl SAR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SAR_step_impl(sp: &mut SAR_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn SAR_step_impl(cfg: &SAR_StreamConfig, sp: &mut SAR_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         prevLow = sp.newLow;
@@ -596,7 +605,7 @@ impl Core {
                 // Output the overide SAR
                 (*outReal) = sp.sar;
                 // Adjust af and ep
-                sp.af = sp.optInAcceleration;
+                sp.af = cfg.optInAcceleration;
                 sp.ep = sp.newLow;
                 // Calculate the new SAR
                 sp.sar = (sp.af as f64).mul_add(sp.ep - sp.sar, sp.sar);
@@ -615,9 +624,9 @@ impl Core {
                 // Adjust af and ep.
                 if sp.newHigh > sp.ep {
                     sp.ep = sp.newHigh;
-                    sp.af += sp.optInAcceleration;
-                    if sp.af > sp.optInMaximum {
-                        sp.af = sp.optInMaximum;
+                    sp.af += cfg.optInAcceleration;
+                    if sp.af > cfg.optInMaximum {
+                        sp.af = cfg.optInMaximum;
                     }
                 }
                 // Calculate the new SAR
@@ -647,7 +656,7 @@ impl Core {
             // Output the overide SAR
             (*outReal) = sp.sar;
             // Adjust af and ep
-            sp.af = sp.optInAcceleration;
+            sp.af = cfg.optInAcceleration;
             sp.ep = sp.newHigh;
             // Calculate the new SAR
             sp.sar = (sp.af as f64).mul_add(sp.ep - sp.sar, sp.sar);
@@ -666,9 +675,9 @@ impl Core {
             // Adjust af and ep.
             if sp.newLow < sp.ep {
                 sp.ep = sp.newLow;
-                sp.af += sp.optInAcceleration;
-                if sp.af > sp.optInMaximum {
-                    sp.af = sp.optInMaximum;
+                sp.af += cfg.optInAcceleration;
+                if sp.af > cfg.optInMaximum {
+                    sp.af = cfg.optInMaximum;
                 }
             }
             // Calculate the new SAR
@@ -935,8 +944,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = SAR_StreamState {
-            optInAcceleration,
-            optInMaximum,
             isLong,
             newHigh,
             newLow,
@@ -944,7 +951,7 @@ impl Core {
             ep,
             sar,
         };
-        Ok(SAR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SAR_Stream { config: SAR_StreamConfig { optInAcceleration, optInMaximum, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SAR_Open`] (composition seam).
@@ -1053,7 +1060,7 @@ impl SAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::SAR_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::SAR_step_impl(&self.config, &mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1086,7 +1093,7 @@ impl SAR_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::SAR_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::SAR_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

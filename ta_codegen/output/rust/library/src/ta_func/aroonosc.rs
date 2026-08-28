@@ -337,6 +337,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What AROONOSC was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&AROONOSC_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct AROONOSC_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live AROONOSC stream: one value per closed bar, bit-identical to [`Core::AROONOSC`]
 /// over the same series. Open with [`Core::AROONOSC_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -346,6 +355,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AROONOSC_Stream")]
 pub struct AROONOSC_Stream {
+    /// What this stream was opened with — see `AROONOSC_StreamConfig`.
+    config: AROONOSC_StreamConfig,
     state: AROONOSC_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -356,6 +367,7 @@ impl AROONOSC_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `AROONOSC_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -364,7 +376,6 @@ impl AROONOSC_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct AROONOSC_StreamState {
-    optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
     factor: f64,
@@ -383,7 +394,6 @@ impl AROONOSC_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.lowest = src.lowest;
         self.highest = src.highest;
         self.factor = src.factor;
@@ -405,7 +415,7 @@ impl AROONOSC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AROONOSC_step_impl(sp: &mut AROONOSC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn AROONOSC_step_impl(cfg: &AROONOSC_StreamConfig, sp: &mut AROONOSC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         let mut aroon: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -614,7 +624,6 @@ impl Core {
             }
         }
         let state = AROONOSC_StreamState {
-            optInTimePeriod,
             lowest,
             highest,
             factor,
@@ -627,7 +636,7 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok(AROONOSC_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(AROONOSC_Stream { config: AROONOSC_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::AROONOSC_Open`] (composition seam).
@@ -717,10 +726,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `AROONOSC_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `AROONOSC_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static AROONOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<AROONOSC_Stream>>> =
+    static AROONOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<AROONOSC_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -744,7 +753,7 @@ impl AROONOSC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::AROONOSC_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::AROONOSC_step_impl(&self.config, &mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -777,7 +786,7 @@ impl AROONOSC_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::AROONOSC_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::AROONOSC_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -801,11 +810,12 @@ impl AROONOSC_Stream {
             return Err(RetCode::BadParam);
         }
         AROONOSC_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::AROONOSC_step_impl(&self.config, &mut scratch, inHigh, inLow, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

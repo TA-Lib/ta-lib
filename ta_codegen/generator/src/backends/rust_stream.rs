@@ -155,11 +155,24 @@ fn extra_param_rust_type(c_type: &str) -> &'static str {
 // `(*out)` writes against `&mut` step params.
 // ---------------------------------------------------------------------------
 
-struct RustStreamNames;
+/// Where a carried name lives in the step: the Open-time invariants through
+/// the read-only `cfg`, everything a bar can write through `sp` (issue #276).
+fn carried_path(config: &HashSet<String>, name: &str) -> String {
+    if config.contains(name) {
+        format!("cfg.{name}")
+    } else {
+        format!("sp.{name}")
+    }
+}
+
+struct RustStreamNames {
+    /// The names this function keeps in its config — see [`carried_path`].
+    config: HashSet<String>,
+}
 
 impl streaming::NameMap for RustStreamNames {
     fn state(&self, name: &str) -> String {
-        format!("sp.{name}")
+        carried_path(&self.config, name)
     }
     fn bar(&self, array: &str) -> String {
         array.to_string()
@@ -358,22 +371,10 @@ fn state_fields_from(
     typing: &Typing,
     scalars: &[(String, VarType)],
 ) -> Vec<(String, String, String)> {
+    // The optional inputs and private extra params used to lead this list.
+    // They are Open-time invariants, so they live in `<F>_StreamConfig` now
+    // (issue #276) and the state holds only what a bar can write.
     let mut fields: Vec<(String, String, String)> = Vec::new();
-    for p in &func.optional_inputs {
-        // Params are always captured (identity path included).
-        fields.push((
-            p.name.clone(),
-            opt_param_rust_type(&p.param_type),
-            p.name.clone(),
-        ));
-    }
-    for (name, c_type) in &func.private_extra_params {
-        fields.push((
-            name.clone(),
-            extra_param_rust_type(c_type).to_string(),
-            name.clone(),
-        ));
-    }
     for (name, ty) in scalars {
         let (rty, default) = field_type_and_default(typing, name, ty, true);
         let default = default.unwrap_or_else(|| {
@@ -790,38 +791,143 @@ fn cs_binding(setting: &str) -> String {
     format!("cs_{}", crate::candle_settings::pascal_to_snake_case(setting))
 }
 
-/// `, cs_near: &CandleSetting, …` — the step signature's settings parameters.
-fn cs_step_params(settings: &BTreeSet<String>) -> String {
-    let mut s = String::new();
-    for setting in settings {
-        let _ = write!(s, ", {}: &CandleSetting", cs_binding(setting));
-    }
-    s
+// ---------------------------------------------------------------------------
+// The handle's Open-time invariants: `Config` (issue #276)
+// ---------------------------------------------------------------------------
+//
+// #274 took the candlestick settings out of the embedded `Core`. What stayed
+// behind in the *state* is the same kind of value: `optInTimePeriod` and the
+// private extra params (EMA's k factor) are fixed at `Open` and read on every
+// bar, never written by a step. Sitting in the state, they were copied by
+// every `peek` — the scratch restore has to reproduce a field it can never
+// have changed — and the step reached them through the same `&mut` the rings
+// arrive by, so nothing told the compiler a bar could not move them.
+//
+// They now live in a `<F>_StreamConfig` beside the state, and the step takes
+// `cfg: &<F>_StreamConfig`. `&T` is `noalias` + `readonly` to LLVM, so a
+// config read hoists across a write through `sp` without the compiler having
+// to prove non-aliasing by inlining.
+//
+// A function whose config would be empty emits no struct, no field and no
+// parameter, exactly as #274 emits no settings field where a step reads none.
+// That is 30 of the 176, and their generated code is byte-identical across
+// this change — the control set for its own benchmark.
+
+/// `<F>_StreamConfig` — the handle's Open-time invariants.
+fn config_type_name(func: &FuncDef) -> String {
+    format!("{}_StreamConfig", func.name.to_uppercase())
 }
 
-/// `&self.cs_near, …` — the step call's settings arguments, as a handle reads
-/// them. Distinct field places, so they borrow alongside `&mut self.state`.
-fn cs_step_args(settings: &BTreeSet<String>) -> String {
-    let mut s = String::new();
-    for setting in settings {
-        let _ = write!(s, "&self.{}, ", cs_binding(setting));
+/// The config's parameter fields: (name, rust_type, identity-path default).
+/// The optional inputs, then the private extra params — the two groups that
+/// `state_fields_from` used to lead with, in that same order.
+fn config_param_fields(func: &FuncDef) -> Vec<(String, String, String)> {
+    let mut fields: Vec<(String, String, String)> = Vec::new();
+    for p in &func.optional_inputs {
+        fields.push((
+            p.name.clone(),
+            opt_param_rust_type(&p.param_type),
+            p.name.clone(),
+        ));
     }
-    s
+    for (name, c_type) in &func.private_extra_params {
+        fields.push((
+            name.clone(),
+            extra_param_rust_type(c_type).to_string(),
+            name.clone(),
+        ));
+    }
+    fields
 }
 
-/// `cs_near: self.candle_settings.near, …` — the handle's settings at every
-/// construction site, where `self` is the opening `Core`.
-fn cs_ctor_fields(func: &FuncDef) -> String {
-    let mut s = String::new();
+/// Every name the step must reach through `cfg.` rather than `sp.`.
+fn config_field_names(func: &FuncDef) -> HashSet<String> {
+    config_param_fields(func)
+        .into_iter()
+        .map(|(n, _, _)| n)
+        .collect()
+}
+
+/// Whether this function carries a config at all — a settings-reading step or
+/// a parameter counts. False for the 30 that carry neither.
+fn has_config(func: &FuncDef) -> bool {
+    !config_param_fields(func).is_empty() || !handle_candle_settings(func).is_empty()
+}
+
+/// `cfg: &<F>_StreamConfig, ` — the step signature's leading config
+/// parameter, empty where the function has no config.
+fn cfg_step_param(func: &FuncDef) -> String {
+    if has_config(func) {
+        format!("cfg: &{}, ", config_type_name(func))
+    } else {
+        String::new()
+    }
+}
+
+/// `&self.config, ` — the step call's config argument, as a handle reads it.
+/// A distinct field place, so it borrows alongside `&mut self.state`.
+fn cfg_step_arg(func: &FuncDef) -> String {
+    if has_config(func) {
+        "&self.config, ".to_string()
+    } else {
+        String::new()
+    }
+}
+
+/// `config: <F>_StreamConfig { cs_near: self.candle_settings.near, optInTimePeriod, .. }, `
+/// — the handle's config at every construction site, where `self` is the
+/// opening `Core` and each parameter is in scope under its own name.
+fn cfg_ctor_field(func: &FuncDef) -> String {
+    if !has_config(func) {
+        return String::new();
+    }
+    let cty = config_type_name(func);
+    let mut inner = String::new();
     for setting in handle_candle_settings(func) {
         let _ = write!(
-            s,
+            inner,
             "{}: self.candle_settings.{}, ",
             cs_binding(&setting),
             crate::candle_settings::pascal_to_snake_case(&setting)
         );
     }
-    s
+    for (name, _, _) in config_param_fields(func) {
+        let _ = write!(inner, "{name}, ");
+    }
+    format!("config: {cty} {{ {inner}}}, ")
+}
+
+/// The `<F>_StreamConfig` declaration and its `Clone`-based restore.
+///
+/// Every field is `Copy` — scalars, enum params and `CandleSetting` — so the
+/// struct derives `Copy` and a handle-level restore is a plain assignment.
+fn emit_config_struct(o: &mut String, func: &FuncDef) {
+    if !has_config(func) {
+        return;
+    }
+    let cty = config_type_name(func);
+    let n = func.name.to_uppercase();
+    let _ = writeln!(
+        o,
+        "/// What {n} was opened with: read on every bar, written by none of\n\
+         /// them. Held beside the state so a step takes it as `&{cty}`\n\
+         /// (`noalias` + `readonly`) and `peek`'s scratch never copies it.\n\
+         #[derive(Debug, Clone, Copy)]\n\
+         #[allow(non_snake_case, dead_code)]\n\
+         struct {cty} {{"
+    );
+    for setting in handle_candle_settings(func) {
+        let _ = writeln!(
+            o,
+            "    /// The `{setting}` setting this stream was opened with.\n\
+             \x20   {}: CandleSetting,",
+            cs_binding(&setting)
+        );
+    }
+    for (name, rty, _) in config_param_fields(func) {
+        let _ = writeln!(o, "    {name}: {rty},");
+    }
+    let _ = writeln!(o, "}}\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -844,21 +950,19 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
     let state = state_type_name(func);
     let sn = snake(func);
     let n = func.name.to_uppercase();
-    let settings = handle_candle_settings(func);
-    // Exactly the settings this function's step reads, and nothing where it
-    // reads none (issue #274). Ahead of `state`, so the fields a step touches
-    // every bar sit together at the front of the handle.
-    let mut cs_fields = String::new();
-    let mut cs_restore = String::new();
-    for setting in &settings {
-        let field = cs_binding(setting);
-        let _ = write!(
-            cs_fields,
-            "    /// The `{setting}` setting this stream was opened with.\n\
-             \x20   {field}: CandleSetting,\n"
-        );
-        let _ = writeln!(cs_restore, "        self.{field} = src.{field};");
-    }
+    // The Open-time invariants — the settings this step reads (#274) and the
+    // parameters it was opened with (#276) — in one `Copy` struct ahead of the
+    // state. A function that has neither carries no field at all.
+    emit_config_struct(o, func);
+    let (cfg_field, cfg_restore) = if has_config(func) {
+        let cty = config_type_name(func);
+        (
+            format!("    /// What this stream was opened with — see `{cty}`.\n    config: {cty},\n"),
+            "        self.config = src.config;\n".to_string(),
+        )
+    } else {
+        (String::new(), String::new())
+    };
     let _ = writeln!(
         o,
         "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{sn}`]\n\
@@ -869,7 +973,7 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          #[must_use = \"a stream does nothing unless updated; dropping it closes the stream\"]\n\
          #[derive(Debug, Clone)]\n\
          #[doc(alias = \"TA_{n}_Stream\")]\n\
-         pub struct {handle} {{\n{cs_fields}    state: {state},\n\
+         pub struct {handle} {{\n{cfg_field}    state: {state},\n\
          \x20   /// The bars this handle has produced a value for — see [`Self::out_range`].\n\
          \x20   out: OutRange,\n}}\n"
     );
@@ -882,7 +986,7 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          \x20   /// Overwrite from `src`, reusing this handle's buffers instead of\n\
          \x20   /// allocating new ones. See `{state}::restore_from`.\n\
          \x20   pub(crate) fn restore_from(&mut self, src: &Self) {{\n\
-         {cs_restore}\
+         {cfg_restore}\
          \x20       self.state.restore_from(&src.state);\n\
          \x20       self.out = src.out;\n\
          \x20   }}\n}}\n"
@@ -1072,12 +1176,17 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
     for bar in streaming::input_array_names(func) {
         ctx.real_vars.insert(bar);
     }
-    // Alias every state field name under `sp.` in the same set its bare name
-    // occupies, so the cast-inference matches batch decisions on field reads.
+    // Alias every carried field name under its own path — `cfg.` for the
+    // Open-time invariants, `sp.` for everything a bar can write — in the same
+    // set its bare name occupies, so the cast-inference matches batch
+    // decisions on field reads. Both spellings are inserted for every name:
+    // the sets are keyed by spelling, not by field, so a name that is not this
+    // function's config simply never appears under `cfg.` in a rendered body.
+    let cfg_names = config_field_names(func);
     let alias = |set: &mut HashSet<String>| {
         let names: Vec<String> = set.iter().cloned().collect();
         for n in names {
-            set.insert(format!("sp.{n}"));
+            set.insert(carried_path(&cfg_names, &n));
         }
     };
     // Extrema override: cursor machinery is i32 in the handle.
@@ -1193,9 +1302,11 @@ fn emit_step(
 fn emit_step_sig(o: &mut String, func: &FuncDef, fallible: bool) {
     let sn = snake(func);
     let state = state_type_name(func);
-    // No `&self`: a step reads nothing from `Core` but the candlestick settings
-    // it names, and those arrive as parameters from the handle (issue #274).
-    let cs_params = cs_step_params(&handle_candle_settings(func));
+    // No `&self`: a step reads nothing from `Core` (issue #274). What it was
+    // opened with — the settings it names and the params it was given —
+    // arrives as one `&Config`, which is `noalias` + `readonly` and so cannot
+    // be moved by a write through `sp` (issue #276).
+    let cfg_param_lead = cfg_step_param(func);
     let mut params = String::new();
     for bar in streaming::input_array_names(func) {
         let _ = write!(params, ", {bar}: f64");
@@ -1211,7 +1322,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef, fallible: bool) {
     let ret = if fallible { " -> Result<(), RetCode>" } else { "" };
     let _ = writeln!(
         o,
-        "    fn {sn}_step_impl(sp: &mut {state}{cs_params}{params}){ret} {{"
+        "    fn {sn}_step_impl({cfg_param_lead}sp: &mut {state}{params}){ret} {{"
     );
 }
 
@@ -1247,7 +1358,7 @@ fn emit_step_body(
     }
     emit_extrema_rebase(o, model, indent);
 
-    let transition = streaming::build_transition(model, &RustStreamNames)
+    let transition = streaming::build_transition(model, &RustStreamNames { config: config_field_names(func) })
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     // C's `*outReal = 0;` must type as f64: float integer literals written to
     // a REAL output become float literals (the renderer's ArrayAccess-target
@@ -1290,14 +1401,15 @@ fn emit_step_body(
         ));
     }
     // Candle settings unpack into the same locals batch uses, from the step's
-    // own `cs_<snake>` parameters — the handle's copy of what it was opened
-    // with, which is what the embedded `Core` used to be read for (issue #274).
+    // read-only `cfg` — the handle's copy of what it was opened with, which is
+    // what the embedded `Core` used to be read for (#274, moved into the
+    // config struct by #276).
     let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
     if !step_settings.is_empty() {
         o.push_str(&crate::candle_settings::emit_rust_unpacking_from(
             &step_settings,
             indent,
-            &|s| cs_binding(s),
+            &|s| format!("cfg.{}", cs_binding(s)),
         ));
     }
     o.push_str(&body);
@@ -1318,7 +1430,7 @@ fn emit_identity_step_branch(
     counter: &Cell<usize>,
     indent: usize,
 ) {
-    if let Some(s) = streaming::identity_step_branch(model, &RustStreamNames) {
+    if let Some(s) = streaming::identity_step_branch(model, &RustStreamNames { config: config_field_names(model.func) }) {
         let output_names: Vec<String> =
             model.func.outputs.iter().map(|out| out.name.clone()).collect();
         let var_inits: HashMap<String, &Expr> = HashMap::new();
@@ -1772,10 +1884,10 @@ fn emit_capture_and_publish(
 ) {
     let handle = stream_type_name(func);
     let _ = writeln!(o, "\n        // Capture the live batch state into the handle.");
-    let cs_ctor = cs_ctor_fields(func);
+    let cfg_ctor = cfg_ctor_field(func);
     emit_capture(o, func, model, scalars, typing, registry, helpers, counter, extra_fields);
     // The core publishes only the handle; the scalar wrapper reads its sink.
-    let _ = writeln!(o, "        Ok({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
+    let _ = writeln!(o, "        Ok({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
 }
 
 
@@ -1922,7 +2034,7 @@ fn emit_identity_fast_path(
 ) {
     let Some(idp) = &model.identity else { return };
     let handle = stream_type_name(func);
-    let cs_ctor = cs_ctor_fields(func);
+    let cfg_ctor = cfg_ctor_field(func);
     let state = state_type_name(func);
     let sn = snake(func);
     let opt_real_params: Vec<String> = func
@@ -1974,7 +2086,7 @@ fn emit_identity_fast_path(
     let _ = writeln!(o, "            }}");
     let _ = writeln!(
         o,
-        "            return Ok({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }});"
+        "            return Ok({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }});"
     );
     let _ = writeln!(o, "        }}");
 }
@@ -2188,13 +2300,10 @@ fn emit_capture(
     }
 
     // --- the state literal ---------------------------------------------------
+    // The optional inputs and private extra params that used to open this
+    // literal are built into the config at the publish site (`cfg_ctor_field`),
+    // where the opening `Core` is still in scope for the settings beside them.
     let _ = writeln!(o, "        let state = {state} {{");
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "            {},", p.name);
-    }
-    for (name, _) in &func.private_extra_params {
-        let _ = writeln!(o, "            {name},");
-    }
     for (name, _ty) in scalars {
         if model.parity.as_ref().is_some_and(|p| &p.field == name) {
             // Synthetic parity field: seeded to the NEXT bar's parity.
@@ -2411,7 +2520,7 @@ fn stream_doctest(
 #[allow(clippy::too_many_lines)]
 fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_fallible: bool) {
     let sn = snake(func);
-    let cs_args = cs_step_args(&handle_candle_settings(func));
+    let cfg_arg = cfg_step_arg(func);
     let n = func.name.to_uppercase();
     let handle = stream_type_name(func);
     let state = state_type_name(func);
@@ -2450,18 +2559,25 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     // peek the same handle at once, and they must not share a scratch.
     //
     // The retention that buys: one handle copy per (thread, function actually
-    // peeked), held until the thread ends, sized to the largest handle that
-    // thread peeked and keeping that handle's `Core` alive. Dropping every
-    // stream handle does not release it. Bounded and small per entry, but a
-    // long-lived pool thread that peeked a wide `MAVP` bank holds that bank.
+    // peeked), held until the thread ends, sized to the largest state that
+    // thread peeked. Dropping every stream handle does not release it.
+    // Bounded and small per entry, but a long-lived pool thread that peeked a
+    // wide `MAVP` bank holds that bank.
+    //
+    // It holds a bare `{state}`, not a whole handle: what the config says
+    // cannot change under a step, so the scratch has no business carrying a
+    // copy of it — the step reads the *live* handle's `&config` instead
+    // (issue #276). The `out: OutRange` the handle used to bring along went
+    // with it; `peek` never committed a bar, so it was bookkeeping written and
+    // then thrown away.
     if reuse {
         let _ = writeln!(
             o,
             "thread_local! {{\n\
-             \x20   /// `peek`'s reusable scratch handle (see `{state}::restore_from`).\n\
+             \x20   /// `peek`'s reusable scratch state (see `{state}::restore_from`).\n\
              \x20   /// Taken for the duration of the step and put back after, so a\n\
              \x20   /// panicking step costs the scratch, never leaves it borrowed.\n\
-             \x20   static {n}_PEEK_SCRATCH: std::cell::Cell<Option<Box<{handle}>>> =\n\x20       const {{ std::cell::Cell::new(None) }};\n\
+             \x20   static {n}_PEEK_SCRATCH: std::cell::Cell<Option<Box<{state}>>> =\n\x20       const {{ std::cell::Cell::new(None) }};\n\
              }}\n"
         );
     }
@@ -2493,7 +2609,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     o.push_str(&out_decls);
     let _ = writeln!(
         o,
-        "        Core::{sn}_step_impl(&mut self.state, {cs_args}{fwd_bars}{out_refs}){step_try};"
+        "        Core::{sn}_step_impl({cfg_arg}&mut self.state, {fwd_bars}{out_refs}){step_try};"
     );
     // After the step, so a rejected bar (non-finite here, or a sub-stream's
     // reject through `?`) leaves the range exactly where it was. `peek` runs the
@@ -2639,7 +2755,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     }
     let _ = writeln!(
         o,
-        "            Core::{sn}_step_impl(&mut self.state, {cs_args}{step_args}){step_try};"
+        "            Core::{sn}_step_impl({cfg_arg}&mut self.state, {step_args}){step_try};"
     );
     let _ = writeln!(
         o,
@@ -2680,25 +2796,48 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     // must not pay for a handle clone.
     o.push_str(&finite_bar_check(func, "        "));
     if reuse {
-        // `update` on the copy, not the transition on a bare state — so the
-        // transition keeps the single call site it has always had. Reached
-        // through the state directly it acquires a second one, and on the
-        // larger steps that alone is enough to change what the inliner does
-        // with both: measured, it cost `update` up to 70% on the functions
-        // whose step sits near the threshold. `update` is the tier this API
-        // exists to make cheap; it does not pay for peek's business (#201).
+        // The step on a bare state, with the config read from the live handle.
+        //
+        // #201 put `update` on a scratch *handle* here instead, to keep the
+        // transition down to the one call site it had: reached through the
+        // state as well it gets a second, and on a step near the inliner's
+        // threshold that alone was enough to cost `update` up to 70%. That
+        // trade bought peek a handle copy per call — the config included,
+        // which no step can write, and the `out` bookkeeping, which peek
+        // computes and throws away.
+        //
+        // #276 takes that second call site back, on this tier only. What makes
+        // it affordable is the tier itself: `scratch_pays()` selects the 73
+        // states whose clone the optimizer was never folding, which are the
+        // largest steps in the corpus and the ones least likely to have been
+        // inlined into `update` on merit. Whether that holds is a measurement,
+        // not an argument — `stream_ab.py --call=update` is the gate, and the
+        // functions that carry no config at all are its control.
         //
         // One `with`, not a `take()` plus a `set()`: each is its own
         // thread-local lookup, and on the cheapest indicators the second one
         // is a measurable share of the call.
+        //
+        // The scratch goes back before the `?`, so a rejecting step costs the
+        // thread its scratch no more than an accepting one does.
+        let step_q = if step_fallible { "\n\x20           stepped?;" } else { "" };
+        let bind = if step_fallible { "let stepped = " } else { "" };
+        // `out_decls` is written at the method's own indent; inside the
+        // closure it sits one level deeper.
+        let mut peek_out_decls = String::new();
+        for l in out_decls.lines() {
+            let _ = writeln!(peek_out_decls, "    {l}");
+        }
+        let out_decls = peek_out_decls;
         let _ = writeln!(
             o,
             "        {n}_PEEK_SCRATCH.with(|cell| {{\n\
-             \x20           let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));\n\
-             \x20           scratch.restore_from(self);\n\
-             \x20           let value = scratch.update({fwd_bars});\n\
-             \x20           cell.set(Some(scratch));\n\
-             \x20           value\n\
+             \x20           let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));\n\
+             \x20           scratch.restore_from(&self.state);\n\
+             {out_decls}\
+             \x20           {bind}Core::{sn}_step_impl({cfg_arg}&mut scratch, {fwd_bars}{out_refs});\n\
+             \x20           cell.set(Some(scratch));{step_q}\n\
+             \x20           Ok({ret})\n\
              \x20       }})"
         );
     } else {
@@ -2769,13 +2908,13 @@ fn indent_block(s: &str, extra: usize) -> String {
     out
 }
 
-/// The caller's optional params rewritten onto the handle (`optInTimePeriod`
-/// -> `sp.optInTimePeriod`): the step re-derives its arm predicate from the
-/// stored immutable param — no mode tag is ever stored.
-fn params_on_state(func: &FuncDef, e: &Expr) -> Expr {
+/// The caller's optional params rewritten onto the handle's config
+/// (`optInTimePeriod` -> `cfg.optInTimePeriod`): the step re-derives its arm
+/// predicate from the stored immutable param — no mode tag is ever stored.
+fn params_on_config(func: &FuncDef, e: &Expr) -> Expr {
     let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     streaming::rewrite_expr(e, &|x| match x {
-        Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp.{v}")),
+        Expr::Var(v) if params.contains(&v) => Expr::Var(format!("cfg.{v}")),
         other => other,
     })
 }
@@ -2901,7 +3040,7 @@ fn emit_dual_mode(
     // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
     // in the batch and in Open: it is a property of the function, not of a mode.
     emit_identity_step_branch(o, ma, &ctx, &opt_real_params, enums, registry, helpers, counter, 8);
-    let pred_sp = params_on_state(func, &dmp.predicate);
+    let pred_sp = params_on_config(func, &dmp.predicate);
     let pred_sp = render_expr(&pred_sp, &ctx, &opt_real_params, registry, helpers);
     let _ = writeln!(o, "        if {pred_sp} {{");
     emit_step_body(o, func, ma, &typing, &ctx, enums, registry, helpers, counter, 12);
@@ -3070,7 +3209,7 @@ fn emit_dispatch(
     let _ = counter;
     let sn = snake(func);
     let handle = stream_type_name(func);
-    let cs_ctor = cs_ctor_fields(func);
+    let cfg_ctor = cfg_ctor_field(func);
     let state = state_type_name(func);
     let sub_enum = sub_enum_name(func);
     let inputs = streaming::input_array_names(func);
@@ -3088,18 +3227,11 @@ fn emit_dispatch(
 
     // --- structs + sub enum -------------------------------------------------
     emit_handle_struct(o, func);
-    let mut state_fields: Vec<(String, String, String)> = func
-        .optional_inputs
-        .iter()
-        .map(|p| {
-            (
-                p.name.clone(),
-                opt_param_rust_type(&p.param_type).clone(),
-                String::new(),
-            )
-        })
-        .collect();
-    state_fields.push(("sub".into(), sub_enum.clone(), String::new()));
+    // The params this tier used to lead its state with are Open-time
+    // invariants and live in the config now (issue #276); the sub-stream is
+    // all that is left to carry.
+    let state_fields: Vec<(String, String, String)> =
+        vec![("sub".into(), sub_enum.clone(), String::new())];
     let sub_note = format!(
         "Sub-stream, tagged by {}; `{sub_enum}::Identity` on the identity path.",
         dp.param
@@ -3147,7 +3279,7 @@ fn emit_dispatch(
     // --- step ---------------------------------------------------------------
     emit_step_sig(o, func, true);
     if let Some(idp) = &dp.identity {
-        let cond = params_on_state(func, &idp.condition);
+        let cond = params_on_config(func, &idp.condition);
         let cond = render_expr(&cond, &ctx, &[], registry, helpers);
         let _ = writeln!(o, "        if {cond} {{");
         for (out, inp) in &idp.pairs {
@@ -3245,7 +3377,7 @@ fn emit_dispatch(
             }
             let _ = writeln!(
                 o,
-                "            let state = {state} {{ {params_join}, sub: {sub_enum}::Identity }};"
+                "            let state = {state} {{ sub: {sub_enum}::Identity }};"
             );
             match mode {
                 OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
@@ -3262,17 +3394,17 @@ fn emit_dispatch(
                     };
                     let _ = writeln!(
                         o,
-                        "            return Ok(({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }} }}, {value}));"
+                        "            return Ok(({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }} }}, {value}));"
                     );
                 }
                 OutMode::Fill => {
                     let _ = writeln!(
                         o,
-                        "            return Ok(({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }} }}, OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }}));"
+                        "            return Ok(({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }} }}, OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }}));"
                     );
                 }
                 OutMode::FillInternal => {
-                    let _ = writeln!(o, "            return Ok({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }});");
+                    let _ = writeln!(o, "            return Ok({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }});");
                 }
             }
             let _ = writeln!(o, "        }}");
@@ -3401,17 +3533,17 @@ fn emit_dispatch(
         }
         let _ = writeln!(o, "            _ => return Err(RetCode::BadParam),");
         let _ = writeln!(o, "        }};");
-        let _ = writeln!(o, "        let state = {state} {{ {params_join}, sub }};");
+        let _ = writeln!(o, "        let state = {state} {{ sub }};");
         match mode {
             OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
             OutMode::Scalar => {
-                let _ = writeln!(o, "        Ok(({handle} {{ {cs_ctor}state, out: subRange }}, value))");
+                let _ = writeln!(o, "        Ok(({handle} {{ {cfg_ctor}state, out: subRange }}, value))");
             }
             OutMode::Fill => {
-                let _ = writeln!(o, "        Ok(({handle} {{ {cs_ctor}state, out: fillRange }}, fillRange))");
+                let _ = writeln!(o, "        Ok(({handle} {{ {cfg_ctor}state, out: fillRange }}, fillRange))");
             }
             OutMode::FillInternal => {
-                let _ = writeln!(o, "        Ok({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
+                let _ = writeln!(o, "        Ok({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
             }
         }
         let _ = writeln!(o, "    }}\n");
@@ -3447,7 +3579,7 @@ fn emit_period_bank(
 ) {
     let _ = (registry, helpers);
     let handle = stream_type_name(func);
-    let cs_ctor = cs_ctor_fields(func);
+    let cfg_ctor = cfg_ctor_field(func);
     let state = state_type_name(func);
     let callee = plan.callee.to_uppercase();
     let callee = callee.as_str();
@@ -3457,12 +3589,6 @@ fn emit_period_bank(
     let price = plan.price_input.as_str();
     let period = plan.period_input.as_str();
     let out = plan.output.as_str();
-    let params_join = func
-        .optional_inputs
-        .iter()
-        .map(|p| p.name.clone())
-        .collect::<Vec<_>>()
-        .join(", ");
 
     // Callee opt args in the callee's signature order (from the plan; the
     // lookback binds the period slot to the MAX param — the shared anchor).
@@ -3481,18 +3607,10 @@ fn emit_period_bank(
 
     // --- structs ------------------------------------------------------------
     emit_handle_struct(o, func);
-    let mut state_fields: Vec<(String, String, String)> = func
-        .optional_inputs
-        .iter()
-        .map(|p| {
-            (
-                p.name.clone(),
-                opt_param_rust_type(&p.param_type).clone(),
-                String::new(),
-            )
-        })
-        .collect();
-    state_fields.push(("bank".into(), format!("Vec<{subty}>"), String::new()));
+    // As on the dispatch tier: the params are config (issue #276), so the bank
+    // is the whole of this tier's mutable state.
+    let state_fields: Vec<(String, String, String)> =
+        vec![("bank".into(), format!("Vec<{subty}>"), String::new())];
     let bank_note = format!(
         "One sub-{} stream per period in [{min}, {max}], advanced in lockstep.",
         callee.to_uppercase()
@@ -3505,12 +3623,12 @@ fn emit_period_bank(
     // --- step: advance ALL slots, output the clamped-period slot ------------
     emit_step_sig(o, func, true);
     let _ = writeln!(o, "        let mut cp: i32 = {period} as i32;");
-    let _ = writeln!(o, "        if cp < sp.{min} {{");
-    let _ = writeln!(o, "            cp = sp.{min};");
-    let _ = writeln!(o, "        }} else if cp > sp.{max} {{");
-    let _ = writeln!(o, "            cp = sp.{max};");
+    let _ = writeln!(o, "        if cp < cfg.{min} {{");
+    let _ = writeln!(o, "            cp = cfg.{min};");
+    let _ = writeln!(o, "        }} else if cp > cfg.{max} {{");
+    let _ = writeln!(o, "            cp = cfg.{max};");
     let _ = writeln!(o, "        }}");
-    let _ = writeln!(o, "        let slot: usize = (cp - sp.{min}) as usize;");
+    let _ = writeln!(o, "        let slot: usize = (cp - cfg.{min}) as usize;");
     let _ = writeln!(o, "        for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {{");
     let _ = writeln!(o, "            let subValue = sub.update({price})?;");
     let _ = writeln!(o, "            if bankIdx == slot {{");
@@ -3555,10 +3673,10 @@ fn emit_period_bank(
     let _ = writeln!(o, "        let mut cp: i32 = {period}[historyLen - 1] as i32;");
     let _ = writeln!(o, "        if cp < {min} {{\n            cp = {min};\n        }} else if cp > {max} {{\n            cp = {max};\n        }}");
     let _ = writeln!(o, "        let lastValue_{out}: f64 = scratch[(cp - {min}) as usize];");
-    let _ = writeln!(o, "        let state = {state} {{ {params_join}, bank }};");
+    let _ = writeln!(o, "        let state = {state} {{ bank }};");
     let _ = writeln!(
         o,
-        "        Ok(({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: subStart, count: historyLen - subStart }} }}, lastValue_{out}))"
+        "        Ok(({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: subStart, count: historyLen - subStart }} }}, lastValue_{out}))"
     );
     let _ = writeln!(o, "    }}\n");
 
@@ -3605,10 +3723,10 @@ fn emit_period_bank(
     let _ = writeln!(o, "            {out}[t - lookbackTotal] = scratch[(cp - {min}) as usize];");
     let _ = writeln!(o, "            t += 1;");
     let _ = writeln!(o, "        }}");
-    let _ = writeln!(o, "        let state = {state} {{ {params_join}, bank }};");
+    let _ = writeln!(o, "        let state = {state} {{ bank }};");
     let _ = writeln!(
         o,
-        "        Ok(({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }} }}, OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }}))"
+        "        Ok(({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }} }}, OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }}))"
     );
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
@@ -3630,11 +3748,13 @@ fn emit_period_bank(
 /// intermediate series' "output" write lands in a `cur_<series>` scalar.
 struct RustComposedNames {
     series: String,
+    /// The names this function keeps in its config — see [`carried_path`].
+    config: HashSet<String>,
 }
 
 impl streaming::NameMap for RustComposedNames {
     fn state(&self, name: &str) -> String {
-        format!("sp.{name}")
+        carried_path(&self.config, name)
     }
     fn bar(&self, array: &str) -> String {
         array.to_string()
@@ -3783,7 +3903,7 @@ fn transform_map_step(
             Expr::ArrayAccess(name, _) if cur.contains_key(&name) => {
                 Expr::Var(cur.get(&name).expect("checked").clone())
             }
-            Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp.{v}")),
+            Expr::Var(v) if params.contains(&v) => Expr::Var(format!("cfg.{v}")),
             other => other,
         }
     };
@@ -3806,7 +3926,7 @@ fn composed_step_ctx(
         let mut c = typing.ctx.clone();
         for p in &func.optional_inputs {
             if p.param_type == ParamType::Real {
-                c.real_vars.insert(format!("sp.{}", p.name));
+                c.real_vars.insert(format!("cfg.{}", p.name));
             }
         }
         for bar in streaming::input_array_names(func) {
@@ -3902,6 +4022,7 @@ fn emit_composed_step(
         emit_extrema_rebase(o, model, 8);
         let names = RustComposedNames {
             series: cp.series.clone().expect("producer plan carries a series"),
+            config: config_field_names(func),
         };
         let transition = streaming::build_transition(model, &names)
             .unwrap_or_else(|e| panic!("streaming transition: {e}"));
@@ -3914,12 +4035,12 @@ fn emit_composed_step(
         }
         let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
         if !step_settings.is_empty() {
-            // A step's settings come from its own parameters, never a `Core`
-            // receiver it no longer has (issue #274).
+            // A step's settings come from its read-only `cfg`, never a `Core`
+            // receiver it no longer has (#274, #276).
             o.push_str(&crate::candle_settings::emit_rust_unpacking_from(
                 &step_settings,
                 8,
-                &|s| cs_binding(s),
+                &|s| format!("cfg.{}", cs_binding(s)),
             ));
         }
         o.push_str(&body);
@@ -4073,7 +4194,7 @@ fn emit_composed_open(
 ) {
     // The composed fill/scratch path hardcodes f64 Vecs (mirrors C's assert).
     let handle = stream_type_name(func);
-    let cs_ctor = cs_ctor_fields(func);
+    let cfg_ctor = cfg_ctor_field(func);
     let state = state_type_name(func);
     let sn = snake(func);
     let opt_real_params: Vec<String> = func
@@ -4262,14 +4383,10 @@ fn emit_composed_open(
             o, func, model, &model.state, typing, registry, helpers, counter, &extra,
         );
     } else {
-        // Loopless pipeline: params + extras + subs/rings only.
+        // Loopless pipeline: subs/rings only. The params and extras that used
+        // to open this literal are built into the config at the publish site
+        // (issue #276).
         let _ = writeln!(o, "        let state = {state} {{");
-        for p in &func.optional_inputs {
-            let _ = writeln!(o, "            {},", p.name);
-        }
-        for (name, _) in &func.private_extra_params {
-            let _ = writeln!(o, "            {name},");
-        }
         o.push_str(&extra);
         let _ = writeln!(o, "        }};");
     }
@@ -4303,7 +4420,7 @@ fn emit_composed_open(
                     let _ = writeln!(o, "        }}");
                 }
             }
-            let _ = writeln!(o, "        Ok({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
+            let _ = writeln!(o, "        Ok({handle} {{ {cfg_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
         }
     }
     let _ = writeln!(o, "    }}\n");
@@ -4471,25 +4588,14 @@ fn emit_composed(
 
     // --- handle + state struct ---------------------------------------------
     emit_handle_struct(o, func);
-    let mut fields: Vec<(String, String, String)> = if let Some(model) = &cp.producer {
-        state_fields(func, model, &typing)
-    } else {
-        let mut f: Vec<(String, String, String)> = Vec::new();
-        for p in &func.optional_inputs {
-            f.push((
-                p.name.clone(),
-                opt_param_rust_type(&p.param_type),
-                p.name.clone(),
-            ));
-        }
-        for (name, c_type) in &func.private_extra_params {
-            f.push((
-                name.clone(),
-                extra_param_rust_type(c_type).to_string(),
-                name.clone(),
-            ));
-        }
-        f
+    // A loopless composed function has no producer model to take a field list
+    // from, and what it used to put here by hand — the optional inputs and the
+    // private extra params — are Open-time invariants that now live on the
+    // config (issue #276). So it starts empty: the subs and the lag rings
+    // below are the whole of its mutable state.
+    let mut fields: Vec<(String, String, String)> = match &cp.producer {
+        Some(model) => state_fields(func, model, &typing),
+        None => Vec::new(),
     };
     for (si, sub) in cp.subs.iter().enumerate() {
         fields.push((

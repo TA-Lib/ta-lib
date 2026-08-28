@@ -439,6 +439,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What NATR was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&NATR_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct NATR_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live NATR stream: one value per closed bar, bit-identical to [`Core::NATR`]
 /// over the same series. Open with [`Core::NATR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -448,6 +457,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_NATR_Stream")]
 pub struct NATR_Stream {
+    /// What this stream was opened with — see `NATR_StreamConfig`.
+    config: NATR_StreamConfig,
     state: NATR_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -458,6 +469,7 @@ impl NATR_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `NATR_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -466,7 +478,6 @@ impl NATR_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct NATR_StreamState {
-    optInTimePeriod: i32,
     prevATR: f64,
     lag1_inClose: f64,
 }
@@ -476,7 +487,6 @@ impl NATR_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevATR = src.prevATR;
         self.lag1_inClose = src.lag1_inClose;
     }
@@ -489,7 +499,7 @@ impl NATR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn NATR_step_impl(sp: &mut NATR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn NATR_step_impl(cfg: &NATR_StreamConfig, sp: &mut NATR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempValue: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
@@ -511,10 +521,10 @@ impl Core {
         if val3 > greatest {
             greatest = val3;
         }
-        sp.prevATR *= ((sp.optInTimePeriod - 1) as f64);
+        sp.prevATR *= ((cfg.optInTimePeriod - 1) as f64);
         sp.prevATR += greatest;
-        sp.prevATR /= ((sp.optInTimePeriod) as f64);
-        if sp.optInTimePeriod <= 1 {
+        sp.prevATR /= ((cfg.optInTimePeriod) as f64);
+        if cfg.optInTimePeriod <= 1 {
             // No smoothing: emit the raw True Range (unnormalized).
             (*outReal) = sp.prevATR;
         } else {
@@ -741,11 +751,10 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = NATR_StreamState {
-            optInTimePeriod,
             prevATR,
             lag1_inClose: inClose[historyLen - 1],
         };
-        Ok(NATR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(NATR_Stream { config: NATR_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::NATR_Open`] (composition seam).
@@ -857,7 +866,7 @@ impl NATR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::NATR_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::NATR_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -890,7 +899,7 @@ impl NATR_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::NATR_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::NATR_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

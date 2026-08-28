@@ -636,6 +636,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What SMI was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&SMI_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct SMI_StreamConfig {
+    optInTimePeriod: i32,
+    optInFastPeriod: i32,
+    optInSlowPeriod: i32,
+    optInSignalPeriod: i32,
+}
+
 /// Live SMI stream: one value per closed bar, bit-identical to [`Core::SMI`]
 /// over the same series. Open with [`Core::SMI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -645,6 +657,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SMI_Stream")]
 pub struct SMI_Stream {
+    /// What this stream was opened with — see `SMI_StreamConfig`.
+    config: SMI_StreamConfig,
     state: SMI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -655,6 +669,7 @@ impl SMI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `SMI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -663,10 +678,6 @@ impl SMI_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SMI_StreamState {
-    optInTimePeriod: i32,
-    optInFastPeriod: i32,
-    optInSlowPeriod: i32,
-    optInSignalPeriod: i32,
     kSlow: f64,
     kFast: f64,
     kSignal: f64,
@@ -693,10 +704,6 @@ impl SMI_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInSlowPeriod = src.optInSlowPeriod;
-        self.optInSignalPeriod = src.optInSignalPeriod;
         self.kSlow = src.kSlow;
         self.kFast = src.kFast;
         self.kSignal = src.kSignal;
@@ -726,7 +733,7 @@ impl SMI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SMI_step_impl(sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
+    fn SMI_step_impl(cfg: &SMI_StreamConfig, sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         let mut num: f64 = 0.0_f64;
         let mut den: f64 = 0.0_f64;
@@ -1125,10 +1132,6 @@ impl Core {
             }
         }
         let state = SMI_StreamState {
-            optInTimePeriod,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInSignalPeriod,
             kSlow,
             kFast,
             kSignal,
@@ -1149,7 +1152,7 @@ impl Core {
             x_inLow,
             x_inClose,
         };
-        Ok(SMI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SMI_Stream { config: SMI_StreamConfig { optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SMI_Open`] (composition seam).
@@ -1250,10 +1253,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `SMI_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `SMI_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static SMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<SMI_Stream>>> =
+    static SMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<SMI_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1278,7 +1281,7 @@ impl SMI_Stream {
         }
         let mut outSMI: f64 = 0.0_f64;
         let mut outSMISignal: f64 = 0.0_f64;
-        Core::SMI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
+        Core::SMI_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1311,7 +1314,7 @@ impl SMI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::SMI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSMI[i], &mut outSMISignal[i]);
+            Core::SMI_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSMI[i], &mut outSMISignal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1335,11 +1338,13 @@ impl SMI_Stream {
             return Err(RetCode::BadParam);
         }
         SMI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outSMI: f64 = 0.0_f64;
+            let mut outSMISignal: f64 = 0.0_f64;
+            Core::SMI_step_impl(&self.config, &mut scratch, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
             cell.set(Some(scratch));
-            value
+            Ok((outSMI, outSMISignal))
         })
     }
 

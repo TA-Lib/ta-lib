@@ -457,6 +457,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What T3 was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&T3_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct T3_StreamConfig {
+    optInTimePeriod: i32,
+    optInVFactor: f64,
+}
+
 /// Live T3 stream: one value per closed bar, bit-identical to [`Core::T3`]
 /// over the same series. Open with [`Core::T3_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -466,6 +476,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_T3_Stream")]
 pub struct T3_Stream {
+    /// What this stream was opened with — see `T3_StreamConfig`.
+    config: T3_StreamConfig,
     state: T3_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -476,6 +488,7 @@ impl T3_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `T3_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -484,8 +497,6 @@ impl T3_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct T3_StreamState {
-    optInTimePeriod: i32,
-    optInVFactor: f64,
     k: f64,
     one_minus_k: f64,
     e1: f64,
@@ -505,8 +516,6 @@ impl T3_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInVFactor = src.optInVFactor;
         self.k = src.k;
         self.one_minus_k = src.one_minus_k;
         self.e1 = src.e1;
@@ -529,8 +538,8 @@ impl T3_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn T3_step_impl(sp: &mut T3_StreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 {
+    fn T3_step_impl(cfg: &T3_StreamConfig, sp: &mut T3_StreamState, inReal: f64, outReal: &mut f64) {
+        if cfg.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
         }
@@ -581,8 +590,6 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = T3_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                optInVFactor: optInVFactor,
                 k: 0.0_f64,
                 one_minus_k: 0.0_f64,
                 e1: 0.0_f64,
@@ -607,7 +614,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(T3_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(T3_Stream { config: T3_StreamConfig { optInTimePeriod, optInVFactor, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -759,8 +766,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = T3_StreamState {
-            optInTimePeriod,
-            optInVFactor,
             k,
             one_minus_k,
             e1,
@@ -774,7 +779,7 @@ impl Core {
             c3,
             c4,
         };
-        Ok(T3_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(T3_Stream { config: T3_StreamConfig { optInTimePeriod, optInVFactor, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::T3_Open`] (composition seam).
@@ -879,7 +884,7 @@ impl T3_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::T3_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::T3_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -912,7 +917,7 @@ impl T3_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::T3_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::T3_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

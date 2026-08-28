@@ -484,6 +484,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLSEPARATINGLINES was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLSEPARATINGLINES_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLSEPARATINGLINES_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `Equal` setting this stream was opened with.
+    cs_equal: CandleSetting,
+    /// The `ShadowVeryShort` setting this stream was opened with.
+    cs_shadow_very_short: CandleSetting,
+}
+
 /// Live CDLSEPARATINGLINES stream: one value per closed bar, bit-identical to [`Core::CDLSEPARATINGLINES`]
 /// over the same series. Open with [`Core::CDLSEPARATINGLINES_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -493,12 +507,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSEPARATINGLINES_Stream")]
 pub struct CDLSEPARATINGLINES_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `Equal` setting this stream was opened with.
-    cs_equal: CandleSetting,
-    /// The `ShadowVeryShort` setting this stream was opened with.
-    cs_shadow_very_short: CandleSetting,
+    /// What this stream was opened with — see `CDLSEPARATINGLINES_StreamConfig`.
+    config: CDLSEPARATINGLINES_StreamConfig,
     state: CDLSEPARATINGLINES_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -509,9 +519,7 @@ impl CDLSEPARATINGLINES_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLSEPARATINGLINES_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_equal = src.cs_equal;
-        self.cs_shadow_very_short = src.cs_shadow_very_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -571,25 +579,25 @@ impl CDLSEPARATINGLINES_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSEPARATINGLINES_step_impl(sp: &mut CDLSEPARATINGLINES_StreamState, cs_body_long: &CandleSetting, cs_equal: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSEPARATINGLINES_step_impl(cfg: &CDLSEPARATINGLINES_StreamConfig, sp: &mut CDLSEPARATINGLINES_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = cs_equal.range_type as i32;
+        let Equal_rangeType: i32 = cfg.cs_equal.range_type as i32;
         #[allow(non_snake_case)]
-        let Equal_avgPeriod: i32 = cs_equal.avg_period;
+        let Equal_avgPeriod: i32 = cfg.cs_equal.avg_period;
         #[allow(non_snake_case)]
-        let Equal_factor: f64 = cs_equal.factor;
+        let Equal_factor: f64 = cfg.cs_equal.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = cs_shadow_very_short.range_type as i32;
+        let ShadowVeryShort_rangeType: i32 = cfg.cs_shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = cs_shadow_very_short.avg_period;
+        let ShadowVeryShort_avgPeriod: i32 = cfg.cs_shadow_very_short.avg_period;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = cs_shadow_very_short.factor;
+        let ShadowVeryShort_factor: f64 = cfg.cs_shadow_very_short.factor;
         if sp.ringCap_BodyLongTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyLong_rangeType {
@@ -1071,7 +1079,7 @@ impl Core {
             ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLSEPARATINGLINES_Stream { cs_body_long: self.candle_settings.body_long, cs_equal: self.candle_settings.equal, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLSEPARATINGLINES_Stream { config: CDLSEPARATINGLINES_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_equal: self.candle_settings.equal, cs_shadow_very_short: self.candle_settings.shadow_very_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLSEPARATINGLINES_Open`] (composition seam).
@@ -1167,10 +1175,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLSEPARATINGLINES_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLSEPARATINGLINES_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLSEPARATINGLINES_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLSEPARATINGLINES_Stream>>> =
+    static CDLSEPARATINGLINES_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLSEPARATINGLINES_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1194,7 +1202,7 @@ impl CDLSEPARATINGLINES_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLSEPARATINGLINES_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLSEPARATINGLINES_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1227,7 +1235,7 @@ impl CDLSEPARATINGLINES_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLSEPARATINGLINES_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLSEPARATINGLINES_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1251,11 +1259,12 @@ impl CDLSEPARATINGLINES_Stream {
             return Err(RetCode::BadParam);
         }
         CDLSEPARATINGLINES_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLSEPARATINGLINES_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

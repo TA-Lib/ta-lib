@@ -557,6 +557,17 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What ULTOSC was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&ULTOSC_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct ULTOSC_StreamConfig {
+    optInTimePeriod1: i32,
+    optInTimePeriod2: i32,
+    optInTimePeriod3: i32,
+}
+
 /// Live ULTOSC stream: one value per closed bar, bit-identical to [`Core::ULTOSC`]
 /// over the same series. Open with [`Core::ULTOSC_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -566,6 +577,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ULTOSC_Stream")]
 pub struct ULTOSC_Stream {
+    /// What this stream was opened with — see `ULTOSC_StreamConfig`.
+    config: ULTOSC_StreamConfig,
     state: ULTOSC_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -576,6 +589,7 @@ impl ULTOSC_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `ULTOSC_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -584,9 +598,6 @@ impl ULTOSC_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ULTOSC_StreamState {
-    optInTimePeriod1: i32,
-    optInTimePeriod2: i32,
-    optInTimePeriod3: i32,
     a1Total: f64,
     a2Total: f64,
     a3Total: f64,
@@ -609,9 +620,6 @@ impl ULTOSC_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod1 = src.optInTimePeriod1;
-        self.optInTimePeriod2 = src.optInTimePeriod2;
-        self.optInTimePeriod3 = src.optInTimePeriod3;
         self.a1Total = src.a1Total;
         self.a2Total = src.a2Total;
         self.a3Total = src.a3Total;
@@ -637,7 +645,7 @@ impl ULTOSC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ULTOSC_step_impl(sp: &mut ULTOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn ULTOSC_step_impl(cfg: &ULTOSC_StreamConfig, sp: &mut ULTOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut trueLow: f64 = 0.0_f64;
         let mut trueRange: f64 = 0.0_f64;
         let mut closeMinusTrueLow: f64 = 0.0_f64;
@@ -679,14 +687,14 @@ impl Core {
         } else {
             sp.nullRun = 0;
         }
-        if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
+        if sp.nullRun >= ((cfg.optInTimePeriod1) as usize) {
             sp.a1Total = 0.0;
             sp.b1Total = 0.0;
-            if sp.nullRun >= ((sp.optInTimePeriod2) as usize) {
+            if sp.nullRun >= ((cfg.optInTimePeriod2) as usize) {
                 sp.a2Total = 0.0;
                 sp.b2Total = 0.0;
-                if sp.nullRun >= ((sp.optInTimePeriod3) as usize) {
-                    sp.nullRun = (sp.optInTimePeriod3) as usize;
+                if sp.nullRun >= ((cfg.optInTimePeriod3) as usize) {
+                    sp.nullRun = (cfg.optInTimePeriod3) as usize;
                     sp.a3Total = 0.0;
                     sp.b3Total = 0.0;
                 }
@@ -710,13 +718,13 @@ impl Core {
         sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
         sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
         sp.trailingPos1 += 1;
-        if sp.trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
+        if sp.trailingPos1 >= ((cfg.optInTimePeriod3) as usize) {
             sp.trailingPos1 = 0;
         }
         sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
         sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
         sp.trailingPos2 += 1;
-        if sp.trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
+        if sp.trailingPos2 >= ((cfg.optInTimePeriod3) as usize) {
             sp.trailingPos2 = 0;
         }
         sp.term_Idx = sp.term_Idx + 1;
@@ -1032,9 +1040,6 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = ULTOSC_StreamState {
-            optInTimePeriod1,
-            optInTimePeriod2,
-            optInTimePeriod3,
             a1Total,
             a2Total,
             a3Total,
@@ -1051,7 +1056,7 @@ impl Core {
             cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
             cb_term_trueRange: term_trueRange,
         };
-        Ok(ULTOSC_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(ULTOSC_Stream { config: ULTOSC_StreamConfig { optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::ULTOSC_Open`] (composition seam).
@@ -1144,10 +1149,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `ULTOSC_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `ULTOSC_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static ULTOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<ULTOSC_Stream>>> =
+    static ULTOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<ULTOSC_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1171,7 +1176,7 @@ impl ULTOSC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::ULTOSC_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::ULTOSC_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1204,7 +1209,7 @@ impl ULTOSC_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::ULTOSC_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::ULTOSC_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1228,11 +1233,12 @@ impl ULTOSC_Stream {
             return Err(RetCode::BadParam);
         }
         ULTOSC_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::ULTOSC_step_impl(&self.config, &mut scratch, inHigh, inLow, inClose, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

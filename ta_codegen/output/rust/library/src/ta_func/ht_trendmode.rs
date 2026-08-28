@@ -1807,10 +1807,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `HT_TRENDMODE_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `HT_TRENDMODE_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static HT_TRENDMODE_PEEK_SCRATCH: std::cell::Cell<Option<Box<HT_TRENDMODE_Stream>>> =
+    static HT_TRENDMODE_PEEK_SCRATCH: std::cell::Cell<Option<Box<HT_TRENDMODE_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1891,11 +1891,12 @@ impl HT_TRENDMODE_Stream {
             return Err(RetCode::BadParam);
         }
         HT_TRENDMODE_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::HT_TRENDMODE_step_impl(&mut scratch, inReal, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

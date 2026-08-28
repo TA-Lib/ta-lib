@@ -554,6 +554,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What DX was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&DX_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct DX_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live DX stream: one value per closed bar, bit-identical to [`Core::DX`]
 /// over the same series. Open with [`Core::DX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -563,6 +572,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_DX_Stream")]
 pub struct DX_Stream {
+    /// What this stream was opened with — see `DX_StreamConfig`.
+    config: DX_StreamConfig,
     state: DX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -573,6 +584,7 @@ impl DX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `DX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -581,7 +593,6 @@ impl DX_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct DX_StreamState {
-    optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
     prevClose: f64,
@@ -596,7 +607,6 @@ impl DX_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevHigh = src.prevHigh;
         self.prevLow = src.prevLow;
         self.prevClose = src.prevClose;
@@ -614,7 +624,7 @@ impl DX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn DX_step_impl(sp: &mut DX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn DX_step_impl(cfg: &DX_StreamConfig, sp: &mut DX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut diffP: f64 = 0.0_f64;
         let mut diffM: f64 = 0.0_f64;
@@ -629,8 +639,8 @@ impl Core {
         diffM = sp.prevLow - tempReal;
         // Minus Delta
         sp.prevLow = tempReal;
-        sp.prevMinusDM -= sp.prevMinusDM / ((sp.optInTimePeriod) as f64);
-        sp.prevPlusDM -= sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
+        sp.prevMinusDM -= sp.prevMinusDM / ((cfg.optInTimePeriod) as f64);
+        sp.prevPlusDM -= sp.prevPlusDM / ((cfg.optInTimePeriod) as f64);
         if diffM > 0_f64 && diffP < diffM {
             // Case 2 and 4: +DM=0,-DM=diffM
             sp.prevMinusDM += diffM;
@@ -651,7 +661,7 @@ impl Core {
         }
         _true_range_0 = range_0;
         tempReal = _true_range_0;
-        sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
+        sp.prevTR = sp.prevTR - sp.prevTR / ((cfg.optInTimePeriod) as f64) + tempReal;
         sp.prevClose = inClose;
         // Calculate the DX. The value is rounded (see Wilder book).
         if sp.prevTR > 0.0 {
@@ -990,7 +1000,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = DX_StreamState {
-            optInTimePeriod,
             prevHigh,
             prevLow,
             prevClose,
@@ -999,7 +1008,7 @@ impl Core {
             prevTR,
             lastOut_outReal: outReal[(*outNBElement - 1) * outStride],
         };
-        Ok(DX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(DX_Stream { config: DX_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::DX_Open`] (composition seam).
@@ -1111,7 +1120,7 @@ impl DX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::DX_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::DX_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1144,7 +1153,7 @@ impl DX_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::DX_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::DX_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

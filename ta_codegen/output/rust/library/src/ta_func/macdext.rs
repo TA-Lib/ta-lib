@@ -464,6 +464,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MACDEXT was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MACDEXT_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MACDEXT_StreamConfig {
+    optInFastPeriod: i32,
+    optInFastMAType: MAType,
+    optInSlowPeriod: i32,
+    optInSlowMAType: MAType,
+    optInSignalPeriod: i32,
+    optInSignalMAType: MAType,
+}
+
 /// Live MACDEXT stream: one value per closed bar, bit-identical to [`Core::MACDEXT`]
 /// over the same series. Open with [`Core::MACDEXT_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -473,6 +487,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MACDEXT_Stream")]
 pub struct MACDEXT_Stream {
+    /// What this stream was opened with — see `MACDEXT_StreamConfig`.
+    config: MACDEXT_StreamConfig,
     state: MACDEXT_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -483,6 +499,7 @@ impl MACDEXT_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MACDEXT_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -491,12 +508,6 @@ impl MACDEXT_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MACDEXT_StreamState {
-    optInFastPeriod: i32,
-    optInFastMAType: MAType,
-    optInSlowPeriod: i32,
-    optInSlowMAType: MAType,
-    optInSignalPeriod: i32,
-    optInSignalMAType: MAType,
     sub0: MA_Stream,
     sub1: MA_Stream,
     sub2: MA_Stream,
@@ -507,12 +518,6 @@ impl MACDEXT_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInFastMAType = src.optInFastMAType;
-        self.optInSlowPeriod = src.optInSlowPeriod;
-        self.optInSlowMAType = src.optInSlowMAType;
-        self.optInSignalPeriod = src.optInSignalPeriod;
-        self.optInSignalMAType = src.optInSignalMAType;
         self.sub0.restore_from(&src.sub0);
         self.sub1.restore_from(&src.sub1);
         self.sub2.restore_from(&src.sub2);
@@ -526,7 +531,7 @@ impl MACDEXT_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACDEXT_step_impl(sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
+    fn MACDEXT_step_impl(cfg: &MACDEXT_StreamConfig, sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
         let mut cur_slowMABuffer: f64 = 0.0_f64;
         let mut cur_fastMABuffer: f64 = 0.0_f64;
         let mut cur_outMACDSignal: f64 = 0.0_f64;
@@ -711,12 +716,6 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         let state = MACDEXT_StreamState {
-            optInFastPeriod,
-            optInFastMAType,
-            optInSlowPeriod,
-            optInSlowMAType,
-            optInSignalPeriod,
-            optInSignalMAType,
             sub0,
             sub1,
             sub2,
@@ -733,7 +732,7 @@ impl Core {
             let last_sc_outMACDHist = sc_outMACDHist[*outNBElement - 1];
             outMACDHist[0] = last_sc_outMACDHist;
         }
-        Ok(MACDEXT_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MACDEXT_Stream { config: MACDEXT_StreamConfig { optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MACDEXT_Open`] (composition seam).
@@ -838,10 +837,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MACDEXT_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `MACDEXT_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MACDEXT_PEEK_SCRATCH: std::cell::Cell<Option<Box<MACDEXT_Stream>>> =
+    static MACDEXT_PEEK_SCRATCH: std::cell::Cell<Option<Box<MACDEXT_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -867,7 +866,7 @@ impl MACDEXT_Stream {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        Core::MACDEXT_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
+        Core::MACDEXT_step_impl(&self.config, &mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -900,7 +899,7 @@ impl MACDEXT_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MACDEXT_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i])?;
+            Core::MACDEXT_step_impl(&self.config, &mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -924,11 +923,15 @@ impl MACDEXT_Stream {
             return Err(RetCode::BadParam);
         }
         MACDEXT_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outMACD: f64 = 0.0_f64;
+            let mut outMACDSignal: f64 = 0.0_f64;
+            let mut outMACDHist: f64 = 0.0_f64;
+            let stepped = Core::MACDEXT_step_impl(&self.config, &mut scratch, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outMACD, outMACDSignal, outMACDHist))
         })
     }
 

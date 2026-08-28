@@ -571,6 +571,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What BETA was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&BETA_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct BETA_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live BETA stream: one value per closed bar, bit-identical to [`Core::BETA`]
 /// over the same series. Open with [`Core::BETA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -580,6 +589,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BETA_Stream")]
 pub struct BETA_Stream {
+    /// What this stream was opened with — see `BETA_StreamConfig`.
+    config: BETA_StreamConfig,
     state: BETA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -590,6 +601,7 @@ impl BETA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `BETA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -598,7 +610,6 @@ impl BETA_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct BETA_StreamState {
-    optInTimePeriod: i32,
     S_xx: f64,
     S_xy: f64,
     S_x: f64,
@@ -627,7 +638,6 @@ impl BETA_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.S_xx = src.S_xx;
         self.S_xy = src.S_xy;
         self.S_x = src.S_x;
@@ -659,7 +669,7 @@ impl BETA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BETA_step_impl(sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn BETA_step_impl(cfg: &BETA_StreamConfig, sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut tmp_real: f64 = 0.0_f64;
         let mut denom: f64 = 0.0_f64;
         let mut denom_scale: f64 = 0.0_f64;
@@ -743,7 +753,7 @@ impl Core {
         // startIdx-optInTimePeriod+outIdx, which is >= outIdx.
         sp.barsSinceReseed -= 1;
         if denom < 0.000001 * denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.leaving_yy > 1000.0 * sp.S_yy || sp.barsSinceReseed <= 0 {
-            sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
+            sp.barsSinceReseed = (32 * cfg.optInTimePeriod) as usize;
             windowStart = (sp.trailingIdx) as usize;
             // Walk the window forward from the price the trailing cursor already
             // carries. A return needs its predecessor, and reading inReal[j-1]
@@ -1227,7 +1237,6 @@ impl Core {
             }
         }
         let state = BETA_StreamState {
-            optInTimePeriod,
             S_xx,
             S_xy,
             S_x,
@@ -1250,7 +1259,7 @@ impl Core {
             x_inReal0,
             x_inReal1,
         };
-        Ok(BETA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BETA_Stream { config: BETA_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::BETA_Open`] (composition seam).
@@ -1342,10 +1351,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `BETA_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `BETA_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static BETA_PEEK_SCRATCH: std::cell::Cell<Option<Box<BETA_Stream>>> =
+    static BETA_PEEK_SCRATCH: std::cell::Cell<Option<Box<BETA_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1369,7 +1378,7 @@ impl BETA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::BETA_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::BETA_step_impl(&self.config, &mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1402,7 +1411,7 @@ impl BETA_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::BETA_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::BETA_step_impl(&self.config, &mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1426,11 +1435,12 @@ impl BETA_Stream {
             return Err(RetCode::BadParam);
         }
         BETA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal0, inReal1);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::BETA_step_impl(&self.config, &mut scratch, inReal0, inReal1, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

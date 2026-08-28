@@ -679,6 +679,22 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What SAREXT was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&SAREXT_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct SAREXT_StreamConfig {
+    optInStartValue: f64,
+    optInOffsetOnReverse: f64,
+    optInAccelerationInitLong: f64,
+    optInAccelerationLong: f64,
+    optInAccelerationMaxLong: f64,
+    optInAccelerationInitShort: f64,
+    optInAccelerationShort: f64,
+    optInAccelerationMaxShort: f64,
+}
+
 /// Live SAREXT stream: one value per closed bar, bit-identical to [`Core::SAREXT`]
 /// over the same series. Open with [`Core::SAREXT_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -688,6 +704,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SAREXT_Stream")]
 pub struct SAREXT_Stream {
+    /// What this stream was opened with — see `SAREXT_StreamConfig`.
+    config: SAREXT_StreamConfig,
     state: SAREXT_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -698,6 +716,7 @@ impl SAREXT_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `SAREXT_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -706,14 +725,6 @@ impl SAREXT_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SAREXT_StreamState {
-    optInStartValue: f64,
-    optInOffsetOnReverse: f64,
-    optInAccelerationInitLong: f64,
-    optInAccelerationLong: f64,
-    optInAccelerationMaxLong: f64,
-    optInAccelerationInitShort: f64,
-    optInAccelerationShort: f64,
-    optInAccelerationMaxShort: f64,
     isLong: usize,
     newHigh: f64,
     newLow: f64,
@@ -728,14 +739,6 @@ impl SAREXT_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInStartValue = src.optInStartValue;
-        self.optInOffsetOnReverse = src.optInOffsetOnReverse;
-        self.optInAccelerationInitLong = src.optInAccelerationInitLong;
-        self.optInAccelerationLong = src.optInAccelerationLong;
-        self.optInAccelerationMaxLong = src.optInAccelerationMaxLong;
-        self.optInAccelerationInitShort = src.optInAccelerationInitShort;
-        self.optInAccelerationShort = src.optInAccelerationShort;
-        self.optInAccelerationMaxShort = src.optInAccelerationMaxShort;
         self.isLong = src.isLong;
         self.newHigh = src.newHigh;
         self.newLow = src.newLow;
@@ -753,7 +756,7 @@ impl SAREXT_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SAREXT_step_impl(sp: &mut SAREXT_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn SAREXT_step_impl(cfg: &SAREXT_StreamConfig, sp: &mut SAREXT_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         prevLow = sp.newLow;
@@ -775,12 +778,12 @@ impl Core {
                     sp.sar = sp.newHigh;
                 }
                 // Output the overide SAR
-                if sp.optInOffsetOnReverse != 0.0 {
-                    sp.sar += sp.sar * sp.optInOffsetOnReverse;
+                if cfg.optInOffsetOnReverse != 0.0 {
+                    sp.sar += sp.sar * cfg.optInOffsetOnReverse;
                 }
                 (*outReal) = 0_f64 - sp.sar;
                 // Adjust afShort and ep
-                sp.afShort = sp.optInAccelerationInitShort;
+                sp.afShort = cfg.optInAccelerationInitShort;
                 sp.ep = sp.newLow;
                 // Calculate the new SAR
                 sp.sar = (sp.afShort as f64).mul_add(sp.ep - sp.sar, sp.sar);
@@ -799,9 +802,9 @@ impl Core {
                 // Adjust afLong and ep.
                 if sp.newHigh > sp.ep {
                     sp.ep = sp.newHigh;
-                    sp.afLong += sp.optInAccelerationLong;
-                    if sp.afLong > sp.optInAccelerationMaxLong {
-                        sp.afLong = sp.optInAccelerationMaxLong;
+                    sp.afLong += cfg.optInAccelerationLong;
+                    if sp.afLong > cfg.optInAccelerationMaxLong {
+                        sp.afLong = cfg.optInAccelerationMaxLong;
                     }
                 }
                 // Calculate the new SAR
@@ -829,12 +832,12 @@ impl Core {
                 sp.sar = sp.newLow;
             }
             // Output the overide SAR
-            if sp.optInOffsetOnReverse != 0.0 {
-                sp.sar -= sp.sar * sp.optInOffsetOnReverse;
+            if cfg.optInOffsetOnReverse != 0.0 {
+                sp.sar -= sp.sar * cfg.optInOffsetOnReverse;
             }
             (*outReal) = sp.sar;
             // Adjust afLong and ep
-            sp.afLong = sp.optInAccelerationInitLong;
+            sp.afLong = cfg.optInAccelerationInitLong;
             sp.ep = sp.newHigh;
             // Calculate the new SAR
             sp.sar = (sp.afLong as f64).mul_add(sp.ep - sp.sar, sp.sar);
@@ -853,9 +856,9 @@ impl Core {
             // Adjust afShort and ep.
             if sp.newLow < sp.ep {
                 sp.ep = sp.newLow;
-                sp.afShort += sp.optInAccelerationShort;
-                if sp.afShort > sp.optInAccelerationMaxShort {
-                    sp.afShort = sp.optInAccelerationMaxShort;
+                sp.afShort += cfg.optInAccelerationShort;
+                if sp.afShort > cfg.optInAccelerationMaxShort {
+                    sp.afShort = cfg.optInAccelerationMaxShort;
                 }
             }
             // Calculate the new SAR
@@ -1209,14 +1212,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = SAREXT_StreamState {
-            optInStartValue,
-            optInOffsetOnReverse,
-            optInAccelerationInitLong,
-            optInAccelerationLong,
-            optInAccelerationMaxLong,
-            optInAccelerationInitShort,
-            optInAccelerationShort,
-            optInAccelerationMaxShort,
             isLong,
             newHigh,
             newLow,
@@ -1225,7 +1220,7 @@ impl Core {
             ep,
             sar,
         };
-        Ok(SAREXT_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SAREXT_Stream { config: SAREXT_StreamConfig { optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SAREXT_Open`] (composition seam).
@@ -1334,7 +1329,7 @@ impl SAREXT_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::SAREXT_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::SAREXT_step_impl(&self.config, &mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1367,7 +1362,7 @@ impl SAREXT_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::SAREXT_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::SAREXT_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

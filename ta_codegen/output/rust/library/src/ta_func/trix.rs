@@ -384,6 +384,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What TRIX was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&TRIX_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct TRIX_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live TRIX stream: one value per closed bar, bit-identical to [`Core::TRIX`]
 /// over the same series. Open with [`Core::TRIX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -393,6 +402,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TRIX_Stream")]
 pub struct TRIX_Stream {
+    /// What this stream was opened with — see `TRIX_StreamConfig`.
+    config: TRIX_StreamConfig,
     state: TRIX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -403,6 +414,7 @@ impl TRIX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `TRIX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -411,7 +423,6 @@ impl TRIX_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct TRIX_StreamState {
-    optInTimePeriod: i32,
     prevEMA1: f64,
     prevEMA2: f64,
     prevEMA3: f64,
@@ -423,7 +434,6 @@ impl TRIX_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevEMA1 = src.prevEMA1;
         self.prevEMA2 = src.prevEMA2;
         self.prevEMA3 = src.prevEMA3;
@@ -438,7 +448,7 @@ impl TRIX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TRIX_step_impl(sp: &mut TRIX_StreamState, inReal: f64, outReal: &mut f64) {
+    fn TRIX_step_impl(cfg: &TRIX_StreamConfig, sp: &mut TRIX_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         tempReal = sp.prevEMA3;
         sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
@@ -595,13 +605,12 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = TRIX_StreamState {
-            optInTimePeriod,
             prevEMA1,
             prevEMA2,
             prevEMA3,
             optInK_1,
         };
-        Ok(TRIX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TRIX_Stream { config: TRIX_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::TRIX_Open`] (composition seam).
@@ -706,7 +715,7 @@ impl TRIX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::TRIX_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::TRIX_step_impl(&self.config, &mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -739,7 +748,7 @@ impl TRIX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::TRIX_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::TRIX_step_impl(&self.config, &mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

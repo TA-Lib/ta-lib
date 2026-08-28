@@ -377,6 +377,17 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLDARKCLOUDCOVER was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLDARKCLOUDCOVER_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLDARKCLOUDCOVER_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    optInPenetration: f64,
+}
+
 /// Live CDLDARKCLOUDCOVER stream: one value per closed bar, bit-identical to [`Core::CDLDARKCLOUDCOVER`]
 /// over the same series. Open with [`Core::CDLDARKCLOUDCOVER_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -386,8 +397,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDARKCLOUDCOVER_Stream")]
 pub struct CDLDARKCLOUDCOVER_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
+    /// What this stream was opened with — see `CDLDARKCLOUDCOVER_StreamConfig`.
+    config: CDLDARKCLOUDCOVER_StreamConfig,
     state: CDLDARKCLOUDCOVER_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -398,7 +409,7 @@ impl CDLDARKCLOUDCOVER_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLDARKCLOUDCOVER_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -407,7 +418,6 @@ impl CDLDARKCLOUDCOVER_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLDARKCLOUDCOVER_StreamState {
-    optInPenetration: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
     lag1_inHigh: f64,
@@ -424,7 +434,6 @@ impl CDLDARKCLOUDCOVER_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInPenetration = src.optInPenetration;
         self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag1_inHigh = src.lag1_inHigh;
@@ -444,13 +453,13 @@ impl CDLDARKCLOUDCOVER_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLDARKCLOUDCOVER_step_impl(sp: &mut CDLDARKCLOUDCOVER_StreamState, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLDARKCLOUDCOVER_step_impl(cfg: &CDLDARKCLOUDCOVER_StreamConfig, sp: &mut CDLDARKCLOUDCOVER_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -472,7 +481,7 @@ impl Core {
            (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 2nd: black
            inOpen > sp.lag1_inHigh &&                                          // open above prior high
            inClose > sp.lag1_inOpen &&                                         // close within prior body
-           inClose < sp.lag1_inClose - (sp.lag1_inClose - sp.lag1_inOpen).abs() * sp.optInPenetration
+           inClose < sp.lag1_inClose - (sp.lag1_inClose - sp.lag1_inOpen).abs() * cfg.optInPenetration
         {
             (*outInteger) = (0 - 100) as i32;
         } else {
@@ -665,7 +674,6 @@ impl Core {
             }
         }
         let state = CDLDARKCLOUDCOVER_StreamState {
-            optInPenetration,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
@@ -676,7 +684,7 @@ impl Core {
             ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
             ring_BodyLongTrailingIdx_derived,
         };
-        Ok(CDLDARKCLOUDCOVER_Stream { cs_body_long: self.candle_settings.body_long, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLDARKCLOUDCOVER_Stream { config: CDLDARKCLOUDCOVER_StreamConfig { cs_body_long: self.candle_settings.body_long, optInPenetration, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLDARKCLOUDCOVER_Open`] (composition seam).
@@ -791,7 +799,7 @@ impl CDLDARKCLOUDCOVER_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLDARKCLOUDCOVER_step_impl(&mut self.state, &self.cs_body_long, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLDARKCLOUDCOVER_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -824,7 +832,7 @@ impl CDLDARKCLOUDCOVER_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLDARKCLOUDCOVER_step_impl(&mut self.state, &self.cs_body_long, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLDARKCLOUDCOVER_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

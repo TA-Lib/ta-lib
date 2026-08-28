@@ -503,6 +503,19 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLMATHOLD was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLMATHOLD_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLMATHOLD_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
+    optInPenetration: f64,
+}
+
 /// Live CDLMATHOLD stream: one value per closed bar, bit-identical to [`Core::CDLMATHOLD`]
 /// over the same series. Open with [`Core::CDLMATHOLD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -512,10 +525,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLMATHOLD_Stream")]
 pub struct CDLMATHOLD_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `BodyShort` setting this stream was opened with.
-    cs_body_short: CandleSetting,
+    /// What this stream was opened with — see `CDLMATHOLD_StreamConfig`.
+    config: CDLMATHOLD_StreamConfig,
     state: CDLMATHOLD_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -526,8 +537,7 @@ impl CDLMATHOLD_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLMATHOLD_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_body_short = src.cs_body_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -536,7 +546,6 @@ impl CDLMATHOLD_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLMATHOLD_StreamState {
-    optInPenetration: f64,
     BodyPeriodTotal: [f64; 5 as usize],
     lag1_inOpen: f64,
     lag2_inOpen: f64,
@@ -569,7 +578,6 @@ impl CDLMATHOLD_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInPenetration = src.optInPenetration;
         self.BodyPeriodTotal = src.BodyPeriodTotal;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag2_inOpen = src.lag2_inOpen;
@@ -605,20 +613,20 @@ impl CDLMATHOLD_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLMATHOLD_step_impl(sp: &mut CDLMATHOLD_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLMATHOLD_step_impl(cfg: &CDLMATHOLD_StreamConfig, sp: &mut CDLMATHOLD_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cfg.cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cfg.cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = cs_body_short.factor;
+        let BodyShort_factor: f64 = cfg.cs_body_short.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -657,8 +665,8 @@ impl Core {
            ((if (sp.lag3_inOpen).min(sp.lag3_inClose) > (sp.lag4_inOpen).max(sp.lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
            (sp.lag2_inOpen).min(sp.lag2_inClose) < sp.lag4_inClose &&              // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
            (sp.lag1_inOpen).min(sp.lag1_inClose) < sp.lag4_inClose &&
-           (sp.lag2_inOpen).min(sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
-           (sp.lag1_inOpen).min(sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration &&
+           (sp.lag2_inOpen).min(sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * cfg.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
+           (sp.lag1_inOpen).min(sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * cfg.optInPenetration &&
            (sp.lag2_inClose).max(sp.lag2_inOpen) < sp.lag3_inOpen &&               // 2nd to 4th are falling
            (sp.lag1_inClose).max(sp.lag1_inOpen) < (sp.lag2_inClose).max(sp.lag2_inOpen) &&
            inOpen > sp.lag1_inClose &&                                             // 5th opens above the prior close
@@ -1013,7 +1021,6 @@ impl Core {
             }
         }
         let state = CDLMATHOLD_StreamState {
-            optInPenetration,
             BodyPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -1040,7 +1047,7 @@ impl Core {
             ringLag_BodyShortTrailingIdx: capLag_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLMATHOLD_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLMATHOLD_Stream { config: CDLMATHOLD_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, optInPenetration, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLMATHOLD_Open`] (composition seam).
@@ -1136,10 +1143,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLMATHOLD_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLMATHOLD_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLMATHOLD_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLMATHOLD_Stream>>> =
+    static CDLMATHOLD_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLMATHOLD_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1163,7 +1170,7 @@ impl CDLMATHOLD_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLMATHOLD_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLMATHOLD_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1196,7 +1203,7 @@ impl CDLMATHOLD_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLMATHOLD_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLMATHOLD_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1220,11 +1227,12 @@ impl CDLMATHOLD_Stream {
             return Err(RetCode::BadParam);
         }
         CDLMATHOLD_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLMATHOLD_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

@@ -555,6 +555,21 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLMORNINGDOJISTAR was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLMORNINGDOJISTAR_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLMORNINGDOJISTAR_StreamConfig {
+    /// The `BodyDoji` setting this stream was opened with.
+    cs_body_doji: CandleSetting,
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
+    optInPenetration: f64,
+}
+
 /// Live CDLMORNINGDOJISTAR stream: one value per closed bar, bit-identical to [`Core::CDLMORNINGDOJISTAR`]
 /// over the same series. Open with [`Core::CDLMORNINGDOJISTAR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -564,12 +579,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLMORNINGDOJISTAR_Stream")]
 pub struct CDLMORNINGDOJISTAR_Stream {
-    /// The `BodyDoji` setting this stream was opened with.
-    cs_body_doji: CandleSetting,
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `BodyShort` setting this stream was opened with.
-    cs_body_short: CandleSetting,
+    /// What this stream was opened with — see `CDLMORNINGDOJISTAR_StreamConfig`.
+    config: CDLMORNINGDOJISTAR_StreamConfig,
     state: CDLMORNINGDOJISTAR_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -580,9 +591,7 @@ impl CDLMORNINGDOJISTAR_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLMORNINGDOJISTAR_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_doji = src.cs_body_doji;
-        self.cs_body_long = src.cs_body_long;
-        self.cs_body_short = src.cs_body_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -591,7 +600,6 @@ impl CDLMORNINGDOJISTAR_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLMORNINGDOJISTAR_StreamState {
-    optInPenetration: f64,
     BodyDojiPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     BodyShortPeriodTotal: f64,
@@ -619,7 +627,6 @@ impl CDLMORNINGDOJISTAR_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInPenetration = src.optInPenetration;
         self.BodyDojiPeriodTotal = src.BodyDojiPeriodTotal;
         self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
         self.BodyShortPeriodTotal = src.BodyShortPeriodTotal;
@@ -650,25 +657,25 @@ impl CDLMORNINGDOJISTAR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLMORNINGDOJISTAR_step_impl(sp: &mut CDLMORNINGDOJISTAR_StreamState, cs_body_doji: &CandleSetting, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLMORNINGDOJISTAR_step_impl(cfg: &CDLMORNINGDOJISTAR_StreamConfig, sp: &mut CDLMORNINGDOJISTAR_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
+        let BodyDoji_rangeType: i32 = cfg.cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyDoji_avgPeriod: i32 = cs_body_doji.avg_period;
+        let BodyDoji_avgPeriod: i32 = cfg.cs_body_doji.avg_period;
         #[allow(non_snake_case)]
-        let BodyDoji_factor: f64 = cs_body_doji.factor;
+        let BodyDoji_factor: f64 = cfg.cs_body_doji.factor;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cfg.cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cfg.cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = cs_body_short.factor;
+        let BodyShort_factor: f64 = cfg.cs_body_short.factor;
         if sp.ringCap_BodyDojiTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyDoji_rangeType {
@@ -726,7 +733,7 @@ impl Core {
         if (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // black
            (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && // white real body
            ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // gapping down
-           inClose > ((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64).mul_add(sp.optInPenetration, sp.lag2_inClose) && // closing well within 1st rb
+           inClose > ((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64).mul_add(cfg.optInPenetration, sp.lag2_inClose) && // closing well within 1st rb
            (sp.lag2_inClose - sp.lag2_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st: long
            (sp.lag1_inClose - sp.lag1_inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd: doji
            (inClose - inOpen).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) // 3rd: longer than short
@@ -1166,7 +1173,6 @@ impl Core {
             }
         }
         let state = CDLMORNINGDOJISTAR_StreamState {
-            optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
             BodyShortPeriodTotal,
@@ -1188,7 +1194,7 @@ impl Core {
             ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLMORNINGDOJISTAR_Stream { cs_body_doji: self.candle_settings.body_doji, cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLMORNINGDOJISTAR_Stream { config: CDLMORNINGDOJISTAR_StreamConfig { cs_body_doji: self.candle_settings.body_doji, cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, optInPenetration, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLMORNINGDOJISTAR_Open`] (composition seam).
@@ -1284,10 +1290,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLMORNINGDOJISTAR_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLMORNINGDOJISTAR_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLMORNINGDOJISTAR_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLMORNINGDOJISTAR_Stream>>> =
+    static CDLMORNINGDOJISTAR_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLMORNINGDOJISTAR_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1311,7 +1317,7 @@ impl CDLMORNINGDOJISTAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLMORNINGDOJISTAR_step_impl(&mut self.state, &self.cs_body_doji, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLMORNINGDOJISTAR_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1344,7 +1350,7 @@ impl CDLMORNINGDOJISTAR_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLMORNINGDOJISTAR_step_impl(&mut self.state, &self.cs_body_doji, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLMORNINGDOJISTAR_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1368,11 +1374,12 @@ impl CDLMORNINGDOJISTAR_Stream {
             return Err(RetCode::BadParam);
         }
         CDLMORNINGDOJISTAR_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLMORNINGDOJISTAR_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

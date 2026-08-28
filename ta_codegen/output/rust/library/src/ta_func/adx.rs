@@ -613,6 +613,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What ADX was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&ADX_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct ADX_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live ADX stream: one value per closed bar, bit-identical to [`Core::ADX`]
 /// over the same series. Open with [`Core::ADX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -622,6 +631,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ADX_Stream")]
 pub struct ADX_Stream {
+    /// What this stream was opened with — see `ADX_StreamConfig`.
+    config: ADX_StreamConfig,
     state: ADX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -632,6 +643,7 @@ impl ADX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `ADX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -640,7 +652,6 @@ impl ADX_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ADX_StreamState {
-    optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
     prevClose: f64,
@@ -655,7 +666,6 @@ impl ADX_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.prevHigh = src.prevHigh;
         self.prevLow = src.prevLow;
         self.prevClose = src.prevClose;
@@ -673,7 +683,7 @@ impl ADX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ADX_step_impl(sp: &mut ADX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn ADX_step_impl(cfg: &ADX_StreamConfig, sp: &mut ADX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut diffP: f64 = 0.0_f64;
         let mut diffM: f64 = 0.0_f64;
@@ -688,8 +698,8 @@ impl Core {
         diffM = sp.prevLow - tempReal;
         // Minus Delta
         sp.prevLow = tempReal;
-        sp.prevMinusDM -= sp.prevMinusDM / ((sp.optInTimePeriod) as f64);
-        sp.prevPlusDM -= sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
+        sp.prevMinusDM -= sp.prevMinusDM / ((cfg.optInTimePeriod) as f64);
+        sp.prevPlusDM -= sp.prevPlusDM / ((cfg.optInTimePeriod) as f64);
         if diffM > 0_f64 && diffP < diffM {
             // Case 2 and 4: +DM=0,-DM=diffM
             sp.prevMinusDM += diffM;
@@ -710,7 +720,7 @@ impl Core {
         }
         _true_range_0 = range_0;
         tempReal = _true_range_0;
-        sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
+        sp.prevTR = sp.prevTR - sp.prevTR / ((cfg.optInTimePeriod) as f64) + tempReal;
         sp.prevClose = inClose;
         if sp.prevTR > 0.0 {
             // Calculate the DX. The value is rounded (see Wilder book).
@@ -720,7 +730,7 @@ impl Core {
             if !((tempReal).abs() < 1e-14) {
                 tempReal = (100.0 * ((minusDI - plusDI).abs() / tempReal));
                 // Calculate the ADX
-                sp.prevADX = ((sp.prevADX * (((sp.optInTimePeriod - 1)) as f64) + tempReal) / ((sp.optInTimePeriod) as f64));
+                sp.prevADX = ((sp.prevADX * (((cfg.optInTimePeriod - 1)) as f64) + tempReal) / ((cfg.optInTimePeriod) as f64));
             }
         }
         // Output the ADX
@@ -1109,7 +1119,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = ADX_StreamState {
-            optInTimePeriod,
             prevHigh,
             prevLow,
             prevClose,
@@ -1118,7 +1127,7 @@ impl Core {
             prevTR,
             prevADX,
         };
-        Ok(ADX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(ADX_Stream { config: ADX_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::ADX_Open`] (composition seam).
@@ -1230,7 +1239,7 @@ impl ADX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::ADX_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::ADX_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1263,7 +1272,7 @@ impl ADX_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::ADX_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::ADX_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

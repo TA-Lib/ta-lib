@@ -73,9 +73,20 @@ fn test_rust_sma_ring_stream_section() {
     assert!(s.contains("pub struct SMA_Stream {"));
     // No `Core` on the handle: SMA's step reads no candle setting, so it
     // carries none (#274). `backend_suite`'s handle gate owns that claim
-    // across the tiers that do read one.
+    // across the tiers that do read one. What it was opened with is the
+    // config beside the state (#276).
     assert!(!s.contains("core: Core,"));
+    assert!(s.contains("config: SMA_StreamConfig,"));
     assert!(s.contains("state: SMA_StreamState,"));
+    assert!(s.contains("struct SMA_StreamConfig {"));
+    // The param is an Open-time invariant, so it is on the config and NOT on
+    // the state — the split is what #276 buys, and asserting only the first
+    // half would pass on a state that kept its own copy.
+    assert!(s.contains("optInTimePeriod: i32,"));
+    assert!(
+        !body_of(&s, "struct SMA_StreamState {").contains("optInTimePeriod"),
+        "the param must not be duplicated onto the state"
+    );
     assert!(s.contains("struct SMA_StreamState {"));
     assert!(s.contains("ring_trailingIdx_inReal: Vec<f64>,"));
     assert!(s.contains("ringPos_trailingIdx: usize,"));
@@ -84,9 +95,14 @@ fn test_rust_sma_ring_stream_section() {
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
     // Step: ring read-old-then-push order, `(*outReal)` write.
-    assert!(s.contains("fn SMA_step_impl(sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
-    // `tempReal` is step-local scratch, not a handle field (#252).
-    assert!(s.contains("(*outReal) = tempReal / (sp.optInTimePeriod as f64);"));
+    assert!(s.contains(
+        "fn SMA_step_impl(cfg: &SMA_StreamConfig, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"
+    ));
+    // `tempReal` is step-local scratch, not a handle field (#252). The param
+    // reads through `cfg` and still carries its `as f64` — the name-keyed
+    // typing helpers have to recognize the new prefix, or the cast silently
+    // goes missing (#276).
+    assert!(s.contains("(*outReal) = tempReal / (cfg.optInTimePeriod as f64);"));
     assert!(!s.contains("tempReal: f64,"), "no scratch field on the state struct");
     assert!(s.contains("sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
@@ -428,7 +444,9 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
     assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
     assert!(!fill.contains("outBegIdx"), "the public fill carries no out-meta pair:\n{fill}");
     assert!(
-        fill.contains("Ok((MA_Stream { state, out: fillRange }, fillRange))"),
+        fill.contains(
+            "Ok((MA_Stream { config: MA_StreamConfig { optInTimePeriod, optInMAType, }, state, out: fillRange }, fillRange))"
+        ),
         "the public fill returns the arm's own range beside the handle, and keeps it \
          on the handle too (#241):\n{fill}"
     );

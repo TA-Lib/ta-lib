@@ -348,6 +348,16 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLBREAKAWAY was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLBREAKAWAY_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLBREAKAWAY_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+}
+
 /// Live CDLBREAKAWAY stream: one value per closed bar, bit-identical to [`Core::CDLBREAKAWAY`]
 /// over the same series. Open with [`Core::CDLBREAKAWAY_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -357,8 +367,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLBREAKAWAY_Stream")]
 pub struct CDLBREAKAWAY_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
+    /// What this stream was opened with — see `CDLBREAKAWAY_StreamConfig`.
+    config: CDLBREAKAWAY_StreamConfig,
     state: CDLBREAKAWAY_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -369,7 +379,7 @@ impl CDLBREAKAWAY_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLBREAKAWAY_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -437,13 +447,13 @@ impl CDLBREAKAWAY_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLBREAKAWAY_step_impl(sp: &mut CDLBREAKAWAY_StreamState, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLBREAKAWAY_step_impl(cfg: &CDLBREAKAWAY_StreamConfig, sp: &mut CDLBREAKAWAY_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -686,7 +696,7 @@ impl Core {
             ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
             ring_BodyLongTrailingIdx_derived,
         };
-        Ok(CDLBREAKAWAY_Stream { cs_body_long: self.candle_settings.body_long, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLBREAKAWAY_Stream { config: CDLBREAKAWAY_StreamConfig { cs_body_long: self.candle_settings.body_long, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLBREAKAWAY_Open`] (composition seam).
@@ -801,7 +811,7 @@ impl CDLBREAKAWAY_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLBREAKAWAY_step_impl(&mut self.state, &self.cs_body_long, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLBREAKAWAY_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -834,7 +844,7 @@ impl CDLBREAKAWAY_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLBREAKAWAY_step_impl(&mut self.state, &self.cs_body_long, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLBREAKAWAY_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

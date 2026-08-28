@@ -422,6 +422,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLUPSIDEGAP2CROWS was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLUPSIDEGAP2CROWS_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLUPSIDEGAP2CROWS_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
+}
+
 /// Live CDLUPSIDEGAP2CROWS stream: one value per closed bar, bit-identical to [`Core::CDLUPSIDEGAP2CROWS`]
 /// over the same series. Open with [`Core::CDLUPSIDEGAP2CROWS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -431,10 +443,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Stream")]
 pub struct CDLUPSIDEGAP2CROWS_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `BodyShort` setting this stream was opened with.
-    cs_body_short: CandleSetting,
+    /// What this stream was opened with — see `CDLUPSIDEGAP2CROWS_StreamConfig`.
+    config: CDLUPSIDEGAP2CROWS_StreamConfig,
     state: CDLUPSIDEGAP2CROWS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -445,8 +455,7 @@ impl CDLUPSIDEGAP2CROWS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLUPSIDEGAP2CROWS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_body_short = src.cs_body_short;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -504,19 +513,19 @@ impl CDLUPSIDEGAP2CROWS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLUPSIDEGAP2CROWS_step_impl(sp: &mut CDLUPSIDEGAP2CROWS_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLUPSIDEGAP2CROWS_step_impl(cfg: &CDLUPSIDEGAP2CROWS_StreamConfig, sp: &mut CDLUPSIDEGAP2CROWS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cfg.cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cfg.cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = cs_body_short.factor;
+        let BodyShort_factor: f64 = cfg.cs_body_short.factor;
         if sp.ringCap_BodyLongTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyLong_rangeType {
@@ -900,7 +909,7 @@ impl Core {
             ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLUPSIDEGAP2CROWS_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLUPSIDEGAP2CROWS_Stream { config: CDLUPSIDEGAP2CROWS_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLUPSIDEGAP2CROWS_Open`] (composition seam).
@@ -996,10 +1005,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLUPSIDEGAP2CROWS_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLUPSIDEGAP2CROWS_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLUPSIDEGAP2CROWS_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLUPSIDEGAP2CROWS_Stream>>> =
+    static CDLUPSIDEGAP2CROWS_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLUPSIDEGAP2CROWS_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1023,7 +1032,7 @@ impl CDLUPSIDEGAP2CROWS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLUPSIDEGAP2CROWS_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLUPSIDEGAP2CROWS_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1056,7 +1065,7 @@ impl CDLUPSIDEGAP2CROWS_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLUPSIDEGAP2CROWS_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLUPSIDEGAP2CROWS_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1080,11 +1089,12 @@ impl CDLUPSIDEGAP2CROWS_Stream {
             return Err(RetCode::BadParam);
         }
         CDLUPSIDEGAP2CROWS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLUPSIDEGAP2CROWS_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

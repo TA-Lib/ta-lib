@@ -314,6 +314,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What MINMAXINDEX was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&MINMAXINDEX_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct MINMAXINDEX_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live MINMAXINDEX stream: one value per closed bar, bit-identical to [`Core::MINMAXINDEX`]
 /// over the same series. Open with [`Core::MINMAXINDEX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -323,6 +332,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MINMAXINDEX_Stream")]
 pub struct MINMAXINDEX_Stream {
+    /// What this stream was opened with — see `MINMAXINDEX_StreamConfig`.
+    config: MINMAXINDEX_StreamConfig,
     state: MINMAXINDEX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -333,6 +344,7 @@ impl MINMAXINDEX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MINMAXINDEX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -341,7 +353,6 @@ impl MINMAXINDEX_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MINMAXINDEX_StreamState {
-    optInTimePeriod: i32,
     highest: f64,
     lowest: f64,
     trailingIdx: i32,
@@ -358,7 +369,6 @@ impl MINMAXINDEX_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.highest = src.highest;
         self.lowest = src.lowest;
         self.trailingIdx = src.trailingIdx;
@@ -378,7 +388,7 @@ impl MINMAXINDEX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MINMAXINDEX_step_impl(sp: &mut MINMAXINDEX_StreamState, inReal: f64, outMinIdx: &mut i32, outMaxIdx: &mut i32) {
+    fn MINMAXINDEX_step_impl(cfg: &MINMAXINDEX_StreamConfig, sp: &mut MINMAXINDEX_StreamState, inReal: f64, outMinIdx: &mut i32, outMaxIdx: &mut i32) {
         let mut tmpHigh: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -552,7 +562,6 @@ impl Core {
             }
         }
         let state = MINMAXINDEX_StreamState {
-            optInTimePeriod,
             highest,
             lowest,
             trailingIdx: (trailingIdx) as i32,
@@ -563,7 +572,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(MINMAXINDEX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MINMAXINDEX_Stream { config: MINMAXINDEX_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MINMAXINDEX_Open`] (composition seam).
@@ -677,7 +686,7 @@ impl MINMAXINDEX_Stream {
         }
         let mut outMinIdx: i32 = 0_i32;
         let mut outMaxIdx: i32 = 0_i32;
-        Core::MINMAXINDEX_step_impl(&mut self.state, inReal, &mut outMinIdx, &mut outMaxIdx);
+        Core::MINMAXINDEX_step_impl(&self.config, &mut self.state, inReal, &mut outMinIdx, &mut outMaxIdx);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -710,7 +719,7 @@ impl MINMAXINDEX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MINMAXINDEX_step_impl(&mut self.state, inReal[i], &mut outMinIdx[i], &mut outMaxIdx[i]);
+            Core::MINMAXINDEX_step_impl(&self.config, &mut self.state, inReal[i], &mut outMinIdx[i], &mut outMaxIdx[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

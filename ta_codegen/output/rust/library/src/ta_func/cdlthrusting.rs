@@ -453,6 +453,18 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CDLTHRUSTING was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CDLTHRUSTING_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CDLTHRUSTING_StreamConfig {
+    /// The `BodyLong` setting this stream was opened with.
+    cs_body_long: CandleSetting,
+    /// The `Equal` setting this stream was opened with.
+    cs_equal: CandleSetting,
+}
+
 /// Live CDLTHRUSTING stream: one value per closed bar, bit-identical to [`Core::CDLTHRUSTING`]
 /// over the same series. Open with [`Core::CDLTHRUSTING_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -462,10 +474,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLTHRUSTING_Stream")]
 pub struct CDLTHRUSTING_Stream {
-    /// The `BodyLong` setting this stream was opened with.
-    cs_body_long: CandleSetting,
-    /// The `Equal` setting this stream was opened with.
-    cs_equal: CandleSetting,
+    /// What this stream was opened with — see `CDLTHRUSTING_StreamConfig`.
+    config: CDLTHRUSTING_StreamConfig,
     state: CDLTHRUSTING_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -476,8 +486,7 @@ impl CDLTHRUSTING_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLTHRUSTING_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_equal = src.cs_equal;
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -531,19 +540,19 @@ impl CDLTHRUSTING_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLTHRUSTING_step_impl(sp: &mut CDLTHRUSTING_StreamState, cs_body_long: &CandleSetting, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLTHRUSTING_step_impl(cfg: &CDLTHRUSTING_StreamConfig, sp: &mut CDLTHRUSTING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
+        let BodyLong_rangeType: i32 = cfg.cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = cs_body_long.avg_period;
+        let BodyLong_avgPeriod: i32 = cfg.cs_body_long.avg_period;
         #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = cs_body_long.factor;
+        let BodyLong_factor: f64 = cfg.cs_body_long.factor;
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = cs_equal.range_type as i32;
+        let Equal_rangeType: i32 = cfg.cs_equal.range_type as i32;
         #[allow(non_snake_case)]
-        let Equal_avgPeriod: i32 = cs_equal.avg_period;
+        let Equal_avgPeriod: i32 = cfg.cs_equal.avg_period;
         #[allow(non_snake_case)]
-        let Equal_factor: f64 = cs_equal.factor;
+        let Equal_factor: f64 = cfg.cs_equal.factor;
         let mut _candlerange_0: f64;
         match BodyLong_rangeType {
             0 => {
@@ -880,7 +889,7 @@ impl Core {
             ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
             ring_EqualTrailingIdx_derived,
         };
-        Ok(CDLTHRUSTING_Stream { cs_body_long: self.candle_settings.body_long, cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLTHRUSTING_Stream { config: CDLTHRUSTING_StreamConfig { cs_body_long: self.candle_settings.body_long, cs_equal: self.candle_settings.equal, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLTHRUSTING_Open`] (composition seam).
@@ -976,10 +985,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLTHRUSTING_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CDLTHRUSTING_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLTHRUSTING_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLTHRUSTING_Stream>>> =
+    static CDLTHRUSTING_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLTHRUSTING_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1003,7 +1012,7 @@ impl CDLTHRUSTING_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLTHRUSTING_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLTHRUSTING_step_impl(&self.config, &mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1036,7 +1045,7 @@ impl CDLTHRUSTING_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLTHRUSTING_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLTHRUSTING_step_impl(&self.config, &mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1060,11 +1069,12 @@ impl CDLTHRUSTING_Stream {
             return Err(RetCode::BadParam);
         }
         CDLTHRUSTING_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::CDLTHRUSTING_step_impl(&self.config, &mut scratch, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

@@ -414,6 +414,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What CMF was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&CMF_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct CMF_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live CMF stream: one value per closed bar, bit-identical to [`Core::CMF`]
 /// over the same series. Open with [`Core::CMF_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -423,6 +432,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CMF_Stream")]
 pub struct CMF_Stream {
+    /// What this stream was opened with — see `CMF_StreamConfig`.
+    config: CMF_StreamConfig,
     state: CMF_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -433,6 +444,7 @@ impl CMF_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CMF_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -441,7 +453,6 @@ impl CMF_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CMF_StreamState {
-    optInTimePeriod: i32,
     sumMFV: f64,
     sumVol: f64,
     mfv_Idx: usize,
@@ -456,7 +467,6 @@ impl CMF_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.sumMFV = src.sumMFV;
         self.sumVol = src.sumVol;
         self.mfv_Idx = src.mfv_Idx;
@@ -474,7 +484,7 @@ impl CMF_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CMF_step_impl(sp: &mut CMF_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn CMF_step_impl(cfg: &CMF_StreamConfig, sp: &mut CMF_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut high: f64 = 0.0_f64;
         let mut low: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
@@ -649,7 +659,6 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = CMF_StreamState {
-            optInTimePeriod,
             sumMFV,
             sumVol,
             mfv_Idx,
@@ -658,7 +667,7 @@ impl Core {
             cb_mfv_flow: mfv_flow,
             cb_mfv_volume: mfv_volume,
         };
-        Ok(CMF_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CMF_Stream { config: CMF_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CMF_Open`] (composition seam).
@@ -754,10 +763,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CMF_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CMF_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CMF_PEEK_SCRATCH: std::cell::Cell<Option<Box<CMF_Stream>>> =
+    static CMF_PEEK_SCRATCH: std::cell::Cell<Option<Box<CMF_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -781,7 +790,7 @@ impl CMF_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::CMF_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        Core::CMF_step_impl(&self.config, &mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -814,7 +823,7 @@ impl CMF_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CMF_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
+            Core::CMF_step_impl(&self.config, &mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -838,11 +847,12 @@ impl CMF_Stream {
             return Err(RetCode::BadParam);
         }
         CMF_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose, inVolume);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::CMF_step_impl(&self.config, &mut scratch, inHigh, inLow, inClose, inVolume, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

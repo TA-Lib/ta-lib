@@ -278,6 +278,15 @@ impl Core {
 }
 /**** Streaming API *****/
 
+/// What IMI was opened with: read on every bar, written by none of
+/// them. Held beside the state so a step takes it as `&IMI_StreamConfig`
+/// (`noalias` + `readonly`) and `peek`'s scratch never copies it.
+#[derive(Debug, Clone, Copy)]
+#[allow(non_snake_case, dead_code)]
+struct IMI_StreamConfig {
+    optInTimePeriod: i32,
+}
+
 /// Live IMI stream: one value per closed bar, bit-identical to [`Core::IMI`]
 /// over the same series. Open with [`Core::IMI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -287,6 +296,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_IMI_Stream")]
 pub struct IMI_Stream {
+    /// What this stream was opened with — see `IMI_StreamConfig`.
+    config: IMI_StreamConfig,
     state: IMI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -297,6 +308,7 @@ impl IMI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `IMI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.config = src.config;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -305,7 +317,6 @@ impl IMI_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct IMI_StreamState {
-    optInTimePeriod: i32,
     winPos_i: usize,
     winCap_i: usize,
     win_i_inOpen: Vec<f64>,
@@ -317,7 +328,6 @@ impl IMI_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
         self.winPos_i = src.winPos_i;
         self.winCap_i = src.winCap_i;
         self.win_i_inOpen.clone_from(&src.win_i_inOpen);
@@ -332,7 +342,7 @@ impl IMI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn IMI_step_impl(sp: &mut IMI_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
+    fn IMI_step_impl(cfg: &IMI_StreamConfig, sp: &mut IMI_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut upsum: f64 = 0.0_f64;
         let mut downsum: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -342,8 +352,8 @@ impl Core {
         sp.win_i_inClose[sp.winPos_i] = inClose;
         upsum = 0.0;
         downsum = 0.0;
-        // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
-        i = (sp.optInTimePeriod - 1) as usize;
+        // for( i = cfg.optInTimePeriod - 1; i >= 0; i -= 1 )
+        i = (cfg.optInTimePeriod - 1) as usize;
         loop {
             close = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
             open = sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
@@ -441,13 +451,12 @@ impl Core {
         let mut win_i_inClose: Vec<f64> = vec![0.0_f64; cap_i as usize];
         win_i_inClose.copy_from_slice(&inClose[historyLen - cap_i as usize..]);
         let state = IMI_StreamState {
-            optInTimePeriod,
             winPos_i: 0_usize,
             winCap_i: cap_i as usize,
             win_i_inOpen,
             win_i_inClose,
         };
-        Ok(IMI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(IMI_Stream { config: IMI_StreamConfig { optInTimePeriod, }, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::IMI_Open`] (composition seam).
@@ -541,10 +550,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `IMI_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `IMI_StreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static IMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<IMI_Stream>>> =
+    static IMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<IMI_StreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -568,7 +577,7 @@ impl IMI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::IMI_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
+        Core::IMI_step_impl(&self.config, &mut self.state, inOpen, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -601,7 +610,7 @@ impl IMI_Stream {
             if !inOpen[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::IMI_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
+            Core::IMI_step_impl(&self.config, &mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -625,11 +634,12 @@ impl IMI_Stream {
             return Err(RetCode::BadParam);
         }
         IMI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::IMI_step_impl(&self.config, &mut scratch, inOpen, inClose, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 
