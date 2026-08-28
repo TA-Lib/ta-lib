@@ -48,9 +48,9 @@ double provisional = s.Peek(formingClose);       // state left unchanged
 ## Rules
 
 - **Warm-up.** `Open` succeeds only if `history.Length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the handle keeps everything it needs.
-- **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing; it runs the same code on a copy and never writes the handle. `Value` re-reads the last committed value without recomputing.
+- **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing — call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
 - **Allocation.** `Update` allocates nothing — not handle state, and not a return value even for multi-output indicators, because those return a `readonly record struct`. `Peek` is different: where the handle owns several arrays or a sub-handle, the copy is a scratch held per thread and reused, so it allocates nothing after that thread's first peek of that indicator; otherwise `Peek` copies the handle and allocates in proportion to the state the indicator carries. If you peek on every tick and that matters, hold the value `Update` returns instead.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live handle — to stream with different settings, build a new `Core` and open from that.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live handle — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A handle is single-writer — `Update`, `Peek`, `Value` and `Clone()` must not race with an `Update` on the same handle. With no concurrent `Update`, `Peek`/`Value`/`Clone()` never write the handle and may run concurrently. Distinct handles (a `Clone()` result included) are fully independent.
 - **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SMA_Open(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.
 - **Not serializable.** The constructors are `internal`, so no partially built handle can be minted or deserialized. To checkpoint, retain the history and re-open — the result is bit-identical by contract.
@@ -82,7 +82,7 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 | `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar |
 | `handle.UpdateAndFill(bars, outs)` | instead of a loop of `Update` | commit `n` closed bars and write the `n` values |
 
-**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/csharp/) would produce — while still returning the live handle, in one pass:
+**`OpenAndFill`**
 
 ```csharp
 double[] history = /* ...your closing prices... */;
@@ -97,8 +97,7 @@ OutRange r = s.OutRange;    // the bars it has a value for
 
 The output arguments are the batch call's, in the same order. An output may not overlap an input, or another output — that throws `ArgumentException` and mints no handle. With spans that means genuine memory overlap, not just the same buffer: two slices of one array that share even one element are rejected.
 
-**`UpdateAndFill`** — feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
-in one call, writing one value per bar into your span:
+**`UpdateAndFill`**
 
 ```csharp
 double[] outReal = new double[gap.Length];
@@ -106,29 +105,25 @@ double[] outReal = new double[gap.Length];
 s.UpdateAndFill(gap, outReal);      // outReal[i] is the SMA at gap[i]
 ```
 
-It is exactly `gap.Length` back-to-back `Update` calls — same values, same state
-— with one set of argument checks instead of `n`. `s.OutRange` reports the bars
+`s.OutRange` reports the bars
 the handle has a value for, before and after.
 
-That includes a call that fails partway. A non-finite bar throws
-`ArgumentException` exactly as `Update` does, which means the bars **before** it
-are already committed and their values already written; the range tells you how
-many. It throws before committing anything if the input spans differ in length,
-an output is shorter than the bar count, or an output overlaps an input or
-another output. An empty call does nothing.
+It throws `ArgumentException` before committing anything if the input spans
+differ in length, an output is shorter than the bar count, or an output
+overlaps an input or another output. An empty call does nothing. An invalid bar
+(NaN or ±Inf) also throws `ArgumentException`, exactly as `Update` does, but
+commits the valid bars **before** it — their values are already written, and the
+range tells you how many.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is a non-finite bar; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits anything. `Value` and `Clone()` never throw.
+`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits anything. The handle is left untouched on an error. `Value` and `Clone()` never throw.
 
 | Condition | Exception |
 |---|---|
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | An optional parameter outside its documented range | `ArgumentException` |
-| An output array aliasing an input or another output | `ArgumentException` |
-| A non-finite bar, or a non-finite real parameter | `ArgumentException` |
-
-One narrow exception to "the handle is unchanged": a *composed* indicator drives its sub-stages through their own public update, so a value the library computed internally is re-checked there. If such an intermediate overflowed to an infinity, the rejection would surface after earlier sub-stages had advanced, and would name the sub-stage. It needs input magnitudes around 1e306 and up — the overflow class TA-Lib already treats as out of scope — but the guarantee is stated for the caller-supplied case, which is the one you can provoke.
+| A non-finite bar (NaN or ±Inf), or a non-finite real parameter | `ArgumentException` |
 
 `InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MA_Open(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 

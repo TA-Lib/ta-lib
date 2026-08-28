@@ -49,9 +49,8 @@ TA_SMA_Close( s );
 
 - **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are first read at `Open` and must not change during the stream's life.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are first read at `Open` and must not change during the stream's life.
 - **Threads.** A stream is single-writer: never drive one stream from two threads at once (even `Peek`, despite its `const`). Distinct streams are fully independent.
-- **Don't persist** a stream across library versions.
 
 ## Multi-input / multi-output
 
@@ -74,7 +73,7 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 | `TA_<NAME>_OpenAndFill` | once, instead of `Open` | like `Open`, but returns the output for **every** history bar |
 | `TA_<NAME>_UpdateAndFill` | instead of a loop of `Update` | commit `barCount` closed bars and write a value for each |
 
-**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` gives you the output for **every** history bar — the same array the [batch function](/api/) would produce — while still opening the live stream.
+**`OpenAndFill`**
 
 ```c
 double out[300];                 /* one array per output */
@@ -87,8 +86,7 @@ TA_SMA_OpenAndFill( &s, history, historyLen, period,
 TA_SMA_Update( s, newClose, &sma );
 ```
 
-**`UpdateAndFill`** — feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
-in one call, writing one value per bar into your array:
+**`UpdateAndFill`**
 
 ```c
 double gap[64], out[64];         /* one output array per output */
@@ -96,16 +94,13 @@ double gap[64], out[64];         /* one output array per output */
 TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
 ```
 
-It is exactly `barCount` back-to-back `Update` calls — same values, same state —
-with one set of argument checks instead of `barCount`. `Update` and `UpdateAndFill` calls can be freely mixed on the same stream.
-
 ## Error model
 
 | Call | Returns |
 |------|---------|
-| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | `TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar fixes it — or `TA_BAD_PARAM` (bad param, empty history) or `TA_ALLOC_ERR`; `*stream` is NULL on failure. `OpenAndFill` also requires non-NULL, non-overlapping output arguments. |
-| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, and on a non-finite bar value — in which case the handle is left exactly as it was |
-| `TA_<NAME>_UpdateAndFill` | `TA_BAD_PARAM` on NULL arguments, a negative `barCount`, an output aliasing an input or another output — none of which commits anything — and on a non-finite bar, which commits the bars before it |
+| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_START_INDEX` when `historyLen` is 0</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_MAX_INDEX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
+| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf. The stream is left untouched on an error. |
+| `TA_<NAME>_UpdateAndFill` | `TA_BAD_PARAM` on NULL arguments, a negative `barCount`, or an output aliasing an input or another output — none of which commits anything. An invalid bar (NaN or ±Inf) also returns `TA_BAD_PARAM`, but commits the valid bars before it. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 
 ## Discovering streamable functions

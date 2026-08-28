@@ -48,8 +48,9 @@ double provisional = s.peek(formingClose);      // state left unchanged
 ## Rules
 
 - **Warm-up.** `Open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
-- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same code on a copy and never writes the handle. Where the handle owns several arrays or a sub-stream, that copy is a scratch held per thread and reused, so it allocates nothing after the first peek of that indicator on that thread. It is held in a `ThreadLocal` for the life of the thread — one handle copy per indicator that thread has peeked, keeping its `Core` and arrays reachable. On a pooled thread that outlives a deployment, that is the usual `ThreadLocal` retention to be aware of. `value()` re-reads the last committed value without recomputing.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
+- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
+- **Allocation.** `peek` runs on a copy of the handle and never writes it. Where the handle owns several arrays or a sub-stream, that copy is a scratch held per thread and reused, so it allocates nothing after the first peek of that indicator on that thread. It is held in a `ThreadLocal` for the life of the thread — one handle copy per indicator that thread has peeked, keeping its `Core` and arrays reachable. On a pooled thread that outlives a deployment, that is the usual `ThreadLocal` retention to be aware of.
+- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
@@ -79,7 +80,7 @@ int pattern = c.update(o, h, l, cl);
 | `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar |
 | `stream.updateAndFill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values |
 
-**`OpenAndFill`** — `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/java/) would produce — while still returning the live stream, in one pass:
+**`OpenAndFill`**
 
 ```java
 import io.github.talib.OutRange;
@@ -95,8 +96,7 @@ double v = s.update(newClose);
 
 The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned handle as `outRange()` rather than through out-parameters. That accessor is on every stream, not just a filled one: it holds the bars the handle has a value for, which is what the batch call over the same bars reports — `(lookback, historyLen - lookback)` at open, one more per `update`, unchanged by `peek`. The output arrays must not alias the input or each other.
 
-**`updateAndFill`** — feeding a gap one `update` at a time works; `updateAndFill` does the same thing
-in one call, writing one value per bar into your array:
+**`updateAndFill`**
 
 ```java
 double[] out = new double[gap.length];
@@ -104,8 +104,7 @@ double[] out = new double[gap.length];
 s.updateAndFill(gap, out);          // out[i] is the SMA at gap[i]
 ```
 
-It is exactly `gap.length` back-to-back `update` calls — same values, same state
-— with one set of argument checks instead of `n`. `s.outRange()` reports the bars
+`s.outRange()` reports the bars
 the stream has a value for, before and after.
 
 That includes a call that fails partway. A non-finite bar throws
@@ -119,12 +118,10 @@ same array as an input or as another output. A zero-length call does nothing.
 
 | Call | Behaviour |
 |------|-----------|
-| `<NAME>_Open` / `<NAME>_OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters, or output arrays that alias the input or each other (`OpenAndFill`), throw plain `IllegalArgumentException`. |
-| `update` / `peek` | `IllegalArgumentException` on a non-finite bar value, leaving the handle unchanged. Nothing else throws after a successful `Open` (see the note below for the one composed-indicator corner). |
-| `updateAndFill` | The same non-finite rejection, per bar — and it commits the bars ahead of the one it rejects. Ragged inputs, an output shorter than the bar count, and an output that is also an input or another output throw before it commits anything. |
+| `<NAME>_Open` / `<NAME>_OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
+| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. The handle is left untouched on an error. Nothing else throws after a successful `Open` (see the note below for the one composed-indicator corner). |
+| `updateAndFill` | Ragged inputs, an output shorter than the bar count, or an output that is also an input or another output throw `IllegalArgumentException` — none of which commits anything. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`, but commits the valid bars before it. |
 | `value` / `copy` | Never throw. |
-
-One narrow exception to "the handle is unchanged": a *composed* indicator drives its sub-stages through their own public update, so a value the library computed internally is re-checked there. If such an intermediate overflowed to an infinity, the rejection would surface after earlier sub-stages had advanced, and would name the sub-stage. It needs input magnitudes around 1e306 and up — the overflow class TA-Lib already treats as out of scope — but the guarantee is stated for the caller-supplied case, which is the one you can provoke.
 
 ## Discovering streamable functions
 
