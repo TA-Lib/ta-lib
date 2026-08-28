@@ -547,7 +547,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCH_Stream")]
 pub struct STOCH_Stream {
-    core: Core,
     state: STOCH_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -558,7 +557,6 @@ impl STOCH_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `STOCH_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -622,7 +620,7 @@ impl STOCH_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCH_step_impl(&self, sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
+    fn STOCH_step_impl(sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outSlowD: f64 = 0.0_f64;
@@ -1000,7 +998,7 @@ impl Core {
             let last_sc_outSlowD = sc_outSlowD[*outNBElement - 1];
             outSlowD[0] = last_sc_outSlowD;
         }
-        Ok(STOCH_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(STOCH_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
@@ -1129,7 +1127,7 @@ impl STOCH_Stream {
         }
         let mut outSlowK: f64 = 0.0_f64;
         let mut outSlowD: f64 = 0.0_f64;
-        self.core.STOCH_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
+        Core::STOCH_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1162,7 +1160,7 @@ impl STOCH_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.STOCH_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
+            Core::STOCH_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

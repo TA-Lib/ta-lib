@@ -412,7 +412,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LINEARREG_ANGLE_Stream")]
 pub struct LINEARREG_ANGLE_Stream {
-    core: Core,
     state: LINEARREG_ANGLE_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -423,7 +422,6 @@ impl LINEARREG_ANGLE_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `LINEARREG_ANGLE_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -477,7 +475,7 @@ impl LINEARREG_ANGLE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LINEARREG_ANGLE_step_impl(&self, sp: &mut LINEARREG_ANGLE_StreamState, inReal: f64, outReal: &mut f64) {
+    fn LINEARREG_ANGLE_step_impl(sp: &mut LINEARREG_ANGLE_StreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut windowStart: usize = 0_usize;
         let mut tempValue1: f64 = 0.0_f64;
@@ -807,7 +805,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(LINEARREG_ANGLE_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(LINEARREG_ANGLE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::LINEARREG_ANGLE_Open`] (composition seam).
@@ -912,7 +910,7 @@ impl LINEARREG_ANGLE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.LINEARREG_ANGLE_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::LINEARREG_ANGLE_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -945,7 +943,7 @@ impl LINEARREG_ANGLE_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.LINEARREG_ANGLE_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::LINEARREG_ANGLE_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

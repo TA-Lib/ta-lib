@@ -645,7 +645,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SMI_Stream")]
 pub struct SMI_Stream {
-    core: Core,
     state: SMI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -656,7 +655,6 @@ impl SMI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `SMI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -728,7 +726,7 @@ impl SMI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SMI_step_impl(&self, sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
+    fn SMI_step_impl(sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         let mut num: f64 = 0.0_f64;
         let mut den: f64 = 0.0_f64;
@@ -1151,7 +1149,7 @@ impl Core {
             x_inLow,
             x_inClose,
         };
-        Ok(SMI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SMI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SMI_Open`] (composition seam).
@@ -1280,7 +1278,7 @@ impl SMI_Stream {
         }
         let mut outSMI: f64 = 0.0_f64;
         let mut outSMISignal: f64 = 0.0_f64;
-        self.core.SMI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
+        Core::SMI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1313,7 +1311,7 @@ impl SMI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.SMI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSMI[i], &mut outSMISignal[i]);
+            Core::SMI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSMI[i], &mut outSMISignal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

@@ -681,7 +681,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAMA_Stream")]
 pub struct MAMA_Stream {
-    core: Core,
     state: MAMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -692,7 +691,6 @@ impl MAMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MAMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -816,7 +814,7 @@ impl MAMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAMA_step_impl(&self, sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
+    fn MAMA_step_impl(sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
@@ -1454,7 +1452,7 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(MAMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MAMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MAMA_Open`] (composition seam).
@@ -1570,7 +1568,7 @@ impl MAMA_Stream {
         }
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
-        self.core.MAMA_step_impl(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
+        Core::MAMA_step_impl(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1609,7 +1607,7 @@ impl MAMA_Stream {
                 return Err(RetCode::BadParam);
             }
             let slot_outFAMA = match outFAMA.as_deref_mut() { Some(_s) => &mut _s[i], None => &mut sink_outFAMA };
-            self.core.MAMA_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
+            Core::MAMA_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

@@ -473,7 +473,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MACDEXT_Stream")]
 pub struct MACDEXT_Stream {
-    core: Core,
     state: MACDEXT_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -484,7 +483,6 @@ impl MACDEXT_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MACDEXT_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -528,7 +526,7 @@ impl MACDEXT_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACDEXT_step_impl(&self, sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
+    fn MACDEXT_step_impl(sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
         let mut cur_slowMABuffer: f64 = 0.0_f64;
         let mut cur_fastMABuffer: f64 = 0.0_f64;
         let mut cur_outMACDSignal: f64 = 0.0_f64;
@@ -735,7 +733,7 @@ impl Core {
             let last_sc_outMACDHist = sc_outMACDHist[*outNBElement - 1];
             outMACDHist[0] = last_sc_outMACDHist;
         }
-        Ok(MACDEXT_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MACDEXT_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MACDEXT_Open`] (composition seam).
@@ -869,7 +867,7 @@ impl MACDEXT_Stream {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.MACDEXT_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
+        Core::MACDEXT_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -902,7 +900,7 @@ impl MACDEXT_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MACDEXT_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i])?;
+            Core::MACDEXT_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

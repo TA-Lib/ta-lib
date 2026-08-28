@@ -213,7 +213,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_FLOOR_Stream")]
 pub struct FLOOR_Stream {
-    core: Core,
     state: FLOOR_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -224,7 +223,6 @@ impl FLOOR_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `FLOOR_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -250,7 +248,7 @@ impl FLOOR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn FLOOR_step_impl(&self, sp: &mut FLOOR_StreamState, inReal: f64, outReal: &mut f64) {
+    fn FLOOR_step_impl(sp: &mut FLOOR_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).floor();
     }
 
@@ -291,7 +289,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = FLOOR_StreamState {
         };
-        Ok(FLOOR_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(FLOOR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::FLOOR_Open`] (composition seam).
@@ -396,7 +394,7 @@ impl FLOOR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.FLOOR_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::FLOOR_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -429,7 +427,7 @@ impl FLOOR_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.FLOOR_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::FLOOR_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

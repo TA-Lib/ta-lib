@@ -285,7 +285,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MOM_Stream")]
 pub struct MOM_Stream {
-    core: Core,
     state: MOM_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -296,7 +295,6 @@ impl MOM_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MOM_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -330,7 +328,7 @@ impl MOM_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MOM_step_impl(&self, sp: &mut MOM_StreamState, inReal: f64, outReal: &mut f64) {
+    fn MOM_step_impl(sp: &mut MOM_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
@@ -440,7 +438,7 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(MOM_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MOM_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MOM_Open`] (composition seam).
@@ -545,7 +543,7 @@ impl MOM_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MOM_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::MOM_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -578,7 +576,7 @@ impl MOM_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MOM_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::MOM_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

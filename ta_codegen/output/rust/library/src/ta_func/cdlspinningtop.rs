@@ -345,7 +345,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSPINNINGTOP_Stream")]
 pub struct CDLSPINNINGTOP_Stream {
-    core: Core,
+    /// The `BodyShort` setting this stream was opened with.
+    cs_body_short: CandleSetting,
     state: CDLSPINNINGTOP_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -356,7 +357,7 @@ impl CDLSPINNINGTOP_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLSPINNINGTOP_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
+        self.cs_body_short = src.cs_body_short;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -390,13 +391,13 @@ impl CDLSPINNINGTOP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSPINNINGTOP_step_impl(&self, sp: &mut CDLSPINNINGTOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSPINNINGTOP_step_impl(sp: &mut CDLSPINNINGTOP_StreamState, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
+        let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
+        let BodyShort_avgPeriod: i32 = cs_body_short.avg_period;
         #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
+        let BodyShort_factor: f64 = cs_body_short.factor;
         if sp.ringCap_BodyTrailingIdx == 0 {
             let mut _candlerange_0: f64;
             match BodyShort_rangeType {
@@ -608,7 +609,7 @@ impl Core {
             ringCap_BodyTrailingIdx: cap_BodyTrailingIdx as usize,
             ring_BodyTrailingIdx_derived,
         };
-        Ok(CDLSPINNINGTOP_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLSPINNINGTOP_Stream { cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLSPINNINGTOP_Open`] (composition seam).
@@ -723,7 +724,7 @@ impl CDLSPINNINGTOP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLSPINNINGTOP_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLSPINNINGTOP_step_impl(&mut self.state, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -756,7 +757,7 @@ impl CDLSPINNINGTOP_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CDLSPINNINGTOP_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLSPINNINGTOP_step_impl(&mut self.state, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

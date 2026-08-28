@@ -253,7 +253,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BOP_Stream")]
 pub struct BOP_Stream {
-    core: Core,
     state: BOP_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -264,7 +263,6 @@ impl BOP_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `BOP_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -290,7 +288,7 @@ impl BOP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BOP_step_impl(&self, sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn BOP_step_impl(sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         // BOP is a fraction of the bar's own range, so it is scale-free and the
         // divisor only has to be positive. An exact test, not the fixed
@@ -354,7 +352,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = BOP_StreamState {
         };
-        Ok(BOP_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BOP_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::BOP_Open`] (composition seam).
@@ -469,7 +467,7 @@ impl BOP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.BOP_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        Core::BOP_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -502,7 +500,7 @@ impl BOP_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.BOP_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::BOP_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

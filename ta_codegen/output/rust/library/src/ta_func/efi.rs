@@ -404,7 +404,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_EFI_Stream")]
 pub struct EFI_Stream {
-    core: Core,
     state: EFI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -415,7 +414,6 @@ impl EFI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `EFI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -449,7 +447,7 @@ impl EFI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn EFI_step_impl(&self, sp: &mut EFI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn EFI_step_impl(sp: &mut EFI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
@@ -569,7 +567,7 @@ impl Core {
                 optInK_1,
                 prevMA,
             };
-            Ok(EFI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(EFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut optInK_1: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
@@ -674,7 +672,7 @@ impl Core {
                 optInK_1,
                 prevMA,
             };
-            Ok(EFI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(EFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
@@ -788,7 +786,7 @@ impl EFI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.EFI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
+        Core::EFI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -821,7 +819,7 @@ impl EFI_Stream {
             if !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.EFI_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
+            Core::EFI_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

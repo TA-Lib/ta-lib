@@ -367,7 +367,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLTASUKIGAP_Stream")]
 pub struct CDLTASUKIGAP_Stream {
-    core: Core,
+    /// The `Near` setting this stream was opened with.
+    cs_near: CandleSetting,
     state: CDLTASUKIGAP_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -378,7 +379,7 @@ impl CDLTASUKIGAP_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLTASUKIGAP_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
+        self.cs_near = src.cs_near;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -426,13 +427,13 @@ impl CDLTASUKIGAP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLTASUKIGAP_step_impl(&self, sp: &mut CDLTASUKIGAP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLTASUKIGAP_step_impl(sp: &mut CDLTASUKIGAP_StreamState, cs_near: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
+        let Near_rangeType: i32 = cs_near.range_type as i32;
         #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
+        let Near_avgPeriod: i32 = cs_near.avg_period;
         #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
+        let Near_factor: f64 = cs_near.factor;
         let mut _candlerange_0: f64;
         match Near_rangeType {
             0 => {
@@ -673,7 +674,7 @@ impl Core {
             ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
             ring_NearTrailingIdx_derived,
         };
-        Ok(CDLTASUKIGAP_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLTASUKIGAP_Stream { cs_near: self.candle_settings.near, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLTASUKIGAP_Open`] (composition seam).
@@ -788,7 +789,7 @@ impl CDLTASUKIGAP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLTASUKIGAP_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLTASUKIGAP_step_impl(&mut self.state, &self.cs_near, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -821,7 +822,7 @@ impl CDLTASUKIGAP_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CDLTASUKIGAP_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLTASUKIGAP_step_impl(&mut self.state, &self.cs_near, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

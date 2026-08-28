@@ -322,7 +322,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_QSTICK_Stream")]
 pub struct QSTICK_Stream {
-    core: Core,
     state: QSTICK_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -333,7 +332,6 @@ impl QSTICK_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `QSTICK_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -369,7 +367,7 @@ impl QSTICK_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn QSTICK_step_impl(&self, sp: &mut QSTICK_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
+    fn QSTICK_step_impl(sp: &mut QSTICK_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_derived[0] = (inClose - inOpen) as f64;
@@ -500,7 +498,7 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_derived,
         };
-        Ok(QSTICK_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(QSTICK_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::QSTICK_Open`] (composition seam).
@@ -613,7 +611,7 @@ impl QSTICK_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.QSTICK_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
+        Core::QSTICK_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -646,7 +644,7 @@ impl QSTICK_Stream {
             if !inOpen[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.QSTICK_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
+            Core::QSTICK_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

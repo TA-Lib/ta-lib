@@ -244,7 +244,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AVGPRICE_Stream")]
 pub struct AVGPRICE_Stream {
-    core: Core,
     state: AVGPRICE_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -255,7 +254,6 @@ impl AVGPRICE_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `AVGPRICE_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -281,7 +279,7 @@ impl AVGPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AVGPRICE_step_impl(&self, sp: &mut AVGPRICE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn AVGPRICE_step_impl(sp: &mut AVGPRICE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
     }
 
@@ -323,7 +321,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = AVGPRICE_StreamState {
         };
-        Ok(AVGPRICE_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(AVGPRICE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::AVGPRICE_Open`] (composition seam).
@@ -438,7 +436,7 @@ impl AVGPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.AVGPRICE_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        Core::AVGPRICE_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -471,7 +469,7 @@ impl AVGPRICE_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.AVGPRICE_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::AVGPRICE_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

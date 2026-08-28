@@ -357,7 +357,8 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSTICKSANDWICH_Stream")]
 pub struct CDLSTICKSANDWICH_Stream {
-    core: Core,
+    /// The `Equal` setting this stream was opened with.
+    cs_equal: CandleSetting,
     state: CDLSTICKSANDWICH_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -368,7 +369,7 @@ impl CDLSTICKSANDWICH_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLSTICKSANDWICH_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
+        self.cs_equal = src.cs_equal;
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -420,13 +421,13 @@ impl CDLSTICKSANDWICH_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSTICKSANDWICH_step_impl(&self, sp: &mut CDLSTICKSANDWICH_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSTICKSANDWICH_step_impl(sp: &mut CDLSTICKSANDWICH_StreamState, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
+        let Equal_rangeType: i32 = cs_equal.range_type as i32;
         #[allow(non_snake_case)]
-        let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
+        let Equal_avgPeriod: i32 = cs_equal.avg_period;
         #[allow(non_snake_case)]
-        let Equal_factor: f64 = self.candle_settings.equal.factor;
+        let Equal_factor: f64 = cs_equal.factor;
         let mut _candlerange_0: f64;
         match Equal_rangeType {
             0 => {
@@ -653,7 +654,7 @@ impl Core {
             ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
             ring_EqualTrailingIdx_derived,
         };
-        Ok(CDLSTICKSANDWICH_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLSTICKSANDWICH_Stream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLSTICKSANDWICH_Open`] (composition seam).
@@ -768,7 +769,7 @@ impl CDLSTICKSANDWICH_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLSTICKSANDWICH_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLSTICKSANDWICH_step_impl(&mut self.state, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -801,7 +802,7 @@ impl CDLSTICKSANDWICH_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CDLSTICKSANDWICH_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLSTICKSANDWICH_step_impl(&mut self.state, &self.cs_equal, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

@@ -354,7 +354,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_EMA_Stream")]
 pub struct EMA_Stream {
-    core: Core,
     state: EMA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -365,7 +364,6 @@ impl EMA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `EMA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -397,7 +395,7 @@ impl EMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn EMA_step_impl(&self, sp: &mut EMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn EMA_step_impl(sp: &mut EMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
@@ -454,7 +452,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(EMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(EMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -528,7 +526,7 @@ impl Core {
             optInK_1,
             prevMA,
         };
-        Ok(EMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(EMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::EMA_Open`] (composition seam).
@@ -633,7 +631,7 @@ impl EMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.EMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::EMA_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -666,7 +664,7 @@ impl EMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.EMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::EMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

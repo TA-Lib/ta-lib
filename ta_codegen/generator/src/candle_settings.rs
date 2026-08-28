@@ -214,21 +214,40 @@ pub fn emit_c_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
 /// generated candle-range comparisons run on — the same shape as Java's
 /// `.ordinal()` and C#'s `(int)` cast below.
 pub fn emit_rust_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
+    emit_rust_unpacking_from(settings, indent, &|setting| {
+        format!("self.candle_settings.{}", pascal_to_snake_case(setting))
+    })
+}
+
+/// `emit_rust_unpacking`, with the caller choosing where each `CandleSetting`
+/// is read from.
+///
+/// The batch and `Open` tiers run on a `Core` receiver and read
+/// `self.candle_settings.<snake>`. A streaming *step* has no `Core` — a handle
+/// carries only the settings its own step reads (issue #274) — so it reads its
+/// `cs_<snake>` parameter instead. Both spellings unpack into the identical
+/// `<Setting>_rangeType` / `_avgPeriod` / `_factor` locals the transcribed
+/// candle bodies are written against, so only the source moves.
+pub fn emit_rust_unpacking_from(
+    settings: &BTreeSet<String>,
+    indent: usize,
+    source: &dyn Fn(&str) -> String,
+) -> String {
     let pad = " ".repeat(indent);
     let mut out = String::new();
     for setting in settings {
-        let snake = pascal_to_snake_case(setting);
+        let src = source(setting);
         out.push_str(&format!(
             "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_rangeType: i32 = self.candle_settings.{snake}.range_type as i32;\n"
+             {pad}let {setting}_rangeType: i32 = {src}.range_type as i32;\n"
         ));
         out.push_str(&format!(
             "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_avgPeriod: i32 = self.candle_settings.{snake}.avg_period;\n"
+             {pad}let {setting}_avgPeriod: i32 = {src}.avg_period;\n"
         ));
         out.push_str(&format!(
             "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_factor: f64 = self.candle_settings.{snake}.factor;\n"
+             {pad}let {setting}_factor: f64 = {src}.factor;\n"
         ));
     }
     out
@@ -297,7 +316,7 @@ pub fn emit_csharp_unpacking(settings: &BTreeSet<String>, indent: usize) -> Stri
 /// Convert `PascalCase` to `snake_case`.
 ///
 /// `"BodyLong"` -> `"body_long"`, `"ShadowVeryShort"` -> `"shadow_very_short"`
-fn pascal_to_snake_case(s: &str) -> String {
+pub fn pascal_to_snake_case(s: &str) -> String {
     let mut result = String::new();
     for (i, ch) in s.chars().enumerate() {
         if ch.is_uppercase() && i > 0 {

@@ -287,7 +287,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_IMI_Stream")]
 pub struct IMI_Stream {
-    core: Core,
     state: IMI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -298,7 +297,6 @@ impl IMI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `IMI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -334,7 +332,7 @@ impl IMI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn IMI_step_impl(&self, sp: &mut IMI_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
+    fn IMI_step_impl(sp: &mut IMI_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut upsum: f64 = 0.0_f64;
         let mut downsum: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -449,7 +447,7 @@ impl Core {
             win_i_inOpen,
             win_i_inClose,
         };
-        Ok(IMI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(IMI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::IMI_Open`] (composition seam).
@@ -570,7 +568,7 @@ impl IMI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.IMI_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
+        Core::IMI_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -603,7 +601,7 @@ impl IMI_Stream {
             if !inOpen[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.IMI_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
+            Core::IMI_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

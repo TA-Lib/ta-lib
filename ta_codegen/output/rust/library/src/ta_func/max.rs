@@ -369,7 +369,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAX_Stream")]
 pub struct MAX_Stream {
-    core: Core,
     state: MAX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -380,7 +379,6 @@ impl MAX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MAX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -422,7 +420,7 @@ impl MAX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAX_step_impl(&self, sp: &mut MAX_StreamState, inReal: f64, outReal: &mut f64) {
+    fn MAX_step_impl(sp: &mut MAX_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -573,7 +571,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(MAX_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MAX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MAX_Open`] (composition seam).
@@ -678,7 +676,7 @@ impl MAX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MAX_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::MAX_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -711,7 +709,7 @@ impl MAX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MAX_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::MAX_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

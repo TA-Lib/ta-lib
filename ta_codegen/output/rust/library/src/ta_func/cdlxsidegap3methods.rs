@@ -294,7 +294,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Stream")]
 pub struct CDLXSIDEGAP3METHODS_Stream {
-    core: Core,
     state: CDLXSIDEGAP3METHODS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -305,7 +304,6 @@ impl CDLXSIDEGAP3METHODS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CDLXSIDEGAP3METHODS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -339,7 +337,7 @@ impl CDLXSIDEGAP3METHODS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLXSIDEGAP3METHODS_step_impl(&self, sp: &mut CDLXSIDEGAP3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLXSIDEGAP3METHODS_step_impl(sp: &mut CDLXSIDEGAP3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
            inOpen < (sp.lag1_inClose).max(sp.lag1_inOpen) &&  // 3rd opens within 2nd rb
@@ -443,7 +441,7 @@ impl Core {
             lag1_inClose: inClose[historyLen - 1],
             lag2_inClose: inClose[historyLen - 2],
         };
-        Ok(CDLXSIDEGAP3METHODS_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CDLXSIDEGAP3METHODS_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLXSIDEGAP3METHODS_Open`] (composition seam).
@@ -558,7 +556,7 @@ impl CDLXSIDEGAP3METHODS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLXSIDEGAP3METHODS_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::CDLXSIDEGAP3METHODS_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -591,7 +589,7 @@ impl CDLXSIDEGAP3METHODS_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CDLXSIDEGAP3METHODS_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::CDLXSIDEGAP3METHODS_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

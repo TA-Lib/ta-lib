@@ -453,7 +453,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AC_Stream")]
 pub struct AC_Stream {
-    core: Core,
     state: AC_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -464,7 +463,6 @@ impl AC_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `AC_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -522,7 +520,7 @@ impl AC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AC_step_impl(&self, sp: &mut AC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn AC_step_impl(sp: &mut AC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         let mut osc: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -804,7 +802,7 @@ impl Core {
             cbSize_oscBuffer: cbSize_oscBuffer,
             cb_oscBuffer: oscBuffer,
         };
-        Ok(AC_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(AC_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::AC_Open`] (composition seam).
@@ -921,7 +919,7 @@ impl AC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.AC_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::AC_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -954,7 +952,7 @@ impl AC_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.AC_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::AC_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

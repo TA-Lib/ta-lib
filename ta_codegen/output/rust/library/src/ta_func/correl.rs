@@ -482,7 +482,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CORREL_Stream")]
 pub struct CORREL_Stream {
-    core: Core,
     state: CORREL_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -493,7 +492,6 @@ impl CORREL_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CORREL_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -557,7 +555,7 @@ impl CORREL_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CORREL_step_impl(&self, sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn CORREL_step_impl(sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut x: f64 = 0.0_f64;
         let mut y: f64 = 0.0_f64;
         let mut trailingX: f64 = 0.0_f64;
@@ -1020,7 +1018,7 @@ impl Core {
             x_inReal0,
             x_inReal1,
         };
-        Ok(CORREL_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CORREL_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CORREL_Open`] (composition seam).
@@ -1139,7 +1137,7 @@ impl CORREL_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.CORREL_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::CORREL_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1172,7 +1170,7 @@ impl CORREL_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CORREL_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::CORREL_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

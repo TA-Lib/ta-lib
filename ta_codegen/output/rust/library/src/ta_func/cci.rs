@@ -376,7 +376,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CCI_Stream")]
 pub struct CCI_Stream {
-    core: Core,
     state: CCI_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -387,7 +386,6 @@ impl CCI_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `CCI_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -423,7 +421,7 @@ impl CCI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CCI_step_impl(&self, sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn CCI_step_impl(sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempReal3: f64 = 0.0_f64;
@@ -614,7 +612,7 @@ impl Core {
             cbSize_circBuffer: cbSize_circBuffer,
             cb_circBuffer: circBuffer,
         };
-        Ok(CCI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CCI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CCI_Open`] (composition seam).
@@ -726,7 +724,7 @@ impl CCI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.CCI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::CCI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -759,7 +757,7 @@ impl CCI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.CCI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::CCI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

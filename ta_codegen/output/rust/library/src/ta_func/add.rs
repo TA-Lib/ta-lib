@@ -221,7 +221,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ADD_Stream")]
 pub struct ADD_Stream {
-    core: Core,
     state: ADD_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -232,7 +231,6 @@ impl ADD_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `ADD_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -258,7 +256,7 @@ impl ADD_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ADD_step_impl(&self, sp: &mut ADD_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn ADD_step_impl(sp: &mut ADD_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 + inReal1;
     }
 
@@ -302,7 +300,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = ADD_StreamState {
         };
-        Ok(ADD_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(ADD_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::ADD_Open`] (composition seam).
@@ -413,7 +411,7 @@ impl ADD_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.ADD_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::ADD_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -446,7 +444,7 @@ impl ADD_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.ADD_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::ADD_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

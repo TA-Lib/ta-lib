@@ -393,7 +393,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TRIX_Stream")]
 pub struct TRIX_Stream {
-    core: Core,
     state: TRIX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -404,7 +403,6 @@ impl TRIX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `TRIX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -440,7 +438,7 @@ impl TRIX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TRIX_step_impl(&self, sp: &mut TRIX_StreamState, inReal: f64, outReal: &mut f64) {
+    fn TRIX_step_impl(sp: &mut TRIX_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         tempReal = sp.prevEMA3;
         sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
@@ -603,7 +601,7 @@ impl Core {
             prevEMA3,
             optInK_1,
         };
-        Ok(TRIX_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TRIX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::TRIX_Open`] (composition seam).
@@ -708,7 +706,7 @@ impl TRIX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.TRIX_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::TRIX_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -741,7 +739,7 @@ impl TRIX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.TRIX_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::TRIX_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

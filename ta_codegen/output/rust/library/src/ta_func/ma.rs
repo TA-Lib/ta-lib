@@ -415,7 +415,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MA_Stream")]
 pub struct MA_Stream {
-    core: Core,
     state: MA_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -426,7 +425,6 @@ impl MA_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MA_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -498,7 +496,7 @@ impl MA_Sub {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MA_step_impl(&self, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn MA_step_impl(sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
             (*outReal) = inReal;
             return Ok(());
@@ -571,7 +569,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
+            return Ok((MA_Stream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
         }
         let (sub, value, subRange) = match optInMAType {
             MAType::SMA => {
@@ -627,7 +625,7 @@ impl Core {
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { core: self.clone(), state, out: subRange }, value))
+        Ok((MA_Stream { state, out: subRange }, value))
     }
 
     /// Open a live MA stream over the warm-up history; returns the handle and
@@ -705,7 +703,7 @@ impl Core {
                 fillIdx += 1;
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
+            return Ok((MA_Stream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
         }
         let (sub, fillRange) = match optInMAType {
             MAType::SMA => {
@@ -751,7 +749,7 @@ impl Core {
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { core: self.clone(), state, out: fillRange }, fillRange))
+        Ok((MA_Stream { state, out: fillRange }, fillRange))
     }
 
     /// [`Core::MA_OpenAndFill`] anchored at `startIdx` — the composed-open
@@ -791,7 +789,7 @@ impl Core {
                 fillIdx += 1;
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok(MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(MA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let sub = match optInMAType {
             MAType::SMA => MA_Sub::SMA(
@@ -827,7 +825,7 @@ impl Core {
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok(MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
 }
@@ -852,7 +850,7 @@ impl MA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MA_step_impl(&mut self.state, inReal, &mut outReal)?;
+        Core::MA_step_impl(&mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -885,7 +883,7 @@ impl MA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MA_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            Core::MA_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

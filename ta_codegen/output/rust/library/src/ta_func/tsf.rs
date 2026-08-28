@@ -440,7 +440,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TSF_Stream")]
 pub struct TSF_Stream {
-    core: Core,
     state: TSF_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -451,7 +450,6 @@ impl TSF_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `TSF_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -505,7 +503,7 @@ impl TSF_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TSF_step_impl(&self, sp: &mut TSF_StreamState, inReal: f64, outReal: &mut f64) {
+    fn TSF_step_impl(sp: &mut TSF_StreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut b: f64 = 0.0_f64;
         let mut windowStart: usize = 0_usize;
@@ -840,7 +838,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(TSF_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TSF_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::TSF_Open`] (composition seam).
@@ -945,7 +943,7 @@ impl TSF_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.TSF_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::TSF_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -978,7 +976,7 @@ impl TSF_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.TSF_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::TSF_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

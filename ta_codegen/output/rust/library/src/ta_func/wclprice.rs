@@ -266,7 +266,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WCLPRICE_Stream")]
 pub struct WCLPRICE_Stream {
-    core: Core,
     state: WCLPRICE_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -277,7 +276,6 @@ impl WCLPRICE_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `WCLPRICE_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -303,7 +301,7 @@ impl WCLPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn WCLPRICE_step_impl(&self, sp: &mut WCLPRICE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn WCLPRICE_step_impl(sp: &mut WCLPRICE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
     }
 
@@ -345,7 +343,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = WCLPRICE_StreamState {
         };
-        Ok(WCLPRICE_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(WCLPRICE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::WCLPRICE_Open`] (composition seam).
@@ -457,7 +455,7 @@ impl WCLPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.WCLPRICE_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::WCLPRICE_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -490,7 +488,7 @@ impl WCLPRICE_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.WCLPRICE_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::WCLPRICE_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

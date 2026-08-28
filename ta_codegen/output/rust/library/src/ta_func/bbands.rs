@@ -643,7 +643,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BBANDS_Stream")]
 pub struct BBANDS_Stream {
-    core: Core,
     state: BBANDS_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -654,7 +653,6 @@ impl BBANDS_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `BBANDS_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -692,7 +690,7 @@ impl BBANDS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BBANDS_step_impl(&self, sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
+    fn BBANDS_step_impl(sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut cur_tempBuffer1: f64 = 0.0_f64;
@@ -885,7 +883,7 @@ impl Core {
             let last_sc_outRealLowerBand = sc_outRealLowerBand[*outNBElement - 1];
             outRealLowerBand[0] = last_sc_outRealLowerBand;
         }
-        Ok(BBANDS_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BBANDS_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::BBANDS_Open`] (composition seam).
@@ -1019,7 +1017,7 @@ impl BBANDS_Stream {
         let mut outRealUpperBand: f64 = 0.0_f64;
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
-        self.core.BBANDS_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
+        Core::BBANDS_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1052,7 +1050,7 @@ impl BBANDS_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.BBANDS_step_impl(&mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
+            Core::BBANDS_step_impl(&mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

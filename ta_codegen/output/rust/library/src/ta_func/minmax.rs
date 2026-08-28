@@ -427,7 +427,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MINMAX_Stream")]
 pub struct MINMAX_Stream {
-    core: Core,
     state: MINMAX_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -438,7 +437,6 @@ impl MINMAX_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MINMAX_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -484,7 +482,7 @@ impl MINMAX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MINMAX_step_impl(&self, sp: &mut MINMAX_StreamState, inReal: f64, outMin: &mut f64, outMax: &mut f64) {
+    fn MINMAX_step_impl(sp: &mut MINMAX_StreamState, inReal: f64, outMin: &mut f64, outMax: &mut f64) {
         let mut tmpHigh: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -686,7 +684,7 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(MINMAX_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MINMAX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::MINMAX_Open`] (composition seam).
@@ -800,7 +798,7 @@ impl MINMAX_Stream {
         }
         let mut outMin: f64 = 0.0_f64;
         let mut outMax: f64 = 0.0_f64;
-        self.core.MINMAX_step_impl(&mut self.state, inReal, &mut outMin, &mut outMax);
+        Core::MINMAX_step_impl(&mut self.state, inReal, &mut outMin, &mut outMax);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -833,7 +831,7 @@ impl MINMAX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MINMAX_step_impl(&mut self.state, inReal[i], &mut outMin[i], &mut outMax[i]);
+            Core::MINMAX_step_impl(&mut self.state, inReal[i], &mut outMin[i], &mut outMax[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }

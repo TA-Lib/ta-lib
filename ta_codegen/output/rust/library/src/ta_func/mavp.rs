@@ -539,7 +539,6 @@ impl Core {
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAVP_Stream")]
 pub struct MAVP_Stream {
-    core: Core,
     state: MAVP_StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
@@ -550,7 +549,6 @@ impl MAVP_Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
     /// allocating new ones. See `MAVP_StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
         self.out = src.out;
     }
@@ -591,7 +589,7 @@ impl MAVP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAVP_step_impl(&self, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn MAVP_step_impl(sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cp: i32 = inPeriods as i32;
         if cp < sp.optInMinPeriod {
             cp = sp.optInMinPeriod;
@@ -666,7 +664,7 @@ impl Core {
         }
         let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
         let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MAVP_Stream { core: self.clone(), state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
+        Ok((MAVP_Stream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
     }
 
     /// Open a live MAVP stream over the warm-up history; returns the handle and
@@ -782,7 +780,7 @@ impl Core {
             t += 1;
         }
         let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MAVP_Stream { core: self.clone(), state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
+        Ok((MAVP_Stream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
     }
 
 }
@@ -815,7 +813,7 @@ impl MAVP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MAVP_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
+        Core::MAVP_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -848,7 +846,7 @@ impl MAVP_Stream {
             if !inReal[i].is_finite() || !inPeriods[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            self.core.MAVP_step_impl(&mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
+            Core::MAVP_step_impl(&mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
