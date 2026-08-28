@@ -279,9 +279,12 @@ pub enum CandleSettingType {
 /// # Ok::<(), ta_lib::RetCode>(())
 /// ```
 ///
-/// To change a setting, build a new `Core` — cloning is cheap (it is a small
-/// `[i32; N]` array plus two small fields). [`Core::to_builder`] seeds a builder
-/// from an existing `Core` for clone-and-modify.
+/// To change a setting, build a new `Core` — cloning it copies bytes and never
+/// allocates, but there are 280 of them on x86-64 (an `[i32; N]` array, eleven
+/// `CandleSetting`s and the compatibility mode), so it is a memcpy rather than
+/// a free operation. [`Core::to_builder`] seeds a builder from an existing
+/// `Core` for clone-and-modify. Stream handles do not hold one: each carries
+/// only the `CandleSetting`s its own step reads.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Core {
     /// Unstable period for each function identified by [`FuncUnstId`].
