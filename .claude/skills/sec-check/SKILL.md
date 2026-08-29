@@ -56,6 +56,17 @@ log open questions; here, stopping IS the correct output.
      hasn't completed, **stop here** — that is already a hard signal, and
      re-deriving what those gates already check is wasted work, not extra
      rigor.
+   - If running inside tmux (`$TMUX` set), title the window with the linked
+     issue — a session that opens with a skill invocation never gets Claude
+     Code's own auto-generated title, because that feature only ever looks
+     at the literal first message and gives up for the rest of the session
+     once that message is a bare command. Pull the issue number from a
+     closing keyword in `body` (`Fixes`/`Closes`/`Resolves #NNN`); fall back
+     to the PR number if none is linked:
+     ```bash
+     tmux rename-window -t "$TMUX_PANE" "Issue <N>"
+     tmux select-pane -t "$TMUX_PANE" -T "Issue <N>"
+     ```
 
 3. **Read the diff against these lenses** (tailored to this repo — generic
    "look for eval()" checklists miss what's actually sensitive here):
