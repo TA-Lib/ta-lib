@@ -1249,10 +1249,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `SmiStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `SmiStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static SMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<SmiStream>>> =
+    static SMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<SmiStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1334,11 +1334,13 @@ impl SmiStream {
             return Err(RetCode::BadParam);
         }
         SMI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outSMI: f64 = 0.0_f64;
+            let mut outSMISignal: f64 = 0.0_f64;
+            Core::smi_step_impl(&mut scratch, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
             cell.set(Some(scratch));
-            value
+            Ok((outSMI, outSMISignal))
         })
     }
 

@@ -856,10 +856,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MfiStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `MfiStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MFI_PEEK_SCRATCH: std::cell::Cell<Option<Box<MfiStream>>> =
+    static MFI_PEEK_SCRATCH: std::cell::Cell<Option<Box<MfiStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -940,11 +940,12 @@ impl MfiStream {
             return Err(RetCode::BadParam);
         }
         MFI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose, inVolume);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::mfi_step_impl(&mut scratch, inHigh, inLow, inClose, inVolume, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

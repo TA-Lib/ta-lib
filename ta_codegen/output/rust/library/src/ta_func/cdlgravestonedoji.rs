@@ -937,10 +937,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CdlgravestonedojiStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CdlgravestonedojiStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLGRAVESTONEDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdlgravestonedojiStream>>> =
+    static CDLGRAVESTONEDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdlgravestonedojiStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1021,11 +1021,12 @@ impl CdlgravestonedojiStream {
             return Err(RetCode::BadParam);
         }
         CDLGRAVESTONEDOJI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::cdlgravestonedoji_step_impl(&mut scratch, &self.cs_body_doji, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

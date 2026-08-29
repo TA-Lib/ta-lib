@@ -785,10 +785,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MavpStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `MavpStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MavpStream>>> =
+    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MavpStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -869,11 +869,13 @@ impl MavpStream {
             return Err(RetCode::BadParam);
         }
         MAVP_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal, inPeriods);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            let stepped = Core::mavp_step_impl(&mut scratch, inReal, inPeriods, &mut outReal);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok(outReal)
         })
     }
 

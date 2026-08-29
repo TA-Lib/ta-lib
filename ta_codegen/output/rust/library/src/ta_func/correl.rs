@@ -1109,10 +1109,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CorrelStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CorrelStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CORREL_PEEK_SCRATCH: std::cell::Cell<Option<Box<CorrelStream>>> =
+    static CORREL_PEEK_SCRATCH: std::cell::Cell<Option<Box<CorrelStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1193,11 +1193,12 @@ impl CorrelStream {
             return Err(RetCode::BadParam);
         }
         CORREL_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal0, inReal1);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::correl_step_impl(&mut scratch, inReal0, inReal1, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

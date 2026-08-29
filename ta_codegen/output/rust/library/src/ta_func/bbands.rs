@@ -987,10 +987,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `BbandsStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `BbandsStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BbandsStream>>> =
+    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BbandsStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1073,11 +1073,15 @@ impl BbandsStream {
             return Err(RetCode::BadParam);
         }
         BBANDS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outRealUpperBand: f64 = 0.0_f64;
+            let mut outRealMiddleBand: f64 = 0.0_f64;
+            let mut outRealLowerBand: f64 = 0.0_f64;
+            let stepped = Core::bbands_step_impl(&mut scratch, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
         })
     }
 

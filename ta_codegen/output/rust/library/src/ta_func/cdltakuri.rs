@@ -1140,10 +1140,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CdltakuriStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CdltakuriStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLTAKURI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdltakuriStream>>> =
+    static CDLTAKURI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdltakuriStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1224,11 +1224,12 @@ impl CdltakuriStream {
             return Err(RetCode::BadParam);
         }
         CDLTAKURI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::cdltakuri_step_impl(&mut scratch, &self.cs_body_doji, &self.cs_shadow_very_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 

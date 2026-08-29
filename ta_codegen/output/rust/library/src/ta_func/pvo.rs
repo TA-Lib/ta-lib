@@ -605,10 +605,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `PvoStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `PvoStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static PVO_PEEK_SCRATCH: std::cell::Cell<Option<Box<PvoStream>>> =
+    static PVO_PEEK_SCRATCH: std::cell::Cell<Option<Box<PvoStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -689,11 +689,13 @@ impl PvoStream {
             return Err(RetCode::BadParam);
         }
         PVO_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inVolume);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            let stepped = Core::pvo_step_impl(&mut scratch, inVolume, &mut outReal);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok(outReal)
         })
     }
 

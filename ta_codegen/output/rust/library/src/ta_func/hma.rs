@@ -1602,10 +1602,10 @@ impl Core {
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `HmaStreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `HmaStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HmaStream>>> =
+    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HmaStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
@@ -1686,11 +1686,12 @@ impl HmaStream {
             return Err(RetCode::BadParam);
         }
         HMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::hma_step_impl(&mut scratch, inReal, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 

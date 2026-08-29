@@ -2451,19 +2451,25 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     // because `peek` takes `&self` and the handle is `Sync` — two threads may
     // peek the same handle at once, and they must not share a scratch.
     //
-    // The retention that buys: one handle copy per (thread, function actually
-    // peeked), held until the thread ends, sized to the largest handle that
-    // thread peeked and keeping that handle's `Core` alive. Dropping every
-    // stream handle does not release it. Bounded and small per entry, but a
-    // long-lived pool thread that peeked a wide `MAVP` bank holds that bank.
+    // The retention that buys: one state copy per (thread, function actually
+    // peeked), held until the thread ends, sized to the largest state that
+    // thread peeked. Dropping every stream handle does not release it. Bounded
+    // and small per entry, but a long-lived pool thread that peeked a wide
+    // `MAVP` bank holds that bank.
+    //
+    // A bare `{state}`, not the whole handle: what a step cannot write, a
+    // scratch has no business reproducing. The settings are read off the LIVE
+    // handle instead, and the `out: OutRange` the handle used to carry along
+    // went with them — `peek` commits no bar, so restoring a count it never
+    // reads and then re-incrementing it was work thrown away every call.
     if reuse {
         let _ = writeln!(
             o,
             "thread_local! {{\n\
-             \x20   /// `peek`'s reusable scratch handle (see `{state}::restore_from`).\n\
+             \x20   /// `peek`'s reusable scratch state (see `{state}::restore_from`).\n\
              \x20   /// Taken for the duration of the step and put back after, so a\n\
              \x20   /// panicking step costs the scratch, never leaves it borrowed.\n\
-             \x20   static {n}_PEEK_SCRATCH: std::cell::Cell<Option<Box<{handle}>>> =\n\x20       const {{ std::cell::Cell::new(None) }};\n\
+             \x20   static {n}_PEEK_SCRATCH: std::cell::Cell<Option<Box<{state}>>> =\n\x20       const {{ std::cell::Cell::new(None) }};\n\
              }}\n"
         );
     }
@@ -2682,25 +2688,48 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     // must not pay for a handle clone.
     o.push_str(&finite_bar_check(func, "        "));
     if reuse {
-        // `update` on the copy, not the transition on a bare state — so the
-        // transition keeps the single call site it has always had. Reached
-        // through the state directly it acquires a second one, and on the
-        // larger steps that alone is enough to change what the inliner does
-        // with both: measured, it cost `update` up to 70% on the functions
-        // whose step sits near the threshold. `update` is the tier this API
-        // exists to make cheap; it does not pay for peek's business (#201).
+        // The step on the scratch state, with the settings read off the live
+        // handle — not `update` on a scratch handle.
+        //
+        // #201 chose the latter to keep the transition down to the one call
+        // site it had, because a second one changed what the inliner did with
+        // both and cost `update` up to 70% on steps sitting near the
+        // threshold. The price was a whole-handle copy per peek: the settings,
+        // which no step can write, and the `out` bookkeeping, which peek
+        // computes and discards — plus a second `is_finite` on a bar `peek`
+        // had already checked.
+        //
+        // What makes the second call site affordable is the tier: this is the
+        // set whose state clone the optimizer was never folding, so its steps
+        // are the corpus's largest and the least likely to have been inlined
+        // into `update` on merit. That is a measurement, not an argument —
+        // `stream_ab.py --call=update` is the gate, and the functions outside
+        // this tier are its control.
         //
         // One `with`, not a `take()` plus a `set()`: each is its own
         // thread-local lookup, and on the cheapest indicators the second one
         // is a measurable share of the call.
+        //
+        // The scratch goes back before the `?`, so a rejecting step costs the
+        // thread its scratch no more than an accepting one does.
+        let step_q = if step_fallible { "\n\x20           stepped?;" } else { "" };
+        let bind = if step_fallible { "let stepped = " } else { "" };
+        // `out_decls` is written at the method's own indent; inside the
+        // closure it sits one level deeper.
+        let mut peek_out_decls = String::new();
+        for l in out_decls.lines() {
+            let _ = writeln!(peek_out_decls, "    {l}");
+        }
+        let out_decls = peek_out_decls;
         let _ = writeln!(
             o,
             "        {n}_PEEK_SCRATCH.with(|cell| {{\n\
-             \x20           let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));\n\
-             \x20           scratch.restore_from(self);\n\
-             \x20           let value = scratch.update({fwd_bars});\n\
-             \x20           cell.set(Some(scratch));\n\
-             \x20           value\n\
+             \x20           let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));\n\
+             \x20           scratch.restore_from(&self.state);\n\
+             {out_decls}\
+             \x20           {bind}Core::{sn}_step_impl(&mut scratch, {cs_args}{fwd_bars}{out_refs});\n\
+             \x20           cell.set(Some(scratch));{step_q}\n\
+             \x20           Ok({ret})\n\
              \x20       }})"
         );
     } else {

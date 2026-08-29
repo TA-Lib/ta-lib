@@ -13264,3 +13264,70 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
         "the batch tier must still read the Core it runs on"
     );
 }
+
+/// `peek`'s reusable scratch is a bare `<N>StreamState`, stepped directly.
+///
+/// #201 put `update` on a scratch *handle* here to keep the transition down to
+/// one call site. That copied, every peek, the two things a peek cannot use:
+/// the settings, which no step writes, and the `out` range, which only a
+/// committed bar moves. It also re-ran the bar's `is_finite` check.
+///
+/// Two rows, each the other's control:
+///
+/// * `BBANDS` — in the reuse tier. Pins all four halves: the scratch is a bare
+///   state, the step runs on it with the settings still read off the live
+///   handle, `update` is not re-entered, and the bar is checked once.
+/// * `SMA` — outside it. Must keep the pre-#201 throwaway clone verbatim, so a
+///   generator that rewrites every peek reddens here rather than passing on
+///   BBANDS alone.
+#[test]
+fn a_reused_peek_scratch_is_a_bare_state_stepped_directly() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    let (func, enums) = load_indicator("bbands");
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        rust.contains(
+            "static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BbandsStreamState>>>"
+        ),
+        "the reused scratch holds a bare state, not a whole handle"
+    );
+    let peek = {
+        let at = rust.find("    pub fn peek(&self").expect("bbands has a peek");
+        &rust[at..at + rust[at..].find("\n    }").expect("peek end")]
+    };
+    assert!(
+        peek.contains("Core::bbands_step_impl(&mut scratch,"),
+        "peek runs the step on the scratch directly\n{peek}"
+    );
+    assert!(
+        !peek.contains("scratch.update("),
+        "peek must not re-enter `update`, which re-checks the bar\n{peek}"
+    );
+    assert!(
+        !peek.contains("out.count"),
+        "peek commits nothing, so it does no range bookkeeping\n{peek}"
+    );
+    assert_eq!(
+        peek.matches("is_finite").count(),
+        1,
+        "the bar is checked once, not twice\n{peek}"
+    );
+
+    // The control: outside the reuse tier the throwaway clone is unchanged.
+    let (func, enums) = load_indicator("sma");
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        !rust.contains("SMA_PEEK_SCRATCH"),
+        "SMA is outside the reuse tier and must have no scratch"
+    );
+    let peek = {
+        let at = rust.find("    pub fn peek(&self").expect("sma has a peek");
+        &rust[at..at + rust[at..].find("\n    }").expect("peek end")]
+    };
+    assert!(
+        peek.contains("let mut scratch = self.clone();") && peek.contains("scratch.update("),
+        "the throwaway tier keeps the pre-#201 clone verbatim\n{peek}"
+    );
+}
