@@ -121,3 +121,31 @@ jobs:
             echo "::error::Clippy failed on the generated crate. Its scaffolding emits a crate-level #![allow(clippy::all, clippy::pedantic)], so a failure here is the emitter's, not the emitted code's — fix the backend, never the generated file."
             exit 1
           fi
+
+      # The crate's hand-written test modules (templates/rust/, copied in by
+      # `generate`) plus the generated registry's own sweeps: 85 tests today,
+      # over types.rs's Core/CoreBuilder API (#144), scratch_election (#146),
+      # stream_finite, stream_out_range (#241), div_zero (#249),
+      # no_phantom_io (#265), tests/nullable_outputs.rs (#262),
+      # tests/stream_open_contract.rs, and abstract_api's registry/binder
+      # sweeps — the by-name ASCII fold from #278 among them.
+      #
+      # Nothing in this gate executed any of them. `clippy --all-targets` above
+      # only COMPILES the test target, and `cargo test --doc` in the other job
+      # skips it, so until now the only thing that ran them was the 5AM dev
+      # nightly — after merge, the one-branch-too-late this file exists to fix
+      # (#211).
+      #
+      # `--tests`, not `--lib`: the latter excludes tests/, and it selects the
+      # lib's own unittest binary as well. Same argument the nightly records.
+      #
+      # It is in THIS job, not next to the doctests, for the reason clippy is:
+      # the job finishes far inside regen-check's wall-clock, so the step costs
+      # the PR nothing it was not already waiting on.
+      - name: Run the generated crate's unit and integration tests
+        shell: bash
+        run: |
+          if ! cargo test --tests -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml; then
+            echo "::error::A test in the generated crate failed. These are the crate's own modules, not the cross-language value gates — a failure here is a contract the emitted code no longer keeps (registry lookup, stream range, div-zero, phantom I/O, Core/CoreBuilder). Reproduce with the same command on the pinned toolchain; fix the backend, never the generated file."
+            exit 1
+          fi
