@@ -188,7 +188,7 @@ public class MetadataTest {
     }
 
     /**
-     * byName folds ASCII case; the name it reports back does not.
+     * byName folds ASCII case; the name the registry stores does not.
      *
      * <p>Swept over the corpus rather than spot-checked on {@code "sma"}: the
      * long names ({@code CDL3STARSINSOUTH}) and the ones carrying a digit or an
@@ -201,11 +201,19 @@ public class MetadataTest {
             FunctionInfo mixed = Functions.byName(alternating(f.name()));
             check(lower == f, f.name() + ": lower-case lookup finds it");
             check(mixed == f, f.name() + ": mixed-case lookup finds it");
-            // Guarded rather than chained: a regressed fold returns null here,
-            // and this suite has to report that as a failure, not a stack trace
-            // that stops the remaining checks from running at all.
-            check(lower != null && lower.name().equals(f.name()),
-                  f.name() + ": the name reported back stays canonical");
+            // A third line stood here asserting lower.name().equals(f.name()),
+            // "the name reported back stays canonical". It cannot fail: the
+            // line above pins lower == f, so it compares one object's name to
+            // itself. Nothing replaces it, and the reason is specific to this
+            // backend -- BY_NAME is keyed on the STORED spelling while byName
+            // folds upward, so a row stored in lower case is unreachable by
+            // its own name. Measured, by lower-casing the SMA row: four checks
+            // fail (byName(SMA), byName round-trips, and both lookups here).
+            // C matches case-insensitively on both sides and has no second
+            // reader of the stored spelling anywhere in ta_regtest, so there
+            // the canonical spelling is asserted outright, as it already is in
+            // Rust. C# folds on both sides too but is caught by the rest of
+            // its own suite; see the note at the same site there.
         }
 
         // Caught rather than chained: a regression here throws, and the suite
