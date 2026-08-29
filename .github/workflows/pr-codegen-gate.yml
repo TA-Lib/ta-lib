@@ -77,3 +77,47 @@ jobs:
             echo "::error::The generator's own test suite failed. Several suites pin exact-set inventories (FMA fusion, stability classification) that a new indicator must be added to."
             exit 1
           fi
+
+  # Clippy runs here as its own job, concurrently with regen-check, so it costs
+  # the PR no wall-clock: ~50s finishing well inside that job's ~4m. That is
+  # also why there is no `paths` filter on Rust — a filter would only save
+  # runner minutes, which are free on a public repo, and most PRs here touch
+  # .rs anyway because the generated crate is committed.
+  #
+  # The generator enforces #![deny(clippy::pedantic)] on itself, and rustc
+  # ignores the `clippy::` namespace — so the `cargo test` steps above compile
+  # the very same code green and can never see it. Only clippy can.
+  #
+  # This does NOT retire the nightly's clippy job, and nothing here should:
+  # most commits reach dev as direct pushes that `on: pull_request` never sees,
+  # so the nightly is the only gate that covers them. This job is the earlier,
+  # partial signal for the contributor path, not a replacement.
+  clippy:
+    name: Rust clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # rust-toolchain.toml pins the version, so a lint cannot fire differently
+      # here than locally. Adding the component is idempotent.
+      - name: Ensure clippy component
+        shell: bash
+        run: rustup component add clippy
+
+      - name: Clippy the generator tool
+        shell: bash
+        run: |
+          if ! cargo clippy --all-targets --manifest-path ta_codegen/generator/Cargo.toml -- -D warnings; then
+            echo "::error::Clippy failed on the generator. It carries #![deny(clippy::pedantic)], so a pedantic lint is an error, not a warning — reproduce with the same command locally on the pinned toolchain."
+            exit 1
+          fi
+
+      - name: Clippy the generated crate
+        shell: bash
+        run: |
+          if ! cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings; then
+            echo "::error::Clippy failed on the generated crate. Its scaffolding emits a crate-level #![allow(clippy::all, clippy::pedantic)], so a failure here is the emitter's, not the emitted code's — fix the backend, never the generated file."
+            exit 1
+          fi
