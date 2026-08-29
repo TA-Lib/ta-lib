@@ -2323,6 +2323,12 @@ fn generate_rust_crate_scaffolding(
     let install_req = crate_version
         .rsplit_once('.')
         .map_or_else(|| crate_version.clone(), |(major_minor, _)| major_minor.to_string());
+    // The crate-docs category index (#179 D6): the grouping the registry has
+    // always known, finally said in the docs. Built in `rust_doc` rather than
+    // here so it is reachable from `tests/backend_suite.rs` — `funcs` is the
+    // whole corpus, and the property worth pinning is that every one of them
+    // reaches the page.
+    let func_index = backends::rust_doc::category_index(funcs);
     // Applied to the two long prose literals below, which hold Rust and TOML
     // samples and so cannot be `format!` strings (every brace would need
     // doubling, in text that is read far more often than it is edited).
@@ -2330,6 +2336,7 @@ fn generate_rust_crate_scaffolding(
         text.replace("$N_FUNCS", &n_funcs.to_string())
             .replace("$N_CANDLES", &n_candles.to_string())
             .replace("$INSTALL_REQ", &install_req)
+            .replace("$FUNC_INDEX", &func_index)
     };
     // Two-crate Cargo workspace: `library/` is the published `ta-lib` crate;
     // `tools/` holds the JSON-RPC server/bench — a layer on top of the library.
@@ -2607,6 +2614,17 @@ path = "src/lib.rs"
 //!
 //! The full function reference, grouped by category, is at
 //! [ta-lib.org/functions](https://ta-lib.org/functions/).
+//!
+//! # Indicators by category
+//!
+//! Every indicator is a method on [`Core`], and the methods are one flat
+//! alphabetical list — so this is where the grouping lives. It is the same
+//! grouping the registry answers at run time ([`abstract_api::Group`], reported
+//! per function as [`FuncInfo::group`](abstract_api::FuncInfo::group)), and each
+//! entry carries that row's own one-line hint. Follow a link for the function's
+//! formula, arguments, ranges and a runnable example.
+//!
+$FUNC_INDEX
 
 #![forbid(unsafe_code)]
 // Every public item, and every public enum variant and struct field, carries its
