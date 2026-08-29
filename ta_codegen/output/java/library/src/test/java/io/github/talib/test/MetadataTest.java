@@ -196,25 +196,44 @@ public class MetadataTest {
      * and no single case stands in for them.
      */
     static void byNameFoldsAsciiCase() {
+        int canonical = 0;
         for (FunctionInfo f : Functions.all()) {
             FunctionInfo lower = Functions.byName(asciiLower(f.name()));
             FunctionInfo mixed = Functions.byName(alternating(f.name()));
             check(lower == f, f.name() + ": lower-case lookup finds it");
             check(mixed == f, f.name() + ": mixed-case lookup finds it");
-            // A third line stood here asserting lower.name().equals(f.name()),
-            // "the name reported back stays canonical". It cannot fail: the
-            // line above pins lower == f, so it compares one object's name to
-            // itself. Nothing replaces it, and the reason is specific to this
-            // backend -- BY_NAME is keyed on the STORED spelling while byName
-            // folds upward, so a row stored in lower case is unreachable by
-            // its own name. Measured, by lower-casing the SMA row: four checks
-            // fail (byName(SMA), byName round-trips, and both lookups here).
-            // C matches case-insensitively on both sides and has no second
-            // reader of the stored spelling anywhere in ta_regtest, so there
-            // the canonical spelling is asserted outright, as it already is in
-            // Rust. C# folds on both sides too but is caught by the rest of
-            // its own suite; see the note at the same site there.
+
+            // "Canonical" has to name something for a fold to fold onto it.
+            // Both spellings probed above are derived from the stored one, so
+            // a row stored in lower case folds onto itself just as happily and
+            // neither lookup notices; this is the line that does. Same
+            // assertion C (test_abstract.c, nameFoldCb) and Rust
+            // (abstract_api.rs, registry_tests) carry.
+            //
+            // It is not the line that used to stand here. That one asserted
+            // lower.name().equals(f.name()), "the name reported back stays
+            // canonical", which cannot fail: `lower == f` above pins the two
+            // to one object, so it compared a name to itself.
+            //
+            // A lower-cased row is not invisible to Java without this -- and
+            // that is the reason to say it rather than leave it. BY_NAME is
+            // keyed on the STORED spelling while byName folds upward, so the
+            // row becomes unreachable by its own name and four checks fail
+            // (byName(SMA), byName round-trips, and both lookups above),
+            // none of them naming the defect. This one names it.
+            check(isStoredUpperCase(f.name()),
+                  f.name() + ": is stored in its canonical upper case");
+            canonical++;
         }
+
+        // The sweep's own non-vacuity guard, the counterpart of C's
+        // `nbCanonical == 0` check. It is insurance, not a second
+        // discriminator: registryIsComplete() already fails on an empty
+        // registry, so the only way here is if all() stopped agreeing with
+        // itself between two calls.
+        check(canonical > 0 && canonical == Functions.all().size(),
+              "the canonical-spelling check ran on every row (" + canonical + "/"
+              + Functions.all().size() + ")");
 
         // Caught rather than chained: a regression here throws, and the suite
         // has to report that as one failed check instead of a stack trace that
@@ -239,6 +258,23 @@ public class MetadataTest {
         check(Functions.byName("sma ") == null, "a trailing space is still part of the name");
         check(Functions.byName("ht-dcperiod") == null, "a separator is still part of the name");
         check(Functions.byName("") == null, "the empty name resolves to nothing");
+    }
+
+    /**
+     * True if the stored spelling carries no ASCII lower case.
+     *
+     * <p>Spelled as "no lower-case letter" rather than {@code s.equals(upper(s))}
+     * so it stays an ASCII claim: a name is upper case here in the same sense
+     * {@code asciiLower} is a fold, and neither borrows a locale's opinion.
+     */
+    private static boolean isStoredUpperCase(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c >= 'a' && c <= 'z') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** ASCII-only lower fold, so the probe cannot inherit the bug it looks for. */

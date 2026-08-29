@@ -222,27 +222,45 @@ public static class MetadataTest
         // a digit or an underscore (CDL2CROWS, HT_DCPERIOD), and no single name
         // stands in for those. Between the all-lower and the alternating
         // spelling every letter position is presented in both cases.
+        int canonical = 0;
         foreach (FunctionInfo f in c)
         {
             Check(c.TryGet(AsciiLower(f.Name), out FunctionInfo? lower) && ReferenceEquals(lower, f),
                   $"{f.Name}: lower-case lookup finds it");
             Check(c.TryGet(Alternating(f.Name), out FunctionInfo? mixed) && ReferenceEquals(mixed, f),
                   $"{f.Name}: mixed-case lookup finds it");
-            // A third line stood here asserting lower.Name == f.Name, "the name
-            // reported back stays canonical". It cannot fail: the line above
-            // pins ReferenceEquals(lower, f), so it compares one object's name
-            // to itself. Nothing replaces it, though the reason is not the fold:
-            // _byName IS OrdinalIgnoreCase, so a row stored in lower case is
-            // still found by every casing and both lookups above stay green.
-            // What catches it is the rest of the suite, which is keyed on the
-            // stored spelling ordinally. Measured, by lower-casing the TRIX
-            // row: without this line four checks still fail (no typed overload
-            // matched, compared every function, XML describes trix, XML
-            // describes every function), plus NoPhantomIoTest and StreamApiTest.
-            // C has no such second reader -- its whole regtest is green with a
-            // lower-cased row -- so there the canonical spelling is asserted
-            // outright, as it already is in Rust.
+
+            // "Canonical" has to name something for a fold to fold onto it.
+            // Both spellings probed above are derived from the stored one, and
+            // here the fold is on both sides -- _byName is OrdinalIgnoreCase --
+            // so a row stored in lower case is still found by every casing and
+            // both lookups above stay green. Nothing in this sweep sees it.
+            // Same assertion C (test_abstract.c, nameFoldCb) and Rust
+            // (abstract_api.rs, registry_tests) carry.
+            //
+            // It is not the line that used to stand here. That one asserted
+            // lower.Name == f.Name, "the name reported back stays canonical",
+            // which cannot fail: ReferenceEquals(lower, f) above pins the two
+            // to one object, so it compared a name to itself.
+            //
+            // The defect does not escape the suite without this line -- the
+            // rest of it is keyed on the stored spelling ordinally -- but
+            // nothing that fails names it. Measured, by lower-casing the TRIX
+            // row: four MetadataTest checks fail (no typed overload matched,
+            // compared every function, XML describes trix, XML describes every
+            // function), plus NoPhantomIoTest and StreamApiTest. This line
+            // fails here instead, saying what is actually wrong.
+            Check(IsStoredUpperCase(f.Name), $"{f.Name}: is stored in its canonical upper case");
+            canonical++;
         }
+
+        // The sweep's own non-vacuity guard, the counterpart of C's
+        // `nbCanonical == 0` check. It is insurance, not a second
+        // discriminator: RegistryIsComplete already fails on an empty
+        // catalogue, so the only way here is if enumeration stopped agreeing
+        // with Count.
+        Check(canonical > 0 && canonical == c.Count,
+              $"the canonical-spelling check ran on every row ({canonical}/{c.Count})");
 
         // What actually holds the line, and the reason it is spelled as the
         // comparer rather than as a Unicode probe.
@@ -280,6 +298,27 @@ public static class MetadataTest
         Check(!c.TryGet("ht-dcperiod", out _), "a separator is still part of the name");
         Check(!c.TryGet("", out _), "the empty name resolves to nothing");
         Check(!c.TryGet(new string('s', 512), out _), "a name longer than any real one matches nothing");
+    }
+
+    /// <summary>
+    /// True if the stored spelling carries no ASCII lower case.
+    /// </summary>
+    /// <remarks>
+    /// Spelled as "no lower-case letter" rather than <c>s == s.ToUpperInvariant()</c>
+    /// so it stays an ASCII claim, and so it does not depend on whether the run
+    /// is globalization-invariant: a name is upper case here in the same sense
+    /// <see cref="AsciiLower"/> is a fold, and neither borrows a culture's opinion.
+    /// </remarks>
+    private static bool IsStoredUpperCase(string s)
+    {
+        foreach (char ch in s)
+        {
+            if (ch >= 'a' && ch <= 'z')
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// <summary>ASCII-only lower fold, so the probe cannot inherit the bug it looks for.</summary>
