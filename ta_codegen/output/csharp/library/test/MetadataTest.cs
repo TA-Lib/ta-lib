@@ -228,8 +228,20 @@ public static class MetadataTest
                   $"{f.Name}: lower-case lookup finds it");
             Check(c.TryGet(Alternating(f.Name), out FunctionInfo? mixed) && ReferenceEquals(mixed, f),
                   $"{f.Name}: mixed-case lookup finds it");
-            Check(lower is not null && lower.Name == f.Name,
-                  $"{f.Name}: the name reported back stays canonical");
+            // A third line stood here asserting lower.Name == f.Name, "the name
+            // reported back stays canonical". It cannot fail: the line above
+            // pins ReferenceEquals(lower, f), so it compares one object's name
+            // to itself. Nothing replaces it, though the reason is not the fold:
+            // _byName IS OrdinalIgnoreCase, so a row stored in lower case is
+            // still found by every casing and both lookups above stay green.
+            // What catches it is the rest of the suite, which is keyed on the
+            // stored spelling ordinally. Measured, by lower-casing the TRIX
+            // row: without this line four checks still fail (no typed overload
+            // matched, compared every function, XML describes trix, XML
+            // describes every function), plus NoPhantomIoTest and StreamApiTest.
+            // C has no such second reader -- its whole regtest is green with a
+            // lower-cased row -- so there the canonical spelling is asserted
+            // outright, as it already is in Rust.
         }
 
         // What actually holds the line, and the reason it is spelled as the

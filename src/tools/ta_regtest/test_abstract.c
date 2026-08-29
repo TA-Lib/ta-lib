@@ -1732,6 +1732,7 @@ static ErrorNumber d2_param_vectors( const char *funcName, const TA_FuncHandle *
 typedef struct
 {
    int nbChecked;
+   int nbCanonical;
    int nbFailed;
 } NameFoldCtx;
 
@@ -1774,6 +1775,24 @@ static void nameFoldCb( const TA_FuncInfo *funcInfo, void *opaqueData )
       return;
    }
 
+   /* "Canonical" has to name something for a fold to fold onto it. Every
+    * spelling probed below is derived from this entry, so a table entry stored
+    * in lower case would fold onto itself just as happily and no probe here
+    * would notice; this is the only line that does. Same assertion the Rust
+    * registry sweep carries (abstract_api.rs, registry_tests).
+    */
+   ctx->nbCanonical++;
+   for( i = 0; i < len; i++ )
+   {
+      if( funcInfo->name[i] >= 'a' && funcInfo->name[i] <= 'z' )
+      {
+         printf( "  ABSTRACT ERROR: '%s' is not stored in its canonical upper case\n",
+                 funcInfo->name );
+         ctx->nbFailed++;
+         break;
+      }
+   }
+
    for( variant = 0; variant < 2; variant++ )
    {
       ctx->nbChecked++;
@@ -1794,13 +1813,23 @@ static void nameFoldCb( const TA_FuncInfo *funcInfo, void *opaqueData )
          continue;
       }
 
-      /* Only the match folds. The name reported back is still canonical, so
-       * this comparison stays case-sensitive on purpose.
+      /* Anchored to the row being enumerated, not to a second lookup of its
+       * own name. `handle == canonical` alone would be satisfied by a lookup
+       * that sent every spelling of every name to the SAME wrong function, so
+       * on its own it says only that the fold is consistent, not that it is
+       * right. TA_ForEachFunc hands out `funcDef->funcInfo` and TA_GetFuncInfo
+       * answers that same pointer (ta_abstract.c), so identity here is the C
+       * spelling of what the other three backends assert directly against the
+       * row they are iterating (`lower == f` / `Some(f.id)`).
+       *
+       * Comparing `back->name` to `funcInfo->name` instead, as this did, says
+       * the same thing only while every name in the table is unique -- which
+       * is true, and which nothing in this sweep checks. Pointer identity does
+       * not lean on it.
        */
-      if( TA_GetFuncInfo( handle, &back ) != TA_SUCCESS ||
-          strcmp( back->name, funcInfo->name ) != 0 )
+      if( TA_GetFuncInfo( handle, &back ) != TA_SUCCESS || back != funcInfo )
       {
-         printf( "  ABSTRACT ERROR: '%s' reports back as '%s', not '%s'\n",
+         printf( "  ABSTRACT ERROR: '%s' resolves to '%s', not to the '%s' row\n",
                  spelling[variant],
                  ( back && back->name ) ? back->name : "(none)",
                  funcInfo->name );
@@ -1831,11 +1860,12 @@ static ErrorNumber checkFuncHandleFoldsCase( void )
       "NOSUCHFUNCTION"
    };
 
-   ctx.nbChecked = 0;
-   ctx.nbFailed  = 0;
+   ctx.nbChecked   = 0;
+   ctx.nbCanonical = 0;
+   ctx.nbFailed    = 0;
    TA_ForEachFunc( nameFoldCb, &ctx );
 
-   if( ctx.nbChecked == 0 )
+   if( ctx.nbChecked == 0 || ctx.nbCanonical == 0 )
    {
       printf( "  ABSTRACT ERROR: the case-fold probe compared nothing\n" );
       return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
@@ -1863,8 +1893,9 @@ static ErrorNumber checkFuncHandleFoldsCase( void )
    if( ctx.nbFailed != 0 )
       return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
 
-   printf( "  Name lookup case fold: %d spellings resolved, all canonical\n",
-           ctx.nbChecked );
+   printf( "  Name lookup case fold: %d spellings resolved to their own row, "
+           "%d name(s) stored upper case\n",
+           ctx.nbChecked, ctx.nbCanonical );
    return TA_TEST_PASS;
 }
 
