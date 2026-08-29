@@ -18,6 +18,13 @@ this error*. **How** an error reaches the caller is a property of the language,
 not of the rule, and is written down exactly once, in Appendix A. Essentially,
 C and Rust report a code, Java and C# raise. No rule repeats it.
 
+Identifiers like `<N>_OpenImpl` or `MAMA_OpenAndFill` are C's spelling, used
+neutrally as notation for "the tier/function this rule is about" — since #278
+dropped cross-language name parity for the streaming family, Rust, Java and C#
+each recase `<N>` and the verb to their own idiom (`sma_open_and_fill`,
+`mamaOpenAndFill`, `MamaOpenAndFill`); no rule here is about one specific
+spelling.
+
 The columns are a conformance tracker, one per shipped backend. A new backend
 adds a column; it does not change a rule.
 

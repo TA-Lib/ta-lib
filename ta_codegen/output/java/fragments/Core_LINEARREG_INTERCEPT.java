@@ -461,7 +461,7 @@
    /**
     * A live LINEARREG_INTERCEPT stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#LINEARREG_INTERCEPT} over the same series.
-    * Open with {@link Core#LINEARREG_INTERCEPT_Open}; there is no close — the handle is
+    * Open with {@link Core#linearregInterceptOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -472,7 +472,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class LINEARREG_INTERCEPT_Stream {
+   public static final class LinearregInterceptStream {
       Core core;
       int optInTimePeriod;
       int lookbackTotal;
@@ -492,7 +492,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      LINEARREG_INTERCEPT_Stream( Core core ) { this.core = core; }
+      LinearregInterceptStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -506,7 +506,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      LINEARREG_INTERCEPT_Stream( LINEARREG_INTERCEPT_Stream other ) {
+      LinearregInterceptStream( LinearregInterceptStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -527,7 +527,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LINEARREG_INTERCEPT_Stream other ) {
+      void copyFrom( LinearregInterceptStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -567,7 +567,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
-         core.LINEARREG_INTERCEPT_StepImpl(this, inReal);
+         core.linearregInterceptStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -593,7 +593,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("LINEARREG_INTERCEPT updateAndFill: BadParam", RetCode.BadParam);
-            core.LINEARREG_INTERCEPT_StepImpl(this, inReal[i]);
+            core.linearregInterceptStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -609,8 +609,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
-         LINEARREG_INTERCEPT_Stream scratch = new LINEARREG_INTERCEPT_Stream(this);
-         core.LINEARREG_INTERCEPT_StepImpl(scratch, inReal);
+         LinearregInterceptStream scratch = new LinearregInterceptStream(this);
+         core.linearregInterceptStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -627,11 +627,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public LINEARREG_INTERCEPT_Stream copy() {
-         return new LINEARREG_INTERCEPT_Stream(this);
+      public LinearregInterceptStream copy() {
+         return new LinearregInterceptStream(this);
       }
    }
-   void LINEARREG_INTERCEPT_StepImpl( LINEARREG_INTERCEPT_Stream sp, double inReal )
+   void linearregInterceptStepImpl( LinearregInterceptStream sp, double inReal )
    {
       double m = 0.0;
       int windowStart = 0;
@@ -730,7 +730,7 @@
       sp.cur_outReal = (sp.SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
       sp.today += 1;
    }
-   private RetCode LINEARREG_INTERCEPT_OpenImpl( LINEARREG_INTERCEPT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode linearregInterceptOpenImpl( LinearregInterceptStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -950,11 +950,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* LINEARREG_INTERCEPT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* linearregInterceptOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   LinearregInterceptStream linearregInterceptOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      LinearregInterceptStream sp = new LinearregInterceptStream(this);
+      RetCode retCode = linearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -968,14 +968,14 @@
       }
       throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind LINEARREG_INTERCEPT_Open (composition seam). */
-   LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind linearregInterceptOpen (composition seam). */
+   LinearregInterceptStream linearregInterceptOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
+      LinearregInterceptStream sp = new LinearregInterceptStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = linearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1002,14 +1002,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_Open( double inReal[], int optInTimePeriod )
+   public LinearregInterceptStream linearregInterceptOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("LINEARREG_INTERCEPT open", "inReal", inReal);
       requireHistory("LINEARREG_INTERCEPT open", inReal.length);
-      return LINEARREG_INTERCEPT_OpenInternal(inReal, 0, optInTimePeriod);
+      return linearregInterceptOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#LINEARREG_INTERCEPT_Open} that also fills the output array(s) bit-identically
+    * {@link Core#linearregInterceptOpen} that also fills the output array(s) bit-identically
     * to {@link Core#LINEARREG_INTERCEPT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1017,9 +1017,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link LINEARREG_INTERCEPT_Stream#outRange()}.
+    * {@link LinearregInterceptStream#outRange()}.
     */
-   public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public LinearregInterceptStream linearregInterceptOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("LINEARREG_INTERCEPT openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_INTERCEPT openAndFill", inReal.length);
@@ -1030,5 +1030,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return LINEARREG_INTERCEPT_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return linearregInterceptOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

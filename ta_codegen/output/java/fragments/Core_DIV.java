@@ -201,7 +201,7 @@
    /**
     * A live DIV stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#DIV} over the same series.
-    * Open with {@link Core#DIV_Open}; there is no close — the handle is
+    * Open with {@link Core#divOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -212,13 +212,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class DIV_Stream {
+   public static final class DivStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      DIV_Stream( Core core ) { this.core = core; }
+      DivStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -232,14 +232,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      DIV_Stream( DIV_Stream other ) {
+      DivStream( DivStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( DIV_Stream other ) {
+      void copyFrom( DivStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -261,7 +261,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
-         core.DIV_StepImpl(this, inReal0, inReal1);
+         core.divStepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -288,7 +288,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
                throw new TaLibArgumentException("DIV updateAndFill: BadParam", RetCode.BadParam);
-            core.DIV_StepImpl(this, inReal0[i], inReal1[i]);
+            core.divStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -304,8 +304,8 @@
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
-         DIV_Stream scratch = new DIV_Stream(this);
-         core.DIV_StepImpl(scratch, inReal0, inReal1);
+         DivStream scratch = new DivStream(this);
+         core.divStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -322,15 +322,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public DIV_Stream copy() {
-         return new DIV_Stream(this);
+      public DivStream copy() {
+         return new DivStream(this);
       }
    }
-   void DIV_StepImpl( DIV_Stream sp, double inReal0, double inReal1 )
+   void divStepImpl( DivStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
-   private RetCode DIV_OpenImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode divOpenImpl( DivStream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -359,11 +359,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* DIV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   DIV_Stream DIV_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* divOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   DivStream divOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+      DivStream sp = new DivStream(this);
+      RetCode retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -377,14 +377,14 @@
       }
       throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind DIV_Open (composition seam). */
-   DIV_Stream DIV_OpenInternal( double inReal0[], double inReal1[], int startIdx )
+   /* Internal startIdx-anchored open behind divOpen (composition seam). */
+   DivStream divOpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
-      DIV_Stream sp = new DIV_Stream(this);
+      DivStream sp = new DivStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -411,16 +411,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public DIV_Stream DIV_Open( double inReal0[], double inReal1[] )
+   public DivStream divOpen( double inReal0[], double inReal1[] )
    {
       requireArgument("DIV open", "inReal0", inReal0);
       requireHistory("DIV open", inReal0.length);
       requireArgument("DIV open", "inReal1", inReal1);
       requireHistoryLength("DIV open", "inReal1", inReal1.length, inReal0.length);
-      return DIV_OpenInternal(inReal0, inReal1, 0);
+      return divOpenInternal(inReal0, inReal1, 0);
    }
    /**
-    * {@link Core#DIV_Open} that also fills the output array(s) bit-identically
+    * {@link Core#divOpen} that also fills the output array(s) bit-identically
     * to {@link Core#DIV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -428,9 +428,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link DIV_Stream#outRange()}.
+    * {@link DivStream#outRange()}.
     */
-   public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
+   public DivStream divOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       requireArgument("DIV openAndFill", "inReal0", inReal0);
       requireHistory("DIV openAndFill", inReal0.length);
@@ -443,5 +443,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return DIV_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
+      return divOpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

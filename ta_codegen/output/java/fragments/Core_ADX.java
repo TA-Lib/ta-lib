@@ -797,7 +797,7 @@
    /**
     * A live ADX stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ADX} over the same series.
-    * Open with {@link Core#ADX_Open}; there is no close — the handle is
+    * Open with {@link Core#adxOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -808,7 +808,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ADX_Stream {
+   public static final class AdxStream {
       Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -822,7 +822,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      ADX_Stream( Core core ) { this.core = core; }
+      AdxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -836,7 +836,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ADX_Stream( ADX_Stream other ) {
+      AdxStream( AdxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -851,7 +851,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ADX_Stream other ) {
+      void copyFrom( AdxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -881,7 +881,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADX update: BadParam", RetCode.BadParam);
-         core.ADX_StepImpl(this, inHigh, inLow, inClose);
+         core.adxStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -909,7 +909,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("ADX updateAndFill: BadParam", RetCode.BadParam);
-            core.ADX_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.adxStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -925,8 +925,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADX peek: BadParam", RetCode.BadParam);
-         ADX_Stream scratch = new ADX_Stream(this);
-         core.ADX_StepImpl(scratch, inHigh, inLow, inClose);
+         AdxStream scratch = new AdxStream(this);
+         core.adxStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -943,11 +943,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ADX_Stream copy() {
-         return new ADX_Stream(this);
+      public AdxStream copy() {
+         return new AdxStream(this);
       }
    }
-   void ADX_StepImpl( ADX_Stream sp, double inHigh, double inLow, double inClose )
+   void adxStepImpl( AdxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;
@@ -1001,7 +1001,7 @@
       /* Output the ADX */
       sp.cur_outReal = sp.prevADX;
    }
-   private RetCode ADX_OpenImpl( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode adxOpenImpl( AdxStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -1390,11 +1390,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ADX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ADX_Stream ADX_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* adxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AdxStream adxOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ADX_Stream sp = new ADX_Stream(this);
-      RetCode retCode = ADX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      AdxStream sp = new AdxStream(this);
+      RetCode retCode = adxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1408,14 +1408,14 @@
       }
       throw new TaLibArgumentException("ADX openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ADX_Open (composition seam). */
-   ADX_Stream ADX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind adxOpen (composition seam). */
+   AdxStream adxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      ADX_Stream sp = new ADX_Stream(this);
+      AdxStream sp = new AdxStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ADX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = adxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1442,7 +1442,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ADX_Stream ADX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public AdxStream adxOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("ADX open", "inHigh", inHigh);
       requireHistory("ADX open", inHigh.length);
@@ -1450,10 +1450,10 @@
       requireArgument("ADX open", "inClose", inClose);
       requireHistoryLength("ADX open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("ADX open", "inClose", inClose.length, inHigh.length);
-      return ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return adxOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#ADX_Open} that also fills the output array(s) bit-identically
+    * {@link Core#adxOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ADX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1461,9 +1461,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ADX_Stream#outRange()}.
+    * {@link AdxStream#outRange()}.
     */
-   public ADX_Stream ADX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public AdxStream adxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("ADX openAndFill", "inHigh", inHigh);
       requireHistory("ADX openAndFill", inHigh.length);
@@ -1478,5 +1478,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ADX_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return adxOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -332,7 +332,7 @@
    /**
     * A live CDLCONCEALBABYSWALL stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLCONCEALBABYSWALL} over the same series.
-    * Open with {@link Core#CDLCONCEALBABYSWALL_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlconcealbabyswallOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -343,7 +343,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLCONCEALBABYSWALL_Stream {
+   public static final class CdlconcealbabyswallStream {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
       double lag1_inOpen;
@@ -369,7 +369,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLCONCEALBABYSWALL_Stream( Core core ) { this.core = core; }
+      CdlconcealbabyswallStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -383,7 +383,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLCONCEALBABYSWALL_Stream( CDLCONCEALBABYSWALL_Stream other ) {
+      CdlconcealbabyswallStream( CdlconcealbabyswallStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -410,7 +410,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLCONCEALBABYSWALL_Stream other ) {
+      void copyFrom( CdlconcealbabyswallStream other ) {
          this.core = other.core;
          if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
             System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
@@ -446,7 +446,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLCONCEALBABYSWALL_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlconcealbabyswallStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -463,7 +463,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
-         core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlconcealbabyswallStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -492,7 +492,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLCONCEALBABYSWALL updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlconcealbabyswallStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -510,14 +510,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLCONCEALBABYSWALL peek: BadParam", RetCode.BadParam);
-         CDLCONCEALBABYSWALL_Stream scratch = PEEK_SCRATCH.get();
+         CdlconcealbabyswallStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLCONCEALBABYSWALL_Stream(this);
+            scratch = new CdlconcealbabyswallStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLCONCEALBABYSWALL_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlconcealbabyswallStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -534,11 +534,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLCONCEALBABYSWALL_Stream copy() {
-         return new CDLCONCEALBABYSWALL_Stream(this);
+      public CdlconcealbabyswallStream copy() {
+         return new CdlconcealbabyswallStream(this);
       }
    }
-   void CDLCONCEALBABYSWALL_StepImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlconcealbabyswallStepImpl( CdlconcealbabyswallStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
@@ -586,7 +586,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLCONCEALBABYSWALL_OpenImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlconcealbabyswallOpenImpl( CdlconcealbabyswallStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -720,11 +720,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLCONCEALBABYSWALL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlconcealbabyswallOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlconcealbabyswallStream cdlconcealbabyswallOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlconcealbabyswallStream sp = new CdlconcealbabyswallStream(this);
+      RetCode retCode = cdlconcealbabyswallOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -738,14 +738,14 @@
       }
       throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLCONCEALBABYSWALL_Open (composition seam). */
-   CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlconcealbabyswallOpen (composition seam). */
+   CdlconcealbabyswallStream cdlconcealbabyswallOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
+      CdlconcealbabyswallStream sp = new CdlconcealbabyswallStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlconcealbabyswallOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -772,7 +772,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlconcealbabyswallStream cdlconcealbabyswallOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLCONCEALBABYSWALL open", "inOpen", inOpen);
       requireHistory("CDLCONCEALBABYSWALL open", inOpen.length);
@@ -782,10 +782,10 @@
       requireHistoryLength("CDLCONCEALBABYSWALL open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLCONCEALBABYSWALL open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLCONCEALBABYSWALL open", "inClose", inClose.length, inOpen.length);
-      return CDLCONCEALBABYSWALL_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlconcealbabyswallOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLCONCEALBABYSWALL_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlconcealbabyswallOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLCONCEALBABYSWALL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -793,9 +793,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLCONCEALBABYSWALL_Stream#outRange()}.
+    * {@link CdlconcealbabyswallStream#outRange()}.
     */
-   public CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlconcealbabyswallStream cdlconcealbabyswallOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inOpen", inOpen);
       requireHistory("CDLCONCEALBABYSWALL openAndFill", inOpen.length);
@@ -812,5 +812,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLCONCEALBABYSWALL_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlconcealbabyswallOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

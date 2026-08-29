@@ -367,7 +367,7 @@
    /**
     * A live CDLHARAMICROSS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLHARAMICROSS} over the same series.
-    * Open with {@link Core#CDLHARAMICROSS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlharamicrossOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -378,7 +378,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLHARAMICROSS_Stream {
+   public static final class CdlharamicrossStream {
       Core core;
       double BodyDojiPeriodTotal;
       double BodyLongPeriodTotal;
@@ -402,7 +402,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLHARAMICROSS_Stream( Core core ) { this.core = core; }
+      CdlharamicrossStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -416,7 +416,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLHARAMICROSS_Stream( CDLHARAMICROSS_Stream other ) {
+      CdlharamicrossStream( CdlharamicrossStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -441,7 +441,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLHARAMICROSS_Stream other ) {
+      void copyFrom( CdlharamicrossStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -475,7 +475,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLHARAMICROSS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlharamicrossStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -492,7 +492,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
-         core.CDLHARAMICROSS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlharamicrossStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -521,7 +521,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLHARAMICROSS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLHARAMICROSS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlharamicrossStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -539,14 +539,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
-         CDLHARAMICROSS_Stream scratch = PEEK_SCRATCH.get();
+         CdlharamicrossStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLHARAMICROSS_Stream(this);
+            scratch = new CdlharamicrossStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLHARAMICROSS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlharamicrossStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -563,11 +563,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLHARAMICROSS_Stream copy() {
-         return new CDLHARAMICROSS_Stream(this);
+      public CdlharamicrossStream copy() {
+         return new CdlharamicrossStream(this);
       }
    }
-   void CDLHARAMICROSS_StepImpl( CDLHARAMICROSS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlharamicrossStepImpl( CdlharamicrossStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -623,7 +623,7 @@
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLHARAMICROSS_OpenImpl( CDLHARAMICROSS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlharamicrossOpenImpl( CdlharamicrossStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -772,11 +772,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLHARAMICROSS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlharamicrossOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlharamicrossStream cdlharamicrossOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLHARAMICROSS_Stream sp = new CDLHARAMICROSS_Stream(this);
-      RetCode retCode = CDLHARAMICROSS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlharamicrossStream sp = new CdlharamicrossStream(this);
+      RetCode retCode = cdlharamicrossOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -790,14 +790,14 @@
       }
       throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLHARAMICROSS_Open (composition seam). */
-   CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlharamicrossOpen (composition seam). */
+   CdlharamicrossStream cdlharamicrossOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLHARAMICROSS_Stream sp = new CDLHARAMICROSS_Stream(this);
+      CdlharamicrossStream sp = new CdlharamicrossStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHARAMICROSS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlharamicrossOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -824,7 +824,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLHARAMICROSS_Stream CDLHARAMICROSS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlharamicrossStream cdlharamicrossOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLHARAMICROSS open", "inOpen", inOpen);
       requireHistory("CDLHARAMICROSS open", inOpen.length);
@@ -834,10 +834,10 @@
       requireHistoryLength("CDLHARAMICROSS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHARAMICROSS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHARAMICROSS open", "inClose", inClose.length, inOpen.length);
-      return CDLHARAMICROSS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlharamicrossOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLHARAMICROSS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlharamicrossOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLHARAMICROSS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -845,9 +845,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLHARAMICROSS_Stream#outRange()}.
+    * {@link CdlharamicrossStream#outRange()}.
     */
-   public CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlharamicrossStream cdlharamicrossOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLHARAMICROSS openAndFill", "inOpen", inOpen);
       requireHistory("CDLHARAMICROSS openAndFill", inOpen.length);
@@ -864,5 +864,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLHARAMICROSS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlharamicrossOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

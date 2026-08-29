@@ -296,23 +296,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::STDDEV`]
-/// over the same series. Open with [`Core::STDDEV_Open`]; dropping the handle
+/// over the same series. Open with [`Core::stddev_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STDDEV_Stream")]
-pub struct STDDEV_Stream {
-    state: STDDEV_StreamState,
+pub struct StddevStream {
+    state: StddevStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl STDDEV_Stream {
+impl StddevStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `STDDEV_StreamState::restore_from`.
+    /// allocating new ones. See `StddevStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -321,14 +321,14 @@ impl STDDEV_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct STDDEV_StreamState {
+struct StddevStreamState {
     optInTimePeriod: i32,
     optInNbDev: f64,
-    sub0: VAR_Stream,
+    sub0: VarStream,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl STDDEV_StreamState {
+impl StddevStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -338,14 +338,13 @@ impl STDDEV_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STDDEV_step_impl(sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn stddev_step_impl(sp: &mut StddevStreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cur_outReal: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
@@ -360,11 +359,11 @@ impl Core {
         Ok(())
     }
 
-    /// The single whole-history transcription behind [`Core::STDDEV_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::STDDEV_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn STDDEV_OpenImpl(
+    /// The single whole-history transcription behind [`Core::stddev_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::stddev_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn stddev_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<STDDEV_Stream, RetCode> {
+    ) -> Result<StddevStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -413,7 +412,7 @@ impl Core {
         // Calculate the variance.
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.VAR_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
+        let sub0 = self.var_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         retCode = RetCode::Success;
         // Calculate the square root of each variance, this
         // is the standard deviation.
@@ -449,7 +448,7 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = STDDEV_StreamState {
+        let state = StddevStreamState {
             optInTimePeriod,
             optInNbDev,
             sub0,
@@ -458,17 +457,17 @@ impl Core {
             let last_sc_outReal = sc_outReal[*outNBElement - 1];
             outReal[0] = last_sc_outReal;
         }
-        Ok(STDDEV_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(StddevStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::STDDEV_Open`] (composition seam).
-    pub(crate) fn STDDEV_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::stddev_open`] (composition seam).
+    pub(crate) fn stddev_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
-    ) -> Result<(STDDEV_Stream, f64), RetCode> {
+    ) -> Result<(StddevStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.STDDEV_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.stddev_open_impl(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -488,7 +487,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STDDEV_Open(&data, 5, 1.0).expect("enough history");
+    /// let (mut s, _last) = core.stddev_open(&data, 5, 1.0).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -498,11 +497,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_STDDEV_Open")]
-    pub fn STDDEV_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(STDDEV_Stream, f64), RetCode> {
-        self.STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev)
+    pub fn stddev_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(StddevStream, f64), RetCode> {
+        self.stddev_open_internal(inReal, 0, optInTimePeriod, optInNbDev)
     }
 
-    /// [`Core::STDDEV_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stddev_open`] that also fills the output array(s) bit-identically to
     /// [`Core::STDDEV`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -510,12 +509,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::STDDEV_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::stddev_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_STDDEV_OpenAndFill")]
-    pub fn STDDEV_OpenAndFill(
+    pub fn stddev_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outReal: &mut [f64],
-    ) -> Result<(STDDEV_Stream, OutRange), RetCode> {
+    ) -> Result<(StddevStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -529,23 +528,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.STDDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.stddev_open_and_fill_internal(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::STDDEV_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::stddev_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn STDDEV_OpenAndFillInternal(
+    pub(crate) fn stddev_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<STDDEV_Stream, RetCode> {
-        self.STDDEV_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<StddevStream, RetCode> {
+        self.stddev_open_impl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl STDDEV_Stream {
+impl StddevStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -563,7 +562,7 @@ impl STDDEV_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::STDDEV_step_impl(&mut self.state, inReal, &mut outReal)?;
+        Core::stddev_step_impl(&mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -596,7 +595,7 @@ impl STDDEV_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STDDEV_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            Core::stddev_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -641,7 +640,7 @@ impl STDDEV_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<STDDEV_Stream>();
+    _assert_auto::<StddevStream>();
 };
 
 /***************/

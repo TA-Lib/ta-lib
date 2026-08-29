@@ -432,23 +432,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live TSF stream: one value per closed bar, bit-identical to [`Core::TSF`]
-/// over the same series. Open with [`Core::TSF_Open`]; dropping the handle
+/// over the same series. Open with [`Core::tsf_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TSF_Stream")]
-pub struct TSF_Stream {
-    state: TSF_StreamState,
+pub struct TsfStream {
+    state: TsfStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl TSF_Stream {
+impl TsfStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `TSF_StreamState::restore_from`.
+    /// allocating new ones. See `TsfStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -457,7 +457,7 @@ impl TSF_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TSF_StreamState {
+struct TsfStreamState {
     optInTimePeriod: i32,
     lookbackTotal: usize,
     trailingIdx: i32,
@@ -475,7 +475,7 @@ struct TSF_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl TSF_StreamState {
+impl TsfStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -496,14 +496,13 @@ impl TSF_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TSF_step_impl(sp: &mut TSF_StreamState, inReal: f64, outReal: &mut f64) {
+    fn tsf_step_impl(sp: &mut TsfStreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut b: f64 = 0.0_f64;
         let mut windowStart: usize = 0_usize;
@@ -606,11 +605,11 @@ impl Core {
         sp.today += 1;
     }
 
-    /// The single whole-history transcription behind [`Core::TSF_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::TSF_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TSF_OpenImpl(
+    /// The single whole-history transcription behind [`Core::tsf_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::tsf_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn tsf_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<TSF_Stream, RetCode> {
+    ) -> Result<TsfStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -822,7 +821,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = TSF_StreamState {
+        let state = TsfStreamState {
             optInTimePeriod,
             lookbackTotal,
             trailingIdx: (trailingIdx) as i32,
@@ -838,17 +837,17 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(TSF_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TsfStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TSF_Open`] (composition seam).
-    pub(crate) fn TSF_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::tsf_open`] (composition seam).
+    pub(crate) fn tsf_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TSF_Stream, f64), RetCode> {
+    ) -> Result<(TsfStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TSF_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.tsf_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -868,7 +867,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.TSF_Open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.tsf_open(&data, 14).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -878,11 +877,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TSF_Open")]
-    pub fn TSF_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TSF_Stream, f64), RetCode> {
-        self.TSF_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn tsf_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TsfStream, f64), RetCode> {
+        self.tsf_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::TSF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::tsf_open`] that also fills the output array(s) bit-identically to
     /// [`Core::TSF`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -890,12 +889,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::TSF_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::tsf_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_TSF_OpenAndFill")]
-    pub fn TSF_OpenAndFill(
+    pub fn tsf_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(TSF_Stream, OutRange), RetCode> {
+    ) -> Result<(TsfStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -909,23 +908,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TSF_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.tsf_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::TSF_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::tsf_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn TSF_OpenAndFillInternal(
+    pub(crate) fn tsf_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TSF_Stream, RetCode> {
-        self.TSF_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<TsfStream, RetCode> {
+        self.tsf_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TSF_Stream {
+impl TsfStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -943,7 +942,7 @@ impl TSF_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::TSF_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::tsf_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -976,7 +975,7 @@ impl TSF_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::TSF_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::tsf_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1021,7 +1020,7 @@ impl TSF_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TSF_Stream>();
+    _assert_auto::<TsfStream>();
 };
 
 /***************/

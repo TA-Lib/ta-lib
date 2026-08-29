@@ -332,23 +332,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live PPO stream: one value per closed bar, bit-identical to [`Core::PPO`]
-/// over the same series. Open with [`Core::PPO_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ppo_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PPO_Stream")]
-pub struct PPO_Stream {
-    state: PPO_StreamState,
+pub struct PpoStream {
+    state: PpoStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl PPO_Stream {
+impl PpoStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `PPO_StreamState::restore_from`.
+    /// allocating new ones. See `PpoStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -357,16 +357,16 @@ impl PPO_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PPO_StreamState {
+struct PpoStreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     optInMAType: MAType,
-    sub0: MA_Stream,
-    sub1: MA_Stream,
+    sub0: MaStream,
+    sub1: MaStream,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl PPO_StreamState {
+impl PpoStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -378,14 +378,13 @@ impl PPO_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PPO_step_impl(sp: &mut PPO_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn ppo_step_impl(sp: &mut PpoStreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
@@ -404,11 +403,11 @@ impl Core {
         Ok(())
     }
 
-    /// The single whole-history transcription behind [`Core::PPO_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::PPO_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn PPO_OpenImpl(
+    /// The single whole-history transcription behind [`Core::ppo_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::ppo_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn ppo_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<PPO_Stream, RetCode> {
+    ) -> Result<PpoStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -479,12 +478,12 @@ impl Core {
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
+        let sub0 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
         retCode = RetCode::Success;
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
+        let sub1 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         retCode = RetCode::Success;
         // fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
         // many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
@@ -507,7 +506,7 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = PPO_StreamState {
+        let state = PpoStreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
@@ -518,17 +517,17 @@ impl Core {
             let last_sc_outReal = sc_outReal[*outNBElement - 1];
             outReal[0] = last_sc_outReal;
         }
-        Ok(PPO_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(PpoStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::PPO_Open`] (composition seam).
-    pub(crate) fn PPO_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ppo_open`] (composition seam).
+    pub(crate) fn ppo_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType,
-    ) -> Result<(PPO_Stream, f64), RetCode> {
+    ) -> Result<(PpoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.PPO_OpenImpl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ppo_open_impl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -548,7 +547,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.PPO_Open(&data, 12, 26, MAType::EMA).expect("enough history");
+    /// let (mut s, _last) = core.ppo_open(&data, 12, 26, MAType::EMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -558,11 +557,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PPO_Open")]
-    pub fn PPO_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PPO_Stream, f64), RetCode> {
-        self.PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
+    pub fn ppo_open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PpoStream, f64), RetCode> {
+        self.ppo_open_internal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
-    /// [`Core::PPO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ppo_open`] that also fills the output array(s) bit-identically to
     /// [`Core::PPO`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -570,12 +569,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::PPO_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ppo_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_PPO_OpenAndFill")]
-    pub fn PPO_OpenAndFill(
+    pub fn ppo_open_and_fill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
-    ) -> Result<(PPO_Stream, OutRange), RetCode> {
+    ) -> Result<(PpoStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -589,31 +588,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.PPO_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.ppo_open_and_fill_internal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::PPO_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ppo_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn PPO_OpenAndFillInternal(
+    pub(crate) fn ppo_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PPO_Stream, RetCode> {
-        self.PPO_OpenImpl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<PpoStream, RetCode> {
+        self.ppo_open_impl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `PPO_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `PpoStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static PPO_PEEK_SCRATCH: std::cell::Cell<Option<Box<PPO_Stream>>> =
+    static PPO_PEEK_SCRATCH: std::cell::Cell<Option<Box<PpoStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl PPO_Stream {
+impl PpoStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -631,7 +630,7 @@ impl PPO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::PPO_step_impl(&mut self.state, inReal, &mut outReal)?;
+        Core::ppo_step_impl(&mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -664,7 +663,7 @@ impl PPO_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::PPO_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            Core::ppo_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -688,11 +687,13 @@ impl PPO_Stream {
             return Err(RetCode::BadParam);
         }
         PPO_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            let stepped = Core::ppo_step_impl(&mut scratch, inReal, &mut outReal);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok(outReal)
         })
     }
 
@@ -712,7 +713,7 @@ impl PPO_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PPO_Stream>();
+    _assert_auto::<PpoStream>();
 };
 
 /***************/

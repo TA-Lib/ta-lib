@@ -316,7 +316,7 @@ public partial class Core
    /// <summary>A live <c>MARKETFI</c> stream: one value per closed bar, bit-identical to
    /// <c>MARKETFI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MARKETFI_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.MarketfiOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -329,19 +329,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MARKETFI_Stream
+   public sealed class MarketfiStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MARKETFI_Stream( Core core ) { this.core = core; }
+      internal MarketfiStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MARKETFI</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Marketfi</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -350,7 +350,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MARKETFI_Stream( MARKETFI_Stream other )
+      internal MarketfiStream( MarketfiStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -358,7 +358,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MARKETFI_Stream other )
+      internal void CopyFrom( MarketfiStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -384,7 +384,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("MARKETFI", "update", RetCode.BadParam);
-         core.MARKETFI_StepImpl(this, inHigh, inLow, inVolume);
+         core.MarketfiStepImpl(this, inHigh, inLow, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -405,8 +405,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("MARKETFI", "peek", RetCode.BadParam);
-         MARKETFI_Stream scratch = new MARKETFI_Stream(this);
-         core.MARKETFI_StepImpl(scratch, inHigh, inLow, inVolume);
+         MarketfiStream scratch = new MarketfiStream(this);
+         core.MarketfiStepImpl(scratch, inHigh, inLow, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -432,7 +432,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("MARKETFI", "updateAndFill", RetCode.BadParam);
-            core.MARKETFI_StepImpl(this, inHigh[i], inLow[i], inVolume[i]);
+            core.MarketfiStepImpl(this, inHigh[i], inLow[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -448,13 +448,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MARKETFI_Stream Clone()
+      public MarketfiStream Clone()
       {
-         return new MARKETFI_Stream(this);
+         return new MarketfiStream(this);
       }
    }
 
-   internal void MARKETFI_StepImpl( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+   internal void MarketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but
@@ -473,7 +473,7 @@ public partial class Core
       }
    }
 
-   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MarketfiOpenImpl( MarketfiStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -534,11 +534,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MARKETFI_Stream MARKETFI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* MarketfiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MarketfiStream MarketfiOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      MarketfiStream sp = new MarketfiStream(this);
+      RetCode retCode = MarketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -547,12 +547,12 @@ public partial class Core
       throw StreamFailure("MARKETFI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MARKETFI_Open (composition seam). */
-   internal MARKETFI_Stream MARKETFI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
+   /* Internal startIdx-anchored open behind MarketfiOpen (composition seam). */
+   internal MarketfiStream MarketfiOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
    {
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      MarketfiStream sp = new MarketfiStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = MarketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -563,12 +563,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MARKETFI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MARKETFI_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>MARKETFI</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="MarketfiStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MARKETFI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MARKETFI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MARKETFI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MarketfiOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -580,7 +579,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MARKETFI_Stream MARKETFI_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume )
+   public MarketfiStream MarketfiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -588,10 +587,10 @@ public partial class Core
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("MARKETFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("MARKETFI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MARKETFI", "open", "inVolume", inVolume.Length, inHigh.Length);
-      return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
+      return MarketfiOpenInternal(inHigh, inLow, inVolume, 0);
    }
 
-   /// <summary><c>MARKETFI_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MarketfiOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MARKETFI</c> produces over
@@ -603,7 +602,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MARKETFI_Stream.OutRange"/>.</para>
+   /// <see cref="MarketfiStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -618,7 +617,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MARKETFI_Stream MARKETFI_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, Span<double> outReal )
+   public MarketfiStream MarketfiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -631,6 +630,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
       }
-      return MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, out _, out _, outReal);
+      return MarketfiOpenAndFillInternal(inHigh, inLow, inVolume, 0, out _, out _, outReal);
    }
 }

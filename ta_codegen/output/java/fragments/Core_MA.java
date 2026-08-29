@@ -501,7 +501,7 @@
    /**
     * A live MA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MA} over the same series.
-    * Open with {@link Core#MA_Open}; there is no close — the handle is
+    * Open with {@link Core#maOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -512,7 +512,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MA_Stream {
+   public static final class MaStream {
       Core core;
       int optInTimePeriod;
       MAType optInMAType;
@@ -522,7 +522,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MA_Stream( Core core ) { this.core = core; }
+      MaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -536,7 +536,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MA_Stream( MA_Stream other ) {
+      MaStream( MaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMAType = other.optInMAType;
@@ -547,34 +547,34 @@
             switch( this.optInMAType )
             {
             case SMA:
-               this.sub = new SMA_Stream((SMA_Stream) other.sub);
+               this.sub = new SmaStream((SmaStream) other.sub);
                break;
             case EMA:
-               this.sub = new EMA_Stream((EMA_Stream) other.sub);
+               this.sub = new EmaStream((EmaStream) other.sub);
                break;
             case WMA:
-               this.sub = new WMA_Stream((WMA_Stream) other.sub);
+               this.sub = new WmaStream((WmaStream) other.sub);
                break;
             case DEMA:
-               this.sub = new DEMA_Stream((DEMA_Stream) other.sub);
+               this.sub = new DemaStream((DemaStream) other.sub);
                break;
             case TEMA:
-               this.sub = new TEMA_Stream((TEMA_Stream) other.sub);
+               this.sub = new TemaStream((TemaStream) other.sub);
                break;
             case TRIMA:
-               this.sub = new TRIMA_Stream((TRIMA_Stream) other.sub);
+               this.sub = new TrimaStream((TrimaStream) other.sub);
                break;
             case KAMA:
-               this.sub = new KAMA_Stream((KAMA_Stream) other.sub);
+               this.sub = new KamaStream((KamaStream) other.sub);
                break;
             case MAMA:
-               this.sub = new MAMA_Stream((MAMA_Stream) other.sub);
+               this.sub = new MamaStream((MamaStream) other.sub);
                break;
             case T3:
-               this.sub = new T3_Stream((T3_Stream) other.sub);
+               this.sub = new T3Stream((T3Stream) other.sub);
                break;
             case HMA:
-               this.sub = new HMA_Stream((HMA_Stream) other.sub);
+               this.sub = new HmaStream((HmaStream) other.sub);
                break;
             default:
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -584,7 +584,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MA_Stream other ) {
+      void copyFrom( MaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMAType = other.optInMAType;
@@ -595,73 +595,73 @@
             switch( this.optInMAType )
             {
             case SMA:
-               if( this.sub instanceof SMA_Stream ) {
-                  ((SMA_Stream) this.sub).copyFrom((SMA_Stream) other.sub);
+               if( this.sub instanceof SmaStream ) {
+                  ((SmaStream) this.sub).copyFrom((SmaStream) other.sub);
                } else {
-                  this.sub = new SMA_Stream((SMA_Stream) other.sub);
+                  this.sub = new SmaStream((SmaStream) other.sub);
                }
                break;
             case EMA:
-               if( this.sub instanceof EMA_Stream ) {
-                  ((EMA_Stream) this.sub).copyFrom((EMA_Stream) other.sub);
+               if( this.sub instanceof EmaStream ) {
+                  ((EmaStream) this.sub).copyFrom((EmaStream) other.sub);
                } else {
-                  this.sub = new EMA_Stream((EMA_Stream) other.sub);
+                  this.sub = new EmaStream((EmaStream) other.sub);
                }
                break;
             case WMA:
-               if( this.sub instanceof WMA_Stream ) {
-                  ((WMA_Stream) this.sub).copyFrom((WMA_Stream) other.sub);
+               if( this.sub instanceof WmaStream ) {
+                  ((WmaStream) this.sub).copyFrom((WmaStream) other.sub);
                } else {
-                  this.sub = new WMA_Stream((WMA_Stream) other.sub);
+                  this.sub = new WmaStream((WmaStream) other.sub);
                }
                break;
             case DEMA:
-               if( this.sub instanceof DEMA_Stream ) {
-                  ((DEMA_Stream) this.sub).copyFrom((DEMA_Stream) other.sub);
+               if( this.sub instanceof DemaStream ) {
+                  ((DemaStream) this.sub).copyFrom((DemaStream) other.sub);
                } else {
-                  this.sub = new DEMA_Stream((DEMA_Stream) other.sub);
+                  this.sub = new DemaStream((DemaStream) other.sub);
                }
                break;
             case TEMA:
-               if( this.sub instanceof TEMA_Stream ) {
-                  ((TEMA_Stream) this.sub).copyFrom((TEMA_Stream) other.sub);
+               if( this.sub instanceof TemaStream ) {
+                  ((TemaStream) this.sub).copyFrom((TemaStream) other.sub);
                } else {
-                  this.sub = new TEMA_Stream((TEMA_Stream) other.sub);
+                  this.sub = new TemaStream((TemaStream) other.sub);
                }
                break;
             case TRIMA:
-               if( this.sub instanceof TRIMA_Stream ) {
-                  ((TRIMA_Stream) this.sub).copyFrom((TRIMA_Stream) other.sub);
+               if( this.sub instanceof TrimaStream ) {
+                  ((TrimaStream) this.sub).copyFrom((TrimaStream) other.sub);
                } else {
-                  this.sub = new TRIMA_Stream((TRIMA_Stream) other.sub);
+                  this.sub = new TrimaStream((TrimaStream) other.sub);
                }
                break;
             case KAMA:
-               if( this.sub instanceof KAMA_Stream ) {
-                  ((KAMA_Stream) this.sub).copyFrom((KAMA_Stream) other.sub);
+               if( this.sub instanceof KamaStream ) {
+                  ((KamaStream) this.sub).copyFrom((KamaStream) other.sub);
                } else {
-                  this.sub = new KAMA_Stream((KAMA_Stream) other.sub);
+                  this.sub = new KamaStream((KamaStream) other.sub);
                }
                break;
             case MAMA:
-               if( this.sub instanceof MAMA_Stream ) {
-                  ((MAMA_Stream) this.sub).copyFrom((MAMA_Stream) other.sub);
+               if( this.sub instanceof MamaStream ) {
+                  ((MamaStream) this.sub).copyFrom((MamaStream) other.sub);
                } else {
-                  this.sub = new MAMA_Stream((MAMA_Stream) other.sub);
+                  this.sub = new MamaStream((MamaStream) other.sub);
                }
                break;
             case T3:
-               if( this.sub instanceof T3_Stream ) {
-                  ((T3_Stream) this.sub).copyFrom((T3_Stream) other.sub);
+               if( this.sub instanceof T3Stream ) {
+                  ((T3Stream) this.sub).copyFrom((T3Stream) other.sub);
                } else {
-                  this.sub = new T3_Stream((T3_Stream) other.sub);
+                  this.sub = new T3Stream((T3Stream) other.sub);
                }
                break;
             case HMA:
-               if( this.sub instanceof HMA_Stream ) {
-                  ((HMA_Stream) this.sub).copyFrom((HMA_Stream) other.sub);
+               if( this.sub instanceof HmaStream ) {
+                  ((HmaStream) this.sub).copyFrom((HmaStream) other.sub);
                } else {
-                  this.sub = new HMA_Stream((HMA_Stream) other.sub);
+                  this.sub = new HmaStream((HmaStream) other.sub);
                }
                break;
             default:
@@ -673,7 +673,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<MaStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -690,7 +690,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
-         core.MA_StepImpl(this, inReal);
+         core.maStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -716,7 +716,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("MA updateAndFill: BadParam", RetCode.BadParam);
-            core.MA_StepImpl(this, inReal[i]);
+            core.maStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -734,14 +734,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
-         MA_Stream scratch = PEEK_SCRATCH.get();
+         MaStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new MA_Stream(this);
+            scratch = new MaStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.MA_StepImpl(scratch, inReal);
+         core.maStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -758,11 +758,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MA_Stream copy() {
-         return new MA_Stream(this);
+      public MaStream copy() {
+         return new MaStream(this);
       }
    }
-   void MA_StepImpl( MA_Stream sp, double inReal )
+   void maStepImpl( MaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;
@@ -771,51 +771,51 @@
       switch( sp.optInMAType )
       {
       case SMA: {
-         sp.cur_outReal = ((SMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((SmaStream) sp.sub).update(inReal);
          break;
       }
       case EMA: {
-         sp.cur_outReal = ((EMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((EmaStream) sp.sub).update(inReal);
          break;
       }
       case WMA: {
-         sp.cur_outReal = ((WMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((WmaStream) sp.sub).update(inReal);
          break;
       }
       case DEMA: {
-         sp.cur_outReal = ((DEMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((DemaStream) sp.sub).update(inReal);
          break;
       }
       case TEMA: {
-         sp.cur_outReal = ((TEMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((TemaStream) sp.sub).update(inReal);
          break;
       }
       case TRIMA: {
-         sp.cur_outReal = ((TRIMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((TrimaStream) sp.sub).update(inReal);
          break;
       }
       case KAMA: {
-         sp.cur_outReal = ((KAMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
          break;
       }
       case MAMA: {
-         MAMA_Stream.Value subValue = ((MAMA_Stream) sp.sub).update(inReal);
+         MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);
          sp.cur_outReal = subValue.mama();
          break;
       }
       case T3: {
-         sp.cur_outReal = ((T3_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((T3Stream) sp.sub).update(inReal);
          break;
       }
       case HMA: {
-         sp.cur_outReal = ((HMA_Stream) sp.sub).update(inReal);
+         sp.cur_outReal = ((HmaStream) sp.sub).update(inReal);
          break;
       }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */
       }
    }
-   private RetCode MA_OpenImpl( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
+   private RetCode maOpenImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -855,7 +855,7 @@
       switch( optInMAType )
       {
       case SMA: {
-         SMA_Stream sub = SMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         SmaStream sub = smaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -863,7 +863,7 @@
          break;
       }
       case EMA: {
-         EMA_Stream sub = EMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         EmaStream sub = emaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -871,7 +871,7 @@
          break;
       }
       case WMA: {
-         WMA_Stream sub = WMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         WmaStream sub = wmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -879,7 +879,7 @@
          break;
       }
       case DEMA: {
-         DEMA_Stream sub = DEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         DemaStream sub = demaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -887,7 +887,7 @@
          break;
       }
       case TEMA: {
-         TEMA_Stream sub = TEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         TemaStream sub = temaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -895,7 +895,7 @@
          break;
       }
       case TRIMA: {
-         TRIMA_Stream sub = TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         TrimaStream sub = trimaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -903,7 +903,7 @@
          break;
       }
       case KAMA: {
-         KAMA_Stream sub = KAMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         KamaStream sub = kamaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -911,7 +911,7 @@
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05);
+         MamaStream sub = mamaOpenInternal(inReal, startIdx, 0.5, 0.05);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -919,7 +919,7 @@
          break;
       }
       case T3: {
-         T3_Stream sub = T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7);
+         T3Stream sub = t3OpenInternal(inReal, startIdx, optInTimePeriod, 0.7);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -927,7 +927,7 @@
          break;
       }
       case HMA: {
-         HMA_Stream sub = HMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         HmaStream sub = hmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -941,7 +941,7 @@
       sp.optInMAType = optInMAType;
       return RetCode.Success;
    }
-   private RetCode MA_OpenAndFillImpl( MA_Stream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode maOpenAndFillImpl( MaStream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -983,7 +983,7 @@
       switch( optInMAType )
       {
       case SMA: {
-         SMA_Stream sub = SMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         SmaStream sub = smaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -991,7 +991,7 @@
          break;
       }
       case EMA: {
-         EMA_Stream sub = EMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         EmaStream sub = emaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -999,7 +999,7 @@
          break;
       }
       case WMA: {
-         WMA_Stream sub = WMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         WmaStream sub = wmaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1007,7 +1007,7 @@
          break;
       }
       case DEMA: {
-         DEMA_Stream sub = DEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         DemaStream sub = demaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1015,7 +1015,7 @@
          break;
       }
       case TEMA: {
-         TEMA_Stream sub = TEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         TemaStream sub = temaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1023,7 +1023,7 @@
          break;
       }
       case TRIMA: {
-         TRIMA_Stream sub = TRIMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         TrimaStream sub = trimaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1031,7 +1031,7 @@
          break;
       }
       case KAMA: {
-         KAMA_Stream sub = KAMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         KamaStream sub = kamaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1039,7 +1039,7 @@
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, null);
+         MamaStream sub = mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1047,7 +1047,7 @@
          break;
       }
       case T3: {
-         T3_Stream sub = T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outReal);
+         T3Stream sub = t3OpenAndFill(inReal, optInTimePeriod, 0.7, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1055,7 +1055,7 @@
          break;
       }
       case HMA: {
-         HMA_Stream sub = HMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         HmaStream sub = hmaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1069,7 +1069,7 @@
       sp.optInMAType = optInMAType;
       return RetCode.Success;
    }
-   private RetCode MA_OpenAndFillInternalImpl( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode maOpenAndFillInternalImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -1112,61 +1112,61 @@
       switch( optInMAType )
       {
       case SMA: {
-         SMA_Stream sub = SMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         SmaStream sub = smaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case EMA: {
-         EMA_Stream sub = EMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         EmaStream sub = emaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case WMA: {
-         WMA_Stream sub = WMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         WmaStream sub = wmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case DEMA: {
-         DEMA_Stream sub = DEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         DemaStream sub = demaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case TEMA: {
-         TEMA_Stream sub = TEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         TemaStream sub = temaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case TRIMA: {
-         TRIMA_Stream sub = TRIMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         TrimaStream sub = trimaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case KAMA: {
-         KAMA_Stream sub = KAMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         KamaStream sub = kamaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
+         MamaStream sub = mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
       }
       case T3: {
-         T3_Stream sub = T3_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+         T3Stream sub = t3OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case HMA: {
-         HMA_Stream sub = HMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         HmaStream sub = hmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1178,11 +1178,11 @@
       sp.optInMAType = optInMAType;
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind MA_Open (composition seam). */
-   MA_Stream MA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind maOpen (composition seam). */
+   MaStream maOpenInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
-      MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
+      MaStream sp = new MaStream(this);
+      RetCode retCode = maOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1207,15 +1207,15 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MA_Stream MA_Open( double inReal[], int optInTimePeriod, MAType optInMAType )
+   public MaStream maOpen( double inReal[], int optInTimePeriod, MAType optInMAType )
    {
       requireArgument("MA open", "inReal", inReal);
       requireHistory("MA open", inReal.length);
       requireArgument("MA open", "optInMAType", optInMAType);
-      return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
+      return maOpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
    /**
-    * {@link Core#MA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#maOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1223,19 +1223,19 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MA_Stream#outRange()}.
+    * {@link MaStream#outRange()}.
     */
-   public MA_Stream MA_OpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
+   public MaStream maOpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
    {
       requireArgument("MA openAndFill", "inReal", inReal);
       requireHistory("MA openAndFill", inReal.length);
       requireArgument("MA openAndFill", "optInMAType", optInMAType);
       int guardOutLen = openFillCount("MA openAndFill", inReal.length, MA_Lookback(optInTimePeriod, optInMAType));
       requireLength("MA openAndFill", "outReal", outReal, guardOutLen);
-      MA_Stream sp = new MA_Stream(this);
+      MaStream sp = new MaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MA_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = maOpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1249,11 +1249,11 @@
       }
       throw new TaLibArgumentException("MA openAndFill: " + retCode, retCode);
    }
-   /* MA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MA_Stream MA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* maOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MaStream maOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      MaStream sp = new MaStream(this);
+      RetCode retCode = maOpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {

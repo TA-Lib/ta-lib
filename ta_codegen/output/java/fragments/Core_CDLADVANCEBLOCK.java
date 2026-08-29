@@ -484,7 +484,7 @@
    /**
     * A live CDLADVANCEBLOCK stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLADVANCEBLOCK} over the same series.
-    * Open with {@link Core#CDLADVANCEBLOCK_Open}; there is no close — the handle is
+    * Open with {@link Core#cdladvanceblockOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -495,7 +495,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLADVANCEBLOCK_Stream {
+   public static final class CdladvanceblockStream {
       Core core;
       double[] ShadowShortPeriodTotal;
       double[] ShadowLongPeriodTotal;
@@ -549,7 +549,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLADVANCEBLOCK_Stream( Core core ) { this.core = core; }
+      CdladvanceblockStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -563,7 +563,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLADVANCEBLOCK_Stream( CDLADVANCEBLOCK_Stream other ) {
+      CdladvanceblockStream( CdladvanceblockStream other ) {
          this.core = other.core;
          this.ShadowShortPeriodTotal = other.ShadowShortPeriodTotal.clone();
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal.clone();
@@ -618,7 +618,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLADVANCEBLOCK_Stream other ) {
+      void copyFrom( CdladvanceblockStream other ) {
          this.core = other.core;
          if( this.ShadowShortPeriodTotal != null && this.ShadowShortPeriodTotal.length == other.ShadowShortPeriodTotal.length ) {
             System.arraycopy( other.ShadowShortPeriodTotal, 0, this.ShadowShortPeriodTotal, 0, other.ShadowShortPeriodTotal.length );
@@ -710,7 +710,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLADVANCEBLOCK_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdladvanceblockStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -727,7 +727,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLADVANCEBLOCK update: BadParam", RetCode.BadParam);
-         core.CDLADVANCEBLOCK_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdladvanceblockStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -756,7 +756,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLADVANCEBLOCK updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLADVANCEBLOCK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdladvanceblockStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -774,14 +774,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
-         CDLADVANCEBLOCK_Stream scratch = PEEK_SCRATCH.get();
+         CdladvanceblockStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLADVANCEBLOCK_Stream(this);
+            scratch = new CdladvanceblockStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLADVANCEBLOCK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdladvanceblockStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -798,11 +798,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLADVANCEBLOCK_Stream copy() {
-         return new CDLADVANCEBLOCK_Stream(this);
+      public CdladvanceblockStream copy() {
+         return new CdladvanceblockStream(this);
       }
    }
-   void CDLADVANCEBLOCK_StepImpl( CDLADVANCEBLOCK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdladvanceblockStepImpl( CdladvanceblockStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -885,7 +885,7 @@
          sp.ringPos_ShadowShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLADVANCEBLOCK_OpenImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdladvanceblockOpenImpl( CdladvanceblockStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -1155,11 +1155,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLADVANCEBLOCK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdladvanceblockOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdladvanceblockStream cdladvanceblockOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdladvanceblockStream sp = new CdladvanceblockStream(this);
+      RetCode retCode = cdladvanceblockOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1173,14 +1173,14 @@
       }
       throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLADVANCEBLOCK_Open (composition seam). */
-   CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdladvanceblockOpen (composition seam). */
+   CdladvanceblockStream cdladvanceblockOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
+      CdladvanceblockStream sp = new CdladvanceblockStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdladvanceblockOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1207,7 +1207,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdladvanceblockStream cdladvanceblockOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLADVANCEBLOCK open", "inOpen", inOpen);
       requireHistory("CDLADVANCEBLOCK open", inOpen.length);
@@ -1217,10 +1217,10 @@
       requireHistoryLength("CDLADVANCEBLOCK open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLADVANCEBLOCK open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLADVANCEBLOCK open", "inClose", inClose.length, inOpen.length);
-      return CDLADVANCEBLOCK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdladvanceblockOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLADVANCEBLOCK_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdladvanceblockOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLADVANCEBLOCK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1228,9 +1228,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLADVANCEBLOCK_Stream#outRange()}.
+    * {@link CdladvanceblockStream#outRange()}.
     */
-   public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdladvanceblockStream cdladvanceblockOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLADVANCEBLOCK openAndFill", "inOpen", inOpen);
       requireHistory("CDLADVANCEBLOCK openAndFill", inOpen.length);
@@ -1247,5 +1247,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLADVANCEBLOCK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdladvanceblockOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

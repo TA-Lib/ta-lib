@@ -232,7 +232,7 @@
    /**
     * A live BOP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#BOP} over the same series.
-    * Open with {@link Core#BOP_Open}; there is no close — the handle is
+    * Open with {@link Core#bopOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -243,13 +243,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class BOP_Stream {
+   public static final class BopStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      BOP_Stream( Core core ) { this.core = core; }
+      BopStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -263,14 +263,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      BOP_Stream( BOP_Stream other ) {
+      BopStream( BopStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( BOP_Stream other ) {
+      void copyFrom( BopStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -292,7 +292,7 @@
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("BOP update: BadParam", RetCode.BadParam);
-         core.BOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.bopStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -321,7 +321,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("BOP updateAndFill: BadParam", RetCode.BadParam);
-            core.BOP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.bopStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -337,8 +337,8 @@
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
-         BOP_Stream scratch = new BOP_Stream(this);
-         core.BOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         BopStream scratch = new BopStream(this);
+         core.bopStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -355,11 +355,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public BOP_Stream copy() {
-         return new BOP_Stream(this);
+      public BopStream copy() {
+         return new BopStream(this);
       }
    }
-   void BOP_StepImpl( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void bopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       /* BOP is a fraction of the bar's own range, so it is scale-free and the
@@ -375,7 +375,7 @@
          sp.cur_outReal = (inClose - inOpen) / tempReal;
       }
    }
-   private RetCode BOP_OpenImpl( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode bopOpenImpl( BopStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -418,11 +418,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* BOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   BOP_Stream BOP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* bopOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   BopStream bopOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      BOP_Stream sp = new BOP_Stream(this);
-      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      BopStream sp = new BopStream(this);
+      RetCode retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -436,14 +436,14 @@
       }
       throw new TaLibArgumentException("BOP openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind BOP_Open (composition seam). */
-   BOP_Stream BOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind bopOpen (composition seam). */
+   BopStream bopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      BOP_Stream sp = new BOP_Stream(this);
+      BopStream sp = new BopStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -470,7 +470,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public BOP_Stream BOP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public BopStream bopOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("BOP open", "inOpen", inOpen);
       requireHistory("BOP open", inOpen.length);
@@ -480,10 +480,10 @@
       requireHistoryLength("BOP open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("BOP open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("BOP open", "inClose", inClose.length, inOpen.length);
-      return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return bopOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#BOP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#bopOpen} that also fills the output array(s) bit-identically
     * to {@link Core#BOP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -491,9 +491,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link BOP_Stream#outRange()}.
+    * {@link BopStream#outRange()}.
     */
-   public BOP_Stream BOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public BopStream bopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       requireArgument("BOP openAndFill", "inOpen", inOpen);
       requireHistory("BOP openAndFill", inOpen.length);
@@ -510,5 +510,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return BOP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+      return bopOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }

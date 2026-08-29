@@ -730,7 +730,7 @@
    /**
     * A live MINUS_DI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MINUS_DI} over the same series.
-    * Open with {@link Core#MINUS_DI_Open}; there is no close — the handle is
+    * Open with {@link Core#minusDiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -741,7 +741,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MINUS_DI_Stream {
+   public static final class MinusDiStream {
       Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -753,7 +753,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MINUS_DI_Stream( Core core ) { this.core = core; }
+      MinusDiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -767,7 +767,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MINUS_DI_Stream( MINUS_DI_Stream other ) {
+      MinusDiStream( MinusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -780,7 +780,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MINUS_DI_Stream other ) {
+      void copyFrom( MinusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -808,7 +808,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
-         core.MINUS_DI_StepImpl(this, inHigh, inLow, inClose);
+         core.minusDiStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -836,7 +836,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("MINUS_DI updateAndFill: BadParam", RetCode.BadParam);
-            core.MINUS_DI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.minusDiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -852,8 +852,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
-         MINUS_DI_Stream scratch = new MINUS_DI_Stream(this);
-         core.MINUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
+         MinusDiStream scratch = new MinusDiStream(this);
+         core.minusDiStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -870,11 +870,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MINUS_DI_Stream copy() {
-         return new MINUS_DI_Stream(this);
+      public MinusDiStream copy() {
+         return new MinusDiStream(this);
       }
    }
-   void MINUS_DI_StepImpl( MINUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+   void minusDiStepImpl( MinusDiStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -954,7 +954,7 @@
          }
       }
    }
-   private RetCode MINUS_DI_OpenImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode minusDiOpenImpl( MinusDiStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1425,11 +1425,11 @@
          return RetCode.Success;
       }
    }
-   /* MINUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MINUS_DI_Stream MINUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* minusDiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MinusDiStream minusDiOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
-      RetCode retCode = MINUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      MinusDiStream sp = new MinusDiStream(this);
+      RetCode retCode = minusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1443,14 +1443,14 @@
       }
       throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MINUS_DI_Open (composition seam). */
-   MINUS_DI_Stream MINUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind minusDiOpen (composition seam). */
+   MinusDiStream minusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
+      MinusDiStream sp = new MinusDiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MINUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = minusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1477,7 +1477,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MINUS_DI_Stream MINUS_DI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public MinusDiStream minusDiOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("MINUS_DI open", "inHigh", inHigh);
       requireHistory("MINUS_DI open", inHigh.length);
@@ -1485,10 +1485,10 @@
       requireArgument("MINUS_DI open", "inClose", inClose);
       requireHistoryLength("MINUS_DI open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("MINUS_DI open", "inClose", inClose.length, inHigh.length);
-      return MINUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return minusDiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MINUS_DI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#minusDiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MINUS_DI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1496,9 +1496,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MINUS_DI_Stream#outRange()}.
+    * {@link MinusDiStream#outRange()}.
     */
-   public MINUS_DI_Stream MINUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public MinusDiStream minusDiOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("MINUS_DI openAndFill", "inHigh", inHigh);
       requireHistory("MINUS_DI openAndFill", inHigh.length);
@@ -1513,5 +1513,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MINUS_DI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return minusDiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

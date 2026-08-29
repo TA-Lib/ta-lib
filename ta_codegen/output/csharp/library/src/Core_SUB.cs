@@ -250,7 +250,7 @@ public partial class Core
    /// <summary>A live <c>SUB</c> stream: one value per closed bar, bit-identical to
    /// <c>SUB</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.SUB_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.SubOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -263,19 +263,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class SUB_Stream
+   public sealed class SubStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal SUB_Stream( Core core ) { this.core = core; }
+      internal SubStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.SUB</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Sub</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -283,7 +283,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal SUB_Stream( SUB_Stream other )
+      internal SubStream( SubStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -291,7 +291,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SUB_Stream other )
+      internal void CopyFrom( SubStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -316,7 +316,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("SUB", "update", RetCode.BadParam);
-         core.SUB_StepImpl(this, inReal0, inReal1);
+         core.SubStepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -336,8 +336,8 @@ public partial class Core
       public double Peek( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("SUB", "peek", RetCode.BadParam);
-         SUB_Stream scratch = new SUB_Stream(this);
-         core.SUB_StepImpl(scratch, inReal0, inReal1);
+         SubStream scratch = new SubStream(this);
+         core.SubStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -362,7 +362,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal0[i]) || !double.IsFinite(inReal1[i]) ) throw Core.StreamFailure("SUB", "updateAndFill", RetCode.BadParam);
-            core.SUB_StepImpl(this, inReal0[i], inReal1[i]);
+            core.SubStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -378,18 +378,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public SUB_Stream Clone()
+      public SubStream Clone()
       {
-         return new SUB_Stream(this);
+         return new SubStream(this);
       }
    }
 
-   internal void SUB_StepImpl( SUB_Stream sp, double inReal0, double inReal1 )
+   internal void SubStepImpl( SubStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 - inReal1;
    }
 
-   private RetCode SUB_OpenImpl( SUB_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SubOpenImpl( SubStream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -422,11 +422,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* SUB_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SUB_Stream SUB_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* SubOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SubStream SubOpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      SubStream sp = new SubStream(this);
+      RetCode retCode = SubOpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -435,12 +435,12 @@ public partial class Core
       throw StreamFailure("SUB", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind SUB_Open (composition seam). */
-   internal SUB_Stream SUB_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
+   /* Internal startIdx-anchored open behind SubOpen (composition seam). */
+   internal SubStream SubOpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
-      SUB_Stream sp = new SUB_Stream(this);
+      SubStream sp = new SubStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = SubOpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -451,11 +451,11 @@ public partial class Core
 
    /// <summary>Open a live <c>SUB</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="SUB_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="SubStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>SUB</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>SUB_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>SUB_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>SubOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal0">Minuend series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Subtrahend series. The warm-up history, oldest bar first.</param>
@@ -466,16 +466,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SUB_Stream SUB_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
+   public SubStream SubOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("SUB open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("SUB", "open", "inReal1", inReal1.Length, inReal0.Length);
-      return SUB_OpenInternal(inReal0, inReal1, 0);
+      return SubOpenInternal(inReal0, inReal1, 0);
    }
 
-   /// <summary><c>SUB_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>SubOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>SUB</c> produces over the
@@ -487,7 +487,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="SUB_Stream.OutRange"/>.</para>
+   /// <see cref="SubStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal0">Minuend series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Subtrahend series. The warm-up history, oldest bar first.</param>
@@ -501,7 +501,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SUB_Stream SUB_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
+   public SubStream SubOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -512,6 +512,6 @@ public partial class Core
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          throw StreamFailure("SUB", "openAndFill", RetCode.BadParam);
       }
-      return SUB_OpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
+      return SubOpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
    }
 }

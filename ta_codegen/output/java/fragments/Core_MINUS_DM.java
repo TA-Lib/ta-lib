@@ -519,7 +519,7 @@
    /**
     * A live MINUS_DM stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MINUS_DM} over the same series.
-    * Open with {@link Core#MINUS_DM_Open}; there is no close — the handle is
+    * Open with {@link Core#minusDmOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -530,7 +530,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MINUS_DM_Stream {
+   public static final class MinusDmStream {
       Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -540,7 +540,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MINUS_DM_Stream( Core core ) { this.core = core; }
+      MinusDmStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -554,7 +554,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MINUS_DM_Stream( MINUS_DM_Stream other ) {
+      MinusDmStream( MinusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -565,7 +565,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MINUS_DM_Stream other ) {
+      void copyFrom( MinusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -591,7 +591,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
-         core.MINUS_DM_StepImpl(this, inHigh, inLow);
+         core.minusDmStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -618,7 +618,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("MINUS_DM updateAndFill: BadParam", RetCode.BadParam);
-            core.MINUS_DM_StepImpl(this, inHigh[i], inLow[i]);
+            core.minusDmStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -634,8 +634,8 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
-         MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
-         core.MINUS_DM_StepImpl(scratch, inHigh, inLow);
+         MinusDmStream scratch = new MinusDmStream(this);
+         core.minusDmStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -652,11 +652,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MINUS_DM_Stream copy() {
-         return new MINUS_DM_Stream(this);
+      public MinusDmStream copy() {
+         return new MinusDmStream(this);
       }
    }
-   void MINUS_DM_StepImpl( MINUS_DM_Stream sp, double inHigh, double inLow )
+   void minusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -698,7 +698,7 @@
          sp.cur_outReal = sp.prevMinusDM;
       }
    }
-   private RetCode MINUS_DM_OpenImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode minusDmOpenImpl( MinusDmStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1017,11 +1017,11 @@
          return RetCode.Success;
       }
    }
-   /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* minusDmOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MinusDmStream minusDmOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
-      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      MinusDmStream sp = new MinusDmStream(this);
+      RetCode retCode = minusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1035,14 +1035,14 @@
       }
       throw new TaLibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MINUS_DM_Open (composition seam). */
-   MINUS_DM_Stream MINUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind minusDmOpen (composition seam). */
+   MinusDmStream minusDmOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
-      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      MinusDmStream sp = new MinusDmStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = minusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1069,16 +1069,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MINUS_DM_Stream MINUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
+   public MinusDmStream minusDmOpen( double inHigh[], double inLow[], int optInTimePeriod )
    {
       requireArgument("MINUS_DM open", "inHigh", inHigh);
       requireHistory("MINUS_DM open", inHigh.length);
       requireArgument("MINUS_DM open", "inLow", inLow);
       requireHistoryLength("MINUS_DM open", "inLow", inLow.length, inHigh.length);
-      return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return minusDmOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MINUS_DM_Open} that also fills the output array(s) bit-identically
+    * {@link Core#minusDmOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MINUS_DM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1086,9 +1086,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MINUS_DM_Stream#outRange()}.
+    * {@link MinusDmStream#outRange()}.
     */
-   public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
+   public MinusDmStream minusDmOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("MINUS_DM openAndFill", "inHigh", inHigh);
       requireHistory("MINUS_DM openAndFill", inHigh.length);
@@ -1101,5 +1101,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MINUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return minusDmOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

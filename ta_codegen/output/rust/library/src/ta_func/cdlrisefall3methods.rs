@@ -527,27 +527,27 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLRISEFALL3METHODS stream: one value per closed bar, bit-identical to [`Core::CDLRISEFALL3METHODS`]
-/// over the same series. Open with [`Core::CDLRISEFALL3METHODS_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlrisefall3methods_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLRISEFALL3METHODS_Stream")]
-pub struct CDLRISEFALL3METHODS_Stream {
+pub struct Cdlrisefall3methodsStream {
     /// The `BodyLong` setting this stream was opened with.
     cs_body_long: CandleSetting,
     /// The `BodyShort` setting this stream was opened with.
     cs_body_short: CandleSetting,
-    state: CDLRISEFALL3METHODS_StreamState,
+    state: Cdlrisefall3methodsStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLRISEFALL3METHODS_Stream {
+impl Cdlrisefall3methodsStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLRISEFALL3METHODS_StreamState::restore_from`.
+    /// allocating new ones. See `Cdlrisefall3methodsStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_long = src.cs_body_long;
         self.cs_body_short = src.cs_body_short;
@@ -558,7 +558,7 @@ impl CDLRISEFALL3METHODS_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLRISEFALL3METHODS_StreamState {
+struct Cdlrisefall3methodsStreamState {
     BodyPeriodTotal: [f64; 5 as usize],
     lag1_inOpen: f64,
     lag2_inOpen: f64,
@@ -587,7 +587,7 @@ struct CDLRISEFALL3METHODS_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLRISEFALL3METHODS_StreamState {
+impl Cdlrisefall3methodsStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -619,14 +619,13 @@ impl CDLRISEFALL3METHODS_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLRISEFALL3METHODS_step_impl(sp: &mut CDLRISEFALL3METHODS_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlrisefall3methods_step_impl(sp: &mut Cdlrisefall3methodsStreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
@@ -763,11 +762,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLRISEFALL3METHODS_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLRISEFALL3METHODS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLRISEFALL3METHODS_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlrisefall3methods_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlrisefall3methods_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlrisefall3methods_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLRISEFALL3METHODS_Stream, RetCode> {
+    ) -> Result<Cdlrisefall3methodsStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1093,7 +1092,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLRISEFALL3METHODS_StreamState {
+        let state = Cdlrisefall3methodsStreamState {
             BodyPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -1120,17 +1119,17 @@ impl Core {
             ringLag_BodyShortTrailingIdx: capLag_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLRISEFALL3METHODS_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(Cdlrisefall3methodsStream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLRISEFALL3METHODS_Open`] (composition seam).
-    pub(crate) fn CDLRISEFALL3METHODS_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlrisefall3methods_open`] (composition seam).
+    pub(crate) fn cdlrisefall3methods_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLRISEFALL3METHODS_Stream, i32), RetCode> {
+    ) -> Result<(Cdlrisefall3methodsStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLRISEFALL3METHODS_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlrisefall3methods_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1157,7 +1156,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLRISEFALL3METHODS_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlrisefall3methods_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1167,11 +1166,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLRISEFALL3METHODS_Open")]
-    pub fn CDLRISEFALL3METHODS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLRISEFALL3METHODS_Stream, i32), RetCode> {
-        self.CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlrisefall3methods_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdlrisefall3methodsStream, i32), RetCode> {
+        self.cdlrisefall3methods_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLRISEFALL3METHODS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlrisefall3methods_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLRISEFALL3METHODS`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1179,12 +1178,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLRISEFALL3METHODS_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlrisefall3methods_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLRISEFALL3METHODS_OpenAndFill")]
-    pub fn CDLRISEFALL3METHODS_OpenAndFill(
+    pub fn cdlrisefall3methods_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLRISEFALL3METHODS_Stream, OutRange), RetCode> {
+    ) -> Result<(Cdlrisefall3methodsStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1201,31 +1200,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLRISEFALL3METHODS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlrisefall3methods_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLRISEFALL3METHODS_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlrisefall3methods_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLRISEFALL3METHODS_OpenAndFillInternal(
+    pub(crate) fn cdlrisefall3methods_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLRISEFALL3METHODS_Stream, RetCode> {
-        self.CDLRISEFALL3METHODS_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<Cdlrisefall3methodsStream, RetCode> {
+        self.cdlrisefall3methods_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLRISEFALL3METHODS_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `Cdlrisefall3methodsStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLRISEFALL3METHODS_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLRISEFALL3METHODS_Stream>>> =
+    static CDLRISEFALL3METHODS_PEEK_SCRATCH: std::cell::Cell<Option<Box<Cdlrisefall3methodsStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLRISEFALL3METHODS_Stream {
+impl Cdlrisefall3methodsStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1243,7 +1242,7 @@ impl CDLRISEFALL3METHODS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLRISEFALL3METHODS_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlrisefall3methods_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1276,7 +1275,7 @@ impl CDLRISEFALL3METHODS_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLRISEFALL3METHODS_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlrisefall3methods_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1300,11 +1299,12 @@ impl CDLRISEFALL3METHODS_Stream {
             return Err(RetCode::BadParam);
         }
         CDLRISEFALL3METHODS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::cdlrisefall3methods_step_impl(&mut scratch, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 
@@ -1324,7 +1324,7 @@ impl CDLRISEFALL3METHODS_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLRISEFALL3METHODS_Stream>();
+    _assert_auto::<Cdlrisefall3methodsStream>();
 };
 
 /***************/

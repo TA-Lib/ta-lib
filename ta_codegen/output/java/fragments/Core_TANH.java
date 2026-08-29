@@ -185,7 +185,7 @@
    /**
     * A live TANH stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TANH} over the same series.
-    * Open with {@link Core#TANH_Open}; there is no close — the handle is
+    * Open with {@link Core#tanhOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -196,13 +196,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TANH_Stream {
+   public static final class TanhStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      TANH_Stream( Core core ) { this.core = core; }
+      TanhStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -216,14 +216,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TANH_Stream( TANH_Stream other ) {
+      TanhStream( TanhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TANH_Stream other ) {
+      void copyFrom( TanhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TANH update: BadParam", RetCode.BadParam);
-         core.TANH_StepImpl(this, inReal);
+         core.tanhStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("TANH updateAndFill: BadParam", RetCode.BadParam);
-            core.TANH_StepImpl(this, inReal[i]);
+            core.tanhStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -287,8 +287,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
-         TANH_Stream scratch = new TANH_Stream(this);
-         core.TANH_StepImpl(scratch, inReal);
+         TanhStream scratch = new TanhStream(this);
+         core.tanhStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -305,15 +305,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TANH_Stream copy() {
-         return new TANH_Stream(this);
+      public TanhStream copy() {
+         return new TanhStream(this);
       }
    }
-   void TANH_StepImpl( TANH_Stream sp, double inReal )
+   void tanhStepImpl( TanhStream sp, double inReal )
    {
       sp.cur_outReal = Math.tanh(inReal);
    }
-   private RetCode TANH_OpenImpl( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode tanhOpenImpl( TanhStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -339,11 +339,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TANH_Stream TANH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* tanhOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TanhStream tanhOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      TanhStream sp = new TanhStream(this);
+      RetCode retCode = tanhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -357,14 +357,14 @@
       }
       throw new TaLibArgumentException("TANH openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TANH_Open (composition seam). */
-   TANH_Stream TANH_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind tanhOpen (composition seam). */
+   TanhStream tanhOpenInternal( double inReal[], int startIdx )
    {
-      TANH_Stream sp = new TANH_Stream(this);
+      TanhStream sp = new TanhStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = tanhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -391,14 +391,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TANH_Stream TANH_Open( double inReal[] )
+   public TanhStream tanhOpen( double inReal[] )
    {
       requireArgument("TANH open", "inReal", inReal);
       requireHistory("TANH open", inReal.length);
-      return TANH_OpenInternal(inReal, 0);
+      return tanhOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#TANH_Open} that also fills the output array(s) bit-identically
+    * {@link Core#tanhOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TANH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -406,9 +406,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TANH_Stream#outRange()}.
+    * {@link TanhStream#outRange()}.
     */
-   public TANH_Stream TANH_OpenAndFill( double inReal[], double outReal[] )
+   public TanhStream tanhOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("TANH openAndFill", "inReal", inReal);
       requireHistory("TANH openAndFill", inReal.length);
@@ -419,5 +419,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TANH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return tanhOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

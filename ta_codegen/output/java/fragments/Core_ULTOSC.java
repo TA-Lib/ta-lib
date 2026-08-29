@@ -741,7 +741,7 @@
    /**
     * A live ULTOSC stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ULTOSC} over the same series.
-    * Open with {@link Core#ULTOSC_Open}; there is no close — the handle is
+    * Open with {@link Core#ultoscOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -752,7 +752,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ULTOSC_Stream {
+   public static final class UltoscStream {
       Core core;
       int optInTimePeriod1;
       int optInTimePeriod2;
@@ -776,7 +776,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      ULTOSC_Stream( Core core ) { this.core = core; }
+      UltoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -790,7 +790,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ULTOSC_Stream( ULTOSC_Stream other ) {
+      UltoscStream( UltoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod1 = other.optInTimePeriod1;
          this.optInTimePeriod2 = other.optInTimePeriod2;
@@ -815,7 +815,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ULTOSC_Stream other ) {
+      void copyFrom( UltoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod1 = other.optInTimePeriod1;
          this.optInTimePeriod2 = other.optInTimePeriod2;
@@ -849,7 +849,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<ULTOSC_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<UltoscStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -866,7 +866,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
-         core.ULTOSC_StepImpl(this, inHigh, inLow, inClose);
+         core.ultoscStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -894,7 +894,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("ULTOSC updateAndFill: BadParam", RetCode.BadParam);
-            core.ULTOSC_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.ultoscStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -912,14 +912,14 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
-         ULTOSC_Stream scratch = PEEK_SCRATCH.get();
+         UltoscStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new ULTOSC_Stream(this);
+            scratch = new UltoscStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.ULTOSC_StepImpl(scratch, inHigh, inLow, inClose);
+         core.ultoscStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -936,11 +936,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ULTOSC_Stream copy() {
-         return new ULTOSC_Stream(this);
+      public UltoscStream copy() {
+         return new UltoscStream(this);
       }
    }
-   void ULTOSC_StepImpl( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
+   void ultoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;
@@ -1042,7 +1042,7 @@
       /* Increment indexes */
       sp.lag1_inClose = inClose;
    }
-   private RetCode ULTOSC_OpenImpl( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ultoscOpenImpl( UltoscStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -1353,11 +1353,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ULTOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ULTOSC_Stream ULTOSC_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* ultoscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   UltoscStream ultoscOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ULTOSC_Stream sp = new ULTOSC_Stream(this);
-      RetCode retCode = ULTOSC_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1);
+      UltoscStream sp = new UltoscStream(this);
+      RetCode retCode = ultoscOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1371,14 +1371,14 @@
       }
       throw new TaLibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ULTOSC_Open (composition seam). */
-   ULTOSC_Stream ULTOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   /* Internal startIdx-anchored open behind ultoscOpen (composition seam). */
+   UltoscStream ultoscOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
-      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      UltoscStream sp = new UltoscStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ULTOSC_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = ultoscOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1405,7 +1405,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ULTOSC_Stream ULTOSC_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   public UltoscStream ultoscOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       requireArgument("ULTOSC open", "inHigh", inHigh);
       requireHistory("ULTOSC open", inHigh.length);
@@ -1413,10 +1413,10 @@
       requireArgument("ULTOSC open", "inClose", inClose);
       requireHistoryLength("ULTOSC open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("ULTOSC open", "inClose", inClose.length, inHigh.length);
-      return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      return ultoscOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
    /**
-    * {@link Core#ULTOSC_Open} that also fills the output array(s) bit-identically
+    * {@link Core#ultoscOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ULTOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1424,9 +1424,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ULTOSC_Stream#outRange()}.
+    * {@link UltoscStream#outRange()}.
     */
-   public ULTOSC_Stream ULTOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
+   public UltoscStream ultoscOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
    {
       requireArgument("ULTOSC openAndFill", "inHigh", inHigh);
       requireHistory("ULTOSC openAndFill", inHigh.length);
@@ -1441,5 +1441,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ULTOSC_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      return ultoscOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
    }

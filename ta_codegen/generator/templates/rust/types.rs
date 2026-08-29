@@ -653,14 +653,14 @@ mod tests {
 
         let one_short = vec![1.0_f64; lookback];
         assert_eq!(
-            core.SMA_Open(&one_short, 30).err(),
+            core.sma_open(&one_short, 30).err(),
             Some(RetCode::InsufficientHistory),
         );
 
         let just_enough = vec![1.0_f64; lookback + 1];
-        assert!(core.SMA_Open(&just_enough, 30).is_ok());
+        assert!(core.sma_open(&just_enough, 30).is_ok());
 
-        assert_eq!(core.SMA_Open(&just_enough, 0).err(), Some(RetCode::BadParam));
+        assert_eq!(core.sma_open(&just_enough, 0).err(), Some(RetCode::BadParam));
 
         // The number C puts on the wire for the same condition. Pinned here
         // because nothing else in this crate compares the two vocabularies, and

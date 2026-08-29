@@ -405,7 +405,7 @@
    /**
     * A live CDLHANGINGMAN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLHANGINGMAN} over the same series.
-    * Open with {@link Core#CDLHANGINGMAN_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlhangingmanOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -416,7 +416,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLHANGINGMAN_Stream {
+   public static final class CdlhangingmanStream {
       Core core;
       double BodyPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -454,7 +454,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLHANGINGMAN_Stream( Core core ) { this.core = core; }
+      CdlhangingmanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -468,7 +468,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLHANGINGMAN_Stream( CDLHANGINGMAN_Stream other ) {
+      CdlhangingmanStream( CdlhangingmanStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -507,7 +507,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLHANGINGMAN_Stream other ) {
+      void copyFrom( CdlhangingmanStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -563,7 +563,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLHANGINGMAN_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlhangingmanStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -580,7 +580,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHANGINGMAN update: BadParam", RetCode.BadParam);
-         core.CDLHANGINGMAN_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlhangingmanStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -609,7 +609,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLHANGINGMAN updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLHANGINGMAN_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlhangingmanStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -627,14 +627,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHANGINGMAN peek: BadParam", RetCode.BadParam);
-         CDLHANGINGMAN_Stream scratch = PEEK_SCRATCH.get();
+         CdlhangingmanStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLHANGINGMAN_Stream(this);
+            scratch = new CdlhangingmanStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLHANGINGMAN_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlhangingmanStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -651,11 +651,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLHANGINGMAN_Stream copy() {
-         return new CDLHANGINGMAN_Stream(this);
+      public CdlhangingmanStream copy() {
+         return new CdlhangingmanStream(this);
       }
    }
-   void CDLHANGINGMAN_StepImpl( CDLHANGINGMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlhangingmanStepImpl( CdlhangingmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -722,7 +722,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLHANGINGMAN_OpenImpl( CDLHANGINGMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlhangingmanOpenImpl( CdlhangingmanStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -919,11 +919,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLHANGINGMAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlhangingmanOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlhangingmanStream cdlhangingmanOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
-      RetCode retCode = CDLHANGINGMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlhangingmanStream sp = new CdlhangingmanStream(this);
+      RetCode retCode = cdlhangingmanOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -937,14 +937,14 @@
       }
       throw new TaLibArgumentException("CDLHANGINGMAN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLHANGINGMAN_Open (composition seam). */
-   CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlhangingmanOpen (composition seam). */
+   CdlhangingmanStream cdlhangingmanOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
+      CdlhangingmanStream sp = new CdlhangingmanStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHANGINGMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlhangingmanOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -971,7 +971,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLHANGINGMAN_Stream CDLHANGINGMAN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlhangingmanStream cdlhangingmanOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLHANGINGMAN open", "inOpen", inOpen);
       requireHistory("CDLHANGINGMAN open", inOpen.length);
@@ -981,10 +981,10 @@
       requireHistoryLength("CDLHANGINGMAN open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHANGINGMAN open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHANGINGMAN open", "inClose", inClose.length, inOpen.length);
-      return CDLHANGINGMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlhangingmanOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLHANGINGMAN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlhangingmanOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLHANGINGMAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -992,9 +992,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLHANGINGMAN_Stream#outRange()}.
+    * {@link CdlhangingmanStream#outRange()}.
     */
-   public CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlhangingmanStream cdlhangingmanOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLHANGINGMAN openAndFill", "inOpen", inOpen);
       requireHistory("CDLHANGINGMAN openAndFill", inOpen.length);
@@ -1011,5 +1011,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLHANGINGMAN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlhangingmanOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

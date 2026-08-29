@@ -265,23 +265,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live SUM stream: one value per closed bar, bit-identical to [`Core::SUM`]
-/// over the same series. Open with [`Core::SUM_Open`]; dropping the handle
+/// over the same series. Open with [`Core::sum_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SUM_Stream")]
-pub struct SUM_Stream {
-    state: SUM_StreamState,
+pub struct SumStream {
+    state: SumStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl SUM_Stream {
+impl SumStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `SUM_StreamState::restore_from`.
+    /// allocating new ones. See `SumStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -290,7 +290,7 @@ impl SUM_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SUM_StreamState {
+struct SumStreamState {
     optInTimePeriod: i32,
     periodTotal: f64,
     ringPos_trailingIdx: usize,
@@ -299,7 +299,7 @@ struct SUM_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl SUM_StreamState {
+impl SumStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -311,14 +311,13 @@ impl SUM_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SUM_step_impl(sp: &mut SUM_StreamState, inReal: f64, outReal: &mut f64) {
+    fn sum_step_impl(sp: &mut SumStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
@@ -334,11 +333,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::SUM_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::SUM_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SUM_OpenImpl(
+    /// The single whole-history transcription behind [`Core::sum_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::sum_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn sum_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<SUM_Stream, RetCode> {
+    ) -> Result<SumStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -414,24 +413,24 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = SUM_StreamState {
+        let state = SumStreamState {
             optInTimePeriod,
             periodTotal,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(SUM_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SumStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::SUM_Open`] (composition seam).
-    pub(crate) fn SUM_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::sum_open`] (composition seam).
+    pub(crate) fn sum_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(SUM_Stream, f64), RetCode> {
+    ) -> Result<(SumStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.SUM_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.sum_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -451,7 +450,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.SUM_Open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.sum_open(&data, 30).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -461,11 +460,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SUM_Open")]
-    pub fn SUM_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(SUM_Stream, f64), RetCode> {
-        self.SUM_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn sum_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(SumStream, f64), RetCode> {
+        self.sum_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::SUM_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::sum_open`] that also fills the output array(s) bit-identically to
     /// [`Core::SUM`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -473,12 +472,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::SUM_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::sum_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_SUM_OpenAndFill")]
-    pub fn SUM_OpenAndFill(
+    pub fn sum_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(SUM_Stream, OutRange), RetCode> {
+    ) -> Result<(SumStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -492,23 +491,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SUM_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.sum_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::SUM_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::sum_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn SUM_OpenAndFillInternal(
+    pub(crate) fn sum_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SUM_Stream, RetCode> {
-        self.SUM_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<SumStream, RetCode> {
+        self.sum_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SUM_Stream {
+impl SumStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -526,7 +525,7 @@ impl SUM_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::SUM_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::sum_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -559,7 +558,7 @@ impl SUM_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::SUM_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::sum_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -604,7 +603,7 @@ impl SUM_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SUM_Stream>();
+    _assert_auto::<SumStream>();
 };
 
 /***************/

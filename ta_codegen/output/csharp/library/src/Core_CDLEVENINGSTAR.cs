@@ -434,7 +434,7 @@ public partial class Core
    /// <summary>A live <c>CDLEVENINGSTAR</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLEVENINGSTAR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLEVENINGSTAR_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdleveningstarOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -447,7 +447,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLEVENINGSTAR_Stream
+   public sealed class CdleveningstarStream
    {
       internal Core core;
       internal double optInPenetration;
@@ -479,12 +479,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLEVENINGSTAR_Stream( Core core ) { this.core = core; }
+      internal CdleveningstarStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLEVENINGSTAR</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdleveningstar</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -493,7 +493,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLEVENINGSTAR_Stream( CDLEVENINGSTAR_Stream other )
+      internal CdleveningstarStream( CdleveningstarStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -528,7 +528,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLEVENINGSTAR_Stream other )
+      internal void CopyFrom( CdleveningstarStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -568,7 +568,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLEVENINGSTAR_Stream? peekScratch;
+      [ThreadStatic] private static CdleveningstarStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -589,7 +589,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLEVENINGSTAR", "update", RetCode.BadParam);
-         core.CDLEVENINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdleveningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -611,14 +611,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLEVENINGSTAR", "peek", RetCode.BadParam);
-         CDLEVENINGSTAR_Stream? scratch = peekScratch;
+         CdleveningstarStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLEVENINGSTAR_Stream(this);
+            scratch = new CdleveningstarStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLEVENINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdleveningstarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -645,7 +645,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLEVENINGSTAR", "updateAndFill", RetCode.BadParam);
-            core.CDLEVENINGSTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdleveningstarStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -661,13 +661,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLEVENINGSTAR_Stream Clone()
+      public CdleveningstarStream Clone()
       {
-         return new CDLEVENINGSTAR_Stream(this);
+         return new CdleveningstarStream(this);
       }
    }
 
-   internal void CDLEVENINGSTAR_StepImpl( CDLEVENINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdleveningstarStepImpl( CdleveningstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -716,7 +716,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLEVENINGSTAR_OpenImpl( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdleveningstarOpenImpl( CdleveningstarStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -879,11 +879,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLEVENINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdleveningstarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdleveningstarStream CdleveningstarOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
+      CdleveningstarStream sp = new CdleveningstarStream(this);
+      RetCode retCode = CdleveningstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -892,12 +892,12 @@ public partial class Core
       throw StreamFailure("CDLEVENINGSTAR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLEVENINGSTAR_Open (composition seam). */
-   internal CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind CdleveningstarOpen (composition seam). */
+   internal CdleveningstarStream CdleveningstarOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
-      CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
+      CdleveningstarStream sp = new CdleveningstarStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdleveningstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -908,12 +908,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLEVENINGSTAR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLEVENINGSTAR_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdleveningstarStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLEVENINGSTAR</c> reports
    /// for that bar.</para>
    /// <para>The history must hold at least <c>CDLEVENINGSTAR_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLEVENINGSTAR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdleveningstarOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -928,7 +928,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
+   public CdleveningstarStream CdleveningstarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGSTAR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGSTAR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -938,10 +938,10 @@ public partial class Core
       RequireHistoryLength("CDLEVENINGSTAR", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGSTAR", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGSTAR", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return CdleveningstarOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
-   /// <summary><c>CDLEVENINGSTAR_Open</c> that also fills the output array(s) over the
+   /// <summary><c>CdleveningstarOpen</c> that also fills the output array(s) over the
    /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLEVENINGSTAR</c>
@@ -955,7 +955,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLEVENINGSTAR_Stream.OutRange"/>.</para>
+   /// <see cref="CdleveningstarStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -973,7 +973,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
+   public CdleveningstarStream CdleveningstarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGSTAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGSTAR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -985,6 +985,6 @@ public partial class Core
       RequireHistoryLength("CDLEVENINGSTAR", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGSTAR", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLEVENINGSTAR", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLEVENINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
+      return CdleveningstarOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }

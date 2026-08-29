@@ -679,7 +679,7 @@
    /**
     * A live STOCH stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#STOCH} over the same series.
-    * Open with {@link Core#STOCH_Open}; there is no close — the handle is
+    * Open with {@link Core#stochOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -690,7 +690,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class STOCH_Stream {
+   public static final class StochStream {
       Core core;
       int optInFastK_Period;
       int optInSlowK_Period;
@@ -712,12 +712,12 @@
       double cur_outSlowK;
       double cur_outSlowD;
       Value cachedValue;
-      MA_Stream sub0;
-      MA_Stream sub1;
+      MaStream sub0;
+      MaStream sub1;
       int outRangeBegIdx;
       int outRangeCount;
 
-      STOCH_Stream( Core core ) { this.core = core; }
+      StochStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -731,7 +731,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      STOCH_Stream( STOCH_Stream other ) {
+      StochStream( StochStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInSlowK_Period = other.optInSlowK_Period;
@@ -753,13 +753,13 @@
          this.cur_outSlowK = other.cur_outSlowK;
          this.cur_outSlowD = other.cur_outSlowD;
          this.cachedValue = other.cachedValue;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( STOCH_Stream other ) {
+      void copyFrom( StochStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInSlowK_Period = other.optInSlowK_Period;
@@ -794,12 +794,12 @@
          this.cur_outSlowD = other.cur_outSlowD;
          this.cachedValue = other.cachedValue;
          if( this.sub0 == null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
          if( this.sub1 == null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.copyFrom(other.sub1);
          }
@@ -808,7 +808,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<STOCH_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<StochStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -838,7 +838,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
-         core.STOCH_StepImpl(this, inHigh, inLow, inClose);
+         core.stochStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
          return this.cachedValue;
@@ -870,7 +870,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                   throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-               core.STOCH_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
                outSlowK[i] = this.cur_outSlowK;
                outSlowD[i] = this.cur_outSlowD;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -893,14 +893,14 @@
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
-         STOCH_Stream scratch = PEEK_SCRATCH.get();
+         StochStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new STOCH_Stream(this);
+            scratch = new StochStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.STOCH_StepImpl(scratch, inHigh, inLow, inClose);
+         core.stochStepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outSlowK, scratch.cur_outSlowD);
       }
 
@@ -917,11 +917,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public STOCH_Stream copy() {
-         return new STOCH_Stream(this);
+      public StochStream copy() {
+         return new StochStream(this);
       }
    }
-   void STOCH_StepImpl( STOCH_Stream sp, double inHigh, double inLow, double inClose )
+   void stochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;
@@ -996,7 +996,7 @@
       sp.cur_outSlowK = cur_tempBuffer;
       sp.cur_outSlowD = cur_outSlowD;
    }
-   private RetCode STOCH_OpenImpl( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[], int outStride )
+   private RetCode stochOpenImpl( StochStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[], int outStride )
    {
       RetCode retCode;
       double lowest = 0;
@@ -1209,7 +1209,7 @@
        */
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
+      MaStream sub0 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
       OutRange _xr0 = MA(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
@@ -1225,7 +1225,7 @@
        */
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      MaStream sub1 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
@@ -1282,14 +1282,14 @@
       sp.sub1 = sub1;
       sp.cur_outSlowK = sc_outSlowK[outNBElement.value - 1];
       sp.cur_outSlowD = sc_outSlowD[outNBElement.value - 1];
-      sp.cachedValue = new STOCH_Stream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
+      sp.cachedValue = new StochStream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
       return RetCode.Success;
    }
-   /* STOCH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   STOCH_Stream STOCH_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[] )
+   /* stochOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   StochStream stochOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[] )
    {
-      STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1);
+      StochStream sp = new StochStream(this);
+      RetCode retCode = stochOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1303,15 +1303,15 @@
       }
       throw new TaLibArgumentException("STOCH openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind STOCH_Open (composition seam). */
-   STOCH_Stream STOCH_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   /* Internal startIdx-anchored open behind stochOpen (composition seam). */
+   StochStream stochOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
-      STOCH_Stream sp = new STOCH_Stream(this);
+      StochStream sp = new StochStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outSlowK = new double[1];
       double[] sink_outSlowD = new double[1];
-      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sink_outSlowK, sink_outSlowD, 0);
+      RetCode retCode = stochOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sink_outSlowK, sink_outSlowD, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1338,7 +1338,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public STOCH_Stream STOCH_Open( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   public StochStream stochOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       requireArgument("STOCH open", "inHigh", inHigh);
       requireHistory("STOCH open", inHigh.length);
@@ -1348,10 +1348,10 @@
       requireArgument("STOCH open", "inClose", inClose);
       requireHistoryLength("STOCH open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("STOCH open", "inClose", inClose.length, inHigh.length);
-      return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      return stochOpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
    }
    /**
-    * {@link Core#STOCH_Open} that also fills the output array(s) bit-identically
+    * {@link Core#stochOpen} that also fills the output array(s) bit-identically
     * to {@link Core#STOCH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1359,9 +1359,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link STOCH_Stream#outRange()}.
+    * {@link StochStream#outRange()}.
     */
-   public STOCH_Stream STOCH_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double outSlowK[], double outSlowD[] )
+   public StochStream stochOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double outSlowK[], double outSlowD[] )
    {
       requireArgument("STOCH openAndFill", "inHigh", inHigh);
       requireHistory("STOCH openAndFill", inHigh.length);
@@ -1379,5 +1379,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return STOCH_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      return stochOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
    }

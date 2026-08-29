@@ -869,12 +869,12 @@ public partial class Core
    /// </remarks>
    /// <param name="SMI">Stochastic Momentum Index, -100 to +100.</param>
    /// <param name="SMISignal">Exponential average of the SMI line.</param>
-   public readonly record struct SMI_Value( double SMI, double SMISignal );
+   public readonly record struct SmiValue( double SMI, double SMISignal );
 
    /// <summary>A live <c>SMI</c> stream: one value per closed bar, bit-identical to
    /// <c>SMI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.SMI_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.SmiOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -887,7 +887,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class SMI_Stream
+   public sealed class SmiStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -918,12 +918,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal SMI_Stream( Core core ) { this.core = core; }
+      internal SmiStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.SMI</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Smi</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -931,7 +931,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal SMI_Stream( SMI_Stream other )
+      internal SmiStream( SmiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -966,7 +966,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SMI_Stream other )
+      internal void CopyFrom( SmiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -1008,7 +1008,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static SMI_Stream? peekScratch;
+      [ThreadStatic] private static SmiStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1025,12 +1025,12 @@ public partial class Core
       /// <param name="inLow">This bar's low price.</param>
       /// <param name="inClose">This bar's close price.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public SMI_Value Update( double inHigh, double inLow, double inClose )
+      public SmiValue Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("SMI", "update", RetCode.BadParam);
-         core.SMI_StepImpl(this, inHigh, inLow, inClose);
+         core.SmiStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new SMI_Value(cur_outSMI, cur_outSMISignal);
+         return new SmiValue(cur_outSMI, cur_outSMISignal);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -1046,18 +1046,18 @@ public partial class Core
       /// <param name="inLow">This bar's low price.</param>
       /// <param name="inClose">This bar's close price.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public SMI_Value Peek( double inHigh, double inLow, double inClose )
+      public SmiValue Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("SMI", "peek", RetCode.BadParam);
-         SMI_Stream? scratch = peekScratch;
+         SmiStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new SMI_Stream(this);
+            scratch = new SmiStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.SMI_StepImpl(scratch, inHigh, inLow, inClose);
-         return new SMI_Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
+         core.SmiStepImpl(scratch, inHigh, inLow, inClose);
+         return new SmiValue(scratch.cur_outSMI, scratch.cur_outSMISignal);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -1083,7 +1083,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("SMI", "updateAndFill", RetCode.BadParam);
-            core.SMI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.SmiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outSMI[i] = cur_outSMI;
             outSMISignal[i] = cur_outSMISignal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -1095,18 +1095,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public SMI_Value Value => new SMI_Value(cur_outSMI, cur_outSMISignal);
+      public SmiValue Value => new SmiValue(cur_outSMI, cur_outSMISignal);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public SMI_Stream Clone()
+      public SmiStream Clone()
       {
-         return new SMI_Stream(this);
+         return new SmiStream(this);
       }
    }
 
-   internal void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
+   internal void SmiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double num = 0.0;
@@ -1188,7 +1188,7 @@ public partial class Core
       sp.today = sp.today + 1;
    }
 
-   private RetCode SMI_OpenImpl( SMI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal, int outStride )
+   private RetCode SmiOpenImpl( SmiStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1529,11 +1529,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* SMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SMI_Stream SMI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal )
+   /* SmiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SmiStream SmiOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal )
    {
-      SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outSMI, outSMISignal, 1);
+      SmiStream sp = new SmiStream(this);
+      RetCode retCode = SmiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outSMI, outSMISignal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1542,13 +1542,13 @@ public partial class Core
       throw StreamFailure("SMI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind SMI_Open (composition seam). */
-   internal SMI_Stream SMI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind SmiOpen (composition seam). */
+   internal SmiStream SmiOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      SMI_Stream sp = new SMI_Stream(this);
+      SmiStream sp = new SmiStream(this);
       double[] sink_outSMI = new double[1];
       double[] sink_outSMISignal = new double[1];
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outSMI, sink_outSMISignal, 0);
+      RetCode retCode = SmiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outSMI, sink_outSMISignal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1559,11 +1559,11 @@ public partial class Core
 
    /// <summary>Open a live <c>SMI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="SMI_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="SmiStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>SMI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>SMI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>SMI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>SmiOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price series. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price series. The warm-up history, oldest bar first.</param>
@@ -1583,7 +1583,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SMI_Stream SMI_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public SmiStream SmiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SMI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SMI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1591,10 +1591,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("SMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("SMI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("SMI", "open", "inClose", inClose.Length, inHigh.Length);
-      return SMI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      return SmiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
-   /// <summary><c>SMI_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>SmiOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>SMI</c> produces over the
@@ -1606,7 +1606,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="SMI_Stream.OutRange"/>.</para>
+   /// <see cref="SmiStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price series. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price series. The warm-up history, oldest bar first.</param>
@@ -1631,7 +1631,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SMI_Stream SMI_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outSMI, Span<double> outSMISignal )
+   public SmiStream SmiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outSMI, Span<double> outSMISignal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SMI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SMI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1645,6 +1645,6 @@ public partial class Core
       if( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || outSMI.Overlaps(outSMISignal) ) {
          throw StreamFailure("SMI", "openAndFill", RetCode.BadParam);
       }
-      return SMI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outSMI, outSMISignal);
+      return SmiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outSMI, outSMISignal);
    }
 }

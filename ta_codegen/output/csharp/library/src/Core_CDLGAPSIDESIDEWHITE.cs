@@ -403,7 +403,7 @@ public partial class Core
    /// <summary>A live <c>CDLGAPSIDESIDEWHITE</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLGAPSIDESIDEWHITE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLGAPSIDESIDEWHITE_Open"/>. There is no close
+   /// <para>Open with <see cref="Core.CdlgapsidesidewhiteOpen"/>. There is no close
    /// and nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -416,7 +416,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLGAPSIDESIDEWHITE_Stream
+   public sealed class CdlgapsidesidewhiteStream
    {
       internal Core core;
       internal double NearPeriodTotal;
@@ -445,12 +445,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLGAPSIDESIDEWHITE_Stream( Core core ) { this.core = core; }
+      internal CdlgapsidesidewhiteStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLGAPSIDESIDEWHITE</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdlgapsidesidewhite</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -459,7 +459,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLGAPSIDESIDEWHITE_Stream( CDLGAPSIDESIDEWHITE_Stream other )
+      internal CdlgapsidesidewhiteStream( CdlgapsidesidewhiteStream other )
       {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
@@ -491,7 +491,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLGAPSIDESIDEWHITE_Stream other )
+      internal void CopyFrom( CdlgapsidesidewhiteStream other )
       {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
@@ -528,7 +528,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLGAPSIDESIDEWHITE_Stream? peekScratch;
+      [ThreadStatic] private static CdlgapsidesidewhiteStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -549,7 +549,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLGAPSIDESIDEWHITE", "update", RetCode.BadParam);
-         core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlgapsidesidewhiteStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -571,14 +571,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLGAPSIDESIDEWHITE", "peek", RetCode.BadParam);
-         CDLGAPSIDESIDEWHITE_Stream? scratch = peekScratch;
+         CdlgapsidesidewhiteStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLGAPSIDESIDEWHITE_Stream(this);
+            scratch = new CdlgapsidesidewhiteStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLGAPSIDESIDEWHITE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlgapsidesidewhiteStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -605,7 +605,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLGAPSIDESIDEWHITE", "updateAndFill", RetCode.BadParam);
-            core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlgapsidesidewhiteStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -621,13 +621,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLGAPSIDESIDEWHITE_Stream Clone()
+      public CdlgapsidesidewhiteStream Clone()
       {
-         return new CDLGAPSIDESIDEWHITE_Stream(this);
+         return new CdlgapsidesidewhiteStream(this);
       }
    }
 
-   internal void CDLGAPSIDESIDEWHITE_StepImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlgapsidesidewhiteStepImpl( CdlgapsidesidewhiteStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -670,7 +670,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLGAPSIDESIDEWHITE_OpenImpl( CDLGAPSIDESIDEWHITE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlgapsidesidewhiteOpenImpl( CdlgapsidesidewhiteStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -821,11 +821,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLGAPSIDESIDEWHITE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlgapsidesidewhiteOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlgapsidesidewhiteStream CdlgapsidesidewhiteOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlgapsidesidewhiteStream sp = new CdlgapsidesidewhiteStream(this);
+      RetCode retCode = CdlgapsidesidewhiteOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -834,12 +834,12 @@ public partial class Core
       throw StreamFailure("CDLGAPSIDESIDEWHITE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLGAPSIDESIDEWHITE_Open (composition seam). */
-   internal CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlgapsidesidewhiteOpen (composition seam). */
+   internal CdlgapsidesidewhiteStream CdlgapsidesidewhiteOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
+      CdlgapsidesidewhiteStream sp = new CdlgapsidesidewhiteStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlgapsidesidewhiteOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -850,13 +850,13 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLGAPSIDESIDEWHITE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLGAPSIDESIDEWHITE_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="CdlgapsidesidewhiteStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what
    /// <c>CDLGAPSIDESIDEWHITE</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLGAPSIDESIDEWHITE_Lookback(...) +
    /// 1</c> bars (unstable-period aware). Nothing is written to any caller
-   /// array; use <c>CDLGAPSIDESIDEWHITE_OpenAndFill</c> to get the warm-up
-   /// values as well.</para>
+   /// array; use <c>CdlgapsidesidewhiteOpenAndFill</c> to get the warm-up values
+   /// as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -870,7 +870,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlgapsidesidewhiteStream CdlgapsidesidewhiteOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLGAPSIDESIDEWHITE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLGAPSIDESIDEWHITE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -880,10 +880,10 @@ public partial class Core
       RequireHistoryLength("CDLGAPSIDESIDEWHITE", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLGAPSIDESIDEWHITE", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLGAPSIDESIDEWHITE", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlgapsidesidewhiteOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLGAPSIDESIDEWHITE_Open</c> that also fills the output array(s) over
+   /// <summary><c>CdlgapsidesidewhiteOpen</c> that also fills the output array(s) over
    /// the whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLGAPSIDESIDEWHITE</c>
@@ -897,7 +897,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLGAPSIDESIDEWHITE_Stream.OutRange"/>.</para>
+   /// <see cref="CdlgapsidesidewhiteStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -916,7 +916,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlgapsidesidewhiteStream CdlgapsidesidewhiteOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLGAPSIDESIDEWHITE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLGAPSIDESIDEWHITE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -928,6 +928,6 @@ public partial class Core
       RequireHistoryLength("CDLGAPSIDESIDEWHITE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLGAPSIDESIDEWHITE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLGAPSIDESIDEWHITE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLGAPSIDESIDEWHITE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlgapsidesidewhiteOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

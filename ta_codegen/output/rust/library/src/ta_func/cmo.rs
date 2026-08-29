@@ -447,23 +447,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CMO stream: one value per closed bar, bit-identical to [`Core::CMO`]
-/// over the same series. Open with [`Core::CMO_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cmo_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CMO_Stream")]
-pub struct CMO_Stream {
-    state: CMO_StreamState,
+pub struct CmoStream {
+    state: CmoStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CMO_Stream {
+impl CmoStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CMO_StreamState::restore_from`.
+    /// allocating new ones. See `CmoStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -472,7 +472,7 @@ impl CMO_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CMO_StreamState {
+struct CmoStreamState {
     optInTimePeriod: i32,
     prevGain: f64,
     prevLoss: f64,
@@ -480,7 +480,7 @@ struct CMO_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CMO_StreamState {
+impl CmoStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -491,14 +491,13 @@ impl CMO_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CMO_step_impl(sp: &mut CMO_StreamState, inReal: f64, outReal: &mut f64) {
+    fn cmo_step_impl(sp: &mut CmoStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
@@ -525,11 +524,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CMO_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CMO_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CMO_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cmo_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cmo_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cmo_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<CMO_Stream, RetCode> {
+    ) -> Result<CmoStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -557,7 +556,7 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let state = CMO_StreamState {
+            let state = CmoStreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
@@ -574,7 +573,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(CMO_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(CmoStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -760,23 +759,23 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = CMO_StreamState {
+        let state = CmoStreamState {
             optInTimePeriod,
             prevGain,
             prevLoss,
             prevValue,
         };
-        Ok(CMO_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CmoStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CMO_Open`] (composition seam).
-    pub(crate) fn CMO_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cmo_open`] (composition seam).
+    pub(crate) fn cmo_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CMO_Stream, f64), RetCode> {
+    ) -> Result<(CmoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.CMO_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.cmo_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -796,7 +795,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CMO_Open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.cmo_open(&data, 14).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -806,11 +805,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CMO_Open")]
-    pub fn CMO_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMO_Stream, f64), RetCode> {
-        self.CMO_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn cmo_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CmoStream, f64), RetCode> {
+        self.cmo_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::CMO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cmo_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CMO`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -818,12 +817,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CMO_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cmo_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CMO_OpenAndFill")]
-    pub fn CMO_OpenAndFill(
+    pub fn cmo_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(CMO_Stream, OutRange), RetCode> {
+    ) -> Result<(CmoStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -837,23 +836,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CMO_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.cmo_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CMO_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cmo_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CMO_OpenAndFillInternal(
+    pub(crate) fn cmo_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CMO_Stream, RetCode> {
-        self.CMO_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<CmoStream, RetCode> {
+        self.cmo_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CMO_Stream {
+impl CmoStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -871,7 +870,7 @@ impl CMO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::CMO_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::cmo_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -904,7 +903,7 @@ impl CMO_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CMO_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::cmo_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -947,7 +946,7 @@ impl CMO_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CMO_Stream>();
+    _assert_auto::<CmoStream>();
 };
 
 /***************/

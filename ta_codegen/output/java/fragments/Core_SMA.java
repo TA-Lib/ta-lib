@@ -298,7 +298,7 @@
    /**
     * A live SMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SMA} over the same series.
-    * Open with {@link Core#SMA_Open}; there is no close — the handle is
+    * Open with {@link Core#smaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -309,7 +309,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SMA_Stream {
+   public static final class SmaStream {
       Core core;
       int optInTimePeriod;
       double periodTotal;
@@ -320,7 +320,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      SMA_Stream( Core core ) { this.core = core; }
+      SmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -334,7 +334,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SMA_Stream( SMA_Stream other ) {
+      SmaStream( SmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -346,7 +346,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SMA_Stream other ) {
+      void copyFrom( SmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -377,7 +377,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
-         core.SMA_StepImpl(this, inReal);
+         core.smaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -403,7 +403,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("SMA updateAndFill: BadParam", RetCode.BadParam);
-            core.SMA_StepImpl(this, inReal[i]);
+            core.smaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -419,8 +419,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
-         SMA_Stream scratch = new SMA_Stream(this);
-         core.SMA_StepImpl(scratch, inReal);
+         SmaStream scratch = new SmaStream(this);
+         core.smaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -437,11 +437,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SMA_Stream copy() {
-         return new SMA_Stream(this);
+      public SmaStream copy() {
+         return new SmaStream(this);
       }
    }
-   void SMA_StepImpl( SMA_Stream sp, double inReal )
+   void smaStepImpl( SmaStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -457,7 +457,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode SMA_OpenImpl( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode smaOpenImpl( SmaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -543,11 +543,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SMA_Stream SMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* smaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SmaStream smaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      SmaStream sp = new SmaStream(this);
+      RetCode retCode = smaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -561,14 +561,14 @@
       }
       throw new TaLibArgumentException("SMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SMA_Open (composition seam). */
-   SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind smaOpen (composition seam). */
+   SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      SMA_Stream sp = new SMA_Stream(this);
+      SmaStream sp = new SmaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = smaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -595,14 +595,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SMA_Stream SMA_Open( double inReal[], int optInTimePeriod )
+   public SmaStream smaOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("SMA open", "inReal", inReal);
       requireHistory("SMA open", inReal.length);
-      return SMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return smaOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#SMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#smaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -610,9 +610,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SMA_Stream#outRange()}.
+    * {@link SmaStream#outRange()}.
     */
-   public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public SmaStream smaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("SMA openAndFill", "inReal", inReal);
       requireHistory("SMA openAndFill", inReal.length);
@@ -623,5 +623,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return smaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -341,7 +341,7 @@
    /**
     * A live CDLSHORTLINE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLSHORTLINE} over the same series.
-    * Open with {@link Core#CDLSHORTLINE_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlshortlineOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -352,7 +352,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLSHORTLINE_Stream {
+   public static final class CdlshortlineStream {
       Core core;
       double BodyPeriodTotal;
       double ShadowPeriodTotal;
@@ -372,7 +372,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLSHORTLINE_Stream( Core core ) { this.core = core; }
+      CdlshortlineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -386,7 +386,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLSHORTLINE_Stream( CDLSHORTLINE_Stream other ) {
+      CdlshortlineStream( CdlshortlineStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -407,7 +407,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLSHORTLINE_Stream other ) {
+      void copyFrom( CdlshortlineStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -437,7 +437,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLSHORTLINE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlshortlineStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -454,7 +454,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHORTLINE update: BadParam", RetCode.BadParam);
-         core.CDLSHORTLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlshortlineStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -483,7 +483,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLSHORTLINE updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLSHORTLINE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlshortlineStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -501,14 +501,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHORTLINE peek: BadParam", RetCode.BadParam);
-         CDLSHORTLINE_Stream scratch = PEEK_SCRATCH.get();
+         CdlshortlineStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLSHORTLINE_Stream(this);
+            scratch = new CdlshortlineStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLSHORTLINE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlshortlineStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -525,11 +525,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLSHORTLINE_Stream copy() {
-         return new CDLSHORTLINE_Stream(this);
+      public CdlshortlineStream copy() {
+         return new CdlshortlineStream(this);
       }
    }
-   void CDLSHORTLINE_StepImpl( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlshortlineStepImpl( CdlshortlineStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -564,7 +564,7 @@
          sp.ringPos_ShadowTrailingIdx = 0;
       }
    }
-   private RetCode CDLSHORTLINE_OpenImpl( CDLSHORTLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlshortlineOpenImpl( CdlshortlineStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -690,11 +690,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLSHORTLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlshortlineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlshortlineStream cdlshortlineOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
-      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlshortlineStream sp = new CdlshortlineStream(this);
+      RetCode retCode = cdlshortlineOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -708,14 +708,14 @@
       }
       throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLSHORTLINE_Open (composition seam). */
-   CDLSHORTLINE_Stream CDLSHORTLINE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlshortlineOpen (composition seam). */
+   CdlshortlineStream cdlshortlineOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
+      CdlshortlineStream sp = new CdlshortlineStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlshortlineOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -742,7 +742,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLSHORTLINE_Stream CDLSHORTLINE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlshortlineStream cdlshortlineOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLSHORTLINE open", "inOpen", inOpen);
       requireHistory("CDLSHORTLINE open", inOpen.length);
@@ -752,10 +752,10 @@
       requireHistoryLength("CDLSHORTLINE open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLSHORTLINE open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLSHORTLINE open", "inClose", inClose.length, inOpen.length);
-      return CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlshortlineOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLSHORTLINE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlshortlineOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLSHORTLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -763,9 +763,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLSHORTLINE_Stream#outRange()}.
+    * {@link CdlshortlineStream#outRange()}.
     */
-   public CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlshortlineStream cdlshortlineOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLSHORTLINE openAndFill", "inOpen", inOpen);
       requireHistory("CDLSHORTLINE openAndFill", inOpen.length);
@@ -782,5 +782,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLSHORTLINE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlshortlineOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

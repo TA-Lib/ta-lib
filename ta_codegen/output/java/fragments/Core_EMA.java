@@ -352,7 +352,7 @@
    /**
     * A live EMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#EMA} over the same series.
-    * Open with {@link Core#EMA_Open}; there is no close — the handle is
+    * Open with {@link Core#emaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -363,7 +363,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class EMA_Stream {
+   public static final class EmaStream {
       Core core;
       int optInTimePeriod;
       double optInK_1;
@@ -372,7 +372,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      EMA_Stream( Core core ) { this.core = core; }
+      EmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -386,7 +386,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      EMA_Stream( EMA_Stream other ) {
+      EmaStream( EmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInK_1 = other.optInK_1;
@@ -396,7 +396,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( EMA_Stream other ) {
+      void copyFrom( EmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInK_1 = other.optInK_1;
@@ -421,7 +421,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
-         core.EMA_StepImpl(this, inReal);
+         core.emaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -447,7 +447,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("EMA updateAndFill: BadParam", RetCode.BadParam);
-            core.EMA_StepImpl(this, inReal[i]);
+            core.emaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -463,8 +463,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
-         EMA_Stream scratch = new EMA_Stream(this);
-         core.EMA_StepImpl(scratch, inReal);
+         EmaStream scratch = new EmaStream(this);
+         core.emaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -481,11 +481,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public EMA_Stream copy() {
-         return new EMA_Stream(this);
+      public EmaStream copy() {
+         return new EmaStream(this);
       }
    }
-   void EMA_StepImpl( EMA_Stream sp, double inReal )
+   void emaStepImpl( EmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -494,7 +494,7 @@
       sp.prevMA = Math.fma(inReal - sp.prevMA, sp.optInK_1, sp.prevMA);
       sp.cur_outReal = sp.prevMA;
    }
-   private RetCode EMA_OpenImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode emaOpenImpl( EmaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -605,11 +605,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* EMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   EMA_Stream EMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* emaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   EmaStream emaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      EMA_Stream sp = new EMA_Stream(this);
-      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      EmaStream sp = new EmaStream(this);
+      RetCode retCode = emaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,14 +623,14 @@
       }
       throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind EMA_Open (composition seam). */
-   EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind emaOpen (composition seam). */
+   EmaStream emaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      EMA_Stream sp = new EMA_Stream(this);
+      EmaStream sp = new EmaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = emaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -657,14 +657,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public EMA_Stream EMA_Open( double inReal[], int optInTimePeriod )
+   public EmaStream emaOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("EMA open", "inReal", inReal);
       requireHistory("EMA open", inReal.length);
-      return EMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return emaOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#EMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#emaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#EMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -672,9 +672,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link EMA_Stream#outRange()}.
+    * {@link EmaStream#outRange()}.
     */
-   public EMA_Stream EMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public EmaStream emaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("EMA openAndFill", "inReal", inReal);
       requireHistory("EMA openAndFill", inReal.length);
@@ -685,5 +685,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return EMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return emaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

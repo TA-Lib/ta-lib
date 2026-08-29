@@ -513,7 +513,7 @@
    /**
     * A live T3 stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#T3} over the same series.
-    * Open with {@link Core#T3_Open}; there is no close — the handle is
+    * Open with {@link Core#t3Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -524,7 +524,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class T3_Stream {
+   public static final class T3Stream {
       Core core;
       int optInTimePeriod;
       double optInVFactor;
@@ -544,7 +544,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      T3_Stream( Core core ) { this.core = core; }
+      T3Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -558,7 +558,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      T3_Stream( T3_Stream other ) {
+      T3Stream( T3Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInVFactor = other.optInVFactor;
@@ -579,7 +579,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( T3_Stream other ) {
+      void copyFrom( T3Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInVFactor = other.optInVFactor;
@@ -615,7 +615,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
-         core.T3_StepImpl(this, inReal);
+         core.t3StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -641,7 +641,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("T3 updateAndFill: BadParam", RetCode.BadParam);
-            core.T3_StepImpl(this, inReal[i]);
+            core.t3StepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -657,8 +657,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
-         T3_Stream scratch = new T3_Stream(this);
-         core.T3_StepImpl(scratch, inReal);
+         T3Stream scratch = new T3Stream(this);
+         core.t3StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -675,11 +675,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public T3_Stream copy() {
-         return new T3_Stream(this);
+      public T3Stream copy() {
+         return new T3Stream(this);
       }
    }
-   void T3_StepImpl( T3_Stream sp, double inReal )
+   void t3StepImpl( T3Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -693,7 +693,7 @@
       sp.e6 = Math.fma(sp.one_minus_k, sp.e6, sp.k * sp.e5);
       sp.cur_outReal = Math.fma(sp.c4, sp.e3, Math.fma(sp.c3, sp.e4, Math.fma(sp.c1, sp.e6, sp.c2 * sp.e5)));
    }
-   private RetCode T3_OpenImpl( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode t3OpenImpl( T3Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -899,11 +899,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* T3_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   T3_Stream T3_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* t3OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   T3Stream t3OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1);
+      T3Stream sp = new T3Stream(this);
+      RetCode retCode = t3OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -917,14 +917,14 @@
       }
       throw new TaLibArgumentException("T3 openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind T3_Open (composition seam). */
-   T3_Stream T3_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
+   /* Internal startIdx-anchored open behind t3Open (composition seam). */
+   T3Stream t3OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
    {
-      T3_Stream sp = new T3_Stream(this);
+      T3Stream sp = new T3Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = t3OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -951,14 +951,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public T3_Stream T3_Open( double inReal[], int optInTimePeriod, double optInVFactor )
+   public T3Stream t3Open( double inReal[], int optInTimePeriod, double optInVFactor )
    {
       requireArgument("T3 open", "inReal", inReal);
       requireHistory("T3 open", inReal.length);
-      return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
+      return t3OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
    /**
-    * {@link Core#T3_Open} that also fills the output array(s) bit-identically
+    * {@link Core#t3Open} that also fills the output array(s) bit-identically
     * to {@link Core#T3} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -966,9 +966,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link T3_Stream#outRange()}.
+    * {@link T3Stream#outRange()}.
     */
-   public T3_Stream T3_OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
+   public T3Stream t3OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
    {
       requireArgument("T3 openAndFill", "inReal", inReal);
       requireHistory("T3 openAndFill", inReal.length);
@@ -979,5 +979,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return T3_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      return t3OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
    }

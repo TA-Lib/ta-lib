@@ -517,7 +517,7 @@ public partial class Core
    /// <summary>A live <c>TSF</c> stream: one value per closed bar, bit-identical to
    /// <c>TSF</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.TSF_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.TsfOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -530,7 +530,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class TSF_Stream
+   public sealed class TsfStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -551,12 +551,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal TSF_Stream( Core core ) { this.core = core; }
+      internal TsfStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.TSF</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Tsf</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -564,7 +564,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal TSF_Stream( TSF_Stream other )
+      internal TsfStream( TsfStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -587,7 +587,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( TSF_Stream other )
+      internal void CopyFrom( TsfStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -628,7 +628,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TSF", "update", RetCode.BadParam);
-         core.TSF_StepImpl(this, inReal);
+         core.TsfStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -647,8 +647,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TSF", "peek", RetCode.BadParam);
-         TSF_Stream scratch = new TSF_Stream(this);
-         core.TSF_StepImpl(scratch, inReal);
+         TsfStream scratch = new TsfStream(this);
+         core.TsfStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -672,7 +672,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("TSF", "updateAndFill", RetCode.BadParam);
-            core.TSF_StepImpl(this, inReal[i]);
+            core.TsfStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -688,13 +688,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public TSF_Stream Clone()
+      public TsfStream Clone()
       {
-         return new TSF_Stream(this);
+         return new TsfStream(this);
       }
    }
 
-   internal void TSF_StepImpl( TSF_Stream sp, double inReal )
+   internal void TsfStepImpl( TsfStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -796,7 +796,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode TSF_OpenImpl( TSF_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TsfOpenImpl( TsfStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1022,11 +1022,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* TSF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal TSF_Stream TSF_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* TsfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal TsfStream TsfOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      TSF_Stream sp = new TSF_Stream(this);
-      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      TsfStream sp = new TsfStream(this);
+      RetCode retCode = TsfOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1035,12 +1035,12 @@ public partial class Core
       throw StreamFailure("TSF", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind TSF_Open (composition seam). */
-   internal TSF_Stream TSF_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind TsfOpen (composition seam). */
+   internal TsfStream TsfOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      TSF_Stream sp = new TSF_Stream(this);
+      TsfStream sp = new TsfStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = TsfOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1051,11 +1051,11 @@ public partial class Core
 
    /// <summary>Open a live <c>TSF</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="TSF_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="TsfStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>TSF</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>TSF_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>TSF_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>TsfOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input series to regress and forecast. The warm-up history, oldest bar
    /// first.</param>
@@ -1068,14 +1068,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TSF_Stream TSF_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public TsfStream TsfOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSF open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSF open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return TSF_OpenInternal(inReal, 0, optInTimePeriod);
+      return TsfOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>TSF_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>TsfOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>TSF</c> produces over the
@@ -1087,7 +1087,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="TSF_Stream.OutRange"/>.</para>
+   /// <see cref="TsfStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input series to regress and forecast. The warm-up history, oldest bar
    /// first.</param>
@@ -1103,7 +1103,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TSF_Stream TSF_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public TsfStream TsfOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSF openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSF openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1112,6 +1112,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("TSF", "openAndFill", RetCode.BadParam);
       }
-      return TSF_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return TsfOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

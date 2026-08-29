@@ -69,6 +69,29 @@ public class StreamSmokeTest {
         }
     }
 
+    /** The registry's SCREAMING_SNAKE name as the streaming tier's method spells it (#278). */
+    private static String camelCase(String screaming) {
+        StringBuilder sb = new StringBuilder();
+        for (String word : screaming.split("_")) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            String w = word.toLowerCase(java.util.Locale.ROOT);
+            if (sb.length() == 0) {
+                sb.append(w);
+            } else {
+                sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+            }
+        }
+        return sb.toString();
+    }
+
+    /** The registry's SCREAMING_SNAKE name as the streaming tier's type spells it (#278). */
+    private static String pascalCase(String screaming) {
+        String c = camelCase(screaming);
+        return c.isEmpty() ? c : Character.toUpperCase(c.charAt(0)) + c.substring(1);
+    }
+
     /**
      * Every stream opener, given one bar of history, must report ITSELF using the
      * spelling the metadata registry publishes — {@code "<name> open: ..."}.
@@ -92,13 +115,13 @@ public class StreamSmokeTest {
         for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
             java.lang.reflect.Method open = null;
             for (java.lang.reflect.Method m : Core.class.getMethods()) {
-                if (m.getName().equals(f.name() + "_Open")) {
+                if (m.getName().equals(camelCase(f.name()) + "Open")) {
                     open = m;
                     break;
                 }
             }
             if (open == null) {
-                unexpected.add(f.name() + ": no " + f.name() + "_Open");
+                unexpected.add(f.name() + ": no " + camelCase(f.name()) + "Open");
                 continue;
             }
             Class<?>[] pt = open.getParameterTypes();
@@ -241,14 +264,14 @@ public class StreamSmokeTest {
             final double[] lw = java.util.Arrays.copyOf(low, warm);
             final double[] ow = java.util.Arrays.copyOf(open, warm);
 
-            final Core.SMA_Stream sa = core.SMA_Open(cw, 14);
-            final Core.SMA_Stream sb = core.SMA_Open(cw, 14);
+            final Core.SmaStream sa = core.smaOpen(cw, 14);
+            final Core.SmaStream sb = core.smaOpen(cw, 14);
             barMustReject("SMA.update", () -> sa.update(v));
             barMustReject("SMA.peek", () -> sa.peek(v));
             stateMustHold("SMA", sa.update(close[warm]), sb.update(close[warm]));
 
-            final Core.MINUS_DI_Stream da = core.MINUS_DI_Open(hw, lw, cw, 14);
-            final Core.MINUS_DI_Stream db = core.MINUS_DI_Open(hw, lw, cw, 14);
+            final Core.MinusDiStream da = core.minusDiOpen(hw, lw, cw, 14);
+            final Core.MinusDiStream db = core.minusDiOpen(hw, lw, cw, 14);
             barMustReject("MINUS_DI.update(high)", () -> da.update(v, low[warm], close[warm]));
             barMustReject("MINUS_DI.update(low)", () -> da.update(high[warm], v, close[warm]));
             barMustReject("MINUS_DI.update(close)", () -> da.update(high[warm], low[warm], v));
@@ -257,8 +280,8 @@ public class StreamSmokeTest {
                 da.update(high[warm], low[warm], close[warm]),
                 db.update(high[warm], low[warm], close[warm]));
 
-            final Core.MA_Stream ma = core.MA_Open(cw, 14, MAType.EMA);
-            final Core.MA_Stream mb = core.MA_Open(cw, 14, MAType.EMA);
+            final Core.MaStream ma = core.maOpen(cw, 14, MAType.EMA);
+            final Core.MaStream mb = core.maOpen(cw, 14, MAType.EMA);
             barMustReject("MA.update", () -> ma.update(v));
             barMustReject("MA.peek", () -> ma.peek(v));
             stateMustHold("MA", ma.update(close[warm]), mb.update(close[warm]));
@@ -266,7 +289,7 @@ public class StreamSmokeTest {
             /* Period 1 is the dispatch identity arm: it copies the bar to the
              * output and never reaches a sub-stream, so a check delegated to the
              * sub would miss it. */
-            final Core.MA_Stream mi = core.MA_Open(cw, 1, MAType.SMA);
+            final Core.MaStream mi = core.maOpen(cw, 1, MAType.SMA);
             barMustReject("MA(identity).update", () -> mi.update(v));
             barMustReject("MA(identity).peek", () -> mi.peek(v));
 
@@ -274,34 +297,34 @@ public class StreamSmokeTest {
             for (int i = 0; i < warm; i++) {
                 pw[i] = 5.0 + (i % 11);
             }
-            final Core.MAVP_Stream va = core.MAVP_Open(cw, pw, 2, 30, MAType.SMA);
-            final Core.MAVP_Stream vb = core.MAVP_Open(cw, pw, 2, 30, MAType.SMA);
+            final Core.MavpStream va = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
+            final Core.MavpStream vb = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
             barMustReject("MAVP.update(real)", () -> va.update(v, pw[0]));
             barMustReject("MAVP.update(period)", () -> va.update(close[warm], v));
             barMustReject("MAVP.peek(period)", () -> va.peek(close[warm], v));
             stateMustHold("MAVP",
                 va.update(close[warm], pw[0]), vb.update(close[warm], pw[0]));
 
-            final Core.BBANDS_Stream ba = core.BBANDS_Open(cw, 20, 2.0, 2.0, MAType.SMA);
-            final Core.BBANDS_Stream bb = core.BBANDS_Open(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BbandsStream ba = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BbandsStream bb = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
             barMustReject("BBANDS.update", () -> ba.update(v));
             barMustReject("BBANDS.peek", () -> ba.peek(v));
-            Core.BBANDS_Stream.Value bav = ba.update(close[warm]);
-            Core.BBANDS_Stream.Value bbv = bb.update(close[warm]);
+            Core.BbandsStream.Value bav = ba.update(close[warm]);
+            Core.BbandsStream.Value bbv = bb.update(close[warm]);
             stateMustHold("BBANDS.upper", bav.realUpperBand(), bbv.realUpperBand());
             stateMustHold("BBANDS.lower", bav.realLowerBand(), bbv.realLowerBand());
 
-            final Core.STOCH_Stream ka = core.STOCH_Open(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
-            final Core.STOCH_Stream kb = core.STOCH_Open(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
+            final Core.StochStream ka = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
+            final Core.StochStream kb = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
             barMustReject("STOCH.update", () -> ka.update(v, low[warm], close[warm]));
             barMustReject("STOCH.peek", () -> ka.peek(high[warm], v, close[warm]));
-            Core.STOCH_Stream.Value kav = ka.update(high[warm], low[warm], close[warm]);
-            Core.STOCH_Stream.Value kbv = kb.update(high[warm], low[warm], close[warm]);
+            Core.StochStream.Value kav = ka.update(high[warm], low[warm], close[warm]);
+            Core.StochStream.Value kbv = kb.update(high[warm], low[warm], close[warm]);
             stateMustHold("STOCH.slowK", kav.slowK(), kbv.slowK());
             stateMustHold("STOCH.slowD", kav.slowD(), kbv.slowD());
 
-            final Core.CDLDOJI_Stream ja = core.CDLDOJI_Open(ow, hw, lw, cw);
-            final Core.CDLDOJI_Stream jb = core.CDLDOJI_Open(ow, hw, lw, cw);
+            final Core.CdldojiStream ja = core.cdldojiOpen(ow, hw, lw, cw);
+            final Core.CdldojiStream jb = core.cdldojiOpen(ow, hw, lw, cw);
             barMustReject("CDLDOJI.update(open)",
                 () -> ja.update(v, high[warm], low[warm], close[warm]));
             barMustReject("CDLDOJI.peek(close)",
@@ -317,10 +340,10 @@ public class StreamSmokeTest {
          * which is why the streaming tier spells the same two comparisons
          * inverted. An infinity is already outside every declared bound. */
         openMustReject("BBANDS(nbDevUp=NaN)",
-            () -> core.BBANDS_Open(java.util.Arrays.copyOf(close, warm), 20,
+            () -> core.bbandsOpen(java.util.Arrays.copyOf(close, warm), 20,
                                    Double.NaN, 2.0, MAType.SMA));
         openMustReject("BBANDS(nbDevDn=NaN)",
-            () -> core.BBANDS_Open(java.util.Arrays.copyOf(close, warm), 20,
+            () -> core.bbandsOpen(java.util.Arrays.copyOf(close, warm), 20,
                                    2.0, Double.NaN, MAType.SMA));
 
         /* Non-vacuity. Literal floors: a count derived from the loop above moves
@@ -380,8 +403,8 @@ public class StreamSmokeTest {
             bars[UF_BAD] = v;
 
             /* --- the shared step loop --------------------------------------- */
-            final Core.SMA_Stream sa = core.SMA_Open(cw, 14);
-            final Core.SMA_Stream sb = core.SMA_Open(cw, 14);
+            final Core.SmaStream sa = core.smaOpen(cw, 14);
+            final Core.SmaStream sb = core.smaOpen(cw, 14);
             final double[] want = new double[UF_BAD];
             for (int i = 0; i < UF_BAD; i++) {
                 want[i] = sb.update(bars[i]);
@@ -400,9 +423,9 @@ public class StreamSmokeTest {
                 sa.update(close[warm + UF_N]), sb.update(close[warm + UF_N]));
 
             /* --- composed, three outputs ------------------------------------ */
-            final Core.BBANDS_Stream ba = core.BBANDS_Open(cw, 20, 2.0, 2.0, MAType.SMA);
-            final Core.BBANDS_Stream bb = core.BBANDS_Open(cw, 20, 2.0, 2.0, MAType.SMA);
-            final Core.BBANDS_Stream.Value[] wantB = new Core.BBANDS_Stream.Value[UF_BAD];
+            final Core.BbandsStream ba = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BbandsStream bb = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BbandsStream.Value[] wantB = new Core.BbandsStream.Value[UF_BAD];
             for (int i = 0; i < UF_BAD; i++) {
                 wantB[i] = bb.update(bars[i]);
             }
@@ -433,8 +456,8 @@ public class StreamSmokeTest {
 
             /* --- dispatch, both arms (period 1 is the identity loop) --------- */
             for (final int period : new int[] { 1, 14 }) {
-                final Core.MA_Stream ma = core.MA_Open(cw, period, MAType.SMA);
-                final Core.MA_Stream mb = core.MA_Open(cw, period, MAType.SMA);
+                final Core.MaStream ma = core.maOpen(cw, period, MAType.SMA);
+                final Core.MaStream mb = core.maOpen(cw, period, MAType.SMA);
                 final double[] wantM = new double[UF_BAD];
                 for (int i = 0; i < UF_BAD; i++) {
                     wantM[i] = mb.update(bars[i]);
@@ -458,8 +481,8 @@ public class StreamSmokeTest {
                 pers[i] = 2.0 + (i % 8);
             }
             pers[UF_BAD] = v;
-            final Core.MAVP_Stream va = core.MAVP_Open(cw, pw, 2, 30, MAType.SMA);
-            final Core.MAVP_Stream vb = core.MAVP_Open(cw, pw, 2, 30, MAType.SMA);
+            final Core.MavpStream va = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
+            final Core.MavpStream vb = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
             final double[] wantV = new double[UF_BAD];
             for (int i = 0; i < UF_BAD; i++) {
                 wantV[i] = vb.update(goodBars[i], pers[i]);
@@ -485,8 +508,8 @@ public class StreamSmokeTest {
                 lows[i] = low[warm + i];
             }
             lows[UF_BAD] = v;
-            final Core.CDLDOJI_Stream ja = core.CDLDOJI_Open(ow, hw, lw, cw);
-            final Core.CDLDOJI_Stream jb = core.CDLDOJI_Open(ow, hw, lw, cw);
+            final Core.CdldojiStream ja = core.cdldojiOpen(ow, hw, lw, cw);
+            final Core.CdldojiStream jb = core.cdldojiOpen(ow, hw, lw, cw);
             final int[] wantJ = new int[UF_BAD];
             for (int i = 0; i < UF_BAD; i++) {
                 wantJ[i] = jb.update(opens[i], highs[i], lows[i], goodBars[i]);
@@ -510,7 +533,7 @@ public class StreamSmokeTest {
         /* The rejections Java can make that C cannot: array lengths. Plus the
          * two the language does allow it to see — an output that IS an input,
          * and a zero-bar call, which is a success that changes nothing. */
-        final Core.SMA_Stream s = core.SMA_Open(cw, 14);
+        final Core.SmaStream s = core.smaOpen(cw, 14);
         final OutRange before = s.outRange();
         final double[] out = new double[UF_N];
         java.util.Arrays.fill(out, UF_CANARY);
@@ -996,7 +1019,7 @@ public class StreamSmokeTest {
         batchRange = core.SMA(0, n - 1, close, 14, batch);
         check(!batchRange.isEmpty(), "batch SMA produced values");
         int lb = core.SMA_Lookback(14);
-        Core.SMA_Stream s = core.SMA_Open(java.util.Arrays.copyOf(close, lb + 1), 14);
+        Core.SmaStream s = core.smaOpen(java.util.Arrays.copyOf(close, lb + 1), 14);
         check(bitEq(s.value(), batch[0]), "open value == first batch output");
         /* The handle's range is the batch range over the bars it has been fed
          * (issue #241) — checked at every bar, so an increment that fires on the
@@ -1016,11 +1039,11 @@ public class StreamSmokeTest {
         }
 
         /* peek does not commit; copy() forks independently. */
-        Core.SMA_Stream a = core.SMA_Open(java.util.Arrays.copyOf(close, 40), 14);
+        Core.SmaStream a = core.smaOpen(java.util.Arrays.copyOf(close, 40), 14);
         double before = a.value();
         a.peek(12345.0);
         check(bitEq(a.value(), before), "peek must not commit");
-        Core.SMA_Stream b = a.copy();
+        Core.SmaStream b = a.copy();
         a.update(111.0);
         check(!bitEq(a.value(), b.value()), "copy is independent (diverges)");
         b.update(111.0);
@@ -1035,13 +1058,13 @@ public class StreamSmokeTest {
         check(s.outRange().equals(batchRange),
               "open + updates over n bars == the batch range over n bars");
         double[] warm = new double[batchRange.count()];
-        Core.SMA_Stream f = core.SMA_OpenAndFill(close, 14, warm);
+        Core.SmaStream f = core.smaOpenAndFill(close, 14, warm);
         check(f.outRange().equals(batchRange), "openAndFill outRange == the batch range");
         check(bitEq(warm[batchRange.count() - 1], f.value()),
               "last filled value == the handle's value");
         check(f.copy().outRange().equals(batchRange), "copy carries the range");
         /* A fork diverges: the copy's count only grows with ITS updates. */
-        Core.SMA_Stream g = f.copy();
+        Core.SmaStream g = f.copy();
         g.update(close[n - 1]);
         check(g.outRange().equals(new OutRange(batchRange.begIdx(), batchRange.count() + 1)),
               "a copy's own update extends only the copy");
@@ -1056,18 +1079,18 @@ public class StreamSmokeTest {
          * added — measured, by removing that guard from the emitter. Outside
          * Rust the re-check is not reachable from the public API at all (the
          * public openers pass startIdx = 0, where the clamp is a no-op), and the
-         * one caller that anchors is the _OpenInternal seam, contracted on
+         * one caller that anchors is the OpenInternal seam, contracted on
          * startIdx <= endIdx: its transcribed bodies index before they check, so
          * driving it out of contract is undefined rather than a rejection —
-         * TA_AD_OpenInternal(45, 40) segfaults under ASan. The re-check is
+         * taAdOpenInternal(45, 40) segfaults under ASan. The re-check is
          * gated in the generator instead, by
          * identity_anchor_clamps_before_it_rechecks_in_every_backend. What this
          * asserts is the public contract around it, which is worth its own line.
          */
         try {
-            core.MAVP_Open(java.util.Arrays.copyOf(close, 10),
+            core.mavpOpen(java.util.Arrays.copyOf(close, 10),
                            java.util.Arrays.copyOf(close, 10), 1, 30, MAType.SMA);
-            check(false, "MAVP_Open on a history shorter than the bank's anchor must throw");
+            check(false, "mavpOpen on a history shorter than the bank's anchor must throw");
         } catch (InsufficientHistoryException e) {
             /* expected */
         }
@@ -1076,22 +1099,22 @@ public class StreamSmokeTest {
         {
             int mavpLb = core.MAVP_Lookback(1, 30, MAType.SMA);
             double[] px = java.util.Arrays.copyOf(close, mavpLb + 3);
-            Core.MAVP_Stream mv = core.MAVP_Open(px, px, 1, 30, MAType.SMA);
+            Core.MavpStream mv = core.mavpOpen(px, px, 1, 30, MAType.SMA);
             check(mv.outRange().equals(new OutRange(mavpLb, 3)),
-                  "MAVP_Open just past its anchor reports (lookback, 3), got " + mv.outRange());
+                  "mavpOpen just past its anchor reports (lookback, 3), got " + mv.outRange());
         }
 
         /* Exceptions: typed insufficient history; plain IAE for bad params;
          * aliasing rejection on openAndFill; update/peek never throw. */
         try {
-            core.SMA_Open(java.util.Arrays.copyOf(close, lb), 14);
+            core.smaOpen(java.util.Arrays.copyOf(close, lb), 14);
             check(false, "short history must throw");
         } catch (InsufficientHistoryException e) {
             check(e instanceof IllegalArgumentException, "IHE extends IAE");
         }
         openMessagesNameTheirOwnFunction(core);
         try {
-            core.SMA_Open(close, -3);
+            core.smaOpen(close, -3);
             check(false, "bad param must throw");
         } catch (InsufficientHistoryException e) {
             check(false, "bad param must NOT be typed as insufficient history");
@@ -1099,25 +1122,25 @@ public class StreamSmokeTest {
             /* expected */
         }
         try {
-            core.SMA_OpenAndFill(close, 14, close);
+            core.smaOpenAndFill(close, 14, close);
             check(false, "openAndFill output aliasing input must throw");
         } catch (IllegalArgumentException e) {
             /* expected */
         }
 
         /* Integer.MIN_VALUE keeps its batch meaning (documented default). */
-        check(bitEq(core.SMA_Open(close, Integer.MIN_VALUE).value(),
-                    core.SMA_Open(close, 30).value()),
+        check(bitEq(core.smaOpen(close, Integer.MIN_VALUE).value(),
+                    core.smaOpen(close, 30).value()),
               "MIN_VALUE selects the default");
 
         /* Multi-output Value: named components, equals/hashCode/toString. */
-        Core.MACD_Stream m = core.MACD_Open(close, 12, 26, 9);
-        Core.MACD_Stream.Value v1 = m.update(close[n - 1]);
+        Core.MacdStream m = core.macdOpen(close, 12, 26, 9);
+        Core.MacdStream.Value v1 = m.update(close[n - 1]);
         check(m.value() == v1, "multi-output value() returns the cached instance");
-        Core.MACD_Stream.Value v2 = m.peek(close[n - 1] + 1.0);
+        Core.MacdStream.Value v2 = m.peek(close[n - 1] + 1.0);
         check(!v1.equals(v2), "distinct bars produce non-equal Values");
         check(v1.toString().contains("macdSignal="), "Value toString names fields");
-        java.util.HashSet<Core.MACD_Stream.Value> set = new java.util.HashSet<Core.MACD_Stream.Value>();
+        java.util.HashSet<Core.MacdStream.Value> set = new java.util.HashSet<Core.MacdStream.Value>();
         set.add(v1);
         check(set.contains(m.value()), "Value hashCode/equals contract");
 
@@ -1131,7 +1154,7 @@ public class StreamSmokeTest {
          * advances it past the end of what any batch call computes. */
         double[] bM = new double[n], bS = new double[n], bH = new double[n];
         OutRange mr = core.MACD(0, n - 1, close, 12, 26, 9, bM, bS, bH);
-        Core.MACD_Stream.Value vOpen = core.MACD_Open(close, 12, 26, 9).value();
+        Core.MacdStream.Value vOpen = core.macdOpen(close, 12, 26, 9).value();
         int lastM = mr.count() - 1;
         check(bitEq(vOpen.macd(),       bM[lastM]), "Value.macd() == batch outMACD");
         check(bitEq(vOpen.macdSignal(), bS[lastM]), "Value.macdSignal() == batch outMACDSignal");
@@ -1140,8 +1163,8 @@ public class StreamSmokeTest {
          * record pattern. Asserted by reflection rather than by the pattern
          * itself: this suite compiles at --release 17, where the syntax does not
          * exist. */
-        check(Core.MACD_Stream.Value.class.isRecord(), "Value is a record");
-        check(Core.MACD_Stream.Value.class.getRecordComponents().length == 3,
+        check(Core.MacdStream.Value.class.isRecord(), "Value is a record");
+        check(Core.MacdStream.Value.class.getRecordComponents().length == 3,
               "Value has one component per batch output");
 
         /* ...and EVERY multi-output handle, not just MACD: one class checked by
@@ -1166,7 +1189,7 @@ public class StreamSmokeTest {
             }
             Class<?> handle = null;
             for (Class<?> nested : Core.class.getDeclaredClasses()) {
-                if (nested.getSimpleName().equals(vf.name() + "_Stream")) {
+                if (nested.getSimpleName().equals(pascalCase(vf.name()) + "Stream")) {
                     handle = nested;
                     break;
                 }
@@ -1219,8 +1242,8 @@ public class StreamSmokeTest {
 
         /* Dispatch DX: every MAType opens through the same entry point. */
         for (MAType ty : MAType.values()) {
-            Core.MA_Stream ma =
-                core.MA_Open(close, 14, ty);
+            Core.MaStream ma =
+                core.maOpen(close, 14, ty);
             ma.update(close[n - 1]);
         }
 
@@ -1230,10 +1253,10 @@ public class StreamSmokeTest {
         Core tuned = Core.builder()
             .candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9)
             .build();
-        Core.CDLDOJI_Stream d1 = core.CDLDOJI_Open(
+        Core.CdldojiStream d1 = core.cdldojiOpen(
             java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
             java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));
-        Core.CDLDOJI_Stream d2 = tuned.CDLDOJI_Open(
+        Core.CdldojiStream d2 = tuned.cdldojiOpen(
             java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
             java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));
         check(d1.value() == 0 && d2.value() == 100,

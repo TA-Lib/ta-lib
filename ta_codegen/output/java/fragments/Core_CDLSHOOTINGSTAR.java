@@ -375,7 +375,7 @@
    /**
     * A live CDLSHOOTINGSTAR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLSHOOTINGSTAR} over the same series.
-    * Open with {@link Core#CDLSHOOTINGSTAR_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlshootingstarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -386,7 +386,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLSHOOTINGSTAR_Stream {
+   public static final class CdlshootingstarStream {
       Core core;
       double BodyPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -415,7 +415,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLSHOOTINGSTAR_Stream( Core core ) { this.core = core; }
+      CdlshootingstarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -429,7 +429,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLSHOOTINGSTAR_Stream( CDLSHOOTINGSTAR_Stream other ) {
+      CdlshootingstarStream( CdlshootingstarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -459,7 +459,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLSHOOTINGSTAR_Stream other ) {
+      void copyFrom( CdlshootingstarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -502,7 +502,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLSHOOTINGSTAR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlshootingstarStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -519,7 +519,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
-         core.CDLSHOOTINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlshootingstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -548,7 +548,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLSHOOTINGSTAR updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLSHOOTINGSTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlshootingstarStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -566,14 +566,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
-         CDLSHOOTINGSTAR_Stream scratch = PEEK_SCRATCH.get();
+         CdlshootingstarStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLSHOOTINGSTAR_Stream(this);
+            scratch = new CdlshootingstarStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLSHOOTINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlshootingstarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -590,11 +590,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLSHOOTINGSTAR_Stream copy() {
-         return new CDLSHOOTINGSTAR_Stream(this);
+      public CdlshootingstarStream copy() {
+         return new CdlshootingstarStream(this);
       }
    }
-   void CDLSHOOTINGSTAR_StepImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlshootingstarStepImpl( CdlshootingstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -648,7 +648,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLSHOOTINGSTAR_OpenImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlshootingstarOpenImpl( CdlshootingstarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -813,11 +813,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLSHOOTINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlshootingstarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlshootingstarStream cdlshootingstarOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
-      RetCode retCode = CDLSHOOTINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlshootingstarStream sp = new CdlshootingstarStream(this);
+      RetCode retCode = cdlshootingstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -831,14 +831,14 @@
       }
       throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLSHOOTINGSTAR_Open (composition seam). */
-   CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlshootingstarOpen (composition seam). */
+   CdlshootingstarStream cdlshootingstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
+      CdlshootingstarStream sp = new CdlshootingstarStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSHOOTINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlshootingstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -865,7 +865,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlshootingstarStream cdlshootingstarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLSHOOTINGSTAR open", "inOpen", inOpen);
       requireHistory("CDLSHOOTINGSTAR open", inOpen.length);
@@ -875,10 +875,10 @@
       requireHistoryLength("CDLSHOOTINGSTAR open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLSHOOTINGSTAR open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLSHOOTINGSTAR open", "inClose", inClose.length, inOpen.length);
-      return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlshootingstarOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLSHOOTINGSTAR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlshootingstarOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLSHOOTINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -886,9 +886,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLSHOOTINGSTAR_Stream#outRange()}.
+    * {@link CdlshootingstarStream#outRange()}.
     */
-   public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlshootingstarStream cdlshootingstarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLSHOOTINGSTAR openAndFill", "inOpen", inOpen);
       requireHistory("CDLSHOOTINGSTAR openAndFill", inOpen.length);
@@ -905,5 +905,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLSHOOTINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlshootingstarOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

@@ -569,9 +569,9 @@ public partial class Core
    /// <summary>A live <c>PLUS_DM</c> stream: one value per closed bar, bit-identical to
    /// <c>PLUS_DM</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.PLUS_DM_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.PlusDmOpen"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -582,7 +582,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class PLUS_DM_Stream
+   public sealed class PlusDmStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -593,12 +593,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal PLUS_DM_Stream( Core core ) { this.core = core; }
+      internal PlusDmStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.PLUS_DM</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.PlusDm</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -607,7 +607,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal PLUS_DM_Stream( PLUS_DM_Stream other )
+      internal PlusDmStream( PlusDmStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -619,7 +619,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( PLUS_DM_Stream other )
+      internal void CopyFrom( PlusDmStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -648,7 +648,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("PLUS_DM", "update", RetCode.BadParam);
-         core.PLUS_DM_StepImpl(this, inHigh, inLow);
+         core.PlusDmStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -668,8 +668,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("PLUS_DM", "peek", RetCode.BadParam);
-         PLUS_DM_Stream scratch = new PLUS_DM_Stream(this);
-         core.PLUS_DM_StepImpl(scratch, inHigh, inLow);
+         PlusDmStream scratch = new PlusDmStream(this);
+         core.PlusDmStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -694,7 +694,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("PLUS_DM", "updateAndFill", RetCode.BadParam);
-            core.PLUS_DM_StepImpl(this, inHigh[i], inLow[i]);
+            core.PlusDmStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -710,13 +710,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public PLUS_DM_Stream Clone()
+      public PlusDmStream Clone()
       {
-         return new PLUS_DM_Stream(this);
+         return new PlusDmStream(this);
       }
    }
 
-   internal void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
+   internal void PlusDmStepImpl( PlusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -759,7 +759,7 @@ public partial class Core
       }
    }
 
-   private RetCode PLUS_DM_OpenImpl( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PlusDmOpenImpl( PlusDmStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1081,11 +1081,11 @@ public partial class Core
       }
    }
 
-   /* PLUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal PLUS_DM_Stream PLUS_DM_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* PlusDmOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal PlusDmStream PlusDmOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      PlusDmStream sp = new PlusDmStream(this);
+      RetCode retCode = PlusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1094,12 +1094,12 @@ public partial class Core
       throw StreamFailure("PLUS_DM", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind PLUS_DM_Open (composition seam). */
-   internal PLUS_DM_Stream PLUS_DM_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind PlusDmOpen (composition seam). */
+   internal PlusDmStream PlusDmOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
-      PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
+      PlusDmStream sp = new PlusDmStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = PlusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1110,11 +1110,11 @@ public partial class Core
 
    /// <summary>Open a live <c>PLUS_DM</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="PLUS_DM_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="PlusDmStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>PLUS_DM</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>PLUS_DM_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>PLUS_DM_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>PlusDmOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1127,16 +1127,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PLUS_DM_Stream PLUS_DM_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
+   public PlusDmStream PlusDmOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("PLUS_DM open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("PLUS_DM", "open", "inLow", inLow.Length, inHigh.Length);
-      return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return PlusDmOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
-   /// <summary><c>PLUS_DM_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>PlusDmOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>PLUS_DM</c> produces over
@@ -1148,7 +1148,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="PLUS_DM_Stream.OutRange"/>.</para>
+   /// <see cref="PlusDmStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1164,7 +1164,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PLUS_DM_Stream PLUS_DM_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
+   public PlusDmStream PlusDmOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1175,6 +1175,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("PLUS_DM", "openAndFill", RetCode.BadParam);
       }
-      return PLUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
+      return PlusDmOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

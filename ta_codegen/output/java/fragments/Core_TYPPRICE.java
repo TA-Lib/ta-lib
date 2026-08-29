@@ -210,7 +210,7 @@
    /**
     * A live TYPPRICE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TYPPRICE} over the same series.
-    * Open with {@link Core#TYPPRICE_Open}; there is no close — the handle is
+    * Open with {@link Core#typpriceOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -221,13 +221,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TYPPRICE_Stream {
+   public static final class TyppriceStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      TYPPRICE_Stream( Core core ) { this.core = core; }
+      TyppriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -241,14 +241,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TYPPRICE_Stream( TYPPRICE_Stream other ) {
+      TyppriceStream( TyppriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TYPPRICE_Stream other ) {
+      void copyFrom( TyppriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -270,7 +270,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
-         core.TYPPRICE_StepImpl(this, inHigh, inLow, inClose);
+         core.typpriceStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -298,7 +298,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("TYPPRICE updateAndFill: BadParam", RetCode.BadParam);
-            core.TYPPRICE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.typpriceStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -314,8 +314,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
-         TYPPRICE_Stream scratch = new TYPPRICE_Stream(this);
-         core.TYPPRICE_StepImpl(scratch, inHigh, inLow, inClose);
+         TyppriceStream scratch = new TyppriceStream(this);
+         core.typpriceStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -332,15 +332,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TYPPRICE_Stream copy() {
-         return new TYPPRICE_Stream(this);
+      public TyppriceStream copy() {
+         return new TyppriceStream(this);
       }
    }
-   void TYPPRICE_StepImpl( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   void typpriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }
-   private RetCode TYPPRICE_OpenImpl( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode typpriceOpenImpl( TyppriceStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -371,11 +371,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* TYPPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TYPPRICE_Stream TYPPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* typpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TyppriceStream typpriceOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      TyppriceStream sp = new TyppriceStream(this);
+      RetCode retCode = typpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -389,14 +389,14 @@
       }
       throw new TaLibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TYPPRICE_Open (composition seam). */
-   TYPPRICE_Stream TYPPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind typpriceOpen (composition seam). */
+   TyppriceStream typpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
+      TyppriceStream sp = new TyppriceStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = typpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -423,7 +423,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TYPPRICE_Stream TYPPRICE_Open( double inHigh[], double inLow[], double inClose[] )
+   public TyppriceStream typpriceOpen( double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("TYPPRICE open", "inHigh", inHigh);
       requireHistory("TYPPRICE open", inHigh.length);
@@ -431,10 +431,10 @@
       requireArgument("TYPPRICE open", "inClose", inClose);
       requireHistoryLength("TYPPRICE open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("TYPPRICE open", "inClose", inClose.length, inHigh.length);
-      return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
+      return typpriceOpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#TYPPRICE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#typpriceOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TYPPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -442,9 +442,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TYPPRICE_Stream#outRange()}.
+    * {@link TyppriceStream#outRange()}.
     */
-   public TYPPRICE_Stream TYPPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public TyppriceStream typpriceOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       requireArgument("TYPPRICE openAndFill", "inHigh", inHigh);
       requireHistory("TYPPRICE openAndFill", inHigh.length);
@@ -459,5 +459,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TYPPRICE_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+      return typpriceOpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }

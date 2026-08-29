@@ -787,9 +787,9 @@ public partial class Core
    /// <summary>A live <c>PLUS_DI</c> stream: one value per closed bar, bit-identical to
    /// <c>PLUS_DI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.PLUS_DI_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.PlusDiOpen"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -800,7 +800,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class PLUS_DI_Stream
+   public sealed class PlusDiStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -813,12 +813,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal PLUS_DI_Stream( Core core ) { this.core = core; }
+      internal PlusDiStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.PLUS_DI</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.PlusDi</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -827,7 +827,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal PLUS_DI_Stream( PLUS_DI_Stream other )
+      internal PlusDiStream( PlusDiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -841,7 +841,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( PLUS_DI_Stream other )
+      internal void CopyFrom( PlusDiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -873,7 +873,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("PLUS_DI", "update", RetCode.BadParam);
-         core.PLUS_DI_StepImpl(this, inHigh, inLow, inClose);
+         core.PlusDiStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -894,8 +894,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("PLUS_DI", "peek", RetCode.BadParam);
-         PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
-         core.PLUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
+         PlusDiStream scratch = new PlusDiStream(this);
+         core.PlusDiStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -921,7 +921,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("PLUS_DI", "updateAndFill", RetCode.BadParam);
-            core.PLUS_DI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.PlusDiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -937,13 +937,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public PLUS_DI_Stream Clone()
+      public PlusDiStream Clone()
       {
-         return new PLUS_DI_Stream(this);
+         return new PlusDiStream(this);
       }
    }
 
-   internal void PLUS_DI_StepImpl( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+   internal void PlusDiStepImpl( PlusDiStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -1024,7 +1024,7 @@ public partial class Core
       }
    }
 
-   private RetCode PLUS_DI_OpenImpl( PLUS_DI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PlusDiOpenImpl( PlusDiStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1498,11 +1498,11 @@ public partial class Core
       }
    }
 
-   /* PLUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal PLUS_DI_Stream PLUS_DI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* PlusDiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal PlusDiStream PlusDiOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
-      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      PlusDiStream sp = new PlusDiStream(this);
+      RetCode retCode = PlusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1511,12 +1511,12 @@ public partial class Core
       throw StreamFailure("PLUS_DI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind PLUS_DI_Open (composition seam). */
-   internal PLUS_DI_Stream PLUS_DI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind PlusDiOpen (composition seam). */
+   internal PlusDiStream PlusDiOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      PlusDiStream sp = new PlusDiStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = PlusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1527,11 +1527,11 @@ public partial class Core
 
    /// <summary>Open a live <c>PLUS_DI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="PLUS_DI_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="PlusDiStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>PLUS_DI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>PLUS_DI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>PLUS_DI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>PlusDiOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1545,7 +1545,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PLUS_DI_Stream PLUS_DI_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public PlusDiStream PlusDiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1553,10 +1553,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("PLUS_DI open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("PLUS_DI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("PLUS_DI", "open", "inClose", inClose.Length, inHigh.Length);
-      return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return PlusDiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>PLUS_DI_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>PlusDiOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>PLUS_DI</c> produces over
@@ -1568,7 +1568,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="PLUS_DI_Stream.OutRange"/>.</para>
+   /// <see cref="PlusDiStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1585,7 +1585,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PLUS_DI_Stream PLUS_DI_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public PlusDiStream PlusDiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1598,6 +1598,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("PLUS_DI", "openAndFill", RetCode.BadParam);
       }
-      return PLUS_DI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return PlusDiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

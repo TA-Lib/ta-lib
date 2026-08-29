@@ -151,6 +151,12 @@ public class MetadataTest {
         check(!Functions.all().isEmpty(), "registry is populated");
         check(Functions.byName("SMA") != null, "byName(SMA)");
         check(Functions.byName("NOSUCHFUNC") == null, "byName of an unknown name is null");
+        // Case-insensitivity is a contract, not an accident (issue #278): once
+        // each backend spells the streaming API in its own idiom, "SMA" is the
+        // only spelling a caller can rely on across all four, so the registry
+        // folds ASCII case (Locale.ROOT) the way C's TA_GetFuncHandle now does too.
+        check(Functions.byName("sma") == Functions.byName("SMA"),
+              "byName is case-insensitive and still reports the canonical instance");
         check(!Functions.groups().isEmpty(), "groups() is populated");
 
         // groups() and the rows are two views of one thing; they cannot drift

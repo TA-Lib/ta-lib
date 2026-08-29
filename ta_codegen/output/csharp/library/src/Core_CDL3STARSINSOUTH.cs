@@ -481,7 +481,7 @@ public partial class Core
    /// <summary>A live <c>CDL3STARSINSOUTH</c> stream: one value per closed bar,
    /// bit-identical to <c>CDL3STARSINSOUTH</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDL3STARSINSOUTH_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.Cdl3starsinsouthOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -494,7 +494,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDL3STARSINSOUTH_Stream
+   public sealed class Cdl3starsinsouthStream
    {
       internal Core core;
       internal double BodyLongPeriodTotal;
@@ -540,12 +540,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDL3STARSINSOUTH_Stream( Core core ) { this.core = core; }
+      internal Cdl3starsinsouthStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDL3STARSINSOUTH</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdl3starsinsouth</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -554,7 +554,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDL3STARSINSOUTH_Stream( CDL3STARSINSOUTH_Stream other )
+      internal Cdl3starsinsouthStream( Cdl3starsinsouthStream other )
       {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -606,7 +606,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDL3STARSINSOUTH_Stream other )
+      internal void CopyFrom( Cdl3starsinsouthStream other )
       {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -669,7 +669,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDL3STARSINSOUTH_Stream? peekScratch;
+      [ThreadStatic] private static Cdl3starsinsouthStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -690,7 +690,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3STARSINSOUTH", "update", RetCode.BadParam);
-         core.CDL3STARSINSOUTH_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.Cdl3starsinsouthStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -712,14 +712,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3STARSINSOUTH", "peek", RetCode.BadParam);
-         CDL3STARSINSOUTH_Stream? scratch = peekScratch;
+         Cdl3starsinsouthStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDL3STARSINSOUTH_Stream(this);
+            scratch = new Cdl3starsinsouthStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDL3STARSINSOUTH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.Cdl3starsinsouthStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -746,7 +746,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDL3STARSINSOUTH", "updateAndFill", RetCode.BadParam);
-            core.CDL3STARSINSOUTH_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.Cdl3starsinsouthStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -762,13 +762,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDL3STARSINSOUTH_Stream Clone()
+      public Cdl3starsinsouthStream Clone()
       {
-         return new CDL3STARSINSOUTH_Stream(this);
+         return new Cdl3starsinsouthStream(this);
       }
    }
 
-   internal void CDL3STARSINSOUTH_StepImpl( CDL3STARSINSOUTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void Cdl3starsinsouthStepImpl( Cdl3starsinsouthStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -846,7 +846,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDL3STARSINSOUTH_OpenImpl( CDL3STARSINSOUTH_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode Cdl3starsinsouthOpenImpl( Cdl3starsinsouthStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1074,11 +1074,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDL3STARSINSOUTH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* Cdl3starsinsouthOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Cdl3starsinsouthStream Cdl3starsinsouthOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
-      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      Cdl3starsinsouthStream sp = new Cdl3starsinsouthStream(this);
+      RetCode retCode = Cdl3starsinsouthOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1087,12 +1087,12 @@ public partial class Core
       throw StreamFailure("CDL3STARSINSOUTH", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDL3STARSINSOUTH_Open (composition seam). */
-   internal CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind Cdl3starsinsouthOpen (composition seam). */
+   internal Cdl3starsinsouthStream Cdl3starsinsouthOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
+      Cdl3starsinsouthStream sp = new Cdl3starsinsouthStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdl3starsinsouthOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1103,12 +1103,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDL3STARSINSOUTH</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDL3STARSINSOUTH_Stream.Value"/> starts at the
-   /// last history bar's value — bit-identical to what <c>CDL3STARSINSOUTH</c>
+   /// <para>The handle's <see cref="Cdl3starsinsouthStream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>CDL3STARSINSOUTH</c>
    /// reports for that bar.</para>
    /// <para>The history must hold at least <c>CDL3STARSINSOUTH_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDL3STARSINSOUTH_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Cdl3starsinsouthOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1122,7 +1122,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public Cdl3starsinsouthStream Cdl3starsinsouthOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3STARSINSOUTH open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3STARSINSOUTH open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1132,10 +1132,10 @@ public partial class Core
       RequireHistoryLength("CDL3STARSINSOUTH", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDL3STARSINSOUTH", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3STARSINSOUTH", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return Cdl3starsinsouthOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDL3STARSINSOUTH_Open</c> that also fills the output array(s) over the
+   /// <summary><c>Cdl3starsinsouthOpen</c> that also fills the output array(s) over the
    /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDL3STARSINSOUTH</c>
@@ -1149,7 +1149,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDL3STARSINSOUTH_Stream.OutRange"/>.</para>
+   /// <see cref="Cdl3starsinsouthStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1167,7 +1167,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public Cdl3starsinsouthStream Cdl3starsinsouthOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3STARSINSOUTH openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3STARSINSOUTH openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1179,6 +1179,6 @@ public partial class Core
       RequireHistoryLength("CDL3STARSINSOUTH", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3STARSINSOUTH", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDL3STARSINSOUTH", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDL3STARSINSOUTH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return Cdl3starsinsouthOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

@@ -317,7 +317,7 @@
    /**
     * A live ADXR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ADXR} over the same series.
-    * Open with {@link Core#ADXR_Open}; there is no close — the handle is
+    * Open with {@link Core#adxrOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -328,18 +328,18 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ADXR_Stream {
+   public static final class AdxrStream {
       Core core;
       int optInTimePeriod;
       double cur_outReal;
       int lagRingPos_adx;
       int lagRingCap_adx;
       double[] lagRing_adx;
-      ADX_Stream sub0;
+      AdxStream sub0;
       int outRangeBegIdx;
       int outRangeCount;
 
-      ADXR_Stream( Core core ) { this.core = core; }
+      AdxrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -353,19 +353,19 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ADXR_Stream( ADXR_Stream other ) {
+      AdxrStream( AdxrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
          this.lagRingPos_adx = other.lagRingPos_adx;
          this.lagRingCap_adx = other.lagRingCap_adx;
          this.lagRing_adx = other.lagRing_adx.clone();
-         this.sub0 = new ADX_Stream(other.sub0);
+         this.sub0 = new AdxStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ADXR_Stream other ) {
+      void copyFrom( AdxrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
@@ -377,7 +377,7 @@
             this.lagRing_adx = other.lagRing_adx.clone();
          }
          if( this.sub0 == null ) {
-            this.sub0 = new ADX_Stream(other.sub0);
+            this.sub0 = new AdxStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
@@ -400,7 +400,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADXR update: BadParam", RetCode.BadParam);
-         core.ADXR_StepImpl(this, inHigh, inLow, inClose);
+         core.adxrStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -428,7 +428,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("ADXR updateAndFill: BadParam", RetCode.BadParam);
-            core.ADXR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.adxrStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -444,8 +444,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
-         ADXR_Stream scratch = new ADXR_Stream(this);
-         core.ADXR_StepImpl(scratch, inHigh, inLow, inClose);
+         AdxrStream scratch = new AdxrStream(this);
+         core.adxrStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -462,11 +462,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ADXR_Stream copy() {
-         return new ADXR_Stream(this);
+      public AdxrStream copy() {
+         return new AdxrStream(this);
       }
    }
-   void ADXR_StepImpl( ADXR_Stream sp, double inHigh, double inLow, double inClose )
+   void adxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;
@@ -478,7 +478,7 @@
       sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode ADXR_OpenImpl( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode adxrOpenImpl( AdxrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] adx;
       int adxrLookback = 0;
@@ -542,7 +542,7 @@
        */
       /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      ADX_Stream sub0 = ADX_OpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, outBegIdx, outNBElement, adx);
+      AdxStream sub0 = adxOpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, outBegIdx, outNBElement, adx);
       retCode = RetCode.Success;
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
@@ -571,11 +571,11 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* ADXR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ADXR_Stream ADXR_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* adxrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AdxrStream adxrOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ADXR_Stream sp = new ADXR_Stream(this);
-      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      AdxrStream sp = new AdxrStream(this);
+      RetCode retCode = adxrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -589,14 +589,14 @@
       }
       throw new TaLibArgumentException("ADXR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ADXR_Open (composition seam). */
-   ADXR_Stream ADXR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind adxrOpen (composition seam). */
+   AdxrStream adxrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      ADXR_Stream sp = new ADXR_Stream(this);
+      AdxrStream sp = new AdxrStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = adxrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,7 +623,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ADXR_Stream ADXR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public AdxrStream adxrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("ADXR open", "inHigh", inHigh);
       requireHistory("ADXR open", inHigh.length);
@@ -631,10 +631,10 @@
       requireArgument("ADXR open", "inClose", inClose);
       requireHistoryLength("ADXR open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("ADXR open", "inClose", inClose.length, inHigh.length);
-      return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return adxrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#ADXR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#adxrOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ADXR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -642,9 +642,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ADXR_Stream#outRange()}.
+    * {@link AdxrStream#outRange()}.
     */
-   public ADXR_Stream ADXR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public AdxrStream adxrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("ADXR openAndFill", "inHigh", inHigh);
       requireHistory("ADXR openAndFill", inHigh.length);
@@ -659,5 +659,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ADXR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return adxrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -650,14 +650,14 @@ public partial class Core
    /// <param name="MACD">MACD line: fast MA minus slow MA.</param>
    /// <param name="MACDSignal">Signal line: MA of the MACD line.</param>
    /// <param name="MACDHist">Histogram: MACD minus signal.</param>
-   public readonly record struct MACDEXT_Value( double MACD, double MACDSignal, double MACDHist );
+   public readonly record struct MacdextValue( double MACD, double MACDSignal, double MACDHist );
 
    /// <summary>A live <c>MACDEXT</c> stream: one value per closed bar, bit-identical to
    /// <c>MACDEXT</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MACDEXT_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.MacdextOpen"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -668,7 +668,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MACDEXT_Stream
+   public sealed class MacdextStream
    {
       internal Core core;
       internal int optInFastPeriod;
@@ -680,18 +680,18 @@ public partial class Core
       internal double cur_outMACD;
       internal double cur_outMACDSignal;
       internal double cur_outMACDHist;
-      internal MA_Stream sub0 = null!;
-      internal MA_Stream sub1 = null!;
-      internal MA_Stream sub2 = null!;
+      internal MaStream sub0 = null!;
+      internal MaStream sub1 = null!;
+      internal MaStream sub2 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MACDEXT_Stream( Core core ) { this.core = core; }
+      internal MacdextStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MACDEXT</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Macdext</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -700,7 +700,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MACDEXT_Stream( MACDEXT_Stream other )
+      internal MacdextStream( MacdextStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -712,14 +712,14 @@ public partial class Core
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
-         this.sub2 = new MA_Stream(other.sub2);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
+         this.sub2 = new MaStream(other.sub2);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MACDEXT_Stream other )
+      internal void CopyFrom( MacdextStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -732,17 +732,17 @@ public partial class Core
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
          if( this.sub0 is null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.CopyFrom(other.sub0);
          }
          if( this.sub1 is null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
          if( this.sub2 is null ) {
-            this.sub2 = new MA_Stream(other.sub2);
+            this.sub2 = new MaStream(other.sub2);
          } else {
             this.sub2.CopyFrom(other.sub2);
          }
@@ -751,7 +751,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MACDEXT_Stream? peekScratch;
+      [ThreadStatic] private static MacdextStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -766,12 +766,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public MACDEXT_Value Update( double inReal )
+      public MacdextValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDEXT", "update", RetCode.BadParam);
-         core.MACDEXT_StepImpl(this, inReal);
+         core.MacdextStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new MACDEXT_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+         return new MacdextValue(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -785,18 +785,18 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public MACDEXT_Value Peek( double inReal )
+      public MacdextValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDEXT", "peek", RetCode.BadParam);
-         MACDEXT_Stream? scratch = peekScratch;
+         MacdextStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new MACDEXT_Stream(this);
+            scratch = new MacdextStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.MACDEXT_StepImpl(scratch, inReal);
-         return new MACDEXT_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         core.MacdextStepImpl(scratch, inReal);
+         return new MacdextValue(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -821,7 +821,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MACDEXT", "updateAndFill", RetCode.BadParam);
-            core.MACDEXT_StepImpl(this, inReal[i]);
+            core.MacdextStepImpl(this, inReal[i]);
             outMACD[i] = cur_outMACD;
             outMACDSignal[i] = cur_outMACDSignal;
             outMACDHist[i] = cur_outMACDHist;
@@ -834,18 +834,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public MACDEXT_Value Value => new MACDEXT_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+      public MacdextValue Value => new MacdextValue(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MACDEXT_Stream Clone()
+      public MacdextStream Clone()
       {
-         return new MACDEXT_Stream(this);
+         return new MacdextStream(this);
       }
    }
 
-   internal void MACDEXT_StepImpl( MACDEXT_Stream sp, double inReal )
+   internal void MacdextStepImpl( MacdextStream sp, double inReal )
    {
       double cur_slowMABuffer = 0.0;
       double cur_fastMABuffer = 0.0;
@@ -864,7 +864,7 @@ public partial class Core
       sp.cur_outMACDHist = cur_outMACDHist;
    }
 
-   private RetCode MACDEXT_OpenImpl( MACDEXT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
+   private RetCode MacdextOpenImpl( MacdextStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -978,12 +978,12 @@ public partial class Core
       tempInteger = startIdx - lookbackSignal;
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, tempInteger, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      MaStream sub0 = MaOpenAndFillInternal(inReal, tempInteger, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       retCode = RetCode.Success;
       /* Calculate the fast MA. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      MaStream sub1 = MaOpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       retCode = RetCode.Success;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
@@ -1006,7 +1006,7 @@ public partial class Core
       int subLen2 = (outNbElement1 - 1) + 1;
       double[] subSrc2_0 = new double[subLen2];
       fastMABuffer.Slice(0, subLen2).CopyTo(subSrc2_0);
-      MA_Stream sub2 = MA_OpenAndFillInternal(subSrc2_0, 0, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, sc_outMACDSignal);
+      MaStream sub2 = MaOpenAndFillInternal(subSrc2_0, 0, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, sc_outMACDSignal);
       retCode = RetCode.Success;
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2; i += 1 ) {
@@ -1034,11 +1034,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MACDEXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MACDEXT_Stream MACDEXT_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
+   /* MacdextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MacdextStream MacdextOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      MACDEXT_Stream sp = new MACDEXT_Stream(this);
-      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
+      MacdextStream sp = new MacdextStream(this);
+      RetCode retCode = MacdextOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1047,14 +1047,14 @@ public partial class Core
       throw StreamFailure("MACDEXT", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MACDEXT_Open (composition seam). */
-   internal MACDEXT_Stream MACDEXT_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   /* Internal startIdx-anchored open behind MacdextOpen (composition seam). */
+   internal MacdextStream MacdextOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
-      MACDEXT_Stream sp = new MACDEXT_Stream(this);
+      MacdextStream sp = new MacdextStream(this);
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
       double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      RetCode retCode = MacdextOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1065,11 +1065,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MACDEXT</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MACDEXT_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MacdextStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MACDEXT</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MACDEXT_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MACDEXT_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MacdextOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
@@ -1091,14 +1091,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MACDEXT_Stream MACDEXT_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   public MacdextStream MacdextOpen( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDEXT open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDEXT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+      return MacdextOpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
 
-   /// <summary><c>MACDEXT_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MacdextOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MACDEXT</c> produces over
@@ -1110,7 +1110,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MACDEXT_Stream.OutRange"/>.</para>
+   /// <see cref="MacdextStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
@@ -1139,7 +1139,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MACDEXT_Stream MACDEXT_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
+   public MacdextStream MacdextOpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDEXT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDEXT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1150,6 +1150,6 @@ public partial class Core
       if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          throw StreamFailure("MACDEXT", "openAndFill", RetCode.BadParam);
       }
-      return MACDEXT_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out _, out _, outMACD, outMACDSignal, outMACDHist);
+      return MacdextOpenAndFillInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out _, out _, outMACD, outMACDSignal, outMACDHist);
    }
 }

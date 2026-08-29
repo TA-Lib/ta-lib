@@ -76,14 +76,20 @@ step 5 deleted it.
 | `_Impl` | the numerics — a transcribed body, nothing else |
 | `_Internal` | a **variant** of an entry point, not a tier: the `startIdx`-anchored seams `_OpenInternal` / `_OpenAndFillInternal` |
 
-Those two are the whole vocabulary, deliberately — one word per concept. So the
-streaming numerics is `<N>_OpenImpl` in all four backends, and the transition
-tier is `<N>_StepImpl` in all four, plus C-only `TA_<N>_ReleaseImpl` (Rust has
-`Drop`, the managed backends have GC). Neither tier is public anywhere, so no
-runtime gate can see the spelling —
-`the_transition_tier_is_step_impl_in_every_backend` is what pins it.
+Those two are the whole vocabulary, deliberately — one word per concept. C
+spells them `<N>_OpenImpl` / `<N>_StepImpl` (plus its own `TA_<N>_ReleaseImpl`;
+Rust has `Drop`, the managed backends have GC) and stays the reference spelling
+below. Since #278 dropped cross-language name parity for Rust/Java/C#, each of
+those three recases `<N>` and the verb to its own idiom instead of mirroring
+C: Rust `<n>_open_impl` / `<n>_step_impl`, Java `<n>OpenImpl` / `<n>StepImpl`,
+C# `<N>OpenImpl` / `<N>StepImpl` (`<n>` = camelCase, `<N>` = PascalCase, the
+acronym single-capitalized — `Sma`, not `SMA`). Neither tier is public
+anywhere, so no runtime gate can see the spelling —
+`the_transition_tier_is_step_impl_in_every_backend` pins the *shape* (one word
+per concept, in whichever casing that backend uses), not one literal string.
 
-**The `_Open*` family is five methods, symmetric, two hops deep:**
+**The `_Open*` family is five methods, symmetric, two hops deep** (C's spelling
+below; Rust/Java/C# carry the same five hops in their own casing, #278):
 
 ```
 PUB  <N>_Open(in, params)                   -> <N>_OpenInternal(in, 0, params)
@@ -245,7 +251,7 @@ Indicators are methods on a `Core` struct, one file per indicator.
   call that returns `Success` with zero elements cannot panic. Nothing but
   `pub fn <N>` and the phantom-I/O sweep reaches it now (#267), so a panic there
   is a generator bug, which is what an `assert!` is for.
-- **Cross-indicator calls target the callee's PUBLIC entry point**, as in C, Java and C# (#267). `<N>_Impl` stays the crate-private numerics tier — C's `RetCode` + out-param shape, which is what the transcription is written against — but nothing calls it any more except `pub fn <N>` and the phantom-I/O sweep. `?` is unavailable in the 33 sites inside `<N>_Impl`, which returns a bare `RetCode`, so each of the 36 sites binds the returned range with a `match` and assigns both out-params from it, then sets `retCode = RetCode::Success`. The guard that followed is dead in all three ported backends and is folded out of the body (`ir_cleanup::drop_answered_cross_call_guards`); the assignment stays, because 10 of the sites fold "success with zero output" into the same conditional and that half survives alone. (The three sites in a `Result`-returning `<N>_OpenImpl` spell the error arm `return Err(_e)`.) The `mem::swap` shim for an in-place callee is unchanged and still owed. **This reverses the answer #236 step 3 and #265 both gave.** Two of #265's three reasons were costs, not correctness — the checks are redundant on a generator-built argument list, and `MAVP` pays them once per distinct period — and are measured, not asserted. The third was reach: `no_phantom_io` probes `<N>_Impl`, so a callee's public input bound answering before any array is touched would blind it exactly as it blinded Java's. #267 part 1 removed that: `analyze_dispatch` now admits a leading "nothing to produce" guard, `ma.c` carries one, and with it `CROSS_CALL_GUARDED` was **deleted** from the Java and C# suites rather than imported into Rust's. C cannot converge the other way — a cross-call is cross-TU there, so a C `_Impl` could not be `static` and would be new ABI in the shipped `.so`.
+- **Cross-indicator calls target the callee's PUBLIC entry point**, as in C, Java and C# (#267). `<N>_Impl` stays the crate-private numerics tier — C's `RetCode` + out-param shape, which is what the transcription is written against — but nothing calls it any more except `pub fn <N>` and the phantom-I/O sweep. `?` is unavailable in the 33 sites inside `<N>_Impl`, which returns a bare `RetCode`, so each of the 36 sites binds the returned range with a `match` and assigns both out-params from it, then sets `retCode = RetCode::Success`. The guard that followed is dead in all three ported backends and is folded out of the body (`ir_cleanup::drop_answered_cross_call_guards`); the assignment stays, because 10 of the sites fold "success with zero output" into the same conditional and that half survives alone. (The three sites in a `Result`-returning `<n>_open_impl` spell the error arm `return Err(_e)`.) The `mem::swap` shim for an in-place callee is unchanged and still owed. **This reverses the answer #236 step 3 and #265 both gave.** Two of #265's three reasons were costs, not correctness — the checks are redundant on a generator-built argument list, and `MAVP` pays them once per distinct period — and are measured, not asserted. The third was reach: `no_phantom_io` probes `<N>_Impl`, so a callee's public input bound answering before any array is touched would blind it exactly as it blinded Java's. #267 part 1 removed that: `analyze_dispatch` now admits a leading "nothing to produce" guard, `ma.c` carries one, and with it `CROSS_CALL_GUARDED` was **deleted** from the Java and C# suites rather than imported into Rust's. C cannot converge the other way — a cross-call is cross-TU there, so a C `_Impl` could not be `static` and would be new ABI in the shipped `.so`.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.

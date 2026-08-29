@@ -449,7 +449,7 @@
    /**
     * A live CDL3WHITESOLDIERS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDL3WHITESOLDIERS} over the same series.
-    * Open with {@link Core#CDL3WHITESOLDIERS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdl3whitesoldiersOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -460,7 +460,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDL3WHITESOLDIERS_Stream {
+   public static final class Cdl3whitesoldiersStream {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
       double[] NearPeriodTotal;
@@ -505,7 +505,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDL3WHITESOLDIERS_Stream( Core core ) { this.core = core; }
+      Cdl3whitesoldiersStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -519,7 +519,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDL3WHITESOLDIERS_Stream( CDL3WHITESOLDIERS_Stream other ) {
+      Cdl3whitesoldiersStream( Cdl3whitesoldiersStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
@@ -565,7 +565,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDL3WHITESOLDIERS_Stream other ) {
+      void copyFrom( Cdl3whitesoldiersStream other ) {
          this.core = other.core;
          if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
             System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
@@ -640,7 +640,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDL3WHITESOLDIERS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdl3whitesoldiersStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -657,7 +657,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
-         core.CDL3WHITESOLDIERS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdl3whitesoldiersStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -686,7 +686,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDL3WHITESOLDIERS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDL3WHITESOLDIERS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdl3whitesoldiersStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -704,14 +704,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
-         CDL3WHITESOLDIERS_Stream scratch = PEEK_SCRATCH.get();
+         Cdl3whitesoldiersStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDL3WHITESOLDIERS_Stream(this);
+            scratch = new Cdl3whitesoldiersStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDL3WHITESOLDIERS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdl3whitesoldiersStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -728,11 +728,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDL3WHITESOLDIERS_Stream copy() {
-         return new CDL3WHITESOLDIERS_Stream(this);
+      public Cdl3whitesoldiersStream copy() {
+         return new Cdl3whitesoldiersStream(this);
       }
    }
-   void CDL3WHITESOLDIERS_StepImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -810,7 +810,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3WHITESOLDIERS_OpenImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdl3whitesoldiersOpenImpl( Cdl3whitesoldiersStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -1046,11 +1046,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDL3WHITESOLDIERS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdl3whitesoldiersOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdl3whitesoldiersStream cdl3whitesoldiersOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
-      RetCode retCode = CDL3WHITESOLDIERS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdl3whitesoldiersStream sp = new Cdl3whitesoldiersStream(this);
+      RetCode retCode = cdl3whitesoldiersOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1064,14 +1064,14 @@
       }
       throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDL3WHITESOLDIERS_Open (composition seam). */
-   CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdl3whitesoldiersOpen (composition seam). */
+   Cdl3whitesoldiersStream cdl3whitesoldiersOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
+      Cdl3whitesoldiersStream sp = new Cdl3whitesoldiersStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3WHITESOLDIERS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdl3whitesoldiersOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1098,7 +1098,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdl3whitesoldiersStream cdl3whitesoldiersOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDL3WHITESOLDIERS open", "inOpen", inOpen);
       requireHistory("CDL3WHITESOLDIERS open", inOpen.length);
@@ -1108,10 +1108,10 @@
       requireHistoryLength("CDL3WHITESOLDIERS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDL3WHITESOLDIERS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDL3WHITESOLDIERS open", "inClose", inClose.length, inOpen.length);
-      return CDL3WHITESOLDIERS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdl3whitesoldiersOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDL3WHITESOLDIERS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdl3whitesoldiersOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDL3WHITESOLDIERS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1119,9 +1119,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDL3WHITESOLDIERS_Stream#outRange()}.
+    * {@link Cdl3whitesoldiersStream#outRange()}.
     */
-   public CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdl3whitesoldiersStream cdl3whitesoldiersOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inOpen", inOpen);
       requireHistory("CDL3WHITESOLDIERS openAndFill", inOpen.length);
@@ -1138,5 +1138,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDL3WHITESOLDIERS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdl3whitesoldiersOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

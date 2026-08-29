@@ -620,23 +620,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live HT_DCPHASE stream: one value per closed bar, bit-identical to [`Core::HT_DCPHASE`]
-/// over the same series. Open with [`Core::HT_DCPHASE_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ht_dcphase_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_DCPHASE_Stream")]
-pub struct HT_DCPHASE_Stream {
-    state: HT_DCPHASE_StreamState,
+pub struct HtDcphaseStream {
+    state: HtDcphaseStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl HT_DCPHASE_Stream {
+impl HtDcphaseStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `HT_DCPHASE_StreamState::restore_from`.
+    /// allocating new ones. See `HtDcphaseStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -645,7 +645,7 @@ impl HT_DCPHASE_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HT_DCPHASE_StreamState {
+struct HtDcphaseStreamState {
     period: f64,
     periodWMASum: f64,
     periodWMASub: f64,
@@ -700,7 +700,7 @@ struct HT_DCPHASE_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl HT_DCPHASE_StreamState {
+impl HtDcphaseStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -758,14 +758,13 @@ impl HT_DCPHASE_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_DCPHASE_step_impl(sp: &mut HT_DCPHASE_StreamState, inReal: f64, outReal: &mut f64) {
+    fn ht_dcphase_step_impl(sp: &mut HtDcphaseStreamState, inReal: f64, outReal: &mut f64) {
         let mut i: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
@@ -975,11 +974,11 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// The single whole-history transcription behind [`Core::HT_DCPHASE_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::HT_DCPHASE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_DCPHASE_OpenImpl(
+    /// The single whole-history transcription behind [`Core::ht_dcphase_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::ht_dcphase_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn ht_dcphase_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<HT_DCPHASE_Stream, RetCode> {
+    ) -> Result<HtDcphaseStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1399,7 +1398,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HT_DCPHASE_StreamState {
+        let state = HtDcphaseStreamState {
             period,
             periodWMASum,
             periodWMASub,
@@ -1452,17 +1451,17 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok(HT_DCPHASE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(HtDcphaseStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::HT_DCPHASE_Open`] (composition seam).
-    pub(crate) fn HT_DCPHASE_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ht_dcphase_open`] (composition seam).
+    pub(crate) fn ht_dcphase_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HT_DCPHASE_Stream, f64), RetCode> {
+    ) -> Result<(HtDcphaseStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.HT_DCPHASE_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ht_dcphase_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1482,7 +1481,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.HT_DCPHASE_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.ht_dcphase_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1492,11 +1491,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_HT_DCPHASE_Open")]
-    pub fn HT_DCPHASE_Open(&self, inReal: &[f64], ) -> Result<(HT_DCPHASE_Stream, f64), RetCode> {
-        self.HT_DCPHASE_OpenInternal(inReal, 0)
+    pub fn ht_dcphase_open(&self, inReal: &[f64], ) -> Result<(HtDcphaseStream, f64), RetCode> {
+        self.ht_dcphase_open_internal(inReal, 0)
     }
 
-    /// [`Core::HT_DCPHASE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ht_dcphase_open`] that also fills the output array(s) bit-identically to
     /// [`Core::HT_DCPHASE`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1504,12 +1503,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::HT_DCPHASE_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ht_dcphase_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_HT_DCPHASE_OpenAndFill")]
-    pub fn HT_DCPHASE_OpenAndFill(
+    pub fn ht_dcphase_open_and_fill(
         &self, inReal: &[f64], outReal: &mut [f64],
-    ) -> Result<(HT_DCPHASE_Stream, OutRange), RetCode> {
+    ) -> Result<(HtDcphaseStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1523,31 +1522,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_DCPHASE_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.ht_dcphase_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::HT_DCPHASE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ht_dcphase_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn HT_DCPHASE_OpenAndFillInternal(
+    pub(crate) fn ht_dcphase_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<HT_DCPHASE_Stream, RetCode> {
-        self.HT_DCPHASE_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<HtDcphaseStream, RetCode> {
+        self.ht_dcphase_open_impl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `HT_DCPHASE_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `HtDcphaseStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static HT_DCPHASE_PEEK_SCRATCH: std::cell::Cell<Option<Box<HT_DCPHASE_Stream>>> =
+    static HT_DCPHASE_PEEK_SCRATCH: std::cell::Cell<Option<Box<HtDcphaseStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HT_DCPHASE_Stream {
+impl HtDcphaseStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1565,7 +1564,7 @@ impl HT_DCPHASE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::HT_DCPHASE_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::ht_dcphase_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1598,7 +1597,7 @@ impl HT_DCPHASE_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::HT_DCPHASE_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::ht_dcphase_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1622,11 +1621,12 @@ impl HT_DCPHASE_Stream {
             return Err(RetCode::BadParam);
         }
         HT_DCPHASE_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::ht_dcphase_step_impl(&mut scratch, inReal, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 
@@ -1646,7 +1646,7 @@ impl HT_DCPHASE_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HT_DCPHASE_Stream>();
+    _assert_auto::<HtDcphaseStream>();
 };
 
 /***************/

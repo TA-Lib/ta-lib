@@ -328,7 +328,7 @@
    /**
     * A live CDLTRISTAR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLTRISTAR} over the same series.
-    * Open with {@link Core#CDLTRISTAR_Open}; there is no close — the handle is
+    * Open with {@link Core#cdltristarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -339,7 +339,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLTRISTAR_Stream {
+   public static final class CdltristarStream {
       Core core;
       double BodyPeriodTotal;
       double lag1_inOpen;
@@ -360,7 +360,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLTRISTAR_Stream( Core core ) { this.core = core; }
+      CdltristarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -374,7 +374,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLTRISTAR_Stream( CDLTRISTAR_Stream other ) {
+      CdltristarStream( CdltristarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -396,7 +396,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLTRISTAR_Stream other ) {
+      void copyFrom( CdltristarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -437,7 +437,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTRISTAR update: BadParam", RetCode.BadParam);
-         core.CDLTRISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdltristarStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -466,7 +466,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLTRISTAR updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLTRISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdltristarStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -482,8 +482,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
-         CDLTRISTAR_Stream scratch = new CDLTRISTAR_Stream(this);
-         core.CDLTRISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdltristarStream scratch = new CdltristarStream(this);
+         core.cdltristarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -500,11 +500,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLTRISTAR_Stream copy() {
-         return new CDLTRISTAR_Stream(this);
+      public CdltristarStream copy() {
+         return new CdltristarStream(this);
       }
    }
-   void CDLTRISTAR_StepImpl( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdltristarStepImpl( CdltristarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -549,7 +549,7 @@
          sp.ringPos_BodyTrailingIdx = 0;
       }
    }
-   private RetCode CDLTRISTAR_OpenImpl( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdltristarOpenImpl( CdltristarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -668,11 +668,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLTRISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLTRISTAR_Stream CDLTRISTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdltristarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdltristarStream cdltristarOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
-      RetCode retCode = CDLTRISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdltristarStream sp = new CdltristarStream(this);
+      RetCode retCode = cdltristarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -686,14 +686,14 @@
       }
       throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLTRISTAR_Open (composition seam). */
-   CDLTRISTAR_Stream CDLTRISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdltristarOpen (composition seam). */
+   CdltristarStream cdltristarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
+      CdltristarStream sp = new CdltristarStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTRISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdltristarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -720,7 +720,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLTRISTAR_Stream CDLTRISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdltristarStream cdltristarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLTRISTAR open", "inOpen", inOpen);
       requireHistory("CDLTRISTAR open", inOpen.length);
@@ -730,10 +730,10 @@
       requireHistoryLength("CDLTRISTAR open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLTRISTAR open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLTRISTAR open", "inClose", inClose.length, inOpen.length);
-      return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdltristarOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLTRISTAR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdltristarOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLTRISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -741,9 +741,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLTRISTAR_Stream#outRange()}.
+    * {@link CdltristarStream#outRange()}.
     */
-   public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdltristarStream cdltristarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLTRISTAR openAndFill", "inOpen", inOpen);
       requireHistory("CDLTRISTAR openAndFill", inOpen.length);
@@ -760,5 +760,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLTRISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdltristarOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

@@ -100,8 +100,8 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
 
     for &bad in &BAD {
         // --- loop tier ---
-        let (mut sa, _) = core.SMA_Open(c, 14).unwrap();
-        let (mut sb, _) = core.SMA_Open(c, 14).unwrap();
+        let (mut sa, _) = core.sma_open(c, 14).unwrap();
+        let (mut sb, _) = core.sma_open(c, 14).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&sa.update(bad))), "SMA.update accepted {bad}");
         assert!(probed(&mut rejects, is_bad_param(&sa.peek(bad))), "SMA.peek accepted {bad}");
         assert!(
@@ -110,8 +110,8 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
         );
 
         // --- dual-mode tier, one input slot at a time ---
-        let (mut da, _) = core.MINUS_DI_Open(h, l, c, 14).unwrap();
-        let (mut db, _) = core.MINUS_DI_Open(h, l, c, 14).unwrap();
+        let (mut da, _) = core.minus_di_open(h, l, c, 14).unwrap();
+        let (mut db, _) = core.minus_di_open(h, l, c, 14).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&da.update(bad, nl, nc))), "MINUS_DI.update(high)");
         assert!(probed(&mut rejects, is_bad_param(&da.update(nh, bad, nc))), "MINUS_DI.update(low)");
         assert!(probed(&mut rejects, is_bad_param(&da.update(nh, nl, bad))), "MINUS_DI.update(close)");
@@ -123,8 +123,8 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
         );
 
         // --- dispatch tier, and its identity arm ---
-        let (mut ma, _) = core.MA_Open(c, 14, MAType::EMA).unwrap();
-        let (mut mb, _) = core.MA_Open(c, 14, MAType::EMA).unwrap();
+        let (mut ma, _) = core.ma_open(c, 14, MAType::EMA).unwrap();
+        let (mut mb, _) = core.ma_open(c, 14, MAType::EMA).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&ma.update(bad))), "MA.update accepted {bad}");
         assert!(probed(&mut rejects, is_bad_param(&ma.peek(bad))), "MA.peek accepted {bad}");
         assert!(
@@ -134,13 +134,13 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
 
         // Period 1 copies the bar straight to the output and never reaches a
         // sub-stream, so a check delegated to the sub would miss it.
-        let (mut mi, _) = core.MA_Open(c, 1, MAType::SMA).unwrap();
+        let (mut mi, _) = core.ma_open(c, 1, MAType::SMA).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&mi.update(bad))), "MA(identity).update");
         assert!(probed(&mut rejects, is_bad_param(&mi.peek(bad))), "MA(identity).peek");
 
         // --- period-bank tier: the period reaches `as i32` ---
-        let (mut va, _) = core.MAVP_Open(c, p, 2, 30, MAType::SMA).unwrap();
-        let (mut vb, _) = core.MAVP_Open(c, p, 2, 30, MAType::SMA).unwrap();
+        let (mut va, _) = core.mavp_open(c, p, 2, 30, MAType::SMA).unwrap();
+        let (mut vb, _) = core.mavp_open(c, p, 2, 30, MAType::SMA).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&va.update(bad, np))), "MAVP.update(real)");
         assert!(probed(&mut rejects, is_bad_param(&va.update(nc, bad))), "MAVP.update(period)");
         assert!(probed(&mut rejects, is_bad_param(&va.peek(nc, bad))), "MAVP.peek(period)");
@@ -151,8 +151,8 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
         );
 
         // --- composed tiers ---
-        let (mut ba, _) = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
-        let (mut bb, _) = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
+        let (mut ba, _) = core.bbands_open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
+        let (mut bb, _) = core.bbands_open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&ba.update(bad))), "BBANDS.update accepted {bad}");
         assert!(probed(&mut rejects, is_bad_param(&ba.peek(bad))), "BBANDS.peek accepted {bad}");
         let (au, am, al) = ba.update(nc).unwrap();
@@ -164,10 +164,10 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
         );
 
         let (mut ka, _) = core
-            .STOCH_Open(h, l, c, 5, 3, MAType::SMA, 3, MAType::SMA)
+            .stoch_open(h, l, c, 5, 3, MAType::SMA, 3, MAType::SMA)
             .unwrap();
         let (mut kb, _) = core
-            .STOCH_Open(h, l, c, 5, 3, MAType::SMA, 3, MAType::SMA)
+            .stoch_open(h, l, c, 5, 3, MAType::SMA, 3, MAType::SMA)
             .unwrap();
         assert!(probed(&mut rejects, is_bad_param(&ka.update(bad, nl, nc))), "STOCH.update");
         assert!(probed(&mut rejects, is_bad_param(&ka.peek(nh, bad, nc))), "STOCH.peek");
@@ -180,8 +180,8 @@ fn update_and_peek_reject_a_non_finite_bar_without_moving_the_handle() {
         );
 
         // --- integer output, four price inputs ---
-        let (mut ja, _) = core.CDLDOJI_Open(o, h, l, c).unwrap();
-        let (mut jb, _) = core.CDLDOJI_Open(o, h, l, c).unwrap();
+        let (mut ja, _) = core.cdldoji_open(o, h, l, c).unwrap();
+        let (mut jb, _) = core.cdldoji_open(o, h, l, c).unwrap();
         assert!(probed(&mut rejects, is_bad_param(&ja.update(bad, nh, nl, nc))), "CDLDOJI.update(open)");
         assert!(probed(&mut rejects, is_bad_param(&ja.peek(no, nh, nl, bad))), "CDLDOJI.peek(close)");
         assert!(
@@ -209,17 +209,17 @@ fn a_nan_real_parameter_is_rejected() {
     let c = &close[..WARM];
 
     assert!(
-        is_bad_param(&core.BBANDS_Open(c, 20, f64::NAN, 2.0, MAType::SMA)),
-        "BBANDS_Open accepted a NaN optInNbDevUp"
+        is_bad_param(&core.bbands_open(c, 20, f64::NAN, 2.0, MAType::SMA)),
+        "bbands_open accepted a NaN optInNbDevUp"
     );
     assert!(
-        is_bad_param(&core.BBANDS_Open(c, 20, 2.0, f64::NAN, MAType::SMA)),
-        "BBANDS_Open accepted a NaN optInNbDevDn"
+        is_bad_param(&core.bbands_open(c, 20, 2.0, f64::NAN, MAType::SMA)),
+        "bbands_open accepted a NaN optInNbDevDn"
     );
     // Control: the same call with both parameters in range must succeed, or the
     // two assertions above would pass for the wrong reason.
     assert!(
-        core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).is_ok(),
+        core.bbands_open(c, 20, 2.0, 2.0, MAType::SMA).is_ok(),
         "the control open must succeed"
     );
 }
@@ -264,8 +264,8 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         bars[UF_BAD] = bad;
 
         // --- the shared step loop (loop / dual-mode / composed all reach it) --
-        let (mut sa, _) = core.SMA_Open(c, 14).unwrap();
-        let (mut sb, _) = core.SMA_Open(c, 14).unwrap();
+        let (mut sa, _) = core.sma_open(c, 14).unwrap();
+        let (mut sb, _) = core.sma_open(c, 14).unwrap();
         let want: Vec<f64> = (0..UF_BAD).map(|i| sb.update(bars[i]).unwrap()).collect();
         let mut out = vec![UF_CANARY; UF_N];
         assert!(
@@ -294,8 +294,8 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         );
 
         // --- composed, three outputs: the commit has to be consistent across all
-        let (mut ba, _) = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
-        let (mut bb, _) = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
+        let (mut ba, _) = core.bbands_open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
+        let (mut bb, _) = core.bbands_open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
         let wantb: Vec<(f64, f64, f64)> =
             (0..UF_BAD).map(|i| bb.update(bars[i]).unwrap()).collect();
         let (mut bu, mut bm, mut bl) =
@@ -320,8 +320,8 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         // --- dispatch, both arms: period 1 is the identity loop, which never
         // reaches a sub-stream and carries its own copy of the per-bar check.
         for period in [1i32, 14] {
-            let (mut ma, _) = core.MA_Open(c, period, MAType::SMA).unwrap();
-            let (mut mb, _) = core.MA_Open(c, period, MAType::SMA).unwrap();
+            let (mut ma, _) = core.ma_open(c, period, MAType::SMA).unwrap();
+            let (mut mb, _) = core.ma_open(c, period, MAType::SMA).unwrap();
             let wantm: Vec<f64> = (0..UF_BAD).map(|i| mb.update(bars[i]).unwrap()).collect();
             let mut mo = vec![UF_CANARY; UF_N];
             assert!(
@@ -342,8 +342,8 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         let good_bars: Vec<f64> = (0..UF_N).map(|i| close[WARM + i]).collect();
         let mut pers: Vec<f64> = (0..UF_N).map(|i| 2.0 + (i % 8) as f64).collect();
         pers[UF_BAD] = bad;
-        let (mut va, _) = core.MAVP_Open(c, p, 2, 30, MAType::SMA).unwrap();
-        let (mut vb, _) = core.MAVP_Open(c, p, 2, 30, MAType::SMA).unwrap();
+        let (mut va, _) = core.mavp_open(c, p, 2, 30, MAType::SMA).unwrap();
+        let (mut vb, _) = core.mavp_open(c, p, 2, 30, MAType::SMA).unwrap();
         let wantv: Vec<f64> = (0..UF_BAD)
             .map(|i| vb.update(good_bars[i], pers[i]).unwrap())
             .collect();
@@ -366,8 +366,8 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         lows[UF_BAD] = bad;
         let opens: Vec<f64> = (0..UF_N).map(|i| open[WARM + i]).collect();
         let highs: Vec<f64> = (0..UF_N).map(|i| high[WARM + i]).collect();
-        let (mut ja, _) = core.CDLDOJI_Open(o, h, l, c).unwrap();
-        let (mut jb, _) = core.CDLDOJI_Open(o, h, l, c).unwrap();
+        let (mut ja, _) = core.cdldoji_open(o, h, l, c).unwrap();
+        let (mut jb, _) = core.cdldoji_open(o, h, l, c).unwrap();
         let wantj: Vec<i32> = (0..UF_BAD)
             .map(|i| jb.update(opens[i], highs[i], lows[i], good_bars[i]).unwrap())
             .collect();
@@ -401,7 +401,7 @@ fn update_and_fill_rejects_bad_lengths_and_treats_zero_bars_as_a_no_op() {
     let c = &close[..WARM];
     let bars: Vec<f64> = (0..UF_N).map(|i| close[WARM + i]).collect();
 
-    let (mut s, _) = core.SMA_Open(c, 14).unwrap();
+    let (mut s, _) = core.sma_open(c, 14).unwrap();
     let before = s.out_range();
     let mut out = vec![UF_CANARY; UF_N];
 
@@ -417,7 +417,7 @@ fn update_and_fill_rejects_bad_lengths_and_treats_zero_bars_as_a_no_op() {
 
     // Ragged inputs, on a multi-input function.
     let (mut d, _) = core
-        .MINUS_DI_Open(&high[..WARM], &low[..WARM], c, 14)
+        .minus_di_open(&high[..WARM], &low[..WARM], c, 14)
         .unwrap();
     let dbefore = d.out_range();
     let hs: Vec<f64> = (0..UF_N).map(|i| high[WARM + i]).collect();

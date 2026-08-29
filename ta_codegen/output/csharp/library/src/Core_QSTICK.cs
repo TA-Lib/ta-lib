@@ -380,7 +380,7 @@ public partial class Core
    /// <summary>A live <c>QSTICK</c> stream: one value per closed bar, bit-identical to
    /// <c>QSTICK</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.QSTICK_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.QstickOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -393,7 +393,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class QSTICK_Stream
+   public sealed class QstickStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -405,12 +405,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal QSTICK_Stream( Core core ) { this.core = core; }
+      internal QstickStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.QSTICK</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Qstick</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -419,7 +419,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal QSTICK_Stream( QSTICK_Stream other )
+      internal QstickStream( QstickStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -433,7 +433,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( QSTICK_Stream other )
+      internal void CopyFrom( QstickStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -466,7 +466,7 @@ public partial class Core
       public double Update( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "update", RetCode.BadParam);
-         core.QSTICK_StepImpl(this, inOpen, inClose);
+         core.QstickStepImpl(this, inOpen, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -486,8 +486,8 @@ public partial class Core
       public double Peek( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "peek", RetCode.BadParam);
-         QSTICK_Stream scratch = new QSTICK_Stream(this);
-         core.QSTICK_StepImpl(scratch, inOpen, inClose);
+         QstickStream scratch = new QstickStream(this);
+         core.QstickStepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -512,7 +512,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("QSTICK", "updateAndFill", RetCode.BadParam);
-            core.QSTICK_StepImpl(this, inOpen[i], inClose[i]);
+            core.QstickStepImpl(this, inOpen[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -528,13 +528,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public QSTICK_Stream Clone()
+      public QstickStream Clone()
       {
-         return new QSTICK_Stream(this);
+         return new QstickStream(this);
       }
    }
 
-   internal void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
+   internal void QstickStepImpl( QstickStream sp, double inOpen, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -551,7 +551,7 @@ public partial class Core
       }
    }
 
-   private RetCode QSTICK_OpenImpl( QSTICK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode QstickOpenImpl( QstickStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -663,11 +663,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* QSTICK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal QSTICK_Stream QSTICK_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* QstickOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal QstickStream QstickOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      QSTICK_Stream sp = new QSTICK_Stream(this);
-      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      QstickStream sp = new QstickStream(this);
+      RetCode retCode = QstickOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -676,12 +676,12 @@ public partial class Core
       throw StreamFailure("QSTICK", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind QSTICK_Open (composition seam). */
-   internal QSTICK_Stream QSTICK_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind QstickOpen (composition seam). */
+   internal QstickStream QstickOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      QSTICK_Stream sp = new QSTICK_Stream(this);
+      QstickStream sp = new QstickStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = QstickOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -692,11 +692,11 @@ public partial class Core
 
    /// <summary>Open a live <c>QSTICK</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="QSTICK_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="QstickStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>QSTICK</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>QSTICK_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>QSTICK_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>QstickOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
@@ -709,16 +709,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public QSTICK_Stream QSTICK_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public QstickStream QstickOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("QSTICK open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("QSTICK", "open", "inClose", inClose.Length, inOpen.Length);
-      return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
+      return QstickOpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>QSTICK_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>QstickOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>QSTICK</c> produces over
@@ -730,7 +730,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="QSTICK_Stream.OutRange"/>.</para>
+   /// <see cref="QstickStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
@@ -746,7 +746,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public QSTICK_Stream QSTICK_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public QstickStream QstickOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -757,6 +757,6 @@ public partial class Core
       if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
       }
-      return QSTICK_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return QstickOpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

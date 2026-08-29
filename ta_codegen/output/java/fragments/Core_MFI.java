@@ -513,7 +513,7 @@
    /**
     * A live MFI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MFI} over the same series.
-    * Open with {@link Core#MFI_Open}; there is no close — the handle is
+    * Open with {@link Core#mfiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -524,7 +524,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MFI_Stream {
+   public static final class MfiStream {
       Core core;
       int optInTimePeriod;
       double posSumMF;
@@ -540,7 +540,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MFI_Stream( Core core ) { this.core = core; }
+      MfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -554,7 +554,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MFI_Stream( MFI_Stream other ) {
+      MfiStream( MfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.posSumMF = other.posSumMF;
@@ -571,7 +571,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MFI_Stream other ) {
+      void copyFrom( MfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.posSumMF = other.posSumMF;
@@ -597,7 +597,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MFI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<MfiStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -614,7 +614,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MFI update: BadParam", RetCode.BadParam);
-         core.MFI_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.mfiStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -643,7 +643,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("MFI updateAndFill: BadParam", RetCode.BadParam);
-            core.MFI_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.mfiStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -661,14 +661,14 @@
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MFI peek: BadParam", RetCode.BadParam);
-         MFI_Stream scratch = PEEK_SCRATCH.get();
+         MfiStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new MFI_Stream(this);
+            scratch = new MfiStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.MFI_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         core.mfiStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -685,11 +685,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MFI_Stream copy() {
-         return new MFI_Stream(this);
+      public MfiStream copy() {
+         return new MfiStream(this);
       }
    }
-   void MFI_StepImpl( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void mfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -733,7 +733,7 @@
          sp.mflow_Idx = 0;
       }
    }
-   private RetCode MFI_OpenImpl( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode mfiOpenImpl( MfiStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -935,11 +935,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MFI_Stream MFI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* mfiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MfiStream mfiOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MFI_Stream sp = new MFI_Stream(this);
-      RetCode retCode = MFI_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      MfiStream sp = new MfiStream(this);
+      RetCode retCode = mfiOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -953,14 +953,14 @@
       }
       throw new TaLibArgumentException("MFI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MFI_Open (composition seam). */
-   MFI_Stream MFI_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind mfiOpen (composition seam). */
+   MfiStream mfiOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
-      MFI_Stream sp = new MFI_Stream(this);
+      MfiStream sp = new MfiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MFI_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = mfiOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -987,7 +987,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MFI_Stream MFI_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
+   public MfiStream mfiOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
    {
       requireArgument("MFI open", "inHigh", inHigh);
       requireHistory("MFI open", inHigh.length);
@@ -997,10 +997,10 @@
       requireHistoryLength("MFI open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("MFI open", "inClose", inClose.length, inHigh.length);
       requireHistoryLength("MFI open", "inVolume", inVolume.length, inHigh.length);
-      return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
+      return mfiOpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MFI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#mfiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1008,9 +1008,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MFI_Stream#outRange()}.
+    * {@link MfiStream#outRange()}.
     */
-   public MFI_Stream MFI_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
+   public MfiStream mfiOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("MFI openAndFill", "inHigh", inHigh);
       requireHistory("MFI openAndFill", inHigh.length);
@@ -1027,5 +1027,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MFI_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return mfiOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

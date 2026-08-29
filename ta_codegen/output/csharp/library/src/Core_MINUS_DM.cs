@@ -570,9 +570,9 @@ public partial class Core
    /// <summary>A live <c>MINUS_DM</c> stream: one value per closed bar, bit-identical to
    /// <c>MINUS_DM</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MINUS_DM_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.MinusDmOpen"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -583,7 +583,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MINUS_DM_Stream
+   public sealed class MinusDmStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -594,13 +594,13 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MINUS_DM_Stream( Core core ) { this.core = core; }
+      internal MinusDmStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MINUS_DM</c> reports over the same bars: the opener
-      /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <para>It is what <c>Core.MinusDm</c> reports over the same bars: the opener sets
+      /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
       /// last value, a subset of this range, because the caller chose not to take
@@ -608,7 +608,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MINUS_DM_Stream( MINUS_DM_Stream other )
+      internal MinusDmStream( MinusDmStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -620,7 +620,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MINUS_DM_Stream other )
+      internal void CopyFrom( MinusDmStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -649,7 +649,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MINUS_DM", "update", RetCode.BadParam);
-         core.MINUS_DM_StepImpl(this, inHigh, inLow);
+         core.MinusDmStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -669,8 +669,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MINUS_DM", "peek", RetCode.BadParam);
-         MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
-         core.MINUS_DM_StepImpl(scratch, inHigh, inLow);
+         MinusDmStream scratch = new MinusDmStream(this);
+         core.MinusDmStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -695,7 +695,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("MINUS_DM", "updateAndFill", RetCode.BadParam);
-            core.MINUS_DM_StepImpl(this, inHigh[i], inLow[i]);
+            core.MinusDmStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -711,13 +711,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MINUS_DM_Stream Clone()
+      public MinusDmStream Clone()
       {
-         return new MINUS_DM_Stream(this);
+         return new MinusDmStream(this);
       }
    }
 
-   internal void MINUS_DM_StepImpl( MINUS_DM_Stream sp, double inHigh, double inLow )
+   internal void MinusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -760,7 +760,7 @@ public partial class Core
       }
    }
 
-   private RetCode MINUS_DM_OpenImpl( MINUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MinusDmOpenImpl( MinusDmStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1082,11 +1082,11 @@ public partial class Core
       }
    }
 
-   /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* MinusDmOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MinusDmStream MinusDmOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
-      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      MinusDmStream sp = new MinusDmStream(this);
+      RetCode retCode = MinusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1095,12 +1095,12 @@ public partial class Core
       throw StreamFailure("MINUS_DM", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MINUS_DM_Open (composition seam). */
-   internal MINUS_DM_Stream MINUS_DM_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MinusDmOpen (composition seam). */
+   internal MinusDmStream MinusDmOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
-      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      MinusDmStream sp = new MinusDmStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = MinusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1111,12 +1111,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MINUS_DM</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MINUS_DM_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>MINUS_DM</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="MinusDmStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MINUS_DM</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MINUS_DM_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MINUS_DM_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MinusDmOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1129,16 +1128,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MINUS_DM_Stream MINUS_DM_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
+   public MinusDmStream MinusDmOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MINUS_DM open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("MINUS_DM", "open", "inLow", inLow.Length, inHigh.Length);
-      return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return MinusDmOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
-   /// <summary><c>MINUS_DM_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MinusDmOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MINUS_DM</c> produces over
@@ -1150,7 +1149,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MINUS_DM_Stream.OutRange"/>.</para>
+   /// <see cref="MinusDmStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1166,7 +1165,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MINUS_DM_Stream MINUS_DM_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
+   public MinusDmStream MinusDmOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DM openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1177,6 +1176,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("MINUS_DM", "openAndFill", RetCode.BadParam);
       }
-      return MINUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
+      return MinusDmOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

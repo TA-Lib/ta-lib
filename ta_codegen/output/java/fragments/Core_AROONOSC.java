@@ -395,7 +395,7 @@
    /**
     * A live AROONOSC stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AROONOSC} over the same series.
-    * Open with {@link Core#AROONOSC_Open}; there is no close — the handle is
+    * Open with {@link Core#aroonoscOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -406,7 +406,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AROONOSC_Stream {
+   public static final class AroonoscStream {
       Core core;
       int optInTimePeriod;
       double lowest;
@@ -424,7 +424,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      AROONOSC_Stream( Core core ) { this.core = core; }
+      AroonoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -438,7 +438,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AROONOSC_Stream( AROONOSC_Stream other ) {
+      AroonoscStream( AroonoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -457,7 +457,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AROONOSC_Stream other ) {
+      void copyFrom( AroonoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -485,7 +485,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AROONOSC_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<AroonoscStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -502,7 +502,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
-         core.AROONOSC_StepImpl(this, inHigh, inLow);
+         core.aroonoscStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -529,7 +529,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("AROONOSC updateAndFill: BadParam", RetCode.BadParam);
-            core.AROONOSC_StepImpl(this, inHigh[i], inLow[i]);
+            core.aroonoscStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -547,14 +547,14 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROONOSC peek: BadParam", RetCode.BadParam);
-         AROONOSC_Stream scratch = PEEK_SCRATCH.get();
+         AroonoscStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new AROONOSC_Stream(this);
+            scratch = new AroonoscStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.AROONOSC_StepImpl(scratch, inHigh, inLow);
+         core.aroonoscStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -571,11 +571,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AROONOSC_Stream copy() {
-         return new AROONOSC_Stream(this);
+      public AroonoscStream copy() {
+         return new AroonoscStream(this);
       }
    }
-   void AROONOSC_StepImpl( AROONOSC_Stream sp, double inHigh, double inLow )
+   void aroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       double aroon = 0.0;
@@ -639,7 +639,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode AROONOSC_OpenImpl( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode aroonoscOpenImpl( AroonoscStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -796,11 +796,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* AROONOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AROONOSC_Stream AROONOSC_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* aroonoscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AroonoscStream aroonoscOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      AroonoscStream sp = new AroonoscStream(this);
+      RetCode retCode = aroonoscOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -814,14 +814,14 @@
       }
       throw new TaLibArgumentException("AROONOSC openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AROONOSC_Open (composition seam). */
-   AROONOSC_Stream AROONOSC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind aroonoscOpen (composition seam). */
+   AroonoscStream aroonoscOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
-      AROONOSC_Stream sp = new AROONOSC_Stream(this);
+      AroonoscStream sp = new AroonoscStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = aroonoscOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -848,16 +848,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AROONOSC_Stream AROONOSC_Open( double inHigh[], double inLow[], int optInTimePeriod )
+   public AroonoscStream aroonoscOpen( double inHigh[], double inLow[], int optInTimePeriod )
    {
       requireArgument("AROONOSC open", "inHigh", inHigh);
       requireHistory("AROONOSC open", inHigh.length);
       requireArgument("AROONOSC open", "inLow", inLow);
       requireHistoryLength("AROONOSC open", "inLow", inLow.length, inHigh.length);
-      return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return aroonoscOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#AROONOSC_Open} that also fills the output array(s) bit-identically
+    * {@link Core#aroonoscOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AROONOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -865,9 +865,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AROONOSC_Stream#outRange()}.
+    * {@link AroonoscStream#outRange()}.
     */
-   public AROONOSC_Stream AROONOSC_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
+   public AroonoscStream aroonoscOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("AROONOSC openAndFill", "inHigh", inHigh);
       requireHistory("AROONOSC openAndFill", inHigh.length);
@@ -880,5 +880,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AROONOSC_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return aroonoscOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

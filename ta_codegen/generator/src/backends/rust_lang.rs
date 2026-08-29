@@ -5137,7 +5137,7 @@ fn render_func_call(
 /// needs writing out. Rust's answers `Err(RetCode)`, and `?` is unavailable in
 /// the 33 sites inside `<N>_Impl`, which returns a bare `RetCode` -- so the error
 /// arm is spelled at every site, as `return _e` there and as `return Err(_e)` at
-/// the three inside a `Result`-returning `<N>_OpenImpl` (`err_returns_result`).
+/// the three inside a `Result`-returning `<n>_open_impl` (`err_returns_result`).
 /// `retCode` is still assigned `Success` afterwards. The guard that used to read
 /// it is folded away by `ir_cleanup::drop_answered_cross_call_guards`, but 10
 /// of the sites fold "success with zero output" into the same conditional

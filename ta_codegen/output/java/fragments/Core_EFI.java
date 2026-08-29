@@ -417,7 +417,7 @@
    /**
     * A live EFI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#EFI} over the same series.
-    * Open with {@link Core#EFI_Open}; there is no close — the handle is
+    * Open with {@link Core#efiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -428,7 +428,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class EFI_Stream {
+   public static final class EfiStream {
       Core core;
       int optInTimePeriod;
       double prevClose;
@@ -438,7 +438,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      EFI_Stream( Core core ) { this.core = core; }
+      EfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -452,7 +452,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      EFI_Stream( EFI_Stream other ) {
+      EfiStream( EfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevClose = other.prevClose;
@@ -463,7 +463,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( EFI_Stream other ) {
+      void copyFrom( EfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevClose = other.prevClose;
@@ -489,7 +489,7 @@
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
-         core.EFI_StepImpl(this, inClose, inVolume);
+         core.efiStepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -516,7 +516,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("EFI updateAndFill: BadParam", RetCode.BadParam);
-            core.EFI_StepImpl(this, inClose[i], inVolume[i]);
+            core.efiStepImpl(this, inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -532,8 +532,8 @@
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
-         EFI_Stream scratch = new EFI_Stream(this);
-         core.EFI_StepImpl(scratch, inClose, inVolume);
+         EfiStream scratch = new EfiStream(this);
+         core.efiStepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -550,11 +550,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public EFI_Stream copy() {
-         return new EFI_Stream(this);
+      public EfiStream copy() {
+         return new EfiStream(this);
       }
    }
-   void EFI_StepImpl( EFI_Stream sp, double inClose, double inVolume )
+   void efiStepImpl( EfiStream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;
@@ -569,7 +569,7 @@
          sp.cur_outReal = sp.prevMA;
       }
    }
-   private RetCode EFI_OpenImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode efiOpenImpl( EfiStream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
@@ -776,11 +776,11 @@
          return RetCode.Success;
       }
    }
-   /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   EFI_Stream EFI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* efiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   EfiStream efiOpenAndFillInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      EfiStream sp = new EfiStream(this);
+      RetCode retCode = efiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -794,14 +794,14 @@
       }
       throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind EFI_Open (composition seam). */
-   EFI_Stream EFI_OpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind efiOpen (composition seam). */
+   EfiStream efiOpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
-      EFI_Stream sp = new EFI_Stream(this);
+      EfiStream sp = new EfiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = efiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -828,16 +828,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public EFI_Stream EFI_Open( double inClose[], double inVolume[], int optInTimePeriod )
+   public EfiStream efiOpen( double inClose[], double inVolume[], int optInTimePeriod )
    {
       requireArgument("EFI open", "inClose", inClose);
       requireHistory("EFI open", inClose.length);
       requireArgument("EFI open", "inVolume", inVolume);
       requireHistoryLength("EFI open", "inVolume", inVolume.length, inClose.length);
-      return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
+      return efiOpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#EFI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#efiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#EFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -845,9 +845,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link EFI_Stream#outRange()}.
+    * {@link EfiStream#outRange()}.
     */
-   public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
+   public EfiStream efiOpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("EFI openAndFill", "inClose", inClose);
       requireHistory("EFI openAndFill", inClose.length);
@@ -860,5 +860,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return EFI_OpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return efiOpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -23,6 +23,9 @@
 //!  * For reference, C's `TA_GetFuncHandle` is an O(n) linear `strcmp` within a
 //!    26-way first-letter bucket (up to 67 compares for the `CDL*` bucket) plus
 //!    several pointer hops per entry. The generated `match` is strictly less work.
+//!  * `get_func_handle` tries this exact match first, and only falls back to an
+//!    O(n) ASCII case-insensitive scan over [`FUNCS`] on a miss (#278) — a cold
+//!    path within a cold path, so the fallback's linearity doesn't matter.
 #![allow(clippy::all)]
 #![allow(non_camel_case_types)]
 
@@ -2336,11 +2339,13 @@ pub static FUNCS: [FuncInfo; 176] = [
     },
 ];
 
-/// Resolve a function name (e.g. "RSI") to its [`FuncId`].
+/// Resolve a function name (e.g. "RSI") to its [`FuncId`], exact-case first.
 ///
-/// Uses a generated `match` — see the module-level docs for why this is O(1)
-/// and faster than C's linear `strcmp` scan, with zero allocation/dependencies.
-pub fn get_func_handle(name: &str) -> Option<FuncId> {
+/// A generated `match` — see the module-level docs for why this is O(1) and
+/// faster than C's linear scan, with zero allocation/dependencies. Private:
+/// [`get_func_handle`] is the public entry, and falls back to a case-insensitive
+/// scan this fast path cannot express.
+fn get_func_handle_exact(name: &str) -> Option<FuncId> {
     Some(match name {
         "AC" => FuncId::AC,
         "ACCBANDS" => FuncId::ACCBANDS,
@@ -2520,6 +2525,21 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "WMA" => FuncId::WMA,
         _ => return None,
     })
+}
+
+/// Resolve a function name (e.g. "RSI", "rsi") to its [`FuncId`].
+///
+/// Every name is invariant ASCII, so an exact match (`get_func_handle_exact`,
+/// O(1), zero allocation) is tried first; a caller spelling the name in any
+/// other case falls back to an ASCII-only case-insensitive linear scan over
+/// [`FUNCS`] (`eq_ignore_ascii_case` — not a locale-aware `to_uppercase`, which
+/// has the classic Turkish-locale bug). Either way the returned [`FuncId`] and
+/// its [`FuncInfo::name`] stay the canonical upper-case spelling.
+pub fn get_func_handle(name: &str) -> Option<FuncId> {
+    if let Some(id) = get_func_handle_exact(name) {
+        return Some(id);
+    }
+    FUNCS.iter().find(|f| f.name.eq_ignore_ascii_case(name)).map(|f| f.id)
 }
 
 /// C-style variant returning the familiar `RetCode` error channel.
@@ -5427,6 +5447,19 @@ mod registry_tests {
     fn unknown_name_is_none() {
         assert_eq!(get_func_handle("definitely_not_a_ta_func"), None);
         assert!(get_func_handle_rc("definitely_not_a_ta_func").is_err());
+    }
+
+    /// #278: the lookup folds ASCII case, but every name it hands back
+    /// (`FuncId`, `FuncInfo::name`) stays the canonical upper-case spelling.
+    #[test]
+    fn lookup_is_ascii_case_insensitive() {
+        for f in FUNCS.iter() {
+            assert_eq!(get_func_handle(&f.name.to_ascii_lowercase()), Some(f.id));
+        }
+        assert_eq!(get_func_handle("sma"), Some(FuncId::SMA));
+        assert_eq!(get_func_handle("Sma"), Some(FuncId::SMA));
+        assert_eq!(get_func_handle("sMa"), Some(FuncId::SMA));
+        assert_eq!(get_func_info(get_func_handle("sma").unwrap()).name, "SMA");
     }
 
     #[test]

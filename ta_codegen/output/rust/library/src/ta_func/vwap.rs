@@ -379,23 +379,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live VWAP stream: one value per closed bar, bit-identical to [`Core::VWAP`]
-/// over the same series. Open with [`Core::VWAP_Open`]; dropping the handle
+/// over the same series. Open with [`Core::vwap_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_VWAP_Stream")]
-pub struct VWAP_Stream {
-    state: VWAP_StreamState,
+pub struct VwapStream {
+    state: VwapStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl VWAP_Stream {
+impl VwapStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `VWAP_StreamState::restore_from`.
+    /// allocating new ones. See `VwapStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -404,14 +404,14 @@ impl VWAP_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct VWAP_StreamState {
+struct VwapStreamState {
     sumPV: f64,
     sumV: f64,
     vwap: f64,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl VWAP_StreamState {
+impl VwapStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -421,14 +421,13 @@ impl VWAP_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn VWAP_step_impl(sp: &mut VWAP_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn vwap_step_impl(sp: &mut VwapStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut typPrice: f64 = 0.0_f64;
         let mut volume: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -515,11 +514,11 @@ impl Core {
         (*outReal) = sp.vwap;
     }
 
-    /// The single whole-history transcription behind [`Core::VWAP_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::VWAP_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn VWAP_OpenImpl(
+    /// The single whole-history transcription behind [`Core::vwap_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::vwap_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn vwap_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<VWAP_Stream, RetCode> {
+    ) -> Result<VwapStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -650,22 +649,22 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = VWAP_StreamState {
+        let state = VwapStreamState {
             sumPV,
             sumV,
             vwap,
         };
-        Ok(VWAP_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(VwapStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::VWAP_Open`] (composition seam).
-    pub(crate) fn VWAP_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::vwap_open`] (composition seam).
+    pub(crate) fn vwap_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(VWAP_Stream, f64), RetCode> {
+    ) -> Result<(VwapStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.VWAP_OpenImpl(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.vwap_open_impl(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -692,7 +691,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.VWAP_Open(&high, &low, &close, &volume).expect("enough history");
+    /// let (mut s, _last) = core.vwap_open(&high, &low, &close, &volume).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -702,11 +701,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_VWAP_Open")]
-    pub fn VWAP_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], ) -> Result<(VWAP_Stream, f64), RetCode> {
-        self.VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0)
+    pub fn vwap_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], ) -> Result<(VwapStream, f64), RetCode> {
+        self.vwap_open_internal(inHigh, inLow, inClose, inVolume, 0)
     }
 
-    /// [`Core::VWAP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::vwap_open`] that also fills the output array(s) bit-identically to
     /// [`Core::VWAP`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -714,12 +713,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::VWAP_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::vwap_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_VWAP_OpenAndFill")]
-    pub fn VWAP_OpenAndFill(
+    pub fn vwap_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],
-    ) -> Result<(VWAP_Stream, OutRange), RetCode> {
+    ) -> Result<(VwapStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -736,23 +735,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.VWAP_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.vwap_open_and_fill_internal(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::VWAP_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::vwap_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn VWAP_OpenAndFillInternal(
+    pub(crate) fn vwap_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<VWAP_Stream, RetCode> {
-        self.VWAP_OpenImpl(inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<VwapStream, RetCode> {
+        self.vwap_open_impl(inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl VWAP_Stream {
+impl VwapStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -770,7 +769,7 @@ impl VWAP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::VWAP_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        Core::vwap_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -803,7 +802,7 @@ impl VWAP_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::VWAP_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
+            Core::vwap_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -846,7 +845,7 @@ impl VWAP_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<VWAP_Stream>();
+    _assert_auto::<VwapStream>();
 };
 
 /***************/

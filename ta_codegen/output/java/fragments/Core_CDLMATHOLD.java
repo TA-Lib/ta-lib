@@ -402,7 +402,7 @@
    /**
     * A live CDLMATHOLD stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLMATHOLD} over the same series.
-    * Open with {@link Core#CDLMATHOLD_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlmatholdOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -413,7 +413,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLMATHOLD_Stream {
+   public static final class CdlmatholdStream {
       Core core;
       double optInPenetration;
       double[] BodyPeriodTotal;
@@ -451,7 +451,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLMATHOLD_Stream( Core core ) { this.core = core; }
+      CdlmatholdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -465,7 +465,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLMATHOLD_Stream( CDLMATHOLD_Stream other ) {
+      CdlmatholdStream( CdlmatholdStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
@@ -504,7 +504,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLMATHOLD_Stream other ) {
+      void copyFrom( CdlmatholdStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          if( this.BodyPeriodTotal != null && this.BodyPeriodTotal.length == other.BodyPeriodTotal.length ) {
@@ -556,7 +556,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLMATHOLD_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlmatholdStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -573,7 +573,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATHOLD update: BadParam", RetCode.BadParam);
-         core.CDLMATHOLD_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlmatholdStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -602,7 +602,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLMATHOLD updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLMATHOLD_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlmatholdStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -620,14 +620,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATHOLD peek: BadParam", RetCode.BadParam);
-         CDLMATHOLD_Stream scratch = PEEK_SCRATCH.get();
+         CdlmatholdStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLMATHOLD_Stream(this);
+            scratch = new CdlmatholdStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLMATHOLD_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlmatholdStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -644,11 +644,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLMATHOLD_Stream copy() {
-         return new CDLMATHOLD_Stream(this);
+      public CdlmatholdStream copy() {
+         return new CdlmatholdStream(this);
       }
    }
-   void CDLMATHOLD_StepImpl( CDLMATHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlmatholdStepImpl( CdlmatholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -712,7 +712,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMATHOLD_OpenImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlmatholdOpenImpl( CdlmatholdStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -894,11 +894,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLMATHOLD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLMATHOLD_Stream CDLMATHOLD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlmatholdOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlmatholdStream cdlmatholdOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
-      RetCode retCode = CDLMATHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+      CdlmatholdStream sp = new CdlmatholdStream(this);
+      RetCode retCode = cdlmatholdOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -912,14 +912,14 @@
       }
       throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLMATHOLD_Open (composition seam). */
-   CDLMATHOLD_Stream CDLMATHOLD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind cdlmatholdOpen (composition seam). */
+   CdlmatholdStream cdlmatholdOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
-      CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
+      CdlmatholdStream sp = new CdlmatholdStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMATHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlmatholdOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -946,7 +946,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLMATHOLD_Stream CDLMATHOLD_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
+   public CdlmatholdStream cdlmatholdOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
       requireArgument("CDLMATHOLD open", "inOpen", inOpen);
       requireHistory("CDLMATHOLD open", inOpen.length);
@@ -956,10 +956,10 @@
       requireHistoryLength("CDLMATHOLD open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMATHOLD open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMATHOLD open", "inClose", inClose.length, inOpen.length);
-      return CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return cdlmatholdOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
-    * {@link Core#CDLMATHOLD_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlmatholdOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLMATHOLD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -967,9 +967,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLMATHOLD_Stream#outRange()}.
+    * {@link CdlmatholdStream#outRange()}.
     */
-   public CDLMATHOLD_Stream CDLMATHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
+   public CdlmatholdStream cdlmatholdOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
       requireArgument("CDLMATHOLD openAndFill", "inOpen", inOpen);
       requireHistory("CDLMATHOLD openAndFill", inOpen.length);
@@ -986,5 +986,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLMATHOLD_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return cdlmatholdOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }

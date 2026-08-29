@@ -185,7 +185,7 @@
    /**
     * A live SQRT stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SQRT} over the same series.
-    * Open with {@link Core#SQRT_Open}; there is no close — the handle is
+    * Open with {@link Core#sqrtOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -196,13 +196,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SQRT_Stream {
+   public static final class SqrtStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      SQRT_Stream( Core core ) { this.core = core; }
+      SqrtStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -216,14 +216,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SQRT_Stream( SQRT_Stream other ) {
+      SqrtStream( SqrtStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SQRT_Stream other ) {
+      void copyFrom( SqrtStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
-         core.SQRT_StepImpl(this, inReal);
+         core.sqrtStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("SQRT updateAndFill: BadParam", RetCode.BadParam);
-            core.SQRT_StepImpl(this, inReal[i]);
+            core.sqrtStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -287,8 +287,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
-         SQRT_Stream scratch = new SQRT_Stream(this);
-         core.SQRT_StepImpl(scratch, inReal);
+         SqrtStream scratch = new SqrtStream(this);
+         core.sqrtStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -305,15 +305,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SQRT_Stream copy() {
-         return new SQRT_Stream(this);
+      public SqrtStream copy() {
+         return new SqrtStream(this);
       }
    }
-   void SQRT_StepImpl( SQRT_Stream sp, double inReal )
+   void sqrtStepImpl( SqrtStream sp, double inReal )
    {
       sp.cur_outReal = Math.sqrt(inReal);
    }
-   private RetCode SQRT_OpenImpl( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode sqrtOpenImpl( SqrtStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -339,11 +339,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SQRT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SQRT_Stream SQRT_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* sqrtOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SqrtStream sqrtOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SQRT_Stream sp = new SQRT_Stream(this);
-      RetCode retCode = SQRT_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      SqrtStream sp = new SqrtStream(this);
+      RetCode retCode = sqrtOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -357,14 +357,14 @@
       }
       throw new TaLibArgumentException("SQRT openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SQRT_Open (composition seam). */
-   SQRT_Stream SQRT_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind sqrtOpen (composition seam). */
+   SqrtStream sqrtOpenInternal( double inReal[], int startIdx )
    {
-      SQRT_Stream sp = new SQRT_Stream(this);
+      SqrtStream sp = new SqrtStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SQRT_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = sqrtOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -391,14 +391,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SQRT_Stream SQRT_Open( double inReal[] )
+   public SqrtStream sqrtOpen( double inReal[] )
    {
       requireArgument("SQRT open", "inReal", inReal);
       requireHistory("SQRT open", inReal.length);
-      return SQRT_OpenInternal(inReal, 0);
+      return sqrtOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#SQRT_Open} that also fills the output array(s) bit-identically
+    * {@link Core#sqrtOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SQRT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -406,9 +406,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SQRT_Stream#outRange()}.
+    * {@link SqrtStream#outRange()}.
     */
-   public SQRT_Stream SQRT_OpenAndFill( double inReal[], double outReal[] )
+   public SqrtStream sqrtOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("SQRT openAndFill", "inReal", inReal);
       requireHistory("SQRT openAndFill", inReal.length);
@@ -419,5 +419,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SQRT_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return sqrtOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

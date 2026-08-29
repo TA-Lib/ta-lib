@@ -247,7 +247,7 @@ public partial class Core
    /// <summary>A live <c>ACOS</c> stream: one value per closed bar, bit-identical to
    /// <c>ACOS</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.ACOS_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.AcosOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -260,19 +260,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class ACOS_Stream
+   public sealed class AcosStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal ACOS_Stream( Core core ) { this.core = core; }
+      internal AcosStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.ACOS</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Acos</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -280,7 +280,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal ACOS_Stream( ACOS_Stream other )
+      internal AcosStream( AcosStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -288,7 +288,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( ACOS_Stream other )
+      internal void CopyFrom( AcosStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -312,7 +312,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ACOS", "update", RetCode.BadParam);
-         core.ACOS_StepImpl(this, inReal);
+         core.AcosStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -331,8 +331,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ACOS", "peek", RetCode.BadParam);
-         ACOS_Stream scratch = new ACOS_Stream(this);
-         core.ACOS_StepImpl(scratch, inReal);
+         AcosStream scratch = new AcosStream(this);
+         core.AcosStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -356,7 +356,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("ACOS", "updateAndFill", RetCode.BadParam);
-            core.ACOS_StepImpl(this, inReal[i]);
+            core.AcosStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -372,18 +372,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public ACOS_Stream Clone()
+      public AcosStream Clone()
       {
-         return new ACOS_Stream(this);
+         return new AcosStream(this);
       }
    }
 
-   internal void ACOS_StepImpl( ACOS_Stream sp, double inReal )
+   internal void AcosStepImpl( AcosStream sp, double inReal )
    {
       sp.cur_outReal = Math.Acos(inReal);
    }
 
-   private RetCode ACOS_OpenImpl( ACOS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AcosOpenImpl( AcosStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -412,11 +412,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* ACOS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ACOS_Stream ACOS_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* AcosOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AcosStream AcosOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      AcosStream sp = new AcosStream(this);
+      RetCode retCode = AcosOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -425,12 +425,12 @@ public partial class Core
       throw StreamFailure("ACOS", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind ACOS_Open (composition seam). */
-   internal ACOS_Stream ACOS_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind AcosOpen (composition seam). */
+   internal AcosStream AcosOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      ACOS_Stream sp = new ACOS_Stream(this);
+      AcosStream sp = new AcosStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = AcosOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -441,11 +441,11 @@ public partial class Core
 
    /// <summary>Open a live <c>ACOS</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="ACOS_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="AcosStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>ACOS</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>ACOS_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>ACOS_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AcosOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">input values (expected in [-1, 1]) The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -455,15 +455,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ACOS_Stream ACOS_Open( ReadOnlySpan<double> inReal )
+   public AcosStream AcosOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ACOS open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ACOS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return ACOS_OpenInternal(inReal, 0);
+      return AcosOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>ACOS_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>AcosOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>ACOS</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -474,7 +474,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ACOS_Stream.OutRange"/>.</para>
+   /// <see cref="AcosStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">input values (expected in [-1, 1]) The warm-up history, oldest bar first.</param>
    /// <param name="outReal">arc cosine of each input, in radians. Must hold at least <c>historyLen -
@@ -487,7 +487,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ACOS_Stream ACOS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
+   public AcosStream AcosOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ACOS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ACOS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -496,6 +496,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("ACOS", "openAndFill", RetCode.BadParam);
       }
-      return ACOS_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
+      return AcosOpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

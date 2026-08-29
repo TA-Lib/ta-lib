@@ -41,6 +41,7 @@ package io.github.talib.metadata;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -73,12 +74,15 @@ public final class Functions {
    }
 
    /**
-    * One function by canonical upper-case name, e.g. {@code "SMA"}.
+    * One function by name, matched case-insensitively (ASCII; {@link Locale#ROOT},
+    * not the platform default, so a Turkish JVM does not turn {@code "i"} into
+    * {@code "İ"}). The metadata itself always reports the canonical upper-case
+    * spelling, e.g. {@code "SMA"}, regardless of the case looked up.
     *
     * @return the metadata, or {@code null} if no such function exists
     */
    public static FunctionInfo byName(String name) {
-      return BY_NAME.get(name);
+      return BY_NAME.get(name.toUpperCase(Locale.ROOT));
    }
 
    /** The distinct group names, in first-appearance order. */

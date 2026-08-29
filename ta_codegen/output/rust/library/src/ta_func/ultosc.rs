@@ -558,23 +558,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live ULTOSC stream: one value per closed bar, bit-identical to [`Core::ULTOSC`]
-/// over the same series. Open with [`Core::ULTOSC_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ultosc_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ULTOSC_Stream")]
-pub struct ULTOSC_Stream {
-    state: ULTOSC_StreamState,
+pub struct UltoscStream {
+    state: UltoscStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl ULTOSC_Stream {
+impl UltoscStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `ULTOSC_StreamState::restore_from`.
+    /// allocating new ones. See `UltoscStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -583,7 +583,7 @@ impl ULTOSC_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct ULTOSC_StreamState {
+struct UltoscStreamState {
     optInTimePeriod1: i32,
     optInTimePeriod2: i32,
     optInTimePeriod3: i32,
@@ -605,7 +605,7 @@ struct ULTOSC_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl ULTOSC_StreamState {
+impl UltoscStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -630,14 +630,13 @@ impl ULTOSC_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ULTOSC_step_impl(sp: &mut ULTOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn ultosc_step_impl(sp: &mut UltoscStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut trueLow: f64 = 0.0_f64;
         let mut trueRange: f64 = 0.0_f64;
         let mut closeMinusTrueLow: f64 = 0.0_f64;
@@ -735,11 +734,11 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// The single whole-history transcription behind [`Core::ULTOSC_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::ULTOSC_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ULTOSC_OpenImpl(
+    /// The single whole-history transcription behind [`Core::ultosc_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::ultosc_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn ultosc_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<ULTOSC_Stream, RetCode> {
+    ) -> Result<UltoscStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1031,7 +1030,7 @@ impl Core {
         if cbSize_term > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = ULTOSC_StreamState {
+        let state = UltoscStreamState {
             optInTimePeriod1,
             optInTimePeriod2,
             optInTimePeriod3,
@@ -1051,17 +1050,17 @@ impl Core {
             cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
             cb_term_trueRange: term_trueRange,
         };
-        Ok(ULTOSC_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(UltoscStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ULTOSC_Open`] (composition seam).
-    pub(crate) fn ULTOSC_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ultosc_open`] (composition seam).
+    pub(crate) fn ultosc_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32,
-    ) -> Result<(ULTOSC_Stream, f64), RetCode> {
+    ) -> Result<(UltoscStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ULTOSC_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ultosc_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1085,7 +1084,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ULTOSC_Open(&high, &low, &close, 7, 14, 28).expect("enough history");
+    /// let (mut s, _last) = core.ultosc_open(&high, &low, &close, 7, 14, 28).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1095,11 +1094,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ULTOSC_Open")]
-    pub fn ULTOSC_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32) -> Result<(ULTOSC_Stream, f64), RetCode> {
-        self.ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)
+    pub fn ultosc_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32) -> Result<(UltoscStream, f64), RetCode> {
+        self.ultosc_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)
     }
 
-    /// [`Core::ULTOSC_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ultosc_open`] that also fills the output array(s) bit-identically to
     /// [`Core::ULTOSC`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1107,12 +1106,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::ULTOSC_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ultosc_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_ULTOSC_OpenAndFill")]
-    pub fn ULTOSC_OpenAndFill(
+    pub fn ultosc_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outReal: &mut [f64],
-    ) -> Result<(ULTOSC_Stream, OutRange), RetCode> {
+    ) -> Result<(UltoscStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1129,31 +1128,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ULTOSC_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.ultosc_open_and_fill_internal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::ULTOSC_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ultosc_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn ULTOSC_OpenAndFillInternal(
+    pub(crate) fn ultosc_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ULTOSC_Stream, RetCode> {
-        self.ULTOSC_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<UltoscStream, RetCode> {
+        self.ultosc_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `ULTOSC_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `UltoscStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static ULTOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<ULTOSC_Stream>>> =
+    static ULTOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<UltoscStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl ULTOSC_Stream {
+impl UltoscStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1171,7 +1170,7 @@ impl ULTOSC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::ULTOSC_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::ultosc_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1204,7 +1203,7 @@ impl ULTOSC_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::ULTOSC_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::ultosc_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1228,11 +1227,12 @@ impl ULTOSC_Stream {
             return Err(RetCode::BadParam);
         }
         ULTOSC_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::ultosc_step_impl(&mut scratch, inHigh, inLow, inClose, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 
@@ -1252,7 +1252,7 @@ impl ULTOSC_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<ULTOSC_Stream>();
+    _assert_auto::<UltoscStream>();
 };
 
 /***************/

@@ -566,23 +566,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live HT_PHASOR stream: one value per closed bar, bit-identical to [`Core::HT_PHASOR`]
-/// over the same series. Open with [`Core::HT_PHASOR_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ht_phasor_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_PHASOR_Stream")]
-pub struct HT_PHASOR_Stream {
-    state: HT_PHASOR_StreamState,
+pub struct HtPhasorStream {
+    state: HtPhasorStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl HT_PHASOR_Stream {
+impl HtPhasorStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `HT_PHASOR_StreamState::restore_from`.
+    /// allocating new ones. See `HtPhasorStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -591,7 +591,7 @@ impl HT_PHASOR_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HT_PHASOR_StreamState {
+struct HtPhasorStreamState {
     period: f64,
     periodWMASum: f64,
     periodWMASub: f64,
@@ -639,7 +639,7 @@ struct HT_PHASOR_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl HT_PHASOR_StreamState {
+impl HtPhasorStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -690,14 +690,13 @@ impl HT_PHASOR_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_PHASOR_step_impl(sp: &mut HT_PHASOR_StreamState, inReal: f64, outInPhase: &mut f64, outQuadrature: &mut f64) {
+    fn ht_phasor_step_impl(sp: &mut HtPhasorStreamState, inReal: f64, outInPhase: &mut f64, outQuadrature: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
@@ -855,11 +854,11 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// The single whole-history transcription behind [`Core::HT_PHASOR_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::HT_PHASOR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_PHASOR_OpenImpl(
+    /// The single whole-history transcription behind [`Core::ht_phasor_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::ht_phasor_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn ht_phasor_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64], outStride: usize,
-    ) -> Result<HT_PHASOR_Stream, RetCode> {
+    ) -> Result<HtPhasorStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1206,7 +1205,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = HT_PHASOR_StreamState {
+        let state = HtPhasorStreamState {
             period,
             periodWMASum,
             periodWMASub,
@@ -1252,18 +1251,18 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(HT_PHASOR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(HtPhasorStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::HT_PHASOR_Open`] (composition seam).
-    pub(crate) fn HT_PHASOR_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ht_phasor_open`] (composition seam).
+    pub(crate) fn ht_phasor_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HT_PHASOR_Stream, (f64, f64)), RetCode> {
+    ) -> Result<(HtPhasorStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInPhase = [0.0_f64; 1];
         let mut sink_outQuadrature = [0.0_f64; 1];
-        let handle = self.HT_PHASOR_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInPhase, &mut sink_outQuadrature, 0)?;
+        let handle = self.ht_phasor_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInPhase, &mut sink_outQuadrature, 0)?;
         Ok((handle, (sink_outInPhase[0], sink_outQuadrature[0])))
     }
 
@@ -1283,7 +1282,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.HT_PHASOR_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.ht_phasor_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1294,11 +1293,11 @@ impl Core {
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_HT_PHASOR_Open")]
-    pub fn HT_PHASOR_Open(&self, inReal: &[f64], ) -> Result<(HT_PHASOR_Stream, (f64, f64)), RetCode> {
-        self.HT_PHASOR_OpenInternal(inReal, 0)
+    pub fn ht_phasor_open(&self, inReal: &[f64], ) -> Result<(HtPhasorStream, (f64, f64)), RetCode> {
+        self.ht_phasor_open_internal(inReal, 0)
     }
 
-    /// [`Core::HT_PHASOR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ht_phasor_open`] that also fills the output array(s) bit-identically to
     /// [`Core::HT_PHASOR`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1306,12 +1305,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::HT_PHASOR_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ht_phasor_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_HT_PHASOR_OpenAndFill")]
-    pub fn HT_PHASOR_OpenAndFill(
+    pub fn ht_phasor_open_and_fill(
         &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],
-    ) -> Result<(HT_PHASOR_Stream, OutRange), RetCode> {
+    ) -> Result<(HtPhasorStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1331,23 +1330,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_PHASOR_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature)?;
+        let handle = self.ht_phasor_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::HT_PHASOR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ht_phasor_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn HT_PHASOR_OpenAndFillInternal(
+    pub(crate) fn ht_phasor_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
-    ) -> Result<HT_PHASOR_Stream, RetCode> {
-        self.HT_PHASOR_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
+    ) -> Result<HtPhasorStream, RetCode> {
+        self.ht_phasor_open_impl(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HT_PHASOR_Stream {
+impl HtPhasorStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1366,7 +1365,7 @@ impl HT_PHASOR_Stream {
         }
         let mut outInPhase: f64 = 0.0_f64;
         let mut outQuadrature: f64 = 0.0_f64;
-        Core::HT_PHASOR_step_impl(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
+        Core::ht_phasor_step_impl(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1399,7 +1398,7 @@ impl HT_PHASOR_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::HT_PHASOR_step_impl(&mut self.state, inReal[i], &mut outInPhase[i], &mut outQuadrature[i]);
+            Core::ht_phasor_step_impl(&mut self.state, inReal[i], &mut outInPhase[i], &mut outQuadrature[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1444,7 +1443,7 @@ impl HT_PHASOR_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HT_PHASOR_Stream>();
+    _assert_auto::<HtPhasorStream>();
 };
 
 /***************/

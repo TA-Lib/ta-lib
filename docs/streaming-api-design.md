@@ -397,7 +397,7 @@ Rust:
 
 ```rust
 let core = Core::builder().build()?;              // immutable settings (issue #104)
-let (mut s, _last) = core.SMA_Open(&history, 14)?; // &self method on Core; the
+let (mut s, _last) = core.sma_open(&history, 14)?; // &self method on Core; the
                                                   // handle holds its own Core
                                                   // (a cheap by-value clone)
 for &x in new_bars { let v = s.update(x)?; }       // &mut self; Err(BadParam)
@@ -418,22 +418,22 @@ Java (shipped shape — design-panel reviewed):
 
 ```java
 Core core = new Core();
-Core.SMA_Stream s = core.SMA_Open(history, 14);  // throws on reject; value() = last-bar value
+Core.SmaStream s = core.smaOpen(history, 14);  // throws on reject; value() = last-bar value
 double v = s.update(bar);                        // one value per closed bar
 double p = s.peek(formingBarClose);              // forming bar, non-committing (scratch copy)
 s.updateAndFill(gapBars, out);                   // n bars, n values, one call
-Core.SMA_Stream t = s.copy();                    // independent stream fork
-Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
-Core.MACD_Stream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
-Core.SMA_Stream s2 = core.SMA_OpenAndFill(history, 14, warmup);
+Core.SmaStream t = s.copy();                    // independent stream fork
+Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
+Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
+Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
 OutRange r = s2.outRange();                      // bars produced so far, on the
                                                  // handle — what batch reports
 ```
 
-- Handles are `public static final` classes **nested in `Core`** (`Core.SMA_Stream`),
-  named `<NAME>_Stream` from the YAML `name` — they ride the existing per-function
-  fragment splice into both the shipped `Core.java` and the JSON-RPC server with
-  zero new build plumbing.
+- Handles are `public static final` classes **nested in `Core`** (`Core.SmaStream`),
+  named `<Name>Stream` (PascalCase, single-capitalized acronym, #278) from the
+  YAML `name` — they ride the existing per-function fragment splice into both
+  the shipped `Core.java` and the JSON-RPC server with zero new build plumbing.
 - Open rejections are unchecked exceptions: `InsufficientHistoryException`
   (an `IllegalArgumentException` subclass — the one routine, data-dependent
   condition, catchable separately) for `historyLen < lookback + 1`, plain
@@ -455,7 +455,7 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
   which overwrites a scratch held per thread instead of allocating a peer.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
-  one managed backend where `SMA_OpenAndFill(history, …, history)` compiles, so
+  one managed backend where `smaOpenAndFill(history, …, history)` compiles, so
   the guard is load-bearing. The managed .NET emitter mirrors it with
   `ReferenceEquals`, which additionally compiles for cross-typed `double[]`/
   `int[]` output pairs where `==` would not.

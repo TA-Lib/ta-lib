@@ -415,7 +415,7 @@ public partial class Core
    /// <summary>A live <c>APO</c> stream: one value per closed bar, bit-identical to
    /// <c>APO</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.APO_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.ApoOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -428,24 +428,24 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class APO_Stream
+   public sealed class ApoStream
    {
       internal Core core;
       internal int optInFastPeriod;
       internal int optInSlowPeriod;
       internal MAType optInMAType;
       internal double cur_outReal;
-      internal MA_Stream sub0 = null!;
-      internal MA_Stream sub1 = null!;
+      internal MaStream sub0 = null!;
+      internal MaStream sub1 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal APO_Stream( Core core ) { this.core = core; }
+      internal ApoStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.APO</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Apo</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -453,20 +453,20 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal APO_Stream( APO_Stream other )
+      internal ApoStream( ApoStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( APO_Stream other )
+      internal void CopyFrom( ApoStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -474,12 +474,12 @@ public partial class Core
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
          if( this.sub0 is null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.CopyFrom(other.sub0);
          }
          if( this.sub1 is null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
@@ -488,7 +488,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static APO_Stream? peekScratch;
+      [ThreadStatic] private static ApoStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -506,7 +506,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("APO", "update", RetCode.BadParam);
-         core.APO_StepImpl(this, inReal);
+         core.ApoStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -525,14 +525,14 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("APO", "peek", RetCode.BadParam);
-         APO_Stream? scratch = peekScratch;
+         ApoStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new APO_Stream(this);
+            scratch = new ApoStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.APO_StepImpl(scratch, inReal);
+         core.ApoStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -556,7 +556,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("APO", "updateAndFill", RetCode.BadParam);
-            core.APO_StepImpl(this, inReal[i]);
+            core.ApoStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -572,13 +572,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public APO_Stream Clone()
+      public ApoStream Clone()
       {
-         return new APO_Stream(this);
+         return new ApoStream(this);
       }
    }
 
-   internal void APO_StepImpl( APO_Stream sp, double inReal )
+   internal void ApoStepImpl( ApoStream sp, double inReal )
    {
       double cur_tempBuffer = 0.0;
       double cur_outReal = 0.0;
@@ -590,7 +590,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode APO_OpenImpl( APO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ApoOpenImpl( ApoStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -664,12 +664,12 @@ public partial class Core
       /* Calculate the fast MA into the tempBuffer. */
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      MaStream sub0 = MaOpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       retCode = RetCode.Success;
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, sc_outReal);
+      MaStream sub1 = MaOpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, sc_outReal);
       retCode = RetCode.Success;
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
@@ -693,11 +693,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* APO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal APO_Stream APO_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* ApoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal ApoStream ApoOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      APO_Stream sp = new APO_Stream(this);
-      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
+      ApoStream sp = new ApoStream(this);
+      RetCode retCode = ApoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -706,12 +706,12 @@ public partial class Core
       throw StreamFailure("APO", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind APO_Open (composition seam). */
-   internal APO_Stream APO_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind ApoOpen (composition seam). */
+   internal ApoStream ApoOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      APO_Stream sp = new APO_Stream(this);
+      ApoStream sp = new ApoStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = ApoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -722,11 +722,11 @@ public partial class Core
 
    /// <summary>Open a live <c>APO</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="APO_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="ApoStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>APO</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>APO_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>APO_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>ApoOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source data series. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="APO_Lookback"/> for its default and
@@ -742,14 +742,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public APO_Stream APO_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public ApoStream ApoOpen( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "APO open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "APO open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+      return ApoOpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
-   /// <summary><c>APO_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>ApoOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>APO</c> produces over the
@@ -761,7 +761,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="APO_Stream.OutRange"/>.</para>
+   /// <see cref="ApoStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source data series. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="APO_Lookback"/> for its default and
@@ -780,7 +780,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public APO_Stream APO_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
+   public ApoStream ApoOpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "APO openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "APO openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -789,6 +789,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("APO", "openAndFill", RetCode.BadParam);
       }
-      return APO_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, outReal);
+      return ApoOpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, outReal);
    }
 }

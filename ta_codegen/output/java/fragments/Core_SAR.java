@@ -605,7 +605,7 @@
    /**
     * A live SAR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SAR} over the same series.
-    * Open with {@link Core#SAR_Open}; there is no close — the handle is
+    * Open with {@link Core#sarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -616,7 +616,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SAR_Stream {
+   public static final class SarStream {
       Core core;
       double optInAcceleration;
       double optInMaximum;
@@ -630,7 +630,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      SAR_Stream( Core core ) { this.core = core; }
+      SarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -644,7 +644,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SAR_Stream( SAR_Stream other ) {
+      SarStream( SarStream other ) {
          this.core = other.core;
          this.optInAcceleration = other.optInAcceleration;
          this.optInMaximum = other.optInMaximum;
@@ -659,7 +659,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SAR_Stream other ) {
+      void copyFrom( SarStream other ) {
          this.core = other.core;
          this.optInAcceleration = other.optInAcceleration;
          this.optInMaximum = other.optInMaximum;
@@ -689,7 +689,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
-         core.SAR_StepImpl(this, inHigh, inLow);
+         core.sarStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -716,7 +716,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("SAR updateAndFill: BadParam", RetCode.BadParam);
-            core.SAR_StepImpl(this, inHigh[i], inLow[i]);
+            core.sarStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -732,8 +732,8 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
-         SAR_Stream scratch = new SAR_Stream(this);
-         core.SAR_StepImpl(scratch, inHigh, inLow);
+         SarStream scratch = new SarStream(this);
+         core.sarStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -750,11 +750,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SAR_Stream copy() {
-         return new SAR_Stream(this);
+      public SarStream copy() {
+         return new SarStream(this);
       }
    }
-   void SAR_StepImpl( SAR_Stream sp, double inHigh, double inLow )
+   void sarStepImpl( SarStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;
@@ -872,7 +872,7 @@
          }
       }
    }
-   private RetCode SAR_OpenImpl( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode sarOpenImpl( SarStream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       RetCode retCode;
       int isLong = 0;
@@ -1137,11 +1137,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SAR_Stream SAR_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* sarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SarStream sarOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SAR_Stream sp = new SAR_Stream(this);
-      RetCode retCode = SAR_OpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1);
+      SarStream sp = new SarStream(this);
+      RetCode retCode = sarOpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1155,14 +1155,14 @@
       }
       throw new TaLibArgumentException("SAR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SAR_Open (composition seam). */
-   SAR_Stream SAR_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
+   /* Internal startIdx-anchored open behind sarOpen (composition seam). */
+   SarStream sarOpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
    {
-      SAR_Stream sp = new SAR_Stream(this);
+      SarStream sp = new SarStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SAR_OpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = sarOpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1189,16 +1189,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SAR_Stream SAR_Open( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
+   public SarStream sarOpen( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
    {
       requireArgument("SAR open", "inHigh", inHigh);
       requireHistory("SAR open", inHigh.length);
       requireArgument("SAR open", "inLow", inLow);
       requireHistoryLength("SAR open", "inLow", inLow.length, inHigh.length);
-      return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
+      return sarOpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
    /**
-    * {@link Core#SAR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#sarOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1206,9 +1206,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SAR_Stream#outRange()}.
+    * {@link SarStream#outRange()}.
     */
-   public SAR_Stream SAR_OpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
+   public SarStream sarOpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
    {
       requireArgument("SAR openAndFill", "inHigh", inHigh);
       requireHistory("SAR openAndFill", inHigh.length);
@@ -1221,5 +1221,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SAR_OpenAndFillInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      return sarOpenAndFillInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
    }

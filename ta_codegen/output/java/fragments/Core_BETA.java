@@ -755,7 +755,7 @@
    /**
     * A live BETA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#BETA} over the same series.
-    * Open with {@link Core#BETA_Open}; there is no close — the handle is
+    * Open with {@link Core#betaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -766,7 +766,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class BETA_Stream {
+   public static final class BetaStream {
       Core core;
       int optInTimePeriod;
       double S_xx;
@@ -794,7 +794,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      BETA_Stream( Core core ) { this.core = core; }
+      BetaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -808,7 +808,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      BETA_Stream( BETA_Stream other ) {
+      BetaStream( BetaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.S_xx = other.S_xx;
@@ -837,7 +837,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( BETA_Stream other ) {
+      void copyFrom( BetaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.S_xx = other.S_xx;
@@ -875,7 +875,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<BETA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<BetaStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -892,7 +892,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
-         core.BETA_StepImpl(this, inReal0, inReal1);
+         core.betaStepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -919,7 +919,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
                throw new TaLibArgumentException("BETA updateAndFill: BadParam", RetCode.BadParam);
-            core.BETA_StepImpl(this, inReal0[i], inReal1[i]);
+            core.betaStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -937,14 +937,14 @@
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("BETA peek: BadParam", RetCode.BadParam);
-         BETA_Stream scratch = PEEK_SCRATCH.get();
+         BetaStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new BETA_Stream(this);
+            scratch = new BetaStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.BETA_StepImpl(scratch, inReal0, inReal1);
+         core.betaStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -961,11 +961,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public BETA_Stream copy() {
-         return new BETA_Stream(this);
+      public BetaStream copy() {
+         return new BetaStream(this);
       }
    }
-   void BETA_StepImpl( BETA_Stream sp, double inReal0, double inReal1 )
+   void betaStepImpl( BetaStream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
       double denom = 0.0;
@@ -1156,7 +1156,7 @@
       sp.S_x -= x;
       sp.S_y -= y;
    }
-   private RetCode BETA_OpenImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode betaOpenImpl( BetaStream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -1549,11 +1549,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   BETA_Stream BETA_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* betaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   BetaStream betaOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      BetaStream sp = new BetaStream(this);
+      RetCode retCode = betaOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1567,14 +1567,14 @@
       }
       throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind BETA_Open (composition seam). */
-   BETA_Stream BETA_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind betaOpen (composition seam). */
+   BetaStream betaOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {
-      BETA_Stream sp = new BETA_Stream(this);
+      BetaStream sp = new BetaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = betaOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1601,16 +1601,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public BETA_Stream BETA_Open( double inReal0[], double inReal1[], int optInTimePeriod )
+   public BetaStream betaOpen( double inReal0[], double inReal1[], int optInTimePeriod )
    {
       requireArgument("BETA open", "inReal0", inReal0);
       requireHistory("BETA open", inReal0.length);
       requireArgument("BETA open", "inReal1", inReal1);
       requireHistoryLength("BETA open", "inReal1", inReal1.length, inReal0.length);
-      return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
+      return betaOpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#BETA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#betaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#BETA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1618,9 +1618,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link BETA_Stream#outRange()}.
+    * {@link BetaStream#outRange()}.
     */
-   public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
+   public BetaStream betaOpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("BETA openAndFill", "inReal0", inReal0);
       requireHistory("BETA openAndFill", inReal0.length);
@@ -1633,5 +1633,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return BETA_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return betaOpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

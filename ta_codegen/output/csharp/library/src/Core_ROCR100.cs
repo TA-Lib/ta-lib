@@ -349,9 +349,9 @@ public partial class Core
    /// <summary>A live <c>ROCR100</c> stream: one value per closed bar, bit-identical to
    /// <c>ROCR100</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.ROCR100_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.Rocr100Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -362,7 +362,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class ROCR100_Stream
+   public sealed class Rocr100Stream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -373,12 +373,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal ROCR100_Stream( Core core ) { this.core = core; }
+      internal Rocr100Stream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.ROCR100</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Rocr100</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -387,7 +387,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal ROCR100_Stream( ROCR100_Stream other )
+      internal Rocr100Stream( Rocr100Stream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -400,7 +400,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( ROCR100_Stream other )
+      internal void CopyFrom( Rocr100Stream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -431,7 +431,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCR100", "update", RetCode.BadParam);
-         core.ROCR100_StepImpl(this, inReal);
+         core.Rocr100StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -450,8 +450,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCR100", "peek", RetCode.BadParam);
-         ROCR100_Stream scratch = new ROCR100_Stream(this);
-         core.ROCR100_StepImpl(scratch, inReal);
+         Rocr100Stream scratch = new Rocr100Stream(this);
+         core.Rocr100StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -475,7 +475,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("ROCR100", "updateAndFill", RetCode.BadParam);
-            core.ROCR100_StepImpl(this, inReal[i]);
+            core.Rocr100StepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -491,13 +491,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public ROCR100_Stream Clone()
+      public Rocr100Stream Clone()
       {
-         return new ROCR100_Stream(this);
+         return new Rocr100Stream(this);
       }
    }
 
-   internal void ROCR100_StepImpl( ROCR100_Stream sp, double inReal )
+   internal void Rocr100StepImpl( Rocr100Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -516,7 +516,7 @@ public partial class Core
       }
    }
 
-   private RetCode ROCR100_OpenImpl( ROCR100_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode Rocr100OpenImpl( Rocr100Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -617,11 +617,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* ROCR100_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ROCR100_Stream ROCR100_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* Rocr100OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Rocr100Stream Rocr100OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      ROCR100_Stream sp = new ROCR100_Stream(this);
-      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      Rocr100Stream sp = new Rocr100Stream(this);
+      RetCode retCode = Rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -630,12 +630,12 @@ public partial class Core
       throw StreamFailure("ROCR100", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind ROCR100_Open (composition seam). */
-   internal ROCR100_Stream ROCR100_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind Rocr100Open (composition seam). */
+   internal Rocr100Stream Rocr100OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      ROCR100_Stream sp = new ROCR100_Stream(this);
+      Rocr100Stream sp = new Rocr100Stream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = Rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -646,11 +646,11 @@ public partial class Core
 
    /// <summary>Open a live <c>ROCR100</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="ROCR100_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="Rocr100Stream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>ROCR100</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>ROCR100_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>ROCR100_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Rocr100OpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input price/data series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="ROCR100_Lookback"/> for its default
@@ -662,14 +662,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ROCR100_Stream ROCR100_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public Rocr100Stream Rocr100Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ROCR100 open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ROCR100 open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return ROCR100_OpenInternal(inReal, 0, optInTimePeriod);
+      return Rocr100OpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>ROCR100_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>Rocr100Open</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>ROCR100</c> produces over
@@ -681,7 +681,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ROCR100_Stream.OutRange"/>.</para>
+   /// <see cref="Rocr100Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input price/data series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="ROCR100_Lookback"/> for its default
@@ -696,7 +696,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ROCR100_Stream ROCR100_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public Rocr100Stream Rocr100OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ROCR100 openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ROCR100 openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -705,6 +705,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("ROCR100", "openAndFill", RetCode.BadParam);
       }
-      return ROCR100_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return Rocr100OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

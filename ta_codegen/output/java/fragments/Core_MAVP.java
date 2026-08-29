@@ -664,7 +664,7 @@
    /**
     * A live MAVP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MAVP} over the same series.
-    * Open with {@link Core#MAVP_Open}; there is no close — the handle is
+    * Open with {@link Core#mavpOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -675,18 +675,18 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MAVP_Stream {
+   public static final class MavpStream {
       Core core;
       int optInMinPeriod;
       int optInMaxPeriod;
       MAType optInMAType;
       double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-      MA_Stream[] bank;
+      MaStream[] bank;
       int outRangeBegIdx;
       int outRangeCount;
 
-      MAVP_Stream( Core core ) { this.core = core; }
+      MavpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -700,21 +700,21 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MAVP_Stream( MAVP_Stream other ) {
+      MavpStream( MavpStream other ) {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
          this.optInMaxPeriod = other.optInMaxPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.bank = new MA_Stream[other.bank.length];
+         this.bank = new MaStream[other.bank.length];
          for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
-            this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+            this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
          }
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MAVP_Stream other ) {
+      void copyFrom( MavpStream other ) {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
          this.optInMaxPeriod = other.optInMaxPeriod;
@@ -725,9 +725,9 @@
                this.bank[bankIdx].copyFrom(other.bank[bankIdx]);
             }
          } else {
-            this.bank = new MA_Stream[other.bank.length];
+            this.bank = new MaStream[other.bank.length];
             for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
-               this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+               this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
             }
          }
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -735,7 +735,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MAVP_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<MavpStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -752,7 +752,7 @@
       public double update( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
             throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
-         core.MAVP_StepImpl(this, inReal, inPeriods);
+         core.mavpStepImpl(this, inReal, inPeriods);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -779,7 +779,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) || !Double.isFinite(inPeriods[i]) )
                throw new TaLibArgumentException("MAVP updateAndFill: BadParam", RetCode.BadParam);
-            core.MAVP_StepImpl(this, inReal[i], inPeriods[i]);
+            core.mavpStepImpl(this, inReal[i], inPeriods[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -797,14 +797,14 @@
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
             throw new TaLibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
-         MAVP_Stream scratch = PEEK_SCRATCH.get();
+         MavpStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new MAVP_Stream(this);
+            scratch = new MavpStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.MAVP_StepImpl(scratch, inReal, inPeriods);
+         core.mavpStepImpl(scratch, inReal, inPeriods);
          return scratch.cur_outReal;
       }
 
@@ -821,11 +821,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MAVP_Stream copy() {
-         return new MAVP_Stream(this);
+      public MavpStream copy() {
+         return new MavpStream(this);
       }
    }
-   void MAVP_StepImpl( MAVP_Stream sp, double inReal, double inPeriods )
+   void mavpStepImpl( MavpStream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {
@@ -841,7 +841,7 @@
          }
       }
    }
-   private RetCode MAVP_OpenImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode mavpOpenImpl( MavpStream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -884,9 +884,9 @@
          return RetCode.InsufficientHistory;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
-      MA_Stream[] bank = new MA_Stream[nBank];
+      MaStream[] bank = new MaStream[nBank];
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         bank[bankIdx] = MA_OpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+         bank[bankIdx] = maOpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
       }
       int cp = (int)inPeriods[historyLen - 1];
       if( cp < optInMinPeriod ) {
@@ -903,7 +903,7 @@
       sp.outRangeCount = historyLen - subStart;
       return RetCode.Success;
    }
-   private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode mavpOpenAndFillImpl( MavpStream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -941,11 +941,11 @@
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
-      MA_Stream[] bank = new MA_Stream[nBank];
+      MaStream[] bank = new MaStream[nBank];
       double[] scratch = new double[nBank];
       double[] seedPrefix = java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1);
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         MA_Stream sub = MA_OpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
+         MaStream sub = maOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
          bank[bankIdx] = sub;
          scratch[bankIdx] = sub.cur_outReal;
       }
@@ -978,11 +978,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind MAVP_Open (composition seam). */
-   MAVP_Stream MAVP_OpenInternal( double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind mavpOpen (composition seam). */
+   MavpStream mavpOpenInternal( double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      MavpStream sp = new MavpStream(this);
+      RetCode retCode = mavpOpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1007,17 +1007,17 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MAVP_Stream MAVP_Open( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   public MavpStream mavpOpen( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       requireArgument("MAVP open", "inReal", inReal);
       requireHistory("MAVP open", inReal.length);
       requireArgument("MAVP open", "optInMAType", optInMAType);
       requireArgument("MAVP open", "inPeriods", inPeriods);
       requireHistoryLength("MAVP open", "inPeriods", inPeriods.length, inReal.length);
-      return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
+      return mavpOpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**
-    * {@link Core#MAVP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#mavpOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MAVP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1025,9 +1025,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MAVP_Stream#outRange()}.
+    * {@link MavpStream#outRange()}.
     */
-   public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
+   public MavpStream mavpOpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
       requireArgument("MAVP openAndFill", "inReal", inReal);
       requireHistory("MAVP openAndFill", inReal.length);
@@ -1036,10 +1036,10 @@
       int guardOutLen = openFillCount("MAVP openAndFill", inReal.length, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       requireHistoryLength("MAVP openAndFill", "inPeriods", inPeriods.length, inReal.length);
       requireLength("MAVP openAndFill", "outReal", outReal, guardOutLen);
-      MAVP_Stream sp = new MAVP_Stream(this);
+      MavpStream sp = new MavpStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = mavpOpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {

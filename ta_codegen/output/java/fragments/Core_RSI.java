@@ -501,7 +501,7 @@
    /**
     * A live RSI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#RSI} over the same series.
-    * Open with {@link Core#RSI_Open}; there is no close — the handle is
+    * Open with {@link Core#rsiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -512,7 +512,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class RSI_Stream {
+   public static final class RsiStream {
       Core core;
       int optInTimePeriod;
       double prevGain;
@@ -522,7 +522,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      RSI_Stream( Core core ) { this.core = core; }
+      RsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -536,7 +536,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      RSI_Stream( RSI_Stream other ) {
+      RsiStream( RsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -547,7 +547,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( RSI_Stream other ) {
+      void copyFrom( RsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -573,7 +573,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
-         core.RSI_StepImpl(this, inReal);
+         core.rsiStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -599,7 +599,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("RSI updateAndFill: BadParam", RetCode.BadParam);
-            core.RSI_StepImpl(this, inReal[i]);
+            core.rsiStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -615,8 +615,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
-         RSI_Stream scratch = new RSI_Stream(this);
-         core.RSI_StepImpl(scratch, inReal);
+         RsiStream scratch = new RsiStream(this);
+         core.rsiStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -633,11 +633,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public RSI_Stream copy() {
-         return new RSI_Stream(this);
+      public RsiStream copy() {
+         return new RsiStream(this);
       }
    }
-   void RSI_StepImpl( RSI_Stream sp, double inReal )
+   void rsiStepImpl( RsiStream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -664,7 +664,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode RSI_OpenImpl( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode rsiOpenImpl( RsiStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -855,11 +855,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   RSI_Stream RSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* rsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   RsiStream rsiOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      RsiStream sp = new RsiStream(this);
+      RetCode retCode = rsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -873,14 +873,14 @@
       }
       throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind RSI_Open (composition seam). */
-   RSI_Stream RSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind rsiOpen (composition seam). */
+   RsiStream rsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      RSI_Stream sp = new RSI_Stream(this);
+      RsiStream sp = new RsiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = rsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -907,14 +907,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public RSI_Stream RSI_Open( double inReal[], int optInTimePeriod )
+   public RsiStream rsiOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("RSI open", "inReal", inReal);
       requireHistory("RSI open", inReal.length);
-      return RSI_OpenInternal(inReal, 0, optInTimePeriod);
+      return rsiOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#RSI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#rsiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#RSI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -922,9 +922,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link RSI_Stream#outRange()}.
+    * {@link RsiStream#outRange()}.
     */
-   public RSI_Stream RSI_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public RsiStream rsiOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("RSI openAndFill", "inReal", inReal);
       requireHistory("RSI openAndFill", inReal.length);
@@ -935,5 +935,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return RSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return rsiOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

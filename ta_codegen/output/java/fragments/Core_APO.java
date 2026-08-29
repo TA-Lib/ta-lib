@@ -361,7 +361,7 @@
    /**
     * A live APO stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#APO} over the same series.
-    * Open with {@link Core#APO_Open}; there is no close — the handle is
+    * Open with {@link Core#apoOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -372,18 +372,18 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class APO_Stream {
+   public static final class ApoStream {
       Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
       MAType optInMAType;
       double cur_outReal;
-      MA_Stream sub0;
-      MA_Stream sub1;
+      MaStream sub0;
+      MaStream sub1;
       int outRangeBegIdx;
       int outRangeCount;
 
-      APO_Stream( Core core ) { this.core = core; }
+      ApoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -397,31 +397,31 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      APO_Stream( APO_Stream other ) {
+      ApoStream( ApoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( APO_Stream other ) {
+      void copyFrom( ApoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
          if( this.sub0 == null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
          if( this.sub1 == null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.copyFrom(other.sub1);
          }
@@ -430,7 +430,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<APO_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<ApoStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -447,7 +447,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
-         core.APO_StepImpl(this, inReal);
+         core.apoStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -473,7 +473,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("APO updateAndFill: BadParam", RetCode.BadParam);
-            core.APO_StepImpl(this, inReal[i]);
+            core.apoStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -491,14 +491,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("APO peek: BadParam", RetCode.BadParam);
-         APO_Stream scratch = PEEK_SCRATCH.get();
+         ApoStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new APO_Stream(this);
+            scratch = new ApoStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.APO_StepImpl(scratch, inReal);
+         core.apoStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -515,11 +515,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public APO_Stream copy() {
-         return new APO_Stream(this);
+      public ApoStream copy() {
+         return new ApoStream(this);
       }
    }
-   void APO_StepImpl( APO_Stream sp, double inReal )
+   void apoStepImpl( ApoStream sp, double inReal )
    {
       double cur_tempBuffer = 0.0;
       double cur_outReal = 0.0;
@@ -530,7 +530,7 @@
       cur_outReal = cur_tempBuffer - cur_outReal;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode APO_OpenImpl( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode apoOpenImpl( ApoStream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -600,12 +600,12 @@
       /* Calculate the fast MA into the tempBuffer. */
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      MaStream sub0 = maOpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       retCode = RetCode.Success;
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
+      MaStream sub1 = maOpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
@@ -628,11 +628,11 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* APO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   APO_Stream APO_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* apoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ApoStream apoOpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      APO_Stream sp = new APO_Stream(this);
-      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
+      ApoStream sp = new ApoStream(this);
+      RetCode retCode = apoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -646,14 +646,14 @@
       }
       throw new TaLibArgumentException("APO openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind APO_Open (composition seam). */
-   APO_Stream APO_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind apoOpen (composition seam). */
+   ApoStream apoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      APO_Stream sp = new APO_Stream(this);
+      ApoStream sp = new ApoStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = apoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -680,15 +680,15 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public APO_Stream APO_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public ApoStream apoOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       requireArgument("APO open", "inReal", inReal);
       requireHistory("APO open", inReal.length);
       requireArgument("APO open", "optInMAType", optInMAType);
-      return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+      return apoOpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
-    * {@link Core#APO_Open} that also fills the output array(s) bit-identically
+    * {@link Core#apoOpen} that also fills the output array(s) bit-identically
     * to {@link Core#APO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -696,9 +696,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link APO_Stream#outRange()}.
+    * {@link ApoStream#outRange()}.
     */
-   public APO_Stream APO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
+   public ApoStream apoOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
       requireArgument("APO openAndFill", "inReal", inReal);
       requireHistory("APO openAndFill", inReal.length);
@@ -710,5 +710,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return APO_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      return apoOpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
    }

@@ -371,7 +371,7 @@
    /**
     * A live CDLINVERTEDHAMMER stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLINVERTEDHAMMER} over the same series.
-    * Open with {@link Core#CDLINVERTEDHAMMER_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlinvertedhammerOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -382,7 +382,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLINVERTEDHAMMER_Stream {
+   public static final class CdlinvertedhammerStream {
       Core core;
       double BodyPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -411,7 +411,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLINVERTEDHAMMER_Stream( Core core ) { this.core = core; }
+      CdlinvertedhammerStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -425,7 +425,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLINVERTEDHAMMER_Stream( CDLINVERTEDHAMMER_Stream other ) {
+      CdlinvertedhammerStream( CdlinvertedhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -455,7 +455,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLINVERTEDHAMMER_Stream other ) {
+      void copyFrom( CdlinvertedhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -498,7 +498,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLINVERTEDHAMMER_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlinvertedhammerStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -515,7 +515,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
-         core.CDLINVERTEDHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlinvertedhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -544,7 +544,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLINVERTEDHAMMER updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLINVERTEDHAMMER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlinvertedhammerStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -562,14 +562,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
-         CDLINVERTEDHAMMER_Stream scratch = PEEK_SCRATCH.get();
+         CdlinvertedhammerStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLINVERTEDHAMMER_Stream(this);
+            scratch = new CdlinvertedhammerStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLINVERTEDHAMMER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlinvertedhammerStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -586,11 +586,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLINVERTEDHAMMER_Stream copy() {
-         return new CDLINVERTEDHAMMER_Stream(this);
+      public CdlinvertedhammerStream copy() {
+         return new CdlinvertedhammerStream(this);
       }
    }
-   void CDLINVERTEDHAMMER_StepImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlinvertedhammerStepImpl( CdlinvertedhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -644,7 +644,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLINVERTEDHAMMER_OpenImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlinvertedhammerOpenImpl( CdlinvertedhammerStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -809,11 +809,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLINVERTEDHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlinvertedhammerOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlinvertedhammerStream cdlinvertedhammerOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
-      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlinvertedhammerStream sp = new CdlinvertedhammerStream(this);
+      RetCode retCode = cdlinvertedhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -827,14 +827,14 @@
       }
       throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLINVERTEDHAMMER_Open (composition seam). */
-   CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlinvertedhammerOpen (composition seam). */
+   CdlinvertedhammerStream cdlinvertedhammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
+      CdlinvertedhammerStream sp = new CdlinvertedhammerStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlinvertedhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -861,7 +861,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlinvertedhammerStream cdlinvertedhammerOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLINVERTEDHAMMER open", "inOpen", inOpen);
       requireHistory("CDLINVERTEDHAMMER open", inOpen.length);
@@ -871,10 +871,10 @@
       requireHistoryLength("CDLINVERTEDHAMMER open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLINVERTEDHAMMER open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLINVERTEDHAMMER open", "inClose", inClose.length, inOpen.length);
-      return CDLINVERTEDHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlinvertedhammerOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLINVERTEDHAMMER_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlinvertedhammerOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLINVERTEDHAMMER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -882,9 +882,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLINVERTEDHAMMER_Stream#outRange()}.
+    * {@link CdlinvertedhammerStream#outRange()}.
     */
-   public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlinvertedhammerStream cdlinvertedhammerOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLINVERTEDHAMMER openAndFill", "inOpen", inOpen);
       requireHistory("CDLINVERTEDHAMMER openAndFill", inOpen.length);
@@ -901,5 +901,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLINVERTEDHAMMER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlinvertedhammerOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

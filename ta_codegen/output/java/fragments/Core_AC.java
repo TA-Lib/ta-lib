@@ -542,7 +542,7 @@
    /**
     * A live AC stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AC} over the same series.
-    * Open with {@link Core#AC_Open}; there is no close — the handle is
+    * Open with {@link Core#acOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -553,7 +553,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AC_Stream {
+   public static final class AcStream {
       Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
@@ -575,7 +575,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      AC_Stream( Core core ) { this.core = core; }
+      AcStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -589,7 +589,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AC_Stream( AC_Stream other ) {
+      AcStream( AcStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -612,7 +612,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AC_Stream other ) {
+      void copyFrom( AcStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -648,7 +648,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AC_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<AcStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -665,7 +665,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AC update: BadParam", RetCode.BadParam);
-         core.AC_StepImpl(this, inHigh, inLow);
+         core.acStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -692,7 +692,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("AC updateAndFill: BadParam", RetCode.BadParam);
-            core.AC_StepImpl(this, inHigh[i], inLow[i]);
+            core.acStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -710,14 +710,14 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AC peek: BadParam", RetCode.BadParam);
-         AC_Stream scratch = PEEK_SCRATCH.get();
+         AcStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new AC_Stream(this);
+            scratch = new AcStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.AC_StepImpl(scratch, inHigh, inLow);
+         core.acStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -734,11 +734,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AC_Stream copy() {
-         return new AC_Stream(this);
+      public AcStream copy() {
+         return new AcStream(this);
       }
    }
-   void AC_StepImpl( AC_Stream sp, double inHigh, double inLow )
+   void acStepImpl( AcStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double osc = 0.0;
@@ -791,7 +791,7 @@
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
-   private RetCode AC_OpenImpl( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode acOpenImpl( AcStream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -1020,11 +1020,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* AC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AC_Stream AC_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* acOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AcStream acOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
+      AcStream sp = new AcStream(this);
+      RetCode retCode = acOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1038,14 +1038,14 @@
       }
       throw new TaLibArgumentException("AC openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AC_Open (composition seam). */
-   AC_Stream AC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind acOpen (composition seam). */
+   AcStream acOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      AC_Stream sp = new AC_Stream(this);
+      AcStream sp = new AcStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = acOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1072,16 +1072,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AC_Stream AC_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public AcStream acOpen( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       requireArgument("AC open", "inHigh", inHigh);
       requireHistory("AC open", inHigh.length);
       requireArgument("AC open", "inLow", inLow);
       requireHistoryLength("AC open", "inLow", inLow.length, inHigh.length);
-      return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      return acOpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**
-    * {@link Core#AC_Open} that also fills the output array(s) bit-identically
+    * {@link Core#acOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1089,9 +1089,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AC_Stream#outRange()}.
+    * {@link AcStream#outRange()}.
     */
-   public AC_Stream AC_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outReal[] )
+   public AcStream acOpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outReal[] )
    {
       requireArgument("AC openAndFill", "inHigh", inHigh);
       requireHistory("AC openAndFill", inHigh.length);
@@ -1104,5 +1104,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AC_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      return acOpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
    }

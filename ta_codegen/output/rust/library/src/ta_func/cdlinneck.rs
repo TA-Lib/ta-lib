@@ -419,27 +419,27 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLINNECK stream: one value per closed bar, bit-identical to [`Core::CDLINNECK`]
-/// over the same series. Open with [`Core::CDLINNECK_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlinneck_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLINNECK_Stream")]
-pub struct CDLINNECK_Stream {
+pub struct CdlinneckStream {
     /// The `BodyLong` setting this stream was opened with.
     cs_body_long: CandleSetting,
     /// The `Equal` setting this stream was opened with.
     cs_equal: CandleSetting,
-    state: CDLINNECK_StreamState,
+    state: CdlinneckStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLINNECK_Stream {
+impl CdlinneckStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLINNECK_StreamState::restore_from`.
+    /// allocating new ones. See `CdlinneckStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_long = src.cs_body_long;
         self.cs_equal = src.cs_equal;
@@ -450,7 +450,7 @@ impl CDLINNECK_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLINNECK_StreamState {
+struct CdlinneckStreamState {
     EqualPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -468,7 +468,7 @@ struct CDLINNECK_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLINNECK_StreamState {
+impl CdlinneckStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -489,14 +489,13 @@ impl CDLINNECK_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLINNECK_step_impl(sp: &mut CDLINNECK_StreamState, cs_body_long: &CandleSetting, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlinneck_step_impl(sp: &mut CdlinneckStreamState, cs_body_long: &CandleSetting, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -600,11 +599,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLINNECK_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLINNECK_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLINNECK_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlinneck_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlinneck_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlinneck_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLINNECK_Stream, RetCode> {
+    ) -> Result<CdlinneckStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -827,7 +826,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLINNECK_StreamState {
+        let state = CdlinneckStreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -843,17 +842,17 @@ impl Core {
             ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
             ring_EqualTrailingIdx_derived,
         };
-        Ok(CDLINNECK_Stream { cs_body_long: self.candle_settings.body_long, cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdlinneckStream { cs_body_long: self.candle_settings.body_long, cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLINNECK_Open`] (composition seam).
-    pub(crate) fn CDLINNECK_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlinneck_open`] (composition seam).
+    pub(crate) fn cdlinneck_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLINNECK_Stream, i32), RetCode> {
+    ) -> Result<(CdlinneckStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLINNECK_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlinneck_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -880,7 +879,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLINNECK_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlinneck_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -890,11 +889,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLINNECK_Open")]
-    pub fn CDLINNECK_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLINNECK_Stream, i32), RetCode> {
-        self.CDLINNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlinneck_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlinneckStream, i32), RetCode> {
+        self.cdlinneck_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLINNECK_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlinneck_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLINNECK`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -902,12 +901,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLINNECK_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlinneck_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLINNECK_OpenAndFill")]
-    pub fn CDLINNECK_OpenAndFill(
+    pub fn cdlinneck_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLINNECK_Stream, OutRange), RetCode> {
+    ) -> Result<(CdlinneckStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -924,31 +923,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLINNECK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlinneck_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLINNECK_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlinneck_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLINNECK_OpenAndFillInternal(
+    pub(crate) fn cdlinneck_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLINNECK_Stream, RetCode> {
-        self.CDLINNECK_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdlinneckStream, RetCode> {
+        self.cdlinneck_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLINNECK_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CdlinneckStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLINNECK_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLINNECK_Stream>>> =
+    static CDLINNECK_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdlinneckStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLINNECK_Stream {
+impl CdlinneckStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -966,7 +965,7 @@ impl CDLINNECK_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLINNECK_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlinneck_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -999,7 +998,7 @@ impl CDLINNECK_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLINNECK_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlinneck_step_impl(&mut self.state, &self.cs_body_long, &self.cs_equal, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1023,11 +1022,12 @@ impl CDLINNECK_Stream {
             return Err(RetCode::BadParam);
         }
         CDLINNECK_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::cdlinneck_step_impl(&mut scratch, &self.cs_body_long, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 
@@ -1047,7 +1047,7 @@ impl CDLINNECK_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLINNECK_Stream>();
+    _assert_auto::<CdlinneckStream>();
 };
 
 /***************/

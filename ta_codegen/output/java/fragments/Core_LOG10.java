@@ -191,7 +191,7 @@
    /**
     * A live LOG10 stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#LOG10} over the same series.
-    * Open with {@link Core#LOG10_Open}; there is no close — the handle is
+    * Open with {@link Core#log10Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -202,13 +202,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class LOG10_Stream {
+   public static final class Log10Stream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      LOG10_Stream( Core core ) { this.core = core; }
+      Log10Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -222,14 +222,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      LOG10_Stream( LOG10_Stream other ) {
+      Log10Stream( Log10Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LOG10_Stream other ) {
+      void copyFrom( Log10Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -251,7 +251,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
-         core.LOG10_StepImpl(this, inReal);
+         core.log10StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -277,7 +277,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("LOG10 updateAndFill: BadParam", RetCode.BadParam);
-            core.LOG10_StepImpl(this, inReal[i]);
+            core.log10StepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -293,8 +293,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
-         LOG10_Stream scratch = new LOG10_Stream(this);
-         core.LOG10_StepImpl(scratch, inReal);
+         Log10Stream scratch = new Log10Stream(this);
+         core.log10StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -311,15 +311,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public LOG10_Stream copy() {
-         return new LOG10_Stream(this);
+      public Log10Stream copy() {
+         return new Log10Stream(this);
       }
    }
-   void LOG10_StepImpl( LOG10_Stream sp, double inReal )
+   void log10StepImpl( Log10Stream sp, double inReal )
    {
       sp.cur_outReal = Math.log10(inReal);
    }
-   private RetCode LOG10_OpenImpl( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode log10OpenImpl( Log10Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -345,11 +345,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   LOG10_Stream LOG10_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* log10OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Log10Stream log10OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      Log10Stream sp = new Log10Stream(this);
+      RetCode retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -363,14 +363,14 @@
       }
       throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind LOG10_Open (composition seam). */
-   LOG10_Stream LOG10_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind log10Open (composition seam). */
+   Log10Stream log10OpenInternal( double inReal[], int startIdx )
    {
-      LOG10_Stream sp = new LOG10_Stream(this);
+      Log10Stream sp = new Log10Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -397,14 +397,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public LOG10_Stream LOG10_Open( double inReal[] )
+   public Log10Stream log10Open( double inReal[] )
    {
       requireArgument("LOG10 open", "inReal", inReal);
       requireHistory("LOG10 open", inReal.length);
-      return LOG10_OpenInternal(inReal, 0);
+      return log10OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#LOG10_Open} that also fills the output array(s) bit-identically
+    * {@link Core#log10Open} that also fills the output array(s) bit-identically
     * to {@link Core#LOG10} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -412,9 +412,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link LOG10_Stream#outRange()}.
+    * {@link Log10Stream#outRange()}.
     */
-   public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
+   public Log10Stream log10OpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("LOG10 openAndFill", "inReal", inReal);
       requireHistory("LOG10 openAndFill", inReal.length);
@@ -425,5 +425,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return LOG10_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return log10OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

@@ -886,7 +886,7 @@ public partial class Core
    /// <summary>A live <c>HMA</c> stream: one value per closed bar, bit-identical to
    /// <c>HMA</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.HMA_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.HmaOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -899,7 +899,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class HMA_Stream
+   public sealed class HmaStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -943,12 +943,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal HMA_Stream( Core core ) { this.core = core; }
+      internal HmaStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.HMA</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Hma</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -956,7 +956,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal HMA_Stream( HMA_Stream other )
+      internal HmaStream( HmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -1006,7 +1006,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HMA_Stream other )
+      internal void CopyFrom( HmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -1067,7 +1067,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HMA_Stream? peekScratch;
+      [ThreadStatic] private static HmaStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1085,7 +1085,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HMA", "update", RetCode.BadParam);
-         core.HMA_StepImpl(this, inReal);
+         core.HmaStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1104,14 +1104,14 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HMA", "peek", RetCode.BadParam);
-         HMA_Stream? scratch = peekScratch;
+         HmaStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new HMA_Stream(this);
+            scratch = new HmaStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.HMA_StepImpl(scratch, inReal);
+         core.HmaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1135,7 +1135,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HMA", "updateAndFill", RetCode.BadParam);
-            core.HMA_StepImpl(this, inReal[i]);
+            core.HmaStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -1151,13 +1151,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public HMA_Stream Clone()
+      public HmaStream Clone()
       {
-         return new HMA_Stream(this);
+         return new HmaStream(this);
       }
    }
 
-   internal void HMA_StepImpl( HMA_Stream sp, double inReal )
+   internal void HmaStepImpl( HmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -1320,7 +1320,7 @@ public partial class Core
       }
    }
 
-   private RetCode HMA_OpenImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HmaOpenImpl( HmaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1933,11 +1933,11 @@ public partial class Core
       }
    }
 
-   /* HMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HMA_Stream HMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* HmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal HmaStream HmaOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      HmaStream sp = new HmaStream(this);
+      RetCode retCode = HmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1946,12 +1946,12 @@ public partial class Core
       throw StreamFailure("HMA", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind HMA_Open (composition seam). */
-   internal HMA_Stream HMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind HmaOpen (composition seam). */
+   internal HmaStream HmaOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      HMA_Stream sp = new HMA_Stream(this);
+      HmaStream sp = new HmaStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = HmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1962,11 +1962,11 @@ public partial class Core
 
    /// <summary>Open a live <c>HMA</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="HMA_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="HmaStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>HMA</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>HMA_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>HMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>HmaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price series, close by convention. The warm-up history, oldest bar
    /// first.</param>
@@ -1979,14 +1979,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HMA_Stream HMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public HmaStream HmaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HMA open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return HMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return HmaOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>HMA_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>HmaOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>HMA</c> produces over the
@@ -1998,7 +1998,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HMA_Stream.OutRange"/>.</para>
+   /// <see cref="HmaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series, close by convention. The warm-up history, oldest bar
    /// first.</param>
@@ -2014,7 +2014,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HMA_Stream HMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public HmaStream HmaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -2023,6 +2023,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("HMA", "openAndFill", RetCode.BadParam);
       }
-      return HMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return HmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

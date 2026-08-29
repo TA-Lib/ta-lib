@@ -186,7 +186,7 @@
    /**
     * A live ATAN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ATAN} over the same series.
-    * Open with {@link Core#ATAN_Open}; there is no close — the handle is
+    * Open with {@link Core#atanOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -197,13 +197,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ATAN_Stream {
+   public static final class AtanStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      ATAN_Stream( Core core ) { this.core = core; }
+      AtanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -217,14 +217,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ATAN_Stream( ATAN_Stream other ) {
+      AtanStream( AtanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ATAN_Stream other ) {
+      void copyFrom( AtanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -246,7 +246,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ATAN update: BadParam", RetCode.BadParam);
-         core.ATAN_StepImpl(this, inReal);
+         core.atanStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -272,7 +272,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("ATAN updateAndFill: BadParam", RetCode.BadParam);
-            core.ATAN_StepImpl(this, inReal[i]);
+            core.atanStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -288,8 +288,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
-         ATAN_Stream scratch = new ATAN_Stream(this);
-         core.ATAN_StepImpl(scratch, inReal);
+         AtanStream scratch = new AtanStream(this);
+         core.atanStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -306,15 +306,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ATAN_Stream copy() {
-         return new ATAN_Stream(this);
+      public AtanStream copy() {
+         return new AtanStream(this);
       }
    }
-   void ATAN_StepImpl( ATAN_Stream sp, double inReal )
+   void atanStepImpl( AtanStream sp, double inReal )
    {
       sp.cur_outReal = Math.atan(inReal);
    }
-   private RetCode ATAN_OpenImpl( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode atanOpenImpl( AtanStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -341,11 +341,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ATAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ATAN_Stream ATAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* atanOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AtanStream atanOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      AtanStream sp = new AtanStream(this);
+      RetCode retCode = atanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -359,14 +359,14 @@
       }
       throw new TaLibArgumentException("ATAN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ATAN_Open (composition seam). */
-   ATAN_Stream ATAN_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind atanOpen (composition seam). */
+   AtanStream atanOpenInternal( double inReal[], int startIdx )
    {
-      ATAN_Stream sp = new ATAN_Stream(this);
+      AtanStream sp = new AtanStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = atanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -393,14 +393,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ATAN_Stream ATAN_Open( double inReal[] )
+   public AtanStream atanOpen( double inReal[] )
    {
       requireArgument("ATAN open", "inReal", inReal);
       requireHistory("ATAN open", inReal.length);
-      return ATAN_OpenInternal(inReal, 0);
+      return atanOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#ATAN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#atanOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ATAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -408,9 +408,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ATAN_Stream#outRange()}.
+    * {@link AtanStream#outRange()}.
     */
-   public ATAN_Stream ATAN_OpenAndFill( double inReal[], double outReal[] )
+   public AtanStream atanOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("ATAN openAndFill", "inReal", inReal);
       requireHistory("ATAN openAndFill", inReal.length);
@@ -421,5 +421,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ATAN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return atanOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

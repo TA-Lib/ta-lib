@@ -366,9 +366,9 @@ fn each_backend_carries_the_guards_it_can_express() {
 fn no_throwing_sub_call_follows_the_cur_capture_in_a_java_step() {
     let mut with_subs = 0usize;
     for name in streaming_funcs() {
-        let base = name.to_uppercase();
+        let base = backends::common::camel_words(&name.to_uppercase());
         let s = section(&name, "java");
-        let body = body_of(&s, &format!("void {base}_StepImpl("));
+        let body = body_of(&s, &format!("void {base}StepImpl("));
         // Only the multi-output handles hold a cache, and only they can publish
         // a half-written bar. A single-output `value()` is a field read, and the
         // dispatch tier's `sp.cur_outReal = sub.update(..)` puts the call

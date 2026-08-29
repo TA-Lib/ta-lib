@@ -183,7 +183,7 @@
    /**
     * A live FLOOR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#FLOOR} over the same series.
-    * Open with {@link Core#FLOOR_Open}; there is no close — the handle is
+    * Open with {@link Core#floorOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -194,13 +194,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class FLOOR_Stream {
+   public static final class FloorStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      FLOOR_Stream( Core core ) { this.core = core; }
+      FloorStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -214,14 +214,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      FLOOR_Stream( FLOOR_Stream other ) {
+      FloorStream( FloorStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( FLOOR_Stream other ) {
+      void copyFrom( FloorStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -243,7 +243,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
-         core.FLOOR_StepImpl(this, inReal);
+         core.floorStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -269,7 +269,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("FLOOR updateAndFill: BadParam", RetCode.BadParam);
-            core.FLOOR_StepImpl(this, inReal[i]);
+            core.floorStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -285,8 +285,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
-         FLOOR_Stream scratch = new FLOOR_Stream(this);
-         core.FLOOR_StepImpl(scratch, inReal);
+         FloorStream scratch = new FloorStream(this);
+         core.floorStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -303,15 +303,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public FLOOR_Stream copy() {
-         return new FLOOR_Stream(this);
+      public FloorStream copy() {
+         return new FloorStream(this);
       }
    }
-   void FLOOR_StepImpl( FLOOR_Stream sp, double inReal )
+   void floorStepImpl( FloorStream sp, double inReal )
    {
       sp.cur_outReal = Math.floor(inReal);
    }
-   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode floorOpenImpl( FloorStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -337,11 +337,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* FLOOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   FLOOR_Stream FLOOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* floorOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   FloorStream floorOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      FloorStream sp = new FloorStream(this);
+      RetCode retCode = floorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -355,14 +355,14 @@
       }
       throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind FLOOR_Open (composition seam). */
-   FLOOR_Stream FLOOR_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind floorOpen (composition seam). */
+   FloorStream floorOpenInternal( double inReal[], int startIdx )
    {
-      FLOOR_Stream sp = new FLOOR_Stream(this);
+      FloorStream sp = new FloorStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = floorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -389,14 +389,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public FLOOR_Stream FLOOR_Open( double inReal[] )
+   public FloorStream floorOpen( double inReal[] )
    {
       requireArgument("FLOOR open", "inReal", inReal);
       requireHistory("FLOOR open", inReal.length);
-      return FLOOR_OpenInternal(inReal, 0);
+      return floorOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#FLOOR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#floorOpen} that also fills the output array(s) bit-identically
     * to {@link Core#FLOOR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -404,9 +404,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link FLOOR_Stream#outRange()}.
+    * {@link FloorStream#outRange()}.
     */
-   public FLOOR_Stream FLOOR_OpenAndFill( double inReal[], double outReal[] )
+   public FloorStream floorOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("FLOOR openAndFill", "inReal", inReal);
       requireHistory("FLOOR openAndFill", inReal.length);
@@ -417,5 +417,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return FLOOR_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return floorOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

@@ -1836,7 +1836,6 @@ fn gen_ta_abstract_c() -> String {
     o.push_str(
         "#include <stddef.h>\n\
          #include <string.h>\n\
-         #include <ctype.h>\n\
          #include \"ta_common.h\"\n\
          #include \"ta_memory.h\"\n\
          #include \"ta_abstract.h\"\n\
@@ -2090,6 +2089,31 @@ fn gen_ta_abstract_c() -> String {
          }\n\n",
     );
 
+    // ASCII-only case fold for TA_GetFuncHandle's name compare (issue #278):
+    // ASCII-only and not `strcasecmp`/`_stricmp` (neither is portably available,
+    // and both share the Turkish-locale bug `tolower`/`toupper` have) so a
+    // caller can spell "SMA" as "sma" or "Sma" on every platform the same way.
+    // TA_GetFuncHandle's own first-letter bucket selection is folded the same
+    // manual way, not through `tolower`: a `tolower` there that answered
+    // outside a-z under an active locale would reject the name before this
+    // function ever ran.
+    o.push_str(
+        "static int TA_StrCmpNoCase( const char *a, const char *b )\n\
+         {\n\
+         \x20  char ca, cb;\n\n\
+         \x20  while( *a && *b )\n\
+         \x20  {\n\
+         \x20     ca = (*a >= 'A' && *a <= 'Z') ? (char)(*a - 'A' + 'a') : *a;\n\
+         \x20     cb = (*b >= 'A' && *b <= 'Z') ? (char)(*b - 'A' + 'a') : *b;\n\
+         \x20     if( ca != cb )\n\
+         \x20        return (unsigned char)ca - (unsigned char)cb;\n\
+         \x20     a++;\n\
+         \x20     b++;\n\
+         \x20  }\n\n\
+         \x20  return (unsigned char)*a - (unsigned char)*b;\n\
+         }\n\n",
+    );
+
     // --- TA_GetFuncHandle ---
     o.push_str(
         "TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )\n\
@@ -2109,7 +2133,7 @@ fn gen_ta_abstract_c() -> String {
          \x20  {\n\
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
-         \x20  tmp = (char)tolower( firstChar );\n\n\
+         \x20  tmp = (firstChar >= 'A' && firstChar <= 'Z') ? (char)(firstChar - 'A' + 'a') : firstChar;\n\n\
          \x20  if( (tmp < 'a') || (tmp > 'z') )\n\
          \x20  {\n\
          \x20     return TA_FUNC_NOT_FOUND;\n\
@@ -2129,7 +2153,7 @@ fn gen_ta_abstract_c() -> String {
          \x20     funcInfo = funcDef->funcInfo;\n\
          \x20     if( !funcInfo )\n\
          \x20        return TA_INTERNAL_ERROR(4);\n\n\
-         \x20     if( strcmp( funcInfo->name, name ) == 0 )\n\
+         \x20     if( TA_StrCmpNoCase( funcInfo->name, name ) == 0 )\n\
          \x20     {\n\
          \x20        *handle = (TA_FuncHandle *)funcDef;\n\
          \x20        return TA_SUCCESS;\n\

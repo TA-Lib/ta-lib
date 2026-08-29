@@ -350,7 +350,7 @@
    /**
     * A live CDLGAPSIDESIDEWHITE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLGAPSIDESIDEWHITE} over the same series.
-    * Open with {@link Core#CDLGAPSIDESIDEWHITE_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlgapsidesidewhiteOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -361,7 +361,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLGAPSIDESIDEWHITE_Stream {
+   public static final class CdlgapsidesidewhiteStream {
       Core core;
       double NearPeriodTotal;
       double EqualPeriodTotal;
@@ -389,7 +389,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLGAPSIDESIDEWHITE_Stream( Core core ) { this.core = core; }
+      CdlgapsidesidewhiteStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -403,7 +403,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLGAPSIDESIDEWHITE_Stream( CDLGAPSIDESIDEWHITE_Stream other ) {
+      CdlgapsidesidewhiteStream( CdlgapsidesidewhiteStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
@@ -432,7 +432,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLGAPSIDESIDEWHITE_Stream other ) {
+      void copyFrom( CdlgapsidesidewhiteStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
@@ -470,7 +470,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLGAPSIDESIDEWHITE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlgapsidesidewhiteStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -487,7 +487,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
-         core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlgapsidesidewhiteStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -516,7 +516,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlgapsidesidewhiteStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -534,14 +534,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
-         CDLGAPSIDESIDEWHITE_Stream scratch = PEEK_SCRATCH.get();
+         CdlgapsidesidewhiteStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLGAPSIDESIDEWHITE_Stream(this);
+            scratch = new CdlgapsidesidewhiteStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLGAPSIDESIDEWHITE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlgapsidesidewhiteStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -558,11 +558,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLGAPSIDESIDEWHITE_Stream copy() {
-         return new CDLGAPSIDESIDEWHITE_Stream(this);
+      public CdlgapsidesidewhiteStream copy() {
+         return new CdlgapsidesidewhiteStream(this);
       }
    }
-   void CDLGAPSIDESIDEWHITE_StepImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlgapsidesidewhiteStepImpl( CdlgapsidesidewhiteStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -604,7 +604,7 @@
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDLGAPSIDESIDEWHITE_OpenImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlgapsidesidewhiteOpenImpl( CdlgapsidesidewhiteStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double NearPeriodTotal = 0;
       double EqualPeriodTotal = 0;
@@ -752,11 +752,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLGAPSIDESIDEWHITE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlgapsidesidewhiteOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlgapsidesidewhiteStream sp = new CdlgapsidesidewhiteStream(this);
+      RetCode retCode = cdlgapsidesidewhiteOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -770,14 +770,14 @@
       }
       throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLGAPSIDESIDEWHITE_Open (composition seam). */
-   CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlgapsidesidewhiteOpen (composition seam). */
+   CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
+      CdlgapsidesidewhiteStream sp = new CdlgapsidesidewhiteStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlgapsidesidewhiteOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -804,7 +804,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLGAPSIDESIDEWHITE open", "inOpen", inOpen);
       requireHistory("CDLGAPSIDESIDEWHITE open", inOpen.length);
@@ -814,10 +814,10 @@
       requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLGAPSIDESIDEWHITE open", "inClose", inClose.length, inOpen.length);
-      return CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlgapsidesidewhiteOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLGAPSIDESIDEWHITE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlgapsidesidewhiteOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLGAPSIDESIDEWHITE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -825,9 +825,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLGAPSIDESIDEWHITE_Stream#outRange()}.
+    * {@link CdlgapsidesidewhiteStream#outRange()}.
     */
-   public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLGAPSIDESIDEWHITE openAndFill", "inOpen", inOpen);
       requireHistory("CDLGAPSIDESIDEWHITE openAndFill", inOpen.length);
@@ -844,5 +844,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLGAPSIDESIDEWHITE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlgapsidesidewhiteOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

@@ -452,7 +452,7 @@
    /**
     * A live ADOSC stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ADOSC} over the same series.
-    * Open with {@link Core#ADOSC_Open}; there is no close — the handle is
+    * Open with {@link Core#adoscOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -463,7 +463,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ADOSC_Stream {
+   public static final class AdoscStream {
       Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
@@ -478,7 +478,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      ADOSC_Stream( Core core ) { this.core = core; }
+      AdoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -492,7 +492,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ADOSC_Stream( ADOSC_Stream other ) {
+      AdoscStream( AdoscStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -508,7 +508,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ADOSC_Stream other ) {
+      void copyFrom( AdoscStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -539,7 +539,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
-         core.ADOSC_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.adoscStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -568,7 +568,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("ADOSC updateAndFill: BadParam", RetCode.BadParam);
-            core.ADOSC_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.adoscStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -584,8 +584,8 @@
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
-         ADOSC_Stream scratch = new ADOSC_Stream(this);
-         core.ADOSC_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         AdoscStream scratch = new AdoscStream(this);
+         core.adoscStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -602,11 +602,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ADOSC_Stream copy() {
-         return new ADOSC_Stream(this);
+      public AdoscStream copy() {
+         return new AdoscStream(this);
       }
    }
-   void ADOSC_StepImpl( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void adoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -623,7 +623,7 @@
       sp.slowEMA = Math.fma(sp.one_minus_slowk, sp.slowEMA, sp.slowk * sp.ad);
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
-   private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode adoscOpenImpl( AdoscStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -778,11 +778,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ADOSC_Stream ADOSC_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* adoscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AdoscStream adoscOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
+      AdoscStream sp = new AdoscStream(this);
+      RetCode retCode = adoscOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -796,14 +796,14 @@
       }
       throw new TaLibArgumentException("ADOSC openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
-   ADOSC_Stream ADOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   /* Internal startIdx-anchored open behind adoscOpen (composition seam). */
+   AdoscStream adoscOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
-      ADOSC_Stream sp = new ADOSC_Stream(this);
+      AdoscStream sp = new AdoscStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = adoscOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -830,7 +830,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ADOSC_Stream ADOSC_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
+   public AdoscStream adoscOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
    {
       requireArgument("ADOSC open", "inHigh", inHigh);
       requireHistory("ADOSC open", inHigh.length);
@@ -840,10 +840,10 @@
       requireHistoryLength("ADOSC open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("ADOSC open", "inClose", inClose.length, inHigh.length);
       requireHistoryLength("ADOSC open", "inVolume", inVolume.length, inHigh.length);
-      return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
+      return adoscOpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
-    * {@link Core#ADOSC_Open} that also fills the output array(s) bit-identically
+    * {@link Core#adoscOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ADOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -851,9 +851,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ADOSC_Stream#outRange()}.
+    * {@link AdoscStream#outRange()}.
     */
-   public ADOSC_Stream ADOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
+   public AdoscStream adoscOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
       requireArgument("ADOSC openAndFill", "inHigh", inHigh);
       requireHistory("ADOSC openAndFill", inHigh.length);
@@ -870,5 +870,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ADOSC_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      return adoscOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
    }

@@ -269,23 +269,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live PVI stream: one value per closed bar, bit-identical to [`Core::PVI`]
-/// over the same series. Open with [`Core::PVI_Open`]; dropping the handle
+/// over the same series. Open with [`Core::pvi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PVI_Stream")]
-pub struct PVI_Stream {
-    state: PVI_StreamState,
+pub struct PviStream {
+    state: PviStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl PVI_Stream {
+impl PviStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `PVI_StreamState::restore_from`.
+    /// allocating new ones. See `PviStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -294,14 +294,14 @@ impl PVI_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PVI_StreamState {
+struct PviStreamState {
     prevPVI: f64,
     prevClose: f64,
     prevVolume: f64,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl PVI_StreamState {
+impl PviStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -311,14 +311,13 @@ impl PVI_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PVI_step_impl(sp: &mut PVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn pvi_step_impl(sp: &mut PviStreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
         let mut tempPVI: f64 = 0.0_f64;
@@ -349,11 +348,11 @@ impl Core {
         sp.prevVolume = tempVolume;
     }
 
-    /// The single whole-history transcription behind [`Core::PVI_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::PVI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn PVI_OpenImpl(
+    /// The single whole-history transcription behind [`Core::pvi_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::pvi_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn pvi_open_impl(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<PVI_Stream, RetCode> {
+    ) -> Result<PviStream, RetCode> {
         if inClose.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -419,22 +418,22 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = PVI_StreamState {
+        let state = PviStreamState {
             prevPVI,
             prevClose,
             prevVolume,
         };
-        Ok(PVI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(PviStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::PVI_Open`] (composition seam).
-    pub(crate) fn PVI_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::pvi_open`] (composition seam).
+    pub(crate) fn pvi_open_internal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(PVI_Stream, f64), RetCode> {
+    ) -> Result<(PviStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.PVI_OpenImpl(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.pvi_open_impl(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -459,7 +458,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.PVI_Open(&close, &volume).expect("enough history");
+    /// let (mut s, _last) = core.pvi_open(&close, &volume).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 12_345.0).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -469,11 +468,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PVI_Open")]
-    pub fn PVI_Open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(PVI_Stream, f64), RetCode> {
-        self.PVI_OpenInternal(inClose, inVolume, 0)
+    pub fn pvi_open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(PviStream, f64), RetCode> {
+        self.pvi_open_internal(inClose, inVolume, 0)
     }
 
-    /// [`Core::PVI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::pvi_open`] that also fills the output array(s) bit-identically to
     /// [`Core::PVI`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -481,12 +480,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::PVI_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::pvi_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_PVI_OpenAndFill")]
-    pub fn PVI_OpenAndFill(
+    pub fn pvi_open_and_fill(
         &self, inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],
-    ) -> Result<(PVI_Stream, OutRange), RetCode> {
+    ) -> Result<(PviStream, OutRange), RetCode> {
         if inClose.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -503,23 +502,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.PVI_OpenAndFillInternal(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.pvi_open_and_fill_internal(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::PVI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::pvi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn PVI_OpenAndFillInternal(
+    pub(crate) fn pvi_open_and_fill_internal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PVI_Stream, RetCode> {
-        self.PVI_OpenImpl(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<PviStream, RetCode> {
+        self.pvi_open_impl(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl PVI_Stream {
+impl PviStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -537,7 +536,7 @@ impl PVI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::PVI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
+        Core::pvi_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -570,7 +569,7 @@ impl PVI_Stream {
             if !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::PVI_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
+            Core::pvi_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -613,7 +612,7 @@ impl PVI_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PVI_Stream>();
+    _assert_auto::<PviStream>();
 };
 
 /***************/

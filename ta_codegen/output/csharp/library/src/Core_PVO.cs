@@ -426,7 +426,7 @@ public partial class Core
    /// <summary>A live <c>PVO</c> stream: one value per closed bar, bit-identical to
    /// <c>PVO</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.PVO_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.PvoOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -439,24 +439,24 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class PVO_Stream
+   public sealed class PvoStream
    {
       internal Core core;
       internal int optInFastPeriod;
       internal int optInSlowPeriod;
       internal MAType optInMAType;
       internal double cur_outReal;
-      internal MA_Stream sub0 = null!;
-      internal MA_Stream sub1 = null!;
+      internal MaStream sub0 = null!;
+      internal MaStream sub1 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal PVO_Stream( Core core ) { this.core = core; }
+      internal PvoStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.PVO</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Pvo</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -464,20 +464,20 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal PVO_Stream( PVO_Stream other )
+      internal PvoStream( PvoStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( PVO_Stream other )
+      internal void CopyFrom( PvoStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -485,12 +485,12 @@ public partial class Core
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
          if( this.sub0 is null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.CopyFrom(other.sub0);
          }
          if( this.sub1 is null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
@@ -499,7 +499,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static PVO_Stream? peekScratch;
+      [ThreadStatic] private static PvoStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -517,7 +517,7 @@ public partial class Core
       public double Update( double inVolume )
       {
          if( !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVO", "update", RetCode.BadParam);
-         core.PVO_StepImpl(this, inVolume);
+         core.PvoStepImpl(this, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -536,14 +536,14 @@ public partial class Core
       public double Peek( double inVolume )
       {
          if( !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVO", "peek", RetCode.BadParam);
-         PVO_Stream? scratch = peekScratch;
+         PvoStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new PVO_Stream(this);
+            scratch = new PvoStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.PVO_StepImpl(scratch, inVolume);
+         core.PvoStepImpl(scratch, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -567,7 +567,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("PVO", "updateAndFill", RetCode.BadParam);
-            core.PVO_StepImpl(this, inVolume[i]);
+            core.PvoStepImpl(this, inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -583,13 +583,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public PVO_Stream Clone()
+      public PvoStream Clone()
       {
-         return new PVO_Stream(this);
+         return new PvoStream(this);
       }
    }
 
-   internal void PVO_StepImpl( PVO_Stream sp, double inVolume )
+   internal void PvoStepImpl( PvoStream sp, double inVolume )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;
@@ -607,7 +607,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode PVO_OpenImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PvoOpenImpl( PvoStream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -682,12 +682,12 @@ public partial class Core
       /* Calculate the fast MA into the tempBuffer. */
       /* Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(inVolume, startIdx, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      MaStream sub0 = MaOpenAndFillInternal(inVolume, startIdx, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       retCode = RetCode.Success;
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(inVolume, startIdx, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, sc_outReal);
+      MaStream sub1 = MaOpenAndFillInternal(inVolume, startIdx, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, sc_outReal);
       retCode = RetCode.Success;
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
@@ -716,11 +716,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* PVO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal PVO_Stream PVO_OpenAndFillInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* PvoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal PvoStream PvoOpenAndFillInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
+      PvoStream sp = new PvoStream(this);
+      RetCode retCode = PvoOpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -729,12 +729,12 @@ public partial class Core
       throw StreamFailure("PVO", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind PVO_Open (composition seam). */
-   internal PVO_Stream PVO_OpenInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind PvoOpen (composition seam). */
+   internal PvoStream PvoOpenInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      PVO_Stream sp = new PVO_Stream(this);
+      PvoStream sp = new PvoStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = PvoOpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -745,11 +745,11 @@ public partial class Core
 
    /// <summary>Open a live <c>PVO</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="PVO_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="PvoStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>PVO</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>PVO_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>PVO_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>PvoOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="PVO_Lookback"/> for its default and
@@ -765,14 +765,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PVO_Stream PVO_Open( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public PvoStream PvoOpen( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( inVolume.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inVolume.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+      return PvoOpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
-   /// <summary><c>PVO_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>PvoOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>PVO</c> produces over the
@@ -784,7 +784,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="PVO_Stream.OutRange"/>.</para>
+   /// <see cref="PvoStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="PVO_Lookback"/> for its default and
@@ -803,7 +803,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PVO_Stream PVO_OpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
+   public PvoStream PvoOpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inVolume.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inVolume.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -812,6 +812,6 @@ public partial class Core
       if( outReal.Overlaps(inVolume) ) {
          throw StreamFailure("PVO", "openAndFill", RetCode.BadParam);
       }
-      return PVO_OpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, outReal);
+      return PvoOpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, outReal);
    }
 }

@@ -420,7 +420,7 @@
    /**
     * A live AO stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AO} over the same series.
-    * Open with {@link Core#AO_Open}; there is no close — the handle is
+    * Open with {@link Core#aoOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -431,7 +431,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AO_Stream {
+   public static final class AoStream {
       Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
@@ -447,7 +447,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      AO_Stream( Core core ) { this.core = core; }
+      AoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -461,7 +461,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AO_Stream( AO_Stream other ) {
+      AoStream( AoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -478,7 +478,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AO_Stream other ) {
+      void copyFrom( AoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -504,7 +504,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AO_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<AoStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -521,7 +521,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
-         core.AO_StepImpl(this, inHigh, inLow);
+         core.aoStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -548,7 +548,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("AO updateAndFill: BadParam", RetCode.BadParam);
-            core.AO_StepImpl(this, inHigh[i], inLow[i]);
+            core.aoStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -566,14 +566,14 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AO peek: BadParam", RetCode.BadParam);
-         AO_Stream scratch = PEEK_SCRATCH.get();
+         AoStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new AO_Stream(this);
+            scratch = new AoStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.AO_StepImpl(scratch, inHigh, inLow);
+         core.aoStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -590,11 +590,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AO_Stream copy() {
-         return new AO_Stream(this);
+      public AoStream copy() {
+         return new AoStream(this);
       }
    }
-   void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
+   void aoStepImpl( AoStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double tempReal = 0.0;
@@ -631,7 +631,7 @@
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
-   private RetCode AO_OpenImpl( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode aoOpenImpl( AoStream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -796,11 +796,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* AO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AO_Stream AO_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* aoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AoStream aoOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      AO_Stream sp = new AO_Stream(this);
-      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
+      AoStream sp = new AoStream(this);
+      RetCode retCode = aoOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -814,14 +814,14 @@
       }
       throw new TaLibArgumentException("AO openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AO_Open (composition seam). */
-   AO_Stream AO_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   /* Internal startIdx-anchored open behind aoOpen (composition seam). */
+   AoStream aoOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
-      AO_Stream sp = new AO_Stream(this);
+      AoStream sp = new AoStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = aoOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -848,16 +848,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AO_Stream AO_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
+   public AoStream aoOpen( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
    {
       requireArgument("AO open", "inHigh", inHigh);
       requireHistory("AO open", inHigh.length);
       requireArgument("AO open", "inLow", inLow);
       requireHistoryLength("AO open", "inLow", inLow.length, inHigh.length);
-      return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
+      return aoOpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
-    * {@link Core#AO_Open} that also fills the output array(s) bit-identically
+    * {@link Core#aoOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -865,9 +865,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AO_Stream#outRange()}.
+    * {@link AoStream#outRange()}.
     */
-   public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
+   public AoStream aoOpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
       requireArgument("AO openAndFill", "inHigh", inHigh);
       requireHistory("AO openAndFill", inHigh.length);
@@ -880,5 +880,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AO_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      return aoOpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
    }

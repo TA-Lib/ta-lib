@@ -910,7 +910,7 @@ public partial class Core
    /// <summary>A live <c>HT_TRENDLINE</c> stream: one value per closed bar, bit-identical
    /// to <c>HT_TRENDLINE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.HT_TRENDLINE_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.HtTrendlineOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -923,7 +923,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class HT_TRENDLINE_Stream
+   public sealed class HtTrendlineStream
    {
       internal Core core;
       internal double period;
@@ -981,12 +981,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal HT_TRENDLINE_Stream( Core core ) { this.core = core; }
+      internal HtTrendlineStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.HT_TRENDLINE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.HtTrendline</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -995,7 +995,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal HT_TRENDLINE_Stream( HT_TRENDLINE_Stream other )
+      internal HtTrendlineStream( HtTrendlineStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1064,7 +1064,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HT_TRENDLINE_Stream other )
+      internal void CopyFrom( HtTrendlineStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1154,7 +1154,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HT_TRENDLINE_Stream? peekScratch;
+      [ThreadStatic] private static HtTrendlineStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1172,7 +1172,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_TRENDLINE", "update", RetCode.BadParam);
-         core.HT_TRENDLINE_StepImpl(this, inReal);
+         core.HtTrendlineStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1191,14 +1191,14 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_TRENDLINE", "peek", RetCode.BadParam);
-         HT_TRENDLINE_Stream? scratch = peekScratch;
+         HtTrendlineStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new HT_TRENDLINE_Stream(this);
+            scratch = new HtTrendlineStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_TRENDLINE_StepImpl(scratch, inReal);
+         core.HtTrendlineStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1222,7 +1222,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HT_TRENDLINE", "updateAndFill", RetCode.BadParam);
-            core.HT_TRENDLINE_StepImpl(this, inReal[i]);
+            core.HtTrendlineStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -1238,13 +1238,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public HT_TRENDLINE_Stream Clone()
+      public HtTrendlineStream Clone()
       {
-         return new HT_TRENDLINE_Stream(this);
+         return new HtTrendlineStream(this);
       }
    }
 
-   internal void HT_TRENDLINE_StepImpl( HT_TRENDLINE_Stream sp, double inReal )
+   internal void HtTrendlineStepImpl( HtTrendlineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -1439,7 +1439,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HtTrendlineOpenImpl( HtTrendlineStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1890,11 +1890,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* HtTrendlineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal HtTrendlineStream HtTrendlineOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      HtTrendlineStream sp = new HtTrendlineStream(this);
+      RetCode retCode = HtTrendlineOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1903,12 +1903,12 @@ public partial class Core
       throw StreamFailure("HT_TRENDLINE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind HT_TRENDLINE_Open (composition seam). */
-   internal HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind HtTrendlineOpen (composition seam). */
+   internal HtTrendlineStream HtTrendlineOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
+      HtTrendlineStream sp = new HtTrendlineStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = HtTrendlineOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1919,12 +1919,12 @@ public partial class Core
 
    /// <summary>Open a live <c>HT_TRENDLINE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="HT_TRENDLINE_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="HtTrendlineStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>HT_TRENDLINE</c> reports
    /// for that bar.</para>
    /// <para>The history must hold at least <c>HT_TRENDLINE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>HT_TRENDLINE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>HtTrendlineOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -1934,15 +1934,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_TRENDLINE_Stream HT_TRENDLINE_Open( ReadOnlySpan<double> inReal )
+   public HtTrendlineStream HtTrendlineOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return HT_TRENDLINE_OpenInternal(inReal, 0);
+      return HtTrendlineOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>HT_TRENDLINE_Open</c> that also fills the output array(s) over the
-   /// whole history in the same single pass.</summary>
+   /// <summary><c>HtTrendlineOpen</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>HT_TRENDLINE</c> produces
    /// over the same series, so no separate batch call is needed for the warm-up
@@ -1955,7 +1955,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HT_TRENDLINE_Stream.OutRange"/>.</para>
+   /// <see cref="HtTrendlineStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <param name="outReal">Instantaneous trendline value. Must hold at least <c>historyLen -
@@ -1968,7 +1968,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
+   public HtTrendlineStream HtTrendlineOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1977,6 +1977,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("HT_TRENDLINE", "openAndFill", RetCode.BadParam);
       }
-      return HT_TRENDLINE_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
+      return HtTrendlineOpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

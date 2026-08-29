@@ -453,7 +453,7 @@ public partial class Core
    /// <summary>A live <c>CDLABANDONEDBABY</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLABANDONEDBABY</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLABANDONEDBABY_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdlabandonedbabyOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -466,7 +466,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLABANDONEDBABY_Stream
+   public sealed class CdlabandonedbabyStream
    {
       internal Core core;
       internal double optInPenetration;
@@ -503,12 +503,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLABANDONEDBABY_Stream( Core core ) { this.core = core; }
+      internal CdlabandonedbabyStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLABANDONEDBABY</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdlabandonedbaby</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -517,7 +517,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLABANDONEDBABY_Stream( CDLABANDONEDBABY_Stream other )
+      internal CdlabandonedbabyStream( CdlabandonedbabyStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -558,7 +558,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLABANDONEDBABY_Stream other )
+      internal void CopyFrom( CdlabandonedbabyStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -606,7 +606,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLABANDONEDBABY_Stream? peekScratch;
+      [ThreadStatic] private static CdlabandonedbabyStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -627,7 +627,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLABANDONEDBABY", "update", RetCode.BadParam);
-         core.CDLABANDONEDBABY_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlabandonedbabyStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -649,14 +649,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLABANDONEDBABY", "peek", RetCode.BadParam);
-         CDLABANDONEDBABY_Stream? scratch = peekScratch;
+         CdlabandonedbabyStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLABANDONEDBABY_Stream(this);
+            scratch = new CdlabandonedbabyStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLABANDONEDBABY_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlabandonedbabyStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -683,7 +683,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLABANDONEDBABY", "updateAndFill", RetCode.BadParam);
-            core.CDLABANDONEDBABY_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlabandonedbabyStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -699,13 +699,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLABANDONEDBABY_Stream Clone()
+      public CdlabandonedbabyStream Clone()
       {
-         return new CDLABANDONEDBABY_Stream(this);
+         return new CdlabandonedbabyStream(this);
       }
    }
 
-   internal void CDLABANDONEDBABY_StepImpl( CDLABANDONEDBABY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlabandonedbabyStepImpl( CdlabandonedbabyStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -765,7 +765,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLABANDONEDBABY_OpenImpl( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlabandonedbabyOpenImpl( CdlabandonedbabyStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -950,11 +950,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLABANDONEDBABY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlabandonedbabyOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlabandonedbabyStream CdlabandonedbabyOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlabandonedbabyStream sp = new CdlabandonedbabyStream(this);
+      RetCode retCode = CdlabandonedbabyOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -963,12 +963,12 @@ public partial class Core
       throw StreamFailure("CDLABANDONEDBABY", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLABANDONEDBABY_Open (composition seam). */
-   internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind CdlabandonedbabyOpen (composition seam). */
+   internal CdlabandonedbabyStream CdlabandonedbabyOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
-      CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
+      CdlabandonedbabyStream sp = new CdlabandonedbabyStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlabandonedbabyOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -979,12 +979,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLABANDONEDBABY</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLABANDONEDBABY_Stream.Value"/> starts at the
-   /// last history bar's value — bit-identical to what <c>CDLABANDONEDBABY</c>
+   /// <para>The handle's <see cref="CdlabandonedbabyStream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>CDLABANDONEDBABY</c>
    /// reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLABANDONEDBABY_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLABANDONEDBABY_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlabandonedbabyOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1000,7 +1000,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
+   public CdlabandonedbabyStream CdlabandonedbabyOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLABANDONEDBABY open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLABANDONEDBABY open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1010,10 +1010,10 @@ public partial class Core
       RequireHistoryLength("CDLABANDONEDBABY", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLABANDONEDBABY", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLABANDONEDBABY", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return CdlabandonedbabyOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
-   /// <summary><c>CDLABANDONEDBABY_Open</c> that also fills the output array(s) over the
+   /// <summary><c>CdlabandonedbabyOpen</c> that also fills the output array(s) over the
    /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLABANDONEDBABY</c>
@@ -1027,7 +1027,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLABANDONEDBABY_Stream.OutRange"/>.</para>
+   /// <see cref="CdlabandonedbabyStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1048,7 +1048,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
+   public CdlabandonedbabyStream CdlabandonedbabyOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLABANDONEDBABY openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLABANDONEDBABY openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1060,6 +1060,6 @@ public partial class Core
       RequireHistoryLength("CDLABANDONEDBABY", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLABANDONEDBABY", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLABANDONEDBABY", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLABANDONEDBABY_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
+      return CdlabandonedbabyOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }

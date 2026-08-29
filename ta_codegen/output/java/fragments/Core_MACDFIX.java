@@ -499,7 +499,7 @@
    /**
     * A live MACDFIX stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MACDFIX} over the same series.
-    * Open with {@link Core#MACDFIX_Open}; there is no close — the handle is
+    * Open with {@link Core#macdfixOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -510,7 +510,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MACDFIX_Stream {
+   public static final class MacdfixStream {
       Core core;
       int optInSignalPeriod;
       double prevFast;
@@ -526,7 +526,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MACDFIX_Stream( Core core ) { this.core = core; }
+      MacdfixStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -540,7 +540,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MACDFIX_Stream( MACDFIX_Stream other ) {
+      MacdfixStream( MacdfixStream other ) {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
          this.prevFast = other.prevFast;
@@ -557,7 +557,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MACDFIX_Stream other ) {
+      void copyFrom( MacdfixStream other ) {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
          this.prevFast = other.prevFast;
@@ -603,7 +603,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
-         core.MACDFIX_StepImpl(this, inReal);
+         core.macdfixStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -634,7 +634,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inReal[i]) )
                   throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
-               core.MACDFIX_StepImpl(this, inReal[i]);
+               core.macdfixStepImpl(this, inReal[i]);
                outMACD[i] = this.cur_outMACD;
                outMACDSignal[i] = this.cur_outMACDSignal;
                outMACDHist[i] = this.cur_outMACDHist;
@@ -656,8 +656,8 @@
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
-         MACDFIX_Stream scratch = new MACDFIX_Stream(this);
-         core.MACDFIX_StepImpl(scratch, inReal);
+         MacdfixStream scratch = new MacdfixStream(this);
+         core.macdfixStepImpl(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -674,11 +674,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MACDFIX_Stream copy() {
-         return new MACDFIX_Stream(this);
+      public MacdfixStream copy() {
+         return new MacdfixStream(this);
       }
    }
-   void MACDFIX_StepImpl( MACDFIX_Stream sp, double inReal )
+   void macdfixStepImpl( MacdfixStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;
@@ -695,7 +695,7 @@
       sp.cur_outMACDSignal = sp.prevSignal;
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
-   private RetCode MACDFIX_OpenImpl( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+   private RetCode macdfixOpenImpl( MacdfixStream sp, double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -881,14 +881,14 @@
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MACDFIX_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
+      sp.cachedValue = new MacdfixStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   /* MACDFIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MACDFIX_Stream MACDFIX_OpenAndFillInternal( double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   /* macdfixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MacdfixStream macdfixOpenAndFillInternal( double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
+      MacdfixStream sp = new MacdfixStream(this);
+      RetCode retCode = macdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -902,16 +902,16 @@
       }
       throw new TaLibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MACDFIX_Open (composition seam). */
-   MACDFIX_Stream MACDFIX_OpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind macdfixOpen (composition seam). */
+   MacdfixStream macdfixOpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
    {
-      MACDFIX_Stream sp = new MACDFIX_Stream(this);
+      MacdfixStream sp = new MacdfixStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
       double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      RetCode retCode = macdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -938,14 +938,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MACDFIX_Stream MACDFIX_Open( double inReal[], int optInSignalPeriod )
+   public MacdfixStream macdfixOpen( double inReal[], int optInSignalPeriod )
    {
       requireArgument("MACDFIX open", "inReal", inReal);
       requireHistory("MACDFIX open", inReal.length);
-      return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
+      return macdfixOpenInternal(inReal, 0, optInSignalPeriod);
    }
    /**
-    * {@link Core#MACDFIX_Open} that also fills the output array(s) bit-identically
+    * {@link Core#macdfixOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MACDFIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -953,9 +953,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MACDFIX_Stream#outRange()}.
+    * {@link MacdfixStream#outRange()}.
     */
-   public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   public MacdfixStream macdfixOpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       requireArgument("MACDFIX openAndFill", "inReal", inReal);
       requireHistory("MACDFIX openAndFill", inReal.length);
@@ -968,5 +968,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MACDFIX_OpenAndFillInternal(inReal, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      return macdfixOpenAndFillInternal(inReal, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
    }

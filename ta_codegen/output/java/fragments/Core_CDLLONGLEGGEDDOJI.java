@@ -343,7 +343,7 @@
    /**
     * A live CDLLONGLEGGEDDOJI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLLONGLEGGEDDOJI} over the same series.
-    * Open with {@link Core#CDLLONGLEGGEDDOJI_Open}; there is no close — the handle is
+    * Open with {@link Core#cdllongleggeddojiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -354,7 +354,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLLONGLEGGEDDOJI_Stream {
+   public static final class CdllongleggeddojiStream {
       Core core;
       double BodyDojiPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -374,7 +374,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLLONGLEGGEDDOJI_Stream( Core core ) { this.core = core; }
+      CdllongleggeddojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -388,7 +388,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLLONGLEGGEDDOJI_Stream( CDLLONGLEGGEDDOJI_Stream other ) {
+      CdllongleggeddojiStream( CdllongleggeddojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -409,7 +409,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLLONGLEGGEDDOJI_Stream other ) {
+      void copyFrom( CdllongleggeddojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -439,7 +439,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLLONGLEGGEDDOJI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdllongleggeddojiStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -456,7 +456,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLONGLEGGEDDOJI update: BadParam", RetCode.BadParam);
-         core.CDLLONGLEGGEDDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdllongleggeddojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -485,7 +485,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLLONGLEGGEDDOJI updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLLONGLEGGEDDOJI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdllongleggeddojiStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -503,14 +503,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLONGLEGGEDDOJI peek: BadParam", RetCode.BadParam);
-         CDLLONGLEGGEDDOJI_Stream scratch = PEEK_SCRATCH.get();
+         CdllongleggeddojiStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLLONGLEGGEDDOJI_Stream(this);
+            scratch = new CdllongleggeddojiStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLLONGLEGGEDDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdllongleggeddojiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -527,11 +527,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLLONGLEGGEDDOJI_Stream copy() {
-         return new CDLLONGLEGGEDDOJI_Stream(this);
+      public CdllongleggeddojiStream copy() {
+         return new CdllongleggeddojiStream(this);
       }
    }
-   void CDLLONGLEGGEDDOJI_StepImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdllongleggeddojiStepImpl( CdllongleggeddojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -566,7 +566,7 @@
          sp.ringPos_ShadowLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLLONGLEGGEDDOJI_OpenImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdllongleggeddojiOpenImpl( CdllongleggeddojiStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -692,11 +692,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLLONGLEGGEDDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdllongleggeddojiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdllongleggeddojiStream cdllongleggeddojiOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
-      RetCode retCode = CDLLONGLEGGEDDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdllongleggeddojiStream sp = new CdllongleggeddojiStream(this);
+      RetCode retCode = cdllongleggeddojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -710,14 +710,14 @@
       }
       throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLLONGLEGGEDDOJI_Open (composition seam). */
-   CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdllongleggeddojiOpen (composition seam). */
+   CdllongleggeddojiStream cdllongleggeddojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
+      CdllongleggeddojiStream sp = new CdllongleggeddojiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLLONGLEGGEDDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdllongleggeddojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -744,7 +744,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdllongleggeddojiStream cdllongleggeddojiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLLONGLEGGEDDOJI open", "inOpen", inOpen);
       requireHistory("CDLLONGLEGGEDDOJI open", inOpen.length);
@@ -754,10 +754,10 @@
       requireHistoryLength("CDLLONGLEGGEDDOJI open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLLONGLEGGEDDOJI open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLLONGLEGGEDDOJI open", "inClose", inClose.length, inOpen.length);
-      return CDLLONGLEGGEDDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdllongleggeddojiOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLLONGLEGGEDDOJI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdllongleggeddojiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLLONGLEGGEDDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -765,9 +765,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLLONGLEGGEDDOJI_Stream#outRange()}.
+    * {@link CdllongleggeddojiStream#outRange()}.
     */
-   public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdllongleggeddojiStream cdllongleggeddojiOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inOpen", inOpen);
       requireHistory("CDLLONGLEGGEDDOJI openAndFill", inOpen.length);
@@ -784,5 +784,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLLONGLEGGEDDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdllongleggeddojiOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

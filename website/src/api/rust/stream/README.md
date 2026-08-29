@@ -14,14 +14,14 @@ Each streamable function adds two constructors on `Core` and a handful of method
 
 | Call | When | Does |
 |------|------|------|
-| `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
+| `core.<name>_open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `stream.out_range()` | any time | the bars this stream has a value for — the batch range over the same bars |
 
-Two more calls, `OpenAndFill` and `update_and_fill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
+Two more calls, `open_and_fill` and `update_and_fill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
-There is no `Close` — dropping the stream closes it (RAII).
+There is no `close` — dropping the stream closes it (RAII).
 
 ## Example (SMA)
 
@@ -32,7 +32,7 @@ let core = Core::new();
 
 // Seed with warm-up history (>= SMA_Lookback(period) + 1 bars).
 let history: Vec<f64> = /* ...your closing prices... */;
-let (mut s, last) = core.SMA_Open(&history, 30)?;   // stream + value at the last history bar
+let (mut s, last) = core.sma_open(&history, 30)?;   // stream + value at the last history bar
 
 // Each time a bar closes:
 let v = s.update(new_close)?;                        // Err only for a non-finite bar
@@ -43,13 +43,13 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`Open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `Open` the only thing they reject is invalid input such as NaN or ±Inf. The handle is left untouched on an error.
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` the only thing they reject is invalid input such as NaN or ±Inf. The handle is left untouched on an error.
 
 ## Rules
 
-- **Warm-up.** `Open` succeeds only if `history.len() >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history can be dropped — the stream keeps everything it needs.
+- **Warm-up.** `open` succeeds only if `history.len() >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
-- **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are captured from the immutable `Core` at `Open` and cannot change during the stream's life.
+- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
 - **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` never writes the handle, so peeks may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
 
 ## Multi-input / multi-output
@@ -58,35 +58,35 @@ Inputs and outputs mirror the batch method. Multi-output functions return a tupl
 
 ```rust
 // MACD: one input, three outputs
-let (mut s, (macd, signal, hist)) = core.MACD_Open(&history, 12, 26, 9)?;
+let (mut s, (macd, signal, hist)) = core.macd_open(&history, 12, 26, 9)?;
 let (macd, signal, hist) = s.update(new_close)?;
 
 // A candlestick pattern returns i32
-let (mut s, _) = core.CDLDOJI_Open(&open, &high, &low, &close)?;
+let (mut s, _) = core.cdldoji_open(&open, &high, &low, &close)?;
 let pattern: i32 = s.update(o, h, l, c)?;
 ```
 
 ## Array-Fill Calls
 
-`Open` and `update` each write a single value. Two more calls write a full slice instead — the same shape the [batch method](/api/rust/) would produce — while still driving the stream:
+`open` and `update` each write a single value. Two more calls write a full slice instead — the same shape the [batch method](/api/rust/) would produce — while still driving the stream:
 
 | Call | When | Does |
 |------|------|------|
-| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` |
+| `core.<name>_open_and_fill(..)` | once, instead of `open` | like `open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` |
 | `stream.update_and_fill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values |
 
-**`OpenAndFill`**
+**`open_and_fill`**
 
 ```rust
 let mut warmup = vec![0.0; history.len()];
 
-let (mut s, filled) = core.SMA_OpenAndFill(&history, 30, &mut warmup)?;
+let (mut s, filled) = core.sma_open_and_fill(&history, 30, &mut warmup)?;
 
 // warmup[..filled.count] is the SMA over all of history; then stream on:
 let v = s.update(new_close)?;
 ```
 
-`OpenAndFill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. The output slices must not alias the input or each other.
+`open_and_fill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. The output slices must not alias the input or each other.
 
 **`update_and_fill`**
 

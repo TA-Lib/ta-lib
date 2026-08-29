@@ -539,7 +539,7 @@ public partial class Core
    /// <summary>A live <c>VAR</c> stream: one value per closed bar, bit-identical to
    /// <c>VAR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.VAR_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.VarOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -552,7 +552,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class VAR_Stream
+   public sealed class VarStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -573,12 +573,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal VAR_Stream( Core core ) { this.core = core; }
+      internal VarStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.VAR</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Var</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -586,7 +586,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal VAR_Stream( VAR_Stream other )
+      internal VarStream( VarStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -609,7 +609,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( VAR_Stream other )
+      internal void CopyFrom( VarStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -650,7 +650,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("VAR", "update", RetCode.BadParam);
-         core.VAR_StepImpl(this, inReal);
+         core.VarStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -669,8 +669,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("VAR", "peek", RetCode.BadParam);
-         VAR_Stream scratch = new VAR_Stream(this);
-         core.VAR_StepImpl(scratch, inReal);
+         VarStream scratch = new VarStream(this);
+         core.VarStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -694,7 +694,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("VAR", "updateAndFill", RetCode.BadParam);
-            core.VAR_StepImpl(this, inReal[i]);
+            core.VarStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -710,13 +710,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public VAR_Stream Clone()
+      public VarStream Clone()
       {
-         return new VAR_Stream(this);
+         return new VarStream(this);
       }
    }
 
-   internal void VAR_StepImpl( VAR_Stream sp, double inReal )
+   internal void VarStepImpl( VarStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;
@@ -838,7 +838,7 @@ public partial class Core
       sp.i += 1;
    }
 
-   private RetCode VAR_OpenImpl( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode VarOpenImpl( VarStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1059,11 +1059,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* VAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal VAR_Stream VAR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* VarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal VarStream VarOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
+      VarStream sp = new VarStream(this);
+      RetCode retCode = VarOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1072,12 +1072,12 @@ public partial class Core
       throw StreamFailure("VAR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind VAR_Open (composition seam). */
-   internal VAR_Stream VAR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   /* Internal startIdx-anchored open behind VarOpen (composition seam). */
+   internal VarStream VarOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
    {
-      VAR_Stream sp = new VAR_Stream(this);
+      VarStream sp = new VarStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = VarOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1088,11 +1088,11 @@ public partial class Core
 
    /// <summary>Open a live <c>VAR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="VAR_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="VarStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>VAR</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>VAR_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>VAR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>VarOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
@@ -1106,14 +1106,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public VAR_Stream VAR_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
+   public VarStream VarOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VAR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VAR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+      return VarOpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
-   /// <summary><c>VAR_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>VarOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>VAR</c> produces over the
@@ -1125,7 +1125,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="VAR_Stream.OutRange"/>.</para>
+   /// <see cref="VarStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
@@ -1142,7 +1142,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public VAR_Stream VAR_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
+   public VarStream VarOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VAR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1151,6 +1151,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("VAR", "openAndFill", RetCode.BadParam);
       }
-      return VAR_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, out _, out _, outReal);
+      return VarOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, out _, out _, outReal);
    }
 }

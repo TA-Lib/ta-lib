@@ -578,7 +578,7 @@
    /**
     * A live KAMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#KAMA} over the same series.
-    * Open with {@link Core#KAMA_Open}; there is no close — the handle is
+    * Open with {@link Core#kamaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -589,7 +589,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class KAMA_Stream {
+   public static final class KamaStream {
       Core core;
       int optInTimePeriod;
       double constMax;
@@ -606,7 +606,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      KAMA_Stream( Core core ) { this.core = core; }
+      KamaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -620,7 +620,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      KAMA_Stream( KAMA_Stream other ) {
+      KamaStream( KamaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.constMax = other.constMax;
@@ -638,7 +638,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( KAMA_Stream other ) {
+      void copyFrom( KamaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.constMax = other.constMax;
@@ -675,7 +675,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
-         core.KAMA_StepImpl(this, inReal);
+         core.kamaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -701,7 +701,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("KAMA updateAndFill: BadParam", RetCode.BadParam);
-            core.KAMA_StepImpl(this, inReal[i]);
+            core.kamaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -717,8 +717,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
-         KAMA_Stream scratch = new KAMA_Stream(this);
-         core.KAMA_StepImpl(scratch, inReal);
+         KamaStream scratch = new KamaStream(this);
+         core.kamaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -735,11 +735,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public KAMA_Stream copy() {
-         return new KAMA_Stream(this);
+      public KamaStream copy() {
+         return new KamaStream(this);
       }
    }
-   void KAMA_StepImpl( KAMA_Stream sp, double inReal )
+   void kamaStepImpl( KamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -800,7 +800,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode KAMA_OpenImpl( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode kamaOpenImpl( KamaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double constMax = 0;
       double constDiff = 0;
@@ -1065,11 +1065,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* KAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   KAMA_Stream KAMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* kamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   KamaStream kamaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      KAMA_Stream sp = new KAMA_Stream(this);
-      RetCode retCode = KAMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      KamaStream sp = new KamaStream(this);
+      RetCode retCode = kamaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1083,14 +1083,14 @@
       }
       throw new TaLibArgumentException("KAMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind KAMA_Open (composition seam). */
-   KAMA_Stream KAMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind kamaOpen (composition seam). */
+   KamaStream kamaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      KAMA_Stream sp = new KAMA_Stream(this);
+      KamaStream sp = new KamaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = KAMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = kamaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1117,14 +1117,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public KAMA_Stream KAMA_Open( double inReal[], int optInTimePeriod )
+   public KamaStream kamaOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("KAMA open", "inReal", inReal);
       requireHistory("KAMA open", inReal.length);
-      return KAMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return kamaOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#KAMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#kamaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#KAMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1132,9 +1132,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link KAMA_Stream#outRange()}.
+    * {@link KamaStream#outRange()}.
     */
-   public KAMA_Stream KAMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public KamaStream kamaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("KAMA openAndFill", "inReal", inReal);
       requireHistory("KAMA openAndFill", inReal.length);
@@ -1145,5 +1145,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return KAMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return kamaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

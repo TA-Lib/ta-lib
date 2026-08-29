@@ -336,7 +336,7 @@ public partial class Core
    /// <summary>A live <c>MOM</c> stream: one value per closed bar, bit-identical to
    /// <c>MOM</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MOM_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.MomOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -349,7 +349,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MOM_Stream
+   public sealed class MomStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -360,12 +360,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MOM_Stream( Core core ) { this.core = core; }
+      internal MomStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MOM</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Mom</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -373,7 +373,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MOM_Stream( MOM_Stream other )
+      internal MomStream( MomStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -386,7 +386,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MOM_Stream other )
+      internal void CopyFrom( MomStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -417,7 +417,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MOM", "update", RetCode.BadParam);
-         core.MOM_StepImpl(this, inReal);
+         core.MomStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -436,8 +436,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MOM", "peek", RetCode.BadParam);
-         MOM_Stream scratch = new MOM_Stream(this);
-         core.MOM_StepImpl(scratch, inReal);
+         MomStream scratch = new MomStream(this);
+         core.MomStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -461,7 +461,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MOM", "updateAndFill", RetCode.BadParam);
-            core.MOM_StepImpl(this, inReal[i]);
+            core.MomStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -477,13 +477,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MOM_Stream Clone()
+      public MomStream Clone()
       {
-         return new MOM_Stream(this);
+         return new MomStream(this);
       }
    }
 
-   internal void MOM_StepImpl( MOM_Stream sp, double inReal )
+   internal void MomStepImpl( MomStream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
@@ -496,7 +496,7 @@ public partial class Core
       }
    }
 
-   private RetCode MOM_OpenImpl( MOM_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MomOpenImpl( MomStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -593,11 +593,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MOM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MOM_Stream MOM_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* MomOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MomStream MomOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      MOM_Stream sp = new MOM_Stream(this);
-      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      MomStream sp = new MomStream(this);
+      RetCode retCode = MomOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -606,12 +606,12 @@ public partial class Core
       throw StreamFailure("MOM", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MOM_Open (composition seam). */
-   internal MOM_Stream MOM_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MomOpen (composition seam). */
+   internal MomStream MomOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      MOM_Stream sp = new MOM_Stream(this);
+      MomStream sp = new MomStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = MomOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -622,11 +622,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MOM</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MOM_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MomStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MOM</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MOM_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MOM_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MomOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input price series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MOM_Lookback"/> for its default and
@@ -638,14 +638,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MOM_Stream MOM_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public MomStream MomOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MOM open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MOM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MOM_OpenInternal(inReal, 0, optInTimePeriod);
+      return MomOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>MOM_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>MomOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MOM</c> produces over the
@@ -657,7 +657,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MOM_Stream.OutRange"/>.</para>
+   /// <see cref="MomStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input price series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MOM_Lookback"/> for its default and
@@ -672,7 +672,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MOM_Stream MOM_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public MomStream MomOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MOM openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MOM openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -681,6 +681,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("MOM", "openAndFill", RetCode.BadParam);
       }
-      return MOM_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return MomOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -278,23 +278,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live TRANGE stream: one value per closed bar, bit-identical to [`Core::TRANGE`]
-/// over the same series. Open with [`Core::TRANGE_Open`]; dropping the handle
+/// over the same series. Open with [`Core::trange_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TRANGE_Stream")]
-pub struct TRANGE_Stream {
-    state: TRANGE_StreamState,
+pub struct TrangeStream {
+    state: TrangeStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl TRANGE_Stream {
+impl TrangeStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `TRANGE_StreamState::restore_from`.
+    /// allocating new ones. See `TrangeStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -303,12 +303,12 @@ impl TRANGE_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TRANGE_StreamState {
+struct TrangeStreamState {
     lag1_inClose: f64,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl TRANGE_StreamState {
+impl TrangeStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -316,14 +316,13 @@ impl TRANGE_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TRANGE_step_impl(sp: &mut TRANGE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn trange_step_impl(sp: &mut TrangeStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -348,11 +347,11 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// The single whole-history transcription behind [`Core::TRANGE_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::TRANGE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TRANGE_OpenImpl(
+    /// The single whole-history transcription behind [`Core::trange_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::trange_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn trange_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<TRANGE_Stream, RetCode> {
+    ) -> Result<TrangeStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -427,20 +426,20 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TRANGE_StreamState {
+        let state = TrangeStreamState {
             lag1_inClose: inClose[historyLen - 1],
         };
-        Ok(TRANGE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TrangeStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TRANGE_Open`] (composition seam).
-    pub(crate) fn TRANGE_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::trange_open`] (composition seam).
+    pub(crate) fn trange_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(TRANGE_Stream, f64), RetCode> {
+    ) -> Result<(TrangeStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TRANGE_OpenImpl(inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.trange_open_impl(inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -464,7 +463,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.TRANGE_Open(&high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.trange_open(&high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -474,11 +473,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TRANGE_Open")]
-    pub fn TRANGE_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(TRANGE_Stream, f64), RetCode> {
-        self.TRANGE_OpenInternal(inHigh, inLow, inClose, 0)
+    pub fn trange_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(TrangeStream, f64), RetCode> {
+        self.trange_open_internal(inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::TRANGE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::trange_open`] that also fills the output array(s) bit-identically to
     /// [`Core::TRANGE`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -486,12 +485,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::TRANGE_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::trange_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_TRANGE_OpenAndFill")]
-    pub fn TRANGE_OpenAndFill(
+    pub fn trange_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outReal: &mut [f64],
-    ) -> Result<(TRANGE_Stream, OutRange), RetCode> {
+    ) -> Result<(TrangeStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -508,23 +507,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TRANGE_OpenAndFillInternal(inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.trange_open_and_fill_internal(inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::TRANGE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::trange_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn TRANGE_OpenAndFillInternal(
+    pub(crate) fn trange_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TRANGE_Stream, RetCode> {
-        self.TRANGE_OpenImpl(inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<TrangeStream, RetCode> {
+        self.trange_open_impl(inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TRANGE_Stream {
+impl TrangeStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -542,7 +541,7 @@ impl TRANGE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::TRANGE_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::trange_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -575,7 +574,7 @@ impl TRANGE_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::TRANGE_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::trange_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -618,7 +617,7 @@ impl TRANGE_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TRANGE_Stream>();
+    _assert_auto::<TrangeStream>();
 };
 
 /***************/

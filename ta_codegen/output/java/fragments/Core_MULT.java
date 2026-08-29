@@ -201,7 +201,7 @@
    /**
     * A live MULT stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MULT} over the same series.
-    * Open with {@link Core#MULT_Open}; there is no close — the handle is
+    * Open with {@link Core#multOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -212,13 +212,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MULT_Stream {
+   public static final class MultStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      MULT_Stream( Core core ) { this.core = core; }
+      MultStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -232,14 +232,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MULT_Stream( MULT_Stream other ) {
+      MultStream( MultStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MULT_Stream other ) {
+      void copyFrom( MultStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -261,7 +261,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
-         core.MULT_StepImpl(this, inReal0, inReal1);
+         core.multStepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -288,7 +288,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
                throw new TaLibArgumentException("MULT updateAndFill: BadParam", RetCode.BadParam);
-            core.MULT_StepImpl(this, inReal0[i], inReal1[i]);
+            core.multStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -304,8 +304,8 @@
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
-         MULT_Stream scratch = new MULT_Stream(this);
-         core.MULT_StepImpl(scratch, inReal0, inReal1);
+         MultStream scratch = new MultStream(this);
+         core.multStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -322,15 +322,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MULT_Stream copy() {
-         return new MULT_Stream(this);
+      public MultStream copy() {
+         return new MultStream(this);
       }
    }
-   void MULT_StepImpl( MULT_Stream sp, double inReal0, double inReal1 )
+   void multStepImpl( MultStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }
-   private RetCode MULT_OpenImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode multOpenImpl( MultStream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -363,11 +363,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MULT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MULT_Stream MULT_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* multOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MultStream multOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MULT_Stream sp = new MULT_Stream(this);
-      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+      MultStream sp = new MultStream(this);
+      RetCode retCode = multOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -381,14 +381,14 @@
       }
       throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MULT_Open (composition seam). */
-   MULT_Stream MULT_OpenInternal( double inReal0[], double inReal1[], int startIdx )
+   /* Internal startIdx-anchored open behind multOpen (composition seam). */
+   MultStream multOpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
-      MULT_Stream sp = new MULT_Stream(this);
+      MultStream sp = new MultStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = multOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -415,16 +415,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MULT_Stream MULT_Open( double inReal0[], double inReal1[] )
+   public MultStream multOpen( double inReal0[], double inReal1[] )
    {
       requireArgument("MULT open", "inReal0", inReal0);
       requireHistory("MULT open", inReal0.length);
       requireArgument("MULT open", "inReal1", inReal1);
       requireHistoryLength("MULT open", "inReal1", inReal1.length, inReal0.length);
-      return MULT_OpenInternal(inReal0, inReal1, 0);
+      return multOpenInternal(inReal0, inReal1, 0);
    }
    /**
-    * {@link Core#MULT_Open} that also fills the output array(s) bit-identically
+    * {@link Core#multOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MULT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -432,9 +432,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MULT_Stream#outRange()}.
+    * {@link MultStream#outRange()}.
     */
-   public MULT_Stream MULT_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
+   public MultStream multOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       requireArgument("MULT openAndFill", "inReal0", inReal0);
       requireHistory("MULT openAndFill", inReal0.length);
@@ -447,5 +447,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MULT_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
+      return multOpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

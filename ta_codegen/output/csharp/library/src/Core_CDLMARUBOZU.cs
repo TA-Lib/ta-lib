@@ -389,7 +389,7 @@ public partial class Core
    /// <summary>A live <c>CDLMARUBOZU</c> stream: one value per closed bar, bit-identical
    /// to <c>CDLMARUBOZU</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLMARUBOZU_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdlmarubozuOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -402,7 +402,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLMARUBOZU_Stream
+   public sealed class CdlmarubozuStream
    {
       internal Core core;
       internal double BodyLongPeriodTotal;
@@ -423,12 +423,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLMARUBOZU_Stream( Core core ) { this.core = core; }
+      internal CdlmarubozuStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLMARUBOZU</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdlmarubozu</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -437,7 +437,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLMARUBOZU_Stream( CDLMARUBOZU_Stream other )
+      internal CdlmarubozuStream( CdlmarubozuStream other )
       {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -461,7 +461,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLMARUBOZU_Stream other )
+      internal void CopyFrom( CdlmarubozuStream other )
       {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -490,7 +490,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLMARUBOZU_Stream? peekScratch;
+      [ThreadStatic] private static CdlmarubozuStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -511,7 +511,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMARUBOZU", "update", RetCode.BadParam);
-         core.CDLMARUBOZU_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -533,14 +533,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMARUBOZU", "peek", RetCode.BadParam);
-         CDLMARUBOZU_Stream? scratch = peekScratch;
+         CdlmarubozuStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLMARUBOZU_Stream(this);
+            scratch = new CdlmarubozuStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLMARUBOZU_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlmarubozuStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -567,7 +567,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLMARUBOZU", "updateAndFill", RetCode.BadParam);
-            core.CDLMARUBOZU_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlmarubozuStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -583,13 +583,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLMARUBOZU_Stream Clone()
+      public CdlmarubozuStream Clone()
       {
-         return new CDLMARUBOZU_Stream(this);
+         return new CdlmarubozuStream(this);
       }
    }
 
-   internal void CDLMARUBOZU_StepImpl( CDLMARUBOZU_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlmarubozuStepImpl( CdlmarubozuStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -625,7 +625,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLMARUBOZU_OpenImpl( CDLMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlmarubozuOpenImpl( CdlmarubozuStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -753,11 +753,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLMARUBOZU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlmarubozuOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlmarubozuStream CdlmarubozuOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
-      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlmarubozuStream sp = new CdlmarubozuStream(this);
+      RetCode retCode = CdlmarubozuOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -766,12 +766,12 @@ public partial class Core
       throw StreamFailure("CDLMARUBOZU", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLMARUBOZU_Open (composition seam). */
-   internal CDLMARUBOZU_Stream CDLMARUBOZU_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlmarubozuOpen (composition seam). */
+   internal CdlmarubozuStream CdlmarubozuOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
+      CdlmarubozuStream sp = new CdlmarubozuStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlmarubozuOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -782,12 +782,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLMARUBOZU</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLMARUBOZU_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdlmarubozuStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLMARUBOZU</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>CDLMARUBOZU_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLMARUBOZU_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlmarubozuOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -800,7 +800,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLMARUBOZU_Stream CDLMARUBOZU_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlmarubozuStream CdlmarubozuOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLMARUBOZU open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLMARUBOZU open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -810,10 +810,10 @@ public partial class Core
       RequireHistoryLength("CDLMARUBOZU", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLMARUBOZU", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLMARUBOZU", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlmarubozuOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLMARUBOZU_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>CdlmarubozuOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLMARUBOZU</c> produces
@@ -827,7 +827,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLMARUBOZU_Stream.OutRange"/>.</para>
+   /// <see cref="CdlmarubozuStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -844,7 +844,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlmarubozuStream CdlmarubozuOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLMARUBOZU openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLMARUBOZU openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -856,6 +856,6 @@ public partial class Core
       RequireHistoryLength("CDLMARUBOZU", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLMARUBOZU", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLMARUBOZU", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLMARUBOZU_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlmarubozuOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

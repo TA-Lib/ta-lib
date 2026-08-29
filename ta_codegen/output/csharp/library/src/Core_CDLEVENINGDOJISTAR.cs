@@ -455,8 +455,8 @@ public partial class Core
    /// <summary>A live <c>CDLEVENINGDOJISTAR</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLEVENINGDOJISTAR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLEVENINGDOJISTAR_Open"/>. There is no close
-   /// and nothing to dispose — the handle is ordinary managed state, and an
+   /// <para>Open with <see cref="Core.CdleveningdojistarOpen"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
@@ -468,7 +468,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLEVENINGDOJISTAR_Stream
+   public sealed class CdleveningdojistarStream
    {
       internal Core core;
       internal double optInPenetration;
@@ -505,12 +505,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLEVENINGDOJISTAR_Stream( Core core ) { this.core = core; }
+      internal CdleveningdojistarStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLEVENINGDOJISTAR</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdleveningdojistar</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -519,7 +519,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLEVENINGDOJISTAR_Stream( CDLEVENINGDOJISTAR_Stream other )
+      internal CdleveningdojistarStream( CdleveningdojistarStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -560,7 +560,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLEVENINGDOJISTAR_Stream other )
+      internal void CopyFrom( CdleveningdojistarStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -608,7 +608,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLEVENINGDOJISTAR_Stream? peekScratch;
+      [ThreadStatic] private static CdleveningdojistarStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -629,7 +629,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLEVENINGDOJISTAR", "update", RetCode.BadParam);
-         core.CDLEVENINGDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdleveningdojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -651,14 +651,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLEVENINGDOJISTAR", "peek", RetCode.BadParam);
-         CDLEVENINGDOJISTAR_Stream? scratch = peekScratch;
+         CdleveningdojistarStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLEVENINGDOJISTAR_Stream(this);
+            scratch = new CdleveningdojistarStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLEVENINGDOJISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdleveningdojistarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -685,7 +685,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLEVENINGDOJISTAR", "updateAndFill", RetCode.BadParam);
-            core.CDLEVENINGDOJISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdleveningdojistarStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -701,13 +701,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLEVENINGDOJISTAR_Stream Clone()
+      public CdleveningdojistarStream Clone()
       {
-         return new CDLEVENINGDOJISTAR_Stream(this);
+         return new CdleveningdojistarStream(this);
       }
    }
 
-   internal void CDLEVENINGDOJISTAR_StepImpl( CDLEVENINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdleveningdojistarStepImpl( CdleveningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -770,7 +770,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdleveningdojistarOpenImpl( CdleveningdojistarStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -956,11 +956,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLEVENINGDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdleveningdojistarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdleveningdojistarStream CdleveningdojistarOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
+      CdleveningdojistarStream sp = new CdleveningdojistarStream(this);
+      RetCode retCode = CdleveningdojistarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -969,12 +969,12 @@ public partial class Core
       throw StreamFailure("CDLEVENINGDOJISTAR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLEVENINGDOJISTAR_Open (composition seam). */
-   internal CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind CdleveningdojistarOpen (composition seam). */
+   internal CdleveningdojistarStream CdleveningdojistarOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
-      CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
+      CdleveningdojistarStream sp = new CdleveningdojistarStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdleveningdojistarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -985,12 +985,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLEVENINGDOJISTAR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLEVENINGDOJISTAR_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="CdleveningdojistarStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what <c>CDLEVENINGDOJISTAR</c>
    /// reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLEVENINGDOJISTAR_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLEVENINGDOJISTAR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdleveningdojistarOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1006,7 +1006,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
+   public CdleveningdojistarStream CdleveningdojistarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGDOJISTAR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGDOJISTAR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1016,11 +1016,11 @@ public partial class Core
       RequireHistoryLength("CDLEVENINGDOJISTAR", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGDOJISTAR", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGDOJISTAR", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return CdleveningdojistarOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
-   /// <summary><c>CDLEVENINGDOJISTAR_Open</c> that also fills the output array(s) over
-   /// the whole history in the same single pass.</summary>
+   /// <summary><c>CdleveningdojistarOpen</c> that also fills the output array(s) over the
+   /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLEVENINGDOJISTAR</c>
    /// produces over the same series, so no separate batch call is needed for the
@@ -1033,7 +1033,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLEVENINGDOJISTAR_Stream.OutRange"/>.</para>
+   /// <see cref="CdleveningdojistarStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1053,7 +1053,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
+   public CdleveningdojistarStream CdleveningdojistarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGDOJISTAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGDOJISTAR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1065,6 +1065,6 @@ public partial class Core
       RequireHistoryLength("CDLEVENINGDOJISTAR", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGDOJISTAR", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLEVENINGDOJISTAR", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLEVENINGDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
+      return CdleveningdojistarOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }
