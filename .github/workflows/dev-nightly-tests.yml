@@ -414,6 +414,10 @@ jobs:
   # green because its scaffolding emits a crate-level #![allow(clippy::all,
   # clippy::pedantic)] — its machine output is verified bit-exact against the C
   # reference, not linted (rewriting emitted comparisons would change NaN semantics).
+  # That "(and rustc warnings)" is load-bearing for one lint on purpose: the crate
+  # sets #![warn(missing_docs)] (#179 D7), and `-D warnings` here is the only thing
+  # that turns an undocumented public item into a failure rather than a warning
+  # nobody reads.
   # Rust-only and self-contained: no C build, no JDK/.NET, and intentionally NOT
   # gated on the C hero 'test' job, so an unrelated dist failure can't skip it.
   #
@@ -446,6 +450,18 @@ jobs:
       - name: Clippy the generated crate
         shell: bash
         run: cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
+
+      # Rustdoc's own lints are a separate set that clippy never reaches: an
+      # unresolved intra-doc link is `rustdoc::broken_intra_doc_links`, and only
+      # rustdoc raises it. docs.rs is the first place rustdoc runs on a release,
+      # and a broken link renders there as literal text (#179 E4). The registry
+      # alone carries 176 generated `[Core::<F>]` links, so this is the step that
+      # keeps them resolving.
+      - name: Rustdoc the generated crate
+        shell: bash
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
       # --no-fail-fast: cargo runs the test binaries in sequence and stops at
       # the first that fails, so one red suite hid the other eleven -- a real

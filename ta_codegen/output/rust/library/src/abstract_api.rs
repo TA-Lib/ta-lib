@@ -32,186 +32,367 @@
 use crate::FuncUnstId;
 
 use crate::MAType;
+/// Every function in the registry, in the canonical order — and the dense
+/// index into [`FUNCS`].
+///
+/// Fieldless, so it is the whole handle: there is no opaque pointer to free
+/// and no magic number to validate. [`FuncId::info`] is the metadata.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u16)]
 #[non_exhaustive]
 #[allow(non_camel_case_types)]
 pub enum FuncId {
+    /// Accelerator/Decelerator Oscillator — [`Core::AC`](crate::Core::AC).
     AC,
+    /// Acceleration Bands — [`Core::ACCBANDS`](crate::Core::ACCBANDS).
     ACCBANDS,
+    /// Vector Trigonometric ACos — [`Core::ACOS`](crate::Core::ACOS).
     ACOS,
+    /// Chaikin A/D Line — [`Core::AD`](crate::Core::AD).
     AD,
+    /// Vector Arithmetic Add — [`Core::ADD`](crate::Core::ADD).
     ADD,
+    /// Chaikin A/D Oscillator — [`Core::ADOSC`](crate::Core::ADOSC).
     ADOSC,
+    /// Average Directional Movement Index — [`Core::ADX`](crate::Core::ADX).
     ADX,
+    /// Average Directional Movement Index Rating — [`Core::ADXR`](crate::Core::ADXR).
     ADXR,
+    /// Awesome Oscillator — [`Core::AO`](crate::Core::AO).
     AO,
+    /// Absolute Price Oscillator — [`Core::APO`](crate::Core::APO).
     APO,
+    /// Aroon — [`Core::AROON`](crate::Core::AROON).
     AROON,
+    /// Aroon Oscillator — [`Core::AROONOSC`](crate::Core::AROONOSC).
     AROONOSC,
+    /// Vector Trigonometric ASin — [`Core::ASIN`](crate::Core::ASIN).
     ASIN,
+    /// Vector Trigonometric ATan — [`Core::ATAN`](crate::Core::ATAN).
     ATAN,
+    /// Average True Range — [`Core::ATR`](crate::Core::ATR).
     ATR,
+    /// Average Deviation — [`Core::AVGDEV`](crate::Core::AVGDEV).
     AVGDEV,
+    /// Average Price — [`Core::AVGPRICE`](crate::Core::AVGPRICE).
     AVGPRICE,
+    /// Bollinger Bands — [`Core::BBANDS`](crate::Core::BBANDS).
     BBANDS,
+    /// Beta — [`Core::BETA`](crate::Core::BETA).
     BETA,
+    /// Balance Of Power — [`Core::BOP`](crate::Core::BOP).
     BOP,
+    /// Commodity Channel Index — [`Core::CCI`](crate::Core::CCI).
     CCI,
+    /// Two Crows — [`Core::CDL2CROWS`](crate::Core::CDL2CROWS).
     CDL2CROWS,
+    /// Three Black Crows — [`Core::CDL3BLACKCROWS`](crate::Core::CDL3BLACKCROWS).
     CDL3BLACKCROWS,
+    /// Three Inside Up/Down — [`Core::CDL3INSIDE`](crate::Core::CDL3INSIDE).
     CDL3INSIDE,
+    /// Three-Line Strike — [`Core::CDL3LINESTRIKE`](crate::Core::CDL3LINESTRIKE).
     CDL3LINESTRIKE,
+    /// Three Outside Up/Down — [`Core::CDL3OUTSIDE`](crate::Core::CDL3OUTSIDE).
     CDL3OUTSIDE,
+    /// Three Stars In The South — [`Core::CDL3STARSINSOUTH`](crate::Core::CDL3STARSINSOUTH).
     CDL3STARSINSOUTH,
+    /// Three Advancing White Soldiers — [`Core::CDL3WHITESOLDIERS`](crate::Core::CDL3WHITESOLDIERS).
     CDL3WHITESOLDIERS,
+    /// Abandoned Baby — [`Core::CDLABANDONEDBABY`](crate::Core::CDLABANDONEDBABY).
     CDLABANDONEDBABY,
+    /// Advance Block — [`Core::CDLADVANCEBLOCK`](crate::Core::CDLADVANCEBLOCK).
     CDLADVANCEBLOCK,
+    /// Belt-hold — [`Core::CDLBELTHOLD`](crate::Core::CDLBELTHOLD).
     CDLBELTHOLD,
+    /// Breakaway — [`Core::CDLBREAKAWAY`](crate::Core::CDLBREAKAWAY).
     CDLBREAKAWAY,
+    /// Closing Marubozu — [`Core::CDLCLOSINGMARUBOZU`](crate::Core::CDLCLOSINGMARUBOZU).
     CDLCLOSINGMARUBOZU,
+    /// Concealing Baby Swallow — [`Core::CDLCONCEALBABYSWALL`](crate::Core::CDLCONCEALBABYSWALL).
     CDLCONCEALBABYSWALL,
+    /// Counterattack — [`Core::CDLCOUNTERATTACK`](crate::Core::CDLCOUNTERATTACK).
     CDLCOUNTERATTACK,
+    /// Dark Cloud Cover — [`Core::CDLDARKCLOUDCOVER`](crate::Core::CDLDARKCLOUDCOVER).
     CDLDARKCLOUDCOVER,
+    /// Doji — [`Core::CDLDOJI`](crate::Core::CDLDOJI).
     CDLDOJI,
+    /// Doji Star — [`Core::CDLDOJISTAR`](crate::Core::CDLDOJISTAR).
     CDLDOJISTAR,
+    /// Dragonfly Doji — [`Core::CDLDRAGONFLYDOJI`](crate::Core::CDLDRAGONFLYDOJI).
     CDLDRAGONFLYDOJI,
+    /// Engulfing Pattern — [`Core::CDLENGULFING`](crate::Core::CDLENGULFING).
     CDLENGULFING,
+    /// Evening Doji Star — [`Core::CDLEVENINGDOJISTAR`](crate::Core::CDLEVENINGDOJISTAR).
     CDLEVENINGDOJISTAR,
+    /// Evening Star — [`Core::CDLEVENINGSTAR`](crate::Core::CDLEVENINGSTAR).
     CDLEVENINGSTAR,
+    /// Up/Down-gap side-by-side white lines — [`Core::CDLGAPSIDESIDEWHITE`](crate::Core::CDLGAPSIDESIDEWHITE).
     CDLGAPSIDESIDEWHITE,
+    /// Gravestone Doji — [`Core::CDLGRAVESTONEDOJI`](crate::Core::CDLGRAVESTONEDOJI).
     CDLGRAVESTONEDOJI,
+    /// Hammer — [`Core::CDLHAMMER`](crate::Core::CDLHAMMER).
     CDLHAMMER,
+    /// Hanging Man — [`Core::CDLHANGINGMAN`](crate::Core::CDLHANGINGMAN).
     CDLHANGINGMAN,
+    /// Harami Pattern — [`Core::CDLHARAMI`](crate::Core::CDLHARAMI).
     CDLHARAMI,
+    /// Harami Cross Pattern — [`Core::CDLHARAMICROSS`](crate::Core::CDLHARAMICROSS).
     CDLHARAMICROSS,
+    /// High-Wave Candle — [`Core::CDLHIGHWAVE`](crate::Core::CDLHIGHWAVE).
     CDLHIGHWAVE,
+    /// Hikkake Pattern — [`Core::CDLHIKKAKE`](crate::Core::CDLHIKKAKE).
     CDLHIKKAKE,
+    /// Modified Hikkake Pattern — [`Core::CDLHIKKAKEMOD`](crate::Core::CDLHIKKAKEMOD).
     CDLHIKKAKEMOD,
+    /// Homing Pigeon — [`Core::CDLHOMINGPIGEON`](crate::Core::CDLHOMINGPIGEON).
     CDLHOMINGPIGEON,
+    /// Identical Three Crows — [`Core::CDLIDENTICAL3CROWS`](crate::Core::CDLIDENTICAL3CROWS).
     CDLIDENTICAL3CROWS,
+    /// In-Neck Pattern — [`Core::CDLINNECK`](crate::Core::CDLINNECK).
     CDLINNECK,
+    /// Inverted Hammer — [`Core::CDLINVERTEDHAMMER`](crate::Core::CDLINVERTEDHAMMER).
     CDLINVERTEDHAMMER,
+    /// Kicking — [`Core::CDLKICKING`](crate::Core::CDLKICKING).
     CDLKICKING,
+    /// Kicking - bull/bear determined by the longer marubozu — [`Core::CDLKICKINGBYLENGTH`](crate::Core::CDLKICKINGBYLENGTH).
     CDLKICKINGBYLENGTH,
+    /// Ladder Bottom — [`Core::CDLLADDERBOTTOM`](crate::Core::CDLLADDERBOTTOM).
     CDLLADDERBOTTOM,
+    /// Long Legged Doji — [`Core::CDLLONGLEGGEDDOJI`](crate::Core::CDLLONGLEGGEDDOJI).
     CDLLONGLEGGEDDOJI,
+    /// Long Line Candle — [`Core::CDLLONGLINE`](crate::Core::CDLLONGLINE).
     CDLLONGLINE,
+    /// Marubozu — [`Core::CDLMARUBOZU`](crate::Core::CDLMARUBOZU).
     CDLMARUBOZU,
+    /// Matching Low — [`Core::CDLMATCHINGLOW`](crate::Core::CDLMATCHINGLOW).
     CDLMATCHINGLOW,
+    /// Mat Hold — [`Core::CDLMATHOLD`](crate::Core::CDLMATHOLD).
     CDLMATHOLD,
+    /// Morning Doji Star — [`Core::CDLMORNINGDOJISTAR`](crate::Core::CDLMORNINGDOJISTAR).
     CDLMORNINGDOJISTAR,
+    /// Morning Star — [`Core::CDLMORNINGSTAR`](crate::Core::CDLMORNINGSTAR).
     CDLMORNINGSTAR,
+    /// On-Neck Pattern — [`Core::CDLONNECK`](crate::Core::CDLONNECK).
     CDLONNECK,
+    /// Piercing Pattern — [`Core::CDLPIERCING`](crate::Core::CDLPIERCING).
     CDLPIERCING,
+    /// Rickshaw Man — [`Core::CDLRICKSHAWMAN`](crate::Core::CDLRICKSHAWMAN).
     CDLRICKSHAWMAN,
+    /// Rising/Falling Three Methods — [`Core::CDLRISEFALL3METHODS`](crate::Core::CDLRISEFALL3METHODS).
     CDLRISEFALL3METHODS,
+    /// Separating Lines — [`Core::CDLSEPARATINGLINES`](crate::Core::CDLSEPARATINGLINES).
     CDLSEPARATINGLINES,
+    /// Shooting Star — [`Core::CDLSHOOTINGSTAR`](crate::Core::CDLSHOOTINGSTAR).
     CDLSHOOTINGSTAR,
+    /// Short Line Candle — [`Core::CDLSHORTLINE`](crate::Core::CDLSHORTLINE).
     CDLSHORTLINE,
+    /// Spinning Top — [`Core::CDLSPINNINGTOP`](crate::Core::CDLSPINNINGTOP).
     CDLSPINNINGTOP,
+    /// Stalled Pattern — [`Core::CDLSTALLEDPATTERN`](crate::Core::CDLSTALLEDPATTERN).
     CDLSTALLEDPATTERN,
+    /// Stick Sandwich — [`Core::CDLSTICKSANDWICH`](crate::Core::CDLSTICKSANDWICH).
     CDLSTICKSANDWICH,
+    /// Takuri (Dragonfly Doji with very long lower shadow) — [`Core::CDLTAKURI`](crate::Core::CDLTAKURI).
     CDLTAKURI,
+    /// Tasuki Gap — [`Core::CDLTASUKIGAP`](crate::Core::CDLTASUKIGAP).
     CDLTASUKIGAP,
+    /// Thrusting Pattern — [`Core::CDLTHRUSTING`](crate::Core::CDLTHRUSTING).
     CDLTHRUSTING,
+    /// Tristar Pattern — [`Core::CDLTRISTAR`](crate::Core::CDLTRISTAR).
     CDLTRISTAR,
+    /// Unique 3 River — [`Core::CDLUNIQUE3RIVER`](crate::Core::CDLUNIQUE3RIVER).
     CDLUNIQUE3RIVER,
+    /// Upside Gap Two Crows — [`Core::CDLUPSIDEGAP2CROWS`](crate::Core::CDLUPSIDEGAP2CROWS).
     CDLUPSIDEGAP2CROWS,
+    /// Upside/Downside Gap Three Methods — [`Core::CDLXSIDEGAP3METHODS`](crate::Core::CDLXSIDEGAP3METHODS).
     CDLXSIDEGAP3METHODS,
+    /// Vector Ceil — [`Core::CEIL`](crate::Core::CEIL).
     CEIL,
+    /// Chaikin Money Flow — [`Core::CMF`](crate::Core::CMF).
     CMF,
+    /// Chande Momentum Oscillator — [`Core::CMO`](crate::Core::CMO).
     CMO,
+    /// Chande Momentum Oscillator (Unsmoothed) — [`Core::CMOU`](crate::Core::CMOU).
     CMOU,
+    /// Pearson's Correlation Coefficient (r) — [`Core::CORREL`](crate::Core::CORREL).
     CORREL,
+    /// Vector Trigonometric Cos — [`Core::COS`](crate::Core::COS).
     COS,
+    /// Vector Trigonometric Cosh — [`Core::COSH`](crate::Core::COSH).
     COSH,
+    /// Double Exponential Moving Average — [`Core::DEMA`](crate::Core::DEMA).
     DEMA,
+    /// Vector Arithmetic Div — [`Core::DIV`](crate::Core::DIV).
     DIV,
+    /// Directional Movement Index — [`Core::DX`](crate::Core::DX).
     DX,
+    /// Elder's Force Index — [`Core::EFI`](crate::Core::EFI).
     EFI,
+    /// Exponential Moving Average — [`Core::EMA`](crate::Core::EMA).
     EMA,
+    /// Vector Arithmetic Exp — [`Core::EXP`](crate::Core::EXP).
     EXP,
+    /// Vector Floor — [`Core::FLOOR`](crate::Core::FLOOR).
     FLOOR,
+    /// Hull Moving Average — [`Core::HMA`](crate::Core::HMA).
     HMA,
+    /// Hilbert Transform - Dominant Cycle Period — [`Core::HT_DCPERIOD`](crate::Core::HT_DCPERIOD).
     HT_DCPERIOD,
+    /// Hilbert Transform - Dominant Cycle Phase — [`Core::HT_DCPHASE`](crate::Core::HT_DCPHASE).
     HT_DCPHASE,
+    /// Hilbert Transform - Phasor Components — [`Core::HT_PHASOR`](crate::Core::HT_PHASOR).
     HT_PHASOR,
+    /// Hilbert Transform - SineWave — [`Core::HT_SINE`](crate::Core::HT_SINE).
     HT_SINE,
+    /// Hilbert Transform - Instantaneous Trendline — [`Core::HT_TRENDLINE`](crate::Core::HT_TRENDLINE).
     HT_TRENDLINE,
+    /// Hilbert Transform - Trend vs Cycle Mode — [`Core::HT_TRENDMODE`](crate::Core::HT_TRENDMODE).
     HT_TRENDMODE,
+    /// Intraday Momentum Index — [`Core::IMI`](crate::Core::IMI).
     IMI,
+    /// Kaufman Adaptive Moving Average — [`Core::KAMA`](crate::Core::KAMA).
     KAMA,
+    /// Linear Regression — [`Core::LINEARREG`](crate::Core::LINEARREG).
     LINEARREG,
+    /// Linear Regression Angle — [`Core::LINEARREG_ANGLE`](crate::Core::LINEARREG_ANGLE).
     LINEARREG_ANGLE,
+    /// Linear Regression Intercept — [`Core::LINEARREG_INTERCEPT`](crate::Core::LINEARREG_INTERCEPT).
     LINEARREG_INTERCEPT,
+    /// Linear Regression Slope — [`Core::LINEARREG_SLOPE`](crate::Core::LINEARREG_SLOPE).
     LINEARREG_SLOPE,
+    /// Vector Log Natural — [`Core::LN`](crate::Core::LN).
     LN,
+    /// Vector Log10 — [`Core::LOG10`](crate::Core::LOG10).
     LOG10,
+    /// Moving average — [`Core::MA`](crate::Core::MA).
     MA,
+    /// Moving Average Convergence/Divergence — [`Core::MACD`](crate::Core::MACD).
     MACD,
+    /// MACD with controllable MA type — [`Core::MACDEXT`](crate::Core::MACDEXT).
     MACDEXT,
+    /// Moving Average Convergence/Divergence Fix 12/26 — [`Core::MACDFIX`](crate::Core::MACDFIX).
     MACDFIX,
+    /// MESA Adaptive Moving Average — [`Core::MAMA`](crate::Core::MAMA).
     MAMA,
+    /// Market Facilitation Index — [`Core::MARKETFI`](crate::Core::MARKETFI).
     MARKETFI,
+    /// Moving average with variable period — [`Core::MAVP`](crate::Core::MAVP).
     MAVP,
+    /// Highest value over a specified period — [`Core::MAX`](crate::Core::MAX).
     MAX,
+    /// Index of highest value over a specified period — [`Core::MAXINDEX`](crate::Core::MAXINDEX).
     MAXINDEX,
+    /// Median Price — [`Core::MEDPRICE`](crate::Core::MEDPRICE).
     MEDPRICE,
+    /// Money Flow Index — [`Core::MFI`](crate::Core::MFI).
     MFI,
+    /// MidPoint over period — [`Core::MIDPOINT`](crate::Core::MIDPOINT).
     MIDPOINT,
+    /// Midpoint Price over period — [`Core::MIDPRICE`](crate::Core::MIDPRICE).
     MIDPRICE,
+    /// Lowest value over a specified period — [`Core::MIN`](crate::Core::MIN).
     MIN,
+    /// Index of lowest value over a specified period — [`Core::MININDEX`](crate::Core::MININDEX).
     MININDEX,
+    /// Lowest and highest values over a specified period — [`Core::MINMAX`](crate::Core::MINMAX).
     MINMAX,
+    /// Indexes of lowest and highest values over a specified period — [`Core::MINMAXINDEX`](crate::Core::MINMAXINDEX).
     MINMAXINDEX,
+    /// Minus Directional Indicator — [`Core::MINUS_DI`](crate::Core::MINUS_DI).
     MINUS_DI,
+    /// Minus Directional Movement — [`Core::MINUS_DM`](crate::Core::MINUS_DM).
     MINUS_DM,
+    /// Momentum — [`Core::MOM`](crate::Core::MOM).
     MOM,
+    /// Vector Arithmetic Mult — [`Core::MULT`](crate::Core::MULT).
     MULT,
+    /// Normalized Average True Range — [`Core::NATR`](crate::Core::NATR).
     NATR,
+    /// Negative Volume Index — [`Core::NVI`](crate::Core::NVI).
     NVI,
+    /// On Balance Volume — [`Core::OBV`](crate::Core::OBV).
     OBV,
+    /// Plus Directional Indicator — [`Core::PLUS_DI`](crate::Core::PLUS_DI).
     PLUS_DI,
+    /// Plus Directional Movement — [`Core::PLUS_DM`](crate::Core::PLUS_DM).
     PLUS_DM,
+    /// Percentage Price Oscillator — [`Core::PPO`](crate::Core::PPO).
     PPO,
+    /// Positive Volume Index — [`Core::PVI`](crate::Core::PVI).
     PVI,
+    /// Percentage Volume Oscillator — [`Core::PVO`](crate::Core::PVO).
     PVO,
+    /// Qstick — [`Core::QSTICK`](crate::Core::QSTICK).
     QSTICK,
+    /// Rate of change : ((price/prevPrice)-1)*100 — [`Core::ROC`](crate::Core::ROC).
     ROC,
+    /// Rate of change Percentage: (price-prevPrice)/prevPrice — [`Core::ROCP`](crate::Core::ROCP).
     ROCP,
+    /// Rate of change ratio: (price/prevPrice) — [`Core::ROCR`](crate::Core::ROCR).
     ROCR,
+    /// Rate of change ratio 100 scale: (price/prevPrice)*100 — [`Core::ROCR100`](crate::Core::ROCR100).
     ROCR100,
+    /// Relative Strength Index — [`Core::RSI`](crate::Core::RSI).
     RSI,
+    /// Parabolic SAR — [`Core::SAR`](crate::Core::SAR).
     SAR,
+    /// Parabolic SAR - Extended — [`Core::SAREXT`](crate::Core::SAREXT).
     SAREXT,
+    /// Vector Trigonometric Sin — [`Core::SIN`](crate::Core::SIN).
     SIN,
+    /// Vector Trigonometric Sinh — [`Core::SINH`](crate::Core::SINH).
     SINH,
+    /// Simple Moving Average — [`Core::SMA`](crate::Core::SMA).
     SMA,
+    /// Stochastic Momentum Index — [`Core::SMI`](crate::Core::SMI).
     SMI,
+    /// Vector Square Root — [`Core::SQRT`](crate::Core::SQRT).
     SQRT,
+    /// Standard Deviation — [`Core::STDDEV`](crate::Core::STDDEV).
     STDDEV,
+    /// Stochastic — [`Core::STOCH`](crate::Core::STOCH).
     STOCH,
+    /// Stochastic Fast — [`Core::STOCHF`](crate::Core::STOCHF).
     STOCHF,
+    /// Stochastic Relative Strength Index — [`Core::STOCHRSI`](crate::Core::STOCHRSI).
     STOCHRSI,
+    /// Vector Arithmetic Subtraction — [`Core::SUB`](crate::Core::SUB).
     SUB,
+    /// Summation — [`Core::SUM`](crate::Core::SUM).
     SUM,
+    /// Triple Exponential Moving Average (T3) — [`Core::T3`](crate::Core::T3).
     T3,
+    /// Vector Trigonometric Tan — [`Core::TAN`](crate::Core::TAN).
     TAN,
+    /// Vector Trigonometric Tanh — [`Core::TANH`](crate::Core::TANH).
     TANH,
+    /// Triple Exponential Moving Average — [`Core::TEMA`](crate::Core::TEMA).
     TEMA,
+    /// True Range — [`Core::TRANGE`](crate::Core::TRANGE).
     TRANGE,
+    /// Triangular Moving Average — [`Core::TRIMA`](crate::Core::TRIMA).
     TRIMA,
+    /// 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA — [`Core::TRIX`](crate::Core::TRIX).
     TRIX,
+    /// Time Series Forecast — [`Core::TSF`](crate::Core::TSF).
     TSF,
+    /// Typical Price — [`Core::TYPPRICE`](crate::Core::TYPPRICE).
     TYPPRICE,
+    /// Ultimate Oscillator — [`Core::ULTOSC`](crate::Core::ULTOSC).
     ULTOSC,
+    /// Variance — [`Core::VAR`](crate::Core::VAR).
     VAR,
+    /// Volume Weighted Average Price — [`Core::VWAP`](crate::Core::VWAP).
     VWAP,
+    /// Volume Weighted Moving Average — [`Core::VWMA`](crate::Core::VWMA).
     VWMA,
+    /// Williams' Accumulation/Distribution — [`Core::WAD`](crate::Core::WAD).
     WAD,
+    /// Weighted Close Price — [`Core::WCLPRICE`](crate::Core::WCLPRICE).
     WCLPRICE,
+    /// Williams' %R — [`Core::WILLR`](crate::Core::WILLR).
     WILLR,
+    /// Weighted Moving Average — [`Core::WMA`](crate::Core::WMA).
     WMA,
 }
 
@@ -229,15 +410,25 @@ impl FuncId {
 #[repr(u8)]
 #[non_exhaustive]
 pub enum Group {
+    /// `Cycle Indicators` — the Hilbert Transform family.
     CycleIndicators,
+    /// `Math Operators` — arithmetic and rolling aggregates over a series.
     MathOperators,
+    /// `Math Transform` — element-wise transcendental and rounding functions.
     MathTransform,
+    /// `Momentum Indicators` — rate-of-change and oscillator studies.
     MomentumIndicators,
+    /// `Overlap Studies` — studies drawn on the price scale itself.
     OverlapStudies,
+    /// `Pattern Recognition` — the `CDL*` candlestick recognizers.
     PatternRecognition,
+    /// `Price Transform` — a single bar's OHLC reduced to one price.
     PriceTransform,
+    /// `Statistic Functions` — regression and distribution measures.
     StatisticFunctions,
+    /// `Volatility Indicators` — true-range derived measures.
     VolatilityIndicators,
+    /// `Volume Indicators` — studies that read the volume series.
     VolumeIndicators,
 }
 
@@ -275,19 +466,37 @@ impl Group {
 /// Required-input data kind (C: `TA_Input_Price`/`Real`/`Integer`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum InputType { Price, Real, Integer }
+pub enum InputType {
+    /// One or more OHLCV components of the same bar series; which ones is in
+    /// [`InputInfo::flags`].
+    Price,
+    /// A single `&[f64]` series.
+    Real,
+    /// A single integer series.
+    Integer,
+}
 
 /// Output data kind (C: `TA_Output_Real`/`Integer`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum OutputType { Real, Integer }
+pub enum OutputType {
+    /// Written into an `&mut [f64]`.
+    Real,
+    /// Written into an `&mut [i32]` — the `CDL*` patterns and the `*INDEX` studies.
+    Integer,
+}
 
 macro_rules! flag_newtype {
-    ($name:ident { $($cn:ident = $cv:expr),* $(,)? }) => {
+    ($(#[$sm:meta])* $name:ident { $($(#[$cm:meta])* $cn:ident = $cv:expr),* $(,)? }) => {
+        $(#[$sm])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-        pub struct $name(pub u32);
+        pub struct $name(
+            /// The raw flag word, with the same bit values as the matching C
+            /// `#define`s in `ta_abstract.h`.
+            pub u32
+        );
         impl $name {
-            $(pub const $cn: Self = Self($cv);)*
+            $($(#[$cm])* pub const $cn: Self = Self($cv);)*
             /// Raw bits.
             #[inline] pub const fn bits(self) -> u32 { self.0 }
             /// True if all bits of `other` are set.
@@ -296,61 +505,124 @@ macro_rules! flag_newtype {
     };
 }
 
-flag_newtype!(FuncFlags {
+flag_newtype!(
+    /// What a function is, for a caller deciding how to call or plot it
+    /// (C: `TA_FuncFlags`).
+    FuncFlags {
+    /// Output is on the same scale as the input data, so it can be drawn over
+    /// the price series.
     OVERLAP = 0x0100_0000,
+    /// The function also has a streaming tier — `<F>_Open` / `Update` /
+    /// `Peek` / `Close` — bit-identical to the batch function.
     STREAM = 0x0200_0000,
+    /// Output is over the volume data rather than the price scale.
     VOLUME = 0x0400_0000,
+    /// The function has an unstable initial period, settable through
+    /// [`CoreBuilder::unstable_period`](crate::CoreBuilder::unstable_period).
     UNSTABLE_PERIOD = 0x0800_0000,
+    /// Output is a candlestick-pattern verdict.
     CANDLESTICK = 0x1000_0000,
+    /// Output is path-dependent: built up from the first bar, so it depends on
+    /// the requested `startIdx` and never converges across ranges — the same bar
+    /// computed from a different `startIdx` can differ. E.g. AD, ADOSC, OBV,
+    /// NVI, PVI, SAR, SAREXT.
     PATH_DEPENDENT = 0x2000_0000,
+    /// Inputs of ordinary magnitude can have no finite result, so a successful
+    /// call may write NaN or ±Inf (e.g. ACOS outside `[-1, 1]`, LN of zero,
+    /// `0/0`). Not set where a non-finite value needs magnitudes large enough to
+    /// overflow the intermediate arithmetic. Set on ACOS, ASIN, DIV, LN, LOG10,
+    /// SQRT and VWMA, and on no others.
     NAN_INF_OUTPUT = 0x4000_0000,
+    /// A period of 1 performs no smoothing: the lookback is 0 and every output
+    /// value is a bit-exact copy of its input value.
     PERIOD1_IDENTITY = 0x0000_0001,
 });
-flag_newtype!(InputFlags {
+flag_newtype!(
+    /// Which OHLCV components an [`InputType::Price`] input reads
+    /// (C: the `TA_IN_PRICE_*` bits).
+    InputFlags {
+    /// Reads the open price.
     PRICE_OPEN = 0x0000_0001,
+    /// Reads the high price.
     PRICE_HIGH = 0x0000_0002,
+    /// Reads the low price.
     PRICE_LOW = 0x0000_0004,
+    /// Reads the close price.
     PRICE_CLOSE = 0x0000_0008,
+    /// Reads the volume.
     PRICE_VOLUME = 0x0000_0010,
+    /// Reads the open interest. No shipped function sets this.
     PRICE_OPENINTEREST = 0x0000_0020,
+    /// Reads the timestamp. No shipped function sets this.
     PRICE_TIMESTAMP = 0x0000_0040,
 });
-flag_newtype!(OptInputFlags {
+flag_newtype!(
+    /// How a UI should present an optional input (C: the `TA_OPTIN_*` bits).
+    OptInputFlags {
+    /// The value is a percentage.
     IS_PERCENT = 0x0010_0000,
+    /// The value is a degree, in `0..=360`.
     IS_DEGREE = 0x0020_0000,
+    /// The value is a currency amount.
     IS_CURRENCY = 0x0040_0000,
+    /// The parameter is for advanced users; a UI may hide it by default.
     ADVANCED = 0x0100_0000,
 });
-flag_newtype!(OutputFlags {
+flag_newtype!(
+    /// How an output should be drawn, and what its values can be
+    /// (C: the `TA_OUT_*` bits).
+    OutputFlags {
+    /// Suggest displaying as a connected line.
     LINE = 0x0000_0001,
+    /// Suggest displaying as a dotted line.
     DOT_LINE = 0x0000_0002,
+    /// Suggest displaying as a dashed line.
     DASH_LINE = 0x0000_0004,
+    /// Suggest displaying with dots only.
     DOT = 0x0000_0008,
+    /// Suggest displaying as a histogram.
     HISTO = 0x0000_0010,
+    /// The value says whether the pattern exists: non-zero yes, zero no.
     PATTERN_BOOL = 0x0000_0020,
+    /// Zero is no pattern, positive is bullish, negative is bearish.
     PATTERN_BULL_BEAR = 0x0000_0040,
+    /// Zero is neutral; `]0..100]` getting bullish, `]100..200]` bullish,
+    /// `[-100..0[` getting bearish, `[-200..-100[` bearish.
     PATTERN_STRENGTH = 0x0000_0080,
+    /// The output can be positive.
     POSITIVE = 0x0000_0100,
+    /// The output can be negative.
     NEGATIVE = 0x0000_0200,
+    /// The output can be zero.
     ZERO = 0x0000_0400,
+    /// The values represent an upper limit.
     UPPER_LIMIT = 0x0000_0800,
+    /// The values represent a lower limit.
     LOWER_LIMIT = 0x0000_1000,
+    /// The caller may discard this output — it is computed but need not be
+    /// kept. E.g. MAMA's FAMA line when only the MAMA line is wanted.
     NULLABLE = 0x0000_2000,
 });
 
 /// A required input parameter.
 #[derive(Debug, Clone, Copy)]
 pub struct InputInfo {
+    /// The parameter's name in the generated signature, e.g. `inReal`.
     pub param_name: &'static str,
+    /// Which shape the input has.
     pub kind: InputType,
+    /// For an [`InputType::Price`], the OHLCV components it reads; empty otherwise.
     pub flags: InputFlags,
 }
 
 /// An output parameter.
 #[derive(Debug, Clone, Copy)]
 pub struct OutputInfo {
+    /// The parameter's name in the generated signature, e.g. `outReal`.
     pub param_name: &'static str,
+    /// Which element type the output is written as.
     pub kind: OutputType,
+    /// Plotting and value-domain hints for this output.
     pub flags: OutputFlags,
 }
 
@@ -362,40 +634,90 @@ pub struct OutputInfo {
 /// `OptInputType`; C# ships this same fused shape under `OptInputDomain`.
 #[derive(Debug, Clone, Copy)]
 pub enum OptInputType {
-    RealRange { min: f64, max: f64, precision: u8, default: f64, suggested: (f64, f64, f64) },
-    IntegerRange { min: i32, max: i32, default: i32, suggested: (i32, i32, i32) },
-    RealList { values: &'static [(f64, &'static str)], default: f64 },
-    IntegerList { values: &'static [(i64, &'static str)], default: i64 },
+    /// A real parameter, valid anywhere in `min..=max`.
+    RealRange {
+        /// Smallest accepted value.
+        min: f64,
+        /// Largest accepted value.
+        max: f64,
+        /// Digits after the decimal point a UI should display.
+        precision: u8,
+        /// The value [`Core::REAL_DEFAULT`](crate::Core::REAL_DEFAULT) selects.
+        default: f64,
+        /// Three values worth offering, from low to high.
+        suggested: (f64, f64, f64),
+    },
+    /// An integer parameter, valid anywhere in `min..=max`.
+    IntegerRange {
+        /// Smallest accepted value.
+        min: i32,
+        /// Largest accepted value.
+        max: i32,
+        /// The value [`Core::INTEGER_DEFAULT`](crate::Core::INTEGER_DEFAULT) selects.
+        default: i32,
+        /// Three values worth offering, from low to high.
+        suggested: (i32, i32, i32),
+    },
+    /// A real parameter drawn from a closed list.
+    RealList {
+        /// The accepted values, each with its display string.
+        values: &'static [(f64, &'static str)],
+        /// The value [`Core::REAL_DEFAULT`](crate::Core::REAL_DEFAULT) selects.
+        default: f64,
+    },
+    /// An integer parameter drawn from a closed list — a moving-average type, say.
+    IntegerList {
+        /// The accepted values, each with its display string.
+        values: &'static [(i64, &'static str)],
+        /// The value [`Core::INTEGER_DEFAULT`](crate::Core::INTEGER_DEFAULT) selects.
+        default: i64,
+    },
 }
 
 /// An optional input parameter.
 #[derive(Debug, Clone, Copy)]
 pub struct OptInputInfo {
+    /// The parameter's name in the generated signature, e.g. `optInTimePeriod`.
     pub param_name: &'static str,
+    /// A short label for a UI, e.g. `Time Period`.
     pub display_name: &'static str,
+    /// One line describing what the parameter does.
     pub hint: &'static str,
+    /// How a UI should present the value.
     pub flags: OptInputFlags,
+    /// The parameter's shape and its domain.
     pub kind: OptInputType,
 }
 
 /// Metadata for one TA-Lib function (C: `TA_FuncInfo` + its parameter tables).
 #[derive(Debug, Clone, Copy)]
 pub struct FuncInfo {
+    /// This function's id — also its index into [`FUNCS`].
     pub id: FuncId,
+    /// Upper-case TA name, e.g. `"RSI"`.
     pub name: &'static str,
+    /// The group the function is filed under.
     pub group: Group,
+    /// One line describing what the function computes.
     pub hint: &'static str,
+    /// What the function is, for a caller deciding how to call or plot it.
     pub flags: FuncFlags,
+    /// Required inputs, in call order.
     pub inputs: &'static [InputInfo],
+    /// Optional inputs, in call order.
     pub opt_inputs: &'static [OptInputInfo],
+    /// Outputs, in call order.
     pub outputs: &'static [OutputInfo],
     /// Stable unstable-period id (the one metadata kept aligned to C); `None` if N/A.
     pub unst_id: Option<FuncUnstId>,
 }
 
 impl FuncInfo {
+    /// Number of required inputs.
     #[inline] pub const fn nb_input(&self) -> usize { self.inputs.len() }
+    /// Number of optional inputs.
     #[inline] pub const fn nb_opt_input(&self) -> usize { self.opt_inputs.len() }
+    /// Number of outputs.
     #[inline] pub const fn nb_output(&self) -> usize { self.outputs.len() }
 }
 
