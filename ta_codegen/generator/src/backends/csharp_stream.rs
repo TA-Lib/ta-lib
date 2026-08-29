@@ -3425,9 +3425,9 @@ fn emit_period_bank(
     let _ = helpers;
     let callee = plan.callee.as_str();
     // `callee_base` stays raw for the callee's (unchanged, batch-tier) `_Lookback`;
-    // `callee_cbase` is the PascalCase form for the callee's own stream `_Open*` family.
+    // `callee_pascal` is the PascalCase form for the callee's own stream `_Open*` family.
     let callee_base = registry.name_of(callee);
-    let callee_cbase = pascal_words(&callee_base);
+    let callee_pascal = pascal_words(&callee_base);
     let subty = callee_stream_class(registry, callee);
     let callee_out0 = registry.callee_outputs(callee)[0].clone();
     let min = plan.min_param.as_str();
@@ -3541,7 +3541,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      {subty}[] bank = new {subty}[nBank];");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "         bank[bankIdx] = {callee_cbase}OpenInternal({price}, subStart, {open_opts});");
+    let _ = writeln!(o, "         bank[bankIdx] = {callee_pascal}OpenInternal({price}, subStart, {open_opts});");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int cp = (int){period}[historyLen - 1];");
     let _ = writeln!(o, "      if( cp < {min} ) {{");
@@ -3584,7 +3584,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      double[] seedPrefix = new double[lookbackTotal + 1];");
     let _ = writeln!(o, "      {price}.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "         {subty} sub = {callee_cbase}OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
+    let _ = writeln!(o, "         {subty} sub = {callee_pascal}OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
     let _ = writeln!(o, "         bank[bankIdx] = sub;");
     let _ = writeln!(o, "         scratch[bankIdx] = sub.cur_{callee_out0};");
     let _ = writeln!(o, "      }}");

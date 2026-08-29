@@ -3008,10 +3008,10 @@ fn emit_period_bank(
 ) {
     let _ = helpers;
     let callee = plan.callee.as_str();
-    // Raw, for the callee's unchanged batch `_Lookback`; `callee_jbase` (below)
+    // Raw, for the callee's unchanged batch `_Lookback`; `callee_camel` (below)
     // is the recased base for the callee's streaming family.
     let callee_base = registry.name_of(callee);
-    let callee_jbase = common::camel_words(&callee_base);
+    let callee_camel = common::camel_words(&callee_base);
     let subty = callee_stream_class(registry, callee);
     let callee_out0 = registry.callee_outputs(callee)[0].clone();
     let min = plan.min_param.as_str();
@@ -3117,7 +3117,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      {subty}[] bank = new {subty}[nBank];");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "         bank[bankIdx] = {callee_jbase}OpenInternal({price}, subStart, {open_opts});");
+    let _ = writeln!(o, "         bank[bankIdx] = {callee_camel}OpenInternal({price}, subStart, {open_opts});");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int cp = (int){period}[historyLen - 1];");
     let _ = writeln!(o, "      if( cp < {min} ) {{");
@@ -3161,7 +3161,7 @@ fn emit_period_bank(
         "      double[] seedPrefix = java.util.Arrays.copyOfRange({price}, 0, lookbackTotal + 1);"
     );
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "         {subty} sub = {callee_jbase}OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
+    let _ = writeln!(o, "         {subty} sub = {callee_camel}OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
     let _ = writeln!(o, "         bank[bankIdx] = sub;");
     let _ = writeln!(o, "         scratch[bankIdx] = sub.cur_{callee_out0};");
     let _ = writeln!(o, "      }}");
