@@ -1908,7 +1908,7 @@ typedef struct {
     int               streamRangeFunctions; /* funcs whose handle OutRange matched batch (#241) */
     int               streamRangeLegs;      /* legs that compared the handle's OutRange (#241) */
     int               streamRangeSites;     /* OR of the range-compare sites that fired (#241) */
-    int               streamRangeSitesN;    /* how many sites this server says it has */
+    int               streamRangeSitesAll;  /* the set of sites this server says it has */
     long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
 } ForEachFuncContext;
 
@@ -3420,7 +3420,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int peekProbes = 0;    /* peek-idempotence probes this request ran */
     int rangeLegs = 0;     /* how many legs actually compared a handle's OutRange */
     int rangeSites = 0;    /* OR of the range-compare sites that fired */
-    int rangeSitesN = 0;   /* how many the server says it has */
+    int rangeSitesAll = 0; /* the set the server says it has */
     long long benign = 0;  /* signed-zero cases this function's legs reported */
     int isUnstable;
 
@@ -3643,14 +3643,14 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 rangeChecked = 1;
                 rangeLegs += stream_flag(ctx->responseBuf, "\"range_legs\":");
                 {
-                    /* Which of THIS server's range-compare sites fired, and how
-                     * many it has. Reported by the server rather than held as a
+                    /* Which of THIS server's range-compare sites fired, and
+                     * which it has. Reported by the server rather than held as a
                      * per-language constant here, so the two cannot drift when a
                      * language gains a site. */
                     int m = stream_flag(ctx->responseBuf, "\"range_sites\":");
-                    int nsites = stream_flag(ctx->responseBuf, "\"range_sites_n\":");
+                    int all = stream_flag(ctx->responseBuf, "\"range_sites_all\":");
                     if( m > 0 ) rangeSites |= m;
-                    if( nsites > rangeSitesN ) rangeSitesN = nsites;
+                    if( all > 0 ) rangeSitesAll |= all;
                 }
                 if( stream_flag(ctx->responseBuf, "\"range_ok\":") != 1 )
                 {
@@ -3723,7 +3723,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamPeekProbes += peekProbes;
     ctx->streamRangeLegs += rangeLegs;
     ctx->streamRangeSites |= rangeSites;
-    if( rangeSitesN > ctx->streamRangeSitesN ) ctx->streamRangeSitesN = rangeSitesN;
+    ctx->streamRangeSitesAll |= rangeSitesAll;
     /* Per-leg, not per-function: a function counts as covered as soon as ONE of
      * its legs compares, so without this a reference open that quietly failed
      * on 15 of 16 legs would still read as full coverage. Every leg that
@@ -4483,7 +4483,7 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamRangeFunctions = 0;
             ctx.streamRangeLegs     = 0;
             ctx.streamRangeSites    = 0;
-            ctx.streamRangeSitesN   = 0;
+            ctx.streamRangeSitesAll = 0;
             ctx.streamBenign        = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
             /* The benign total is printed unconditionally, zero included: the
@@ -4504,7 +4504,8 @@ static ErrorNumber test_codegen_for_language(
                    ctx.streamUFillFunctions,
                    ctx.streamStateFunctions, ctx.streamStateLegs,
                    ctx.streamRangeFunctions, ctx.streamRangeLegs,
-                   codegen_popcount(ctx.streamRangeSites), ctx.streamRangeSitesN);
+                   codegen_popcount(ctx.streamRangeSites),
+                   codegen_popcount(ctx.streamRangeSitesAll));
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if
@@ -4604,29 +4605,39 @@ static ErrorNumber test_codegen_for_language(
              * fired somewhere in the run. Corpus-wide rather than per function,
              * because a site can legitimately not run for a given function or
              * vector (C's anchored compare needs lb < Sidx < svN-1). */
-            /* Fails CLOSED on a server that stops declaring its site count.
-             * `range_sites_n` is the server's own claim about itself, so
+            /* A SET, not a count. It was a count, and the ratchet demanded
+             * (1 << n) - 1 — which can only be spelled while every server's
+             * sites are a prefix of one list. The copy/clone site (#287) ends
+             * that: it runs in Java, C# and Rust, the anchored site in C, Java
+             * and C#, so C and Rust have four sites each and neither set is a
+             * prefix of the other. The server now names the set it has, and
+             * what fired has to equal it exactly. */
+            /* Fails CLOSED on a server that stops declaring its sites.
+             * `range_sites_all` is the server's own claim about itself, so
              * skipping the ratchet when it is absent would let the leg be
              * disarmed by deleting one field — the exact shape this ratchet
              * exists to catch. A server that answered the leg at all must say
-             * how many sites it has. */
+             * which sites it has. */
             if( ctx.error == TA_TEST_PASS && ctx.streamRangeFunctions > 0 &&
-                ctx.streamRangeSitesN <= 0 )
+                ctx.streamRangeSitesAll <= 0 )
             {
                 printf("STREAM RANGE PARTIAL: the %s server compared ranges for "
-                       "%d function(s) but never declared how many compare sites "
+                       "%d function(s) but never declared which compare sites "
                        "it has — the per-site ratchet cannot run\n",
                        lang->name, ctx.streamRangeFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             if( ctx.error == TA_TEST_PASS && ctx.streamFunctions > 0 &&
-                ctx.streamRangeSitesN > 0 &&
-                ctx.streamRangeSites != (1 << ctx.streamRangeSitesN) - 1 )
+                ctx.streamRangeSitesAll > 0 &&
+                ctx.streamRangeSites != ctx.streamRangeSitesAll )
             {
                 printf("STREAM RANGE PARTIAL: only %d of %d range compare site(s) "
-                       "ever fired (mask 0x%x) — a whole site class is dead\n",
-                       codegen_popcount(ctx.streamRangeSites), ctx.streamRangeSitesN,
-                       (unsigned)ctx.streamRangeSites);
+                       "ever fired (fired 0x%x, declared 0x%x) — a whole site "
+                       "class is dead\n",
+                       codegen_popcount(ctx.streamRangeSites),
+                       codegen_popcount(ctx.streamRangeSitesAll),
+                       (unsigned)ctx.streamRangeSites,
+                       (unsigned)ctx.streamRangeSitesAll);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
         }

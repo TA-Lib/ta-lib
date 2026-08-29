@@ -5491,7 +5491,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -5718,7 +5718,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -5913,7 +5913,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -6108,7 +6108,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -6303,7 +6303,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -6503,7 +6503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -6702,7 +6702,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -6901,7 +6901,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -7098,7 +7098,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -7308,7 +7308,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -7523,7 +7523,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -7719,7 +7719,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -7914,7 +7914,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -8109,7 +8109,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -8308,7 +8308,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -8504,7 +8504,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -8699,7 +8699,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -8941,7 +8941,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -9137,7 +9137,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -9332,7 +9332,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -9528,7 +9528,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -9725,7 +9725,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -9922,7 +9922,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -10119,7 +10119,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -10316,7 +10316,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -10513,7 +10513,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -10710,7 +10710,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -10907,7 +10907,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -11105,7 +11105,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -11302,7 +11302,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -11499,7 +11499,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -11696,7 +11696,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -11893,7 +11893,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -12090,7 +12090,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -12287,7 +12287,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -12485,7 +12485,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -12682,7 +12682,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -12879,7 +12879,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -13076,7 +13076,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -13273,7 +13273,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -13471,7 +13471,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -13669,7 +13669,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -13866,7 +13866,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -14063,7 +14063,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -14260,7 +14260,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -14457,7 +14457,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -14654,7 +14654,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -14851,7 +14851,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -15048,7 +15048,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -15245,7 +15245,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -15442,7 +15442,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -15639,7 +15639,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -15836,7 +15836,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -16033,7 +16033,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -16230,7 +16230,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -16427,7 +16427,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -16624,7 +16624,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -16821,7 +16821,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -17018,7 +17018,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -17215,7 +17215,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -17412,7 +17412,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -17609,7 +17609,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -17807,7 +17807,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -18005,7 +18005,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -18203,7 +18203,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -18400,7 +18400,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -18597,7 +18597,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -18794,7 +18794,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -18991,7 +18991,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -19188,7 +19188,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -19385,7 +19385,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -19582,7 +19582,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -19779,7 +19779,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -19976,7 +19976,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -20173,7 +20173,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -20370,7 +20370,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -20567,7 +20567,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -20764,7 +20764,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -20961,7 +20961,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -21158,7 +21158,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -21355,7 +21355,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -21552,7 +21552,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -21747,7 +21747,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -21943,7 +21943,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -22142,7 +22142,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -22338,7 +22338,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -22534,7 +22534,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -22729,7 +22729,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -22924,7 +22924,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -23123,7 +23123,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -23318,7 +23318,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -23517,7 +23517,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -23713,7 +23713,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -23912,7 +23912,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -24107,7 +24107,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -24302,7 +24302,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -24498,7 +24498,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -24696,7 +24696,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -24894,7 +24894,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -25111,7 +25111,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -25328,7 +25328,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -25526,7 +25526,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -25716,7 +25716,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -25912,7 +25912,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -26111,7 +26111,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -26307,7 +26307,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -26503,7 +26503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -26699,7 +26699,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -26895,7 +26895,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -27090,7 +27090,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -27285,7 +27285,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -27494,7 +27494,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -27726,7 +27726,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -27970,7 +27970,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -28200,7 +28200,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -28419,7 +28419,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -28614,7 +28614,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -28825,7 +28825,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -29021,7 +29021,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -29209,7 +29209,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -29404,7 +29404,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -29600,7 +29600,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -29796,7 +29796,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -29992,7 +29992,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -30188,7 +30188,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -30376,7 +30376,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -30591,7 +30591,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -30798,7 +30798,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -30997,7 +30997,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -31196,7 +31196,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -31392,7 +31392,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -31587,7 +31587,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -31786,7 +31786,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -31981,7 +31981,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -32176,7 +32176,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -32375,7 +32375,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -32574,7 +32574,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -32784,7 +32784,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -32979,7 +32979,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -33189,7 +33189,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -33385,7 +33385,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -33581,7 +33581,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -33777,7 +33777,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -33973,7 +33973,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -34169,7 +34169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -34368,7 +34368,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -34565,7 +34565,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -34768,7 +34768,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -34963,7 +34963,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -35158,7 +35158,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -35354,7 +35354,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -35575,7 +35575,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -35770,7 +35770,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -35967,7 +35967,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -36198,7 +36198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -36427,7 +36427,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -36660,7 +36660,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -36855,7 +36855,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -37051,7 +37051,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -37251,7 +37251,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -37446,7 +37446,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -37641,7 +37641,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -37840,7 +37840,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -38035,7 +38035,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -38231,7 +38231,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -38430,7 +38430,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -38626,7 +38626,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -38821,7 +38821,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -39019,7 +39019,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -39216,7 +39216,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -39411,7 +39411,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -39607,7 +39607,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -39802,7 +39802,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -39997,7 +39997,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -40193,7 +40193,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
@@ -40389,7 +40389,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":4,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":15,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);
         return;
     }
