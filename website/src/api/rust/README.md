@@ -182,6 +182,8 @@ Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing 
 use ta_lib::abstract_api::{for_each_func, get_func_handle};
 
 // Look one up by name, or walk them all (FuncId::COUNT of them).
+// The name is matched under an ASCII case fold, so "SMA", "sma" and "Sma"
+// all resolve; `info.name` is still the canonical "SMA".
 let id = get_func_handle("SMA").expect("unknown function");
 let info = id.info();
 

@@ -628,15 +628,42 @@ fn functions_registry(rows: &[FuncRow]) -> String {
          \x20     return List.copyOf(BY_NAME.values());\n\
          \x20  }\n\n\
          \x20  /**\n\
-         \x20   * One function by name, matched case-insensitively (ASCII; {@link Locale#ROOT},\n\
-         \x20   * not the platform default, so a Turkish JVM does not turn {@code \"i\"} into\n\
-         \x20   * {@code \"İ\"}). The metadata itself always reports the canonical upper-case\n\
-         \x20   * spelling, e.g. {@code \"SMA\"}, regardless of the case looked up.\n\
+         \x20   * One function by name, matched case-insensitively, e.g. {@code \"SMA\"},\n\
+         \x20   * {@code \"sma\"} or {@code \"Sma\"}. The metadata itself always reports the\n\
+         \x20   * canonical upper-case spelling regardless of the case looked up.\n\
          \x20   *\n\
+         \x20   * @param name the function's name, in any ASCII casing\n\
          \x20   * @return the metadata, or {@code null} if no such function exists\n\
          \x20   */\n\
          \x20  public static FunctionInfo byName(String name) {\n\
-         \x20     return BY_NAME.get(name.toUpperCase(Locale.ROOT));\n\
+         \x20     return name == null ? null : BY_NAME.get(asciiUpper(name));\n\
+         \x20  }\n\n\
+         \x20  /**\n\
+         \x20   * Upper-cases the ASCII letters of {@code s} and nothing else.\n\
+         \x20   *\n\
+         \x20   * <p>Not {@code String.toUpperCase}, with or without a {@code Locale}. The\n\
+         \x20   * platform default has the Turkish-{@code i} bug in the narrowing\n\
+         \x20   * direction; {@link Locale#ROOT} has it in the widening one, mapping the\n\
+         \x20   * dotless {@code '\\u0131'} onto {@code 'I'} and the long {@code 's'}\n\
+         \x20   * ({@code '\\u017F'}) onto {@code 'S'}, so {@code \"s\\u0131n\"} would resolve\n\
+         \x20   * to SIN and {@code \"\\u017Fma\"} to SMA. Function names are invariant ASCII,\n\
+         \x20   * so the fold that matches them is invariant ASCII too.\n\
+         \x20   *\n\
+         \x20   * <p>Returns {@code s} itself when it holds no lower-case ASCII letter,\n\
+         \x20   * which is every call that already passes a canonical name.\n\
+         \x20   */\n\
+         \x20  private static String asciiUpper(String s) {\n\
+         \x20     char[] out = null;\n\
+         \x20     for (int i = 0; i < s.length(); i++) {\n\
+         \x20        char c = s.charAt(i);\n\
+         \x20        if (c >= 'a' && c <= 'z') {\n\
+         \x20           if (out == null) {\n\
+         \x20              out = s.toCharArray();\n\
+         \x20           }\n\
+         \x20           out[i] = (char) (c - ('a' - 'A'));\n\
+         \x20        }\n\
+         \x20     }\n\
+         \x20     return out == null ? s : new String(out);\n\
          \x20  }\n\n\
          \x20  /** The distinct group names, in first-appearance order. */\n\
          \x20  public static List<String> groups() {\n\

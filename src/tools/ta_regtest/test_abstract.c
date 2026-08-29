@@ -1719,6 +1719,155 @@ static ErrorNumber d2_param_vectors( const char *funcName, const TA_FuncHandle *
     return TA_TEST_PASS;
 }
 
+/* ---- TA_GetFuncHandle matches a name under an ASCII case fold (#278) ------
+ *
+ * Swept over the whole corpus rather than spot-checked on "SMA": the fold runs
+ * per character, and the names that catch a partial one are the long ones
+ * (CDL3STARSINSOUTH), the ones carrying a digit (CDL2CROWS) and the ones
+ * carrying an underscore (HT_DCPERIOD) -- no single name stands in for those.
+ *
+ * The two spellings probed are all-lower and alternating case, so between them
+ * every letter position is presented in both cases.
+ */
+typedef struct
+{
+   int nbChecked;
+   int nbFailed;
+} NameFoldCtx;
+
+static void nameFoldCb( const TA_FuncInfo *funcInfo, void *opaqueData )
+{
+   NameFoldCtx *ctx = (NameFoldCtx *)opaqueData;
+   const TA_FuncHandle *canonical;
+   const TA_FuncHandle *handle;
+   const TA_FuncInfo *back;
+   char spelling[2][128];
+   size_t i, len;
+   int variant;
+
+   len = strlen( funcInfo->name );
+   if( len >= sizeof(spelling[0]) )
+   {
+      printf( "  ABSTRACT ERROR: '%s' overruns the case-fold probe's buffer\n",
+              funcInfo->name );
+      ctx->nbFailed++;
+      return;
+   }
+
+   for( i = 0; i < len; i++ )
+   {
+      char c = funcInfo->name[i];
+      char lower = ( c >= 'A' && c <= 'Z' ) ? (char)( c + ( 'a' - 'A' ) ) : c;
+      char upper = ( c >= 'a' && c <= 'z' ) ? (char)( c - ( 'a' - 'A' ) ) : c;
+
+      spelling[0][i] = lower;
+      spelling[1][i] = ( i & 1 ) ? upper : lower;
+   }
+   spelling[0][len] = '\0';
+   spelling[1][len] = '\0';
+
+   if( TA_GetFuncHandle( funcInfo->name, &canonical ) != TA_SUCCESS )
+   {
+      printf( "  ABSTRACT ERROR: '%s' does not resolve under its own spelling\n",
+              funcInfo->name );
+      ctx->nbFailed++;
+      return;
+   }
+
+   for( variant = 0; variant < 2; variant++ )
+   {
+      ctx->nbChecked++;
+
+      if( TA_GetFuncHandle( spelling[variant], &handle ) != TA_SUCCESS )
+      {
+         printf( "  ABSTRACT ERROR: '%s' does not resolve for '%s'\n",
+                 spelling[variant], funcInfo->name );
+         ctx->nbFailed++;
+         continue;
+      }
+
+      if( handle != canonical )
+      {
+         printf( "  ABSTRACT ERROR: '%s' resolves to a different handle than '%s'\n",
+                 spelling[variant], funcInfo->name );
+         ctx->nbFailed++;
+         continue;
+      }
+
+      /* Only the match folds. The name reported back is still canonical, so
+       * this comparison stays case-sensitive on purpose.
+       */
+      if( TA_GetFuncInfo( handle, &back ) != TA_SUCCESS ||
+          strcmp( back->name, funcInfo->name ) != 0 )
+      {
+         printf( "  ABSTRACT ERROR: '%s' reports back as '%s', not '%s'\n",
+                 spelling[variant],
+                 ( back && back->name ) ? back->name : "(none)",
+                 funcInfo->name );
+         ctx->nbFailed++;
+      }
+   }
+}
+
+static ErrorNumber checkFuncHandleFoldsCase( void )
+{
+   NameFoldCtx ctx;
+   const TA_FuncHandle *handle;
+   TA_RetCode retCode;
+   unsigned int i;
+
+   /* A fold is a relaxation of the match, not of what a name is. Each of these
+    * must still miss, or the "fold" has started inventing functions.
+    */
+   static const char * const notNames[] = {
+      "SMA ",          /* trailing space                                   */
+      " SMA",          /* leading space                                    */
+      "S MA",          /* interior space                                   */
+      "HT-DCPERIOD",   /* '-' is not '_'                                   */
+      "SMAA",          /* longer                                           */
+      "SM",            /* shorter                                          */
+      "S\xC4\xB0N",    /* UTF-8 'İ' (U+0130): the Turkish-locale trap      */
+      "s\xC4\xB1n",    /* UTF-8 'ı' (U+0131): the same trap, other way     */
+      "NOSUCHFUNCTION"
+   };
+
+   ctx.nbChecked = 0;
+   ctx.nbFailed  = 0;
+   TA_ForEachFunc( nameFoldCb, &ctx );
+
+   if( ctx.nbChecked == 0 )
+   {
+      printf( "  ABSTRACT ERROR: the case-fold probe compared nothing\n" );
+      return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
+   }
+
+   for( i = 0; i < (unsigned int)(sizeof(notNames)/sizeof(notNames[0])); i++ )
+   {
+      retCode = TA_GetFuncHandle( notNames[i], &handle );
+      if( retCode != TA_FUNC_NOT_FOUND )
+      {
+         printf( "  ABSTRACT ERROR: '%s' resolved [%d]; the fold widened the match\n",
+                 notNames[i], retCode );
+         return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
+      }
+   }
+
+   /* The empty name and a NULL are still bad parameters, not a miss. */
+   if( TA_GetFuncHandle( "", &handle ) != TA_BAD_PARAM ||
+       TA_GetFuncHandle( NULL, &handle ) != TA_BAD_PARAM )
+   {
+      printf( "  ABSTRACT ERROR: an empty or NULL name is no longer TA_BAD_PARAM\n" );
+      return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
+   }
+
+   if( ctx.nbFailed != 0 )
+      return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
+
+   printf( "  Name lookup case fold: %d spellings resolved, all canonical\n",
+           ctx.nbChecked );
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_abstract( void )
 {
    ErrorNumber retValue;
@@ -1731,6 +1880,11 @@ ErrorNumber test_abstract( void )
    printf( "Testing Abstract interface\n" );
 
    retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   /* Verify that a name resolves whatever case it is spelled in. */
+   retValue = checkFuncHandleFoldsCase();
    if( retValue != TA_TEST_PASS )
       return retValue;
 

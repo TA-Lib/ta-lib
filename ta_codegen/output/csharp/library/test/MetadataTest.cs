@@ -48,6 +48,7 @@
 /* Hand-written test; ta_codegen never opens this file. */
 
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -204,6 +205,103 @@ public static class MetadataTest
             Check(c.InGroup(g).Any(), $"group {g} is non-empty");
             Check(g.ToDisplayName().Length > 0, $"group {g} has a display name");
         }
+    }
+
+    /* --------------------------------------------------------- the case fold */
+
+    /// <summary>
+    /// #278: the by-name fold is swept over the whole catalogue, and it is only
+    /// a fold -- it must not start resolving names no function has.
+    /// </summary>
+    private static void ByNameFoldsAsciiCase()
+    {
+        FunctionCatalog c = FunctionCatalog.Default;
+
+        // Swept rather than spot-checked on "SMA". The names a partial fold
+        // gets wrong are the long ones (CDL3STARSINSOUTH) and the ones carrying
+        // a digit or an underscore (CDL2CROWS, HT_DCPERIOD), and no single name
+        // stands in for those. Between the all-lower and the alternating
+        // spelling every letter position is presented in both cases.
+        foreach (FunctionInfo f in c)
+        {
+            Check(c.TryGet(AsciiLower(f.Name), out FunctionInfo? lower) && ReferenceEquals(lower, f),
+                  $"{f.Name}: lower-case lookup finds it");
+            Check(c.TryGet(Alternating(f.Name), out FunctionInfo? mixed) && ReferenceEquals(mixed, f),
+                  $"{f.Name}: mixed-case lookup finds it");
+            Check(lower is not null && lower.Name == f.Name,
+                  $"{f.Name}: the name reported back stays canonical");
+        }
+
+        // What actually holds the line, and the reason it is spelled as the
+        // comparer rather than as a Unicode probe.
+        //
+        // The fold must not widen: Java's Locale.ROOT fold maps the dotless 'i'
+        // (U+0131) onto 'I' and the long 's' (U+017F) onto 'S', so "sın"
+        // reaches SIN and "ſma" reaches SMA there. OrdinalIgnoreCase does not.
+        // But this project sets InvariantGlobalization=true, and in that mode
+        // ToUpperInvariant leaves U+017F alone -- so a catalogue rebuilt on a
+        // ToUpperInvariant comparer passes the three probes below unchanged.
+        // Measured, not assumed: with the comparer swapped, the suite is
+        // ALL PASS under InvariantGlobalization=true and fails exactly
+        // "U+017F does not fold onto SMA" under ICU.
+        //
+        // So the probes are kept -- they are true, and they bite for anyone who
+        // runs the suite under ICU -- but the assertion that discriminates in
+        // either mode is that the comparer is the ordinal one. Ordinal
+        // comparison is defined without reference to a culture, which is the
+        // property being claimed; asking the dictionary which comparer it holds
+        // states that directly instead of inferring it from a spelling.
+        FieldInfo? byName = typeof(FunctionCatalog)
+            .GetField("_byName", BindingFlags.Instance | BindingFlags.NonPublic);
+        Check(byName is not null, "the catalogue still keeps its by-name index in _byName");
+        var index = byName?.GetValue(c) as FrozenDictionary<string, FunctionInfo>;
+        Check(index is not null, "the by-name index is a FrozenDictionary");
+        Check(ReferenceEquals(index?.Comparer, StringComparer.OrdinalIgnoreCase),
+              "the by-name index folds with StringComparer.OrdinalIgnoreCase, not a culture-aware comparer");
+
+        Check(!c.TryGet("SİN", out _), "U+0130 does not fold onto SIN");
+        Check(!c.TryGet("sın", out _), "U+0131 does not fold onto SIN");
+        Check(!c.TryGet("ſma", out _), "U+017F does not fold onto SMA");
+
+        Check(!c.TryGet("sma ", out _), "a trailing space is still part of the name");
+        Check(!c.TryGet(" sma", out _), "a leading space is still part of the name");
+        Check(!c.TryGet("ht-dcperiod", out _), "a separator is still part of the name");
+        Check(!c.TryGet("", out _), "the empty name resolves to nothing");
+        Check(!c.TryGet(new string('s', 512), out _), "a name longer than any real one matches nothing");
+    }
+
+    /// <summary>ASCII-only lower fold, so the probe cannot inherit the bug it looks for.</summary>
+    private static string AsciiLower(string s)
+    {
+        char[] out_ = s.ToCharArray();
+        for (int i = 0; i < out_.Length; i++)
+        {
+            if (out_[i] >= 'A' && out_[i] <= 'Z')
+            {
+                out_[i] = (char)(out_[i] + ('a' - 'A'));
+            }
+        }
+        return new string(out_);
+    }
+
+    /// <summary>Every letter position lands in both cases across the two probes.</summary>
+    private static string Alternating(string s)
+    {
+        char[] out_ = s.ToCharArray();
+        for (int i = 0; i < out_.Length; i++)
+        {
+            char ch = out_[i];
+            bool up = i % 2 != 0;
+            if (ch >= 'A' && ch <= 'Z' && !up)
+            {
+                out_[i] = (char)(ch + ('a' - 'A'));
+            }
+            else if (ch >= 'a' && ch <= 'z' && up)
+            {
+                out_[i] = (char)(ch - ('a' - 'A'));
+            }
+        }
+        return new string(out_);
     }
 
     /* ----------------------------------------------------- domain invariants */
@@ -1037,6 +1135,7 @@ public static class MetadataTest
     public static int Run()
     {
         CatalogueIsComplete();
+        ByNameFoldsAsciiCase();
         DomainsAreCoherent();
         FlagsAreExact();
         UnstableIdAgreesWithTheFlag();

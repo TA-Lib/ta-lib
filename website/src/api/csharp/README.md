@@ -159,7 +159,7 @@ foreach (var f in Core.Functions.Where(f => f.Flags.HasFlag(FunctionFlags.Candle
 }
 ```
 
-`Core.Functions` (an alias for `FunctionCatalog.Default`) implements `IReadOnlyList<FunctionInfo>`, so it is directly enumerable and LINQ-able, and is indexable by position or by name (`Core.Functions["SMA"]`). Streamable functions carry `FunctionFlags.Stream`.
+`Core.Functions` (an alias for `FunctionCatalog.Default`) implements `IReadOnlyList<FunctionInfo>`, so it is directly enumerable and LINQ-able, and is indexable by position or by name (`Core.Functions["SMA"]`). The name is matched with `StringComparer.OrdinalIgnoreCase`, so `"SMA"`, `"sma"` and `"Sma"` all resolve to the same function; `FunctionInfo.Name` stays the canonical `"SMA"`. Streamable functions carry `FunctionFlags.Stream`.
 
 Binding arguments at run time goes through a `FunctionCall`, obtained from `FunctionInfo.CreateCall()`:
 

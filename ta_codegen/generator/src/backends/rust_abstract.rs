@@ -1182,6 +1182,47 @@ mod registry_tests {
         assert_eq!(get_func_handle("Sma"), Some(FuncId::SMA));
         assert_eq!(get_func_handle("sMa"), Some(FuncId::SMA));
         assert_eq!(get_func_info(get_func_handle("sma").unwrap()).name, "SMA");
+
+        // Alternating case, swept over the corpus: between this spelling and
+        // the all-lower one above, every letter position of every name is
+        // presented in both cases, so a fold applied to only part of the name
+        // fails here. The long names and the ones carrying a digit or an
+        // underscore (`CDL3STARSINSOUTH`, `CDL2CROWS`, `HT_DCPERIOD`) are the
+        // ones a partial fold gets wrong, and no single probe stands in for
+        // them.
+        for f in FUNCS.iter() {
+            let mixed: String = f
+                .name
+                .chars()
+                .enumerate()
+                .map(|(i, c)| {
+                    if i % 2 == 0 { c.to_ascii_lowercase() } else { c.to_ascii_uppercase() }
+                })
+                .collect();
+            assert_eq!(get_func_handle(&mixed), Some(f.id), "mixed-case lookup of {}", f.name);
+            assert_eq!(get_func_info(f.id).name, f.name, "{} reports its canonical name", f.name);
+        }
+    }
+
+    /// #278: the fold is ASCII-only, and it is only a fold — not a
+    /// normalisation that would start resolving names no function has.
+    #[test]
+    fn the_fold_does_not_widen_what_resolves() {
+        // The two traps a `to_uppercase`-based fold falls into, in either
+        // direction: `U+0130`/`U+0131` are the Turkish dotted/dotless `I`, and
+        // `U+017F` is the long `s`. Unicode uppercases the latter two onto
+        // ASCII `I` and `S`, so a locale- or Unicode-aware fold resolves
+        // `"s\u{131}n"` to SIN and `"\u{17f}ma"` to SMA. An ASCII fold does not.
+        assert_eq!(get_func_handle("S\u{130}N"), None);
+        assert_eq!(get_func_handle("s\u{131}n"), None);
+        assert_eq!(get_func_handle("\u{17f}ma"), None);
+        // Length, padding and separators are still part of the name.
+        assert_eq!(get_func_handle("sma "), None);
+        assert_eq!(get_func_handle(" sma"), None);
+        assert_eq!(get_func_handle("ht-dcperiod"), None);
+        assert_eq!(get_func_handle(""), None);
+        // Longer than any name: no truncating match.
+        assert_eq!(get_func_handle(&"s".repeat(512)), None);
     }
 
     #[test]
