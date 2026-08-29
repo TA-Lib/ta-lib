@@ -113,33 +113,54 @@ pub(crate) enum Compatibility {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum FuncUnstId {
+    /// Unstable period of [`Core::ADX`].
     ADX,
     /// Reserved: was ADXR, knob was inert (#129); kept for ABI, reusable.
     UNUSED_1,
+    /// Unstable period of [`Core::ATR`].
     ATR,
+    /// Unstable period of [`Core::CMO`].
     CMO,
+    /// Unstable period of [`Core::DX`].
     DX,
+    /// Unstable period of [`Core::EMA`], and of every function that smooths
+    /// with one.
     EMA,
+    /// Unstable period of [`Core::HT_DCPERIOD`].
     HT_DCPERIOD,
+    /// Unstable period of [`Core::HT_DCPHASE`].
     HT_DCPHASE,
+    /// Unstable period of [`Core::HT_PHASOR`].
     HT_PHASOR,
+    /// Unstable period of [`Core::HT_SINE`].
     HT_SINE,
+    /// Unstable period of [`Core::HT_TRENDLINE`].
     HT_TRENDLINE,
+    /// Unstable period of [`Core::HT_TRENDMODE`].
     HT_TRENDMODE,
     /// Reserved: was IMI, reclassified stable (#14); kept for ABI, reusable.
     UNUSED_12,
+    /// Unstable period of [`Core::KAMA`].
     KAMA,
+    /// Unstable period of [`Core::MAMA`].
     MAMA,
     /// Reserved: was MFI, reclassified stable (#4); kept for ABI, reusable.
     UNUSED_15,
+    /// Unstable period of [`Core::MINUS_DI`].
     MINUS_DI,
+    /// Unstable period of [`Core::MINUS_DM`].
     MINUS_DM,
+    /// Unstable period of [`Core::NATR`].
     NATR,
+    /// Unstable period of [`Core::PLUS_DI`].
     PLUS_DI,
+    /// Unstable period of [`Core::PLUS_DM`].
     PLUS_DM,
+    /// Unstable period of [`Core::RSI`].
     RSI,
     /// Reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable.
     UNUSED_22,
+    /// Unstable period of [`Core::T3`].
     T3,
     /// Wildcard: set the unstable period for all functions at once.
     ///
@@ -205,16 +226,27 @@ pub struct CandleSetting {
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(non_snake_case)]
 pub struct CandleSettings {
+    /// When a real body counts as long. [`CandleSettingType::BodyLong`].
     pub body_long: CandleSetting,
+    /// When a real body counts as very long. [`CandleSettingType::BodyVeryLong`].
     pub body_very_long: CandleSetting,
+    /// When a real body counts as short. [`CandleSettingType::BodyShort`].
     pub body_short: CandleSetting,
+    /// When a real body is small enough to be a doji. [`CandleSettingType::BodyDoji`].
     pub body_doji: CandleSetting,
+    /// When a shadow counts as long. [`CandleSettingType::ShadowLong`].
     pub shadow_long: CandleSetting,
+    /// When a shadow counts as very long. [`CandleSettingType::ShadowVeryLong`].
     pub shadow_very_long: CandleSetting,
+    /// When a shadow counts as short. [`CandleSettingType::ShadowShort`].
     pub shadow_short: CandleSetting,
+    /// When a shadow counts as very short. [`CandleSettingType::ShadowVeryShort`].
     pub shadow_very_short: CandleSetting,
+    /// How close two prices must be to count as near. [`CandleSettingType::Near`].
     pub near: CandleSetting,
+    /// How far apart two prices must be to count as far. [`CandleSettingType::Far`].
     pub far: CandleSetting,
+    /// How close two prices must be to count as equal. [`CandleSettingType::Equal`].
     pub equal: CandleSetting,
 }
 
@@ -242,16 +274,27 @@ impl CandleSettings {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum CandleSettingType {
+    /// Selects [`CandleSettings::body_long`].
     BodyLong,
+    /// Selects [`CandleSettings::body_very_long`].
     BodyVeryLong,
+    /// Selects [`CandleSettings::body_short`].
     BodyShort,
+    /// Selects [`CandleSettings::body_doji`].
     BodyDoji,
+    /// Selects [`CandleSettings::shadow_long`].
     ShadowLong,
+    /// Selects [`CandleSettings::shadow_very_long`].
     ShadowVeryLong,
+    /// Selects [`CandleSettings::shadow_short`].
     ShadowShort,
+    /// Selects [`CandleSettings::shadow_very_short`].
     ShadowVeryShort,
+    /// Selects [`CandleSettings::near`].
     Near,
+    /// Selects [`CandleSettings::far`].
     Far,
+    /// Selects [`CandleSettings::equal`].
     Equal,
     /// Wildcard sentinel — not a valid target for a single setting.
     AllCandleSettings,

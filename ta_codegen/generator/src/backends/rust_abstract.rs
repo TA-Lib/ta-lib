@@ -59,9 +59,24 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     }
 
     // --- FuncId enum (fieldless; doubles as the dense index into FUNCS) ---
+    o.push_str(
+        "/// Every function in the registry, in the canonical order — and the dense\n\
+         /// index into [`FUNCS`].\n\
+         ///\n\
+         /// Fieldless, so it is the whole handle: there is no opaque pointer to free\n\
+         /// and no magic number to validate. [`FuncId::info`] is the metadata.\n",
+    );
     o.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
     o.push_str("#[repr(u16)]\n#[non_exhaustive]\n#[allow(non_camel_case_types)]\npub enum FuncId {\n");
     for f in &sorted {
+        // The variant's doc is the function's own `hint` — the same string the
+        // row carries into `FuncInfo::hint` and that C's `TA_FuncInfo.hint`
+        // reports — so the two can never say different things about a function.
+        let _ = writeln!(
+            o,
+            "    /// {} — [`Core::{}`](crate::Core::{}).",
+            f.hint, f.name, f.name
+        );
         let _ = writeln!(o, "    {},", f.name);
     }
     o.push_str("}\n\n");
@@ -1236,15 +1251,25 @@ const MODEL: &str = r#"/// Function group (closed set — replaces C's runtime g
 #[repr(u8)]
 #[non_exhaustive]
 pub enum Group {
+    /// `Cycle Indicators` — the Hilbert Transform family.
     CycleIndicators,
+    /// `Math Operators` — arithmetic and rolling aggregates over a series.
     MathOperators,
+    /// `Math Transform` — element-wise transcendental and rounding functions.
     MathTransform,
+    /// `Momentum Indicators` — rate-of-change and oscillator studies.
     MomentumIndicators,
+    /// `Overlap Studies` — studies drawn on the price scale itself.
     OverlapStudies,
+    /// `Pattern Recognition` — the `CDL*` candlestick recognizers.
     PatternRecognition,
+    /// `Price Transform` — a single bar's OHLC reduced to one price.
     PriceTransform,
+    /// `Statistic Functions` — regression and distribution measures.
     StatisticFunctions,
+    /// `Volatility Indicators` — true-range derived measures.
     VolatilityIndicators,
+    /// `Volume Indicators` — studies that read the volume series.
     VolumeIndicators,
 }
 
@@ -1282,19 +1307,37 @@ impl Group {
 /// Required-input data kind (C: `TA_Input_Price`/`Real`/`Integer`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum InputType { Price, Real, Integer }
+pub enum InputType {
+    /// One or more OHLCV components of the same bar series; which ones is in
+    /// [`InputInfo::flags`].
+    Price,
+    /// A single `&[f64]` series.
+    Real,
+    /// A single integer series.
+    Integer,
+}
 
 /// Output data kind (C: `TA_Output_Real`/`Integer`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum OutputType { Real, Integer }
+pub enum OutputType {
+    /// Written into an `&mut [f64]`.
+    Real,
+    /// Written into an `&mut [i32]` — the `CDL*` patterns and the `*INDEX` studies.
+    Integer,
+}
 
 macro_rules! flag_newtype {
-    ($name:ident { $($cn:ident = $cv:expr),* $(,)? }) => {
+    ($(#[$sm:meta])* $name:ident { $($(#[$cm:meta])* $cn:ident = $cv:expr),* $(,)? }) => {
+        $(#[$sm])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-        pub struct $name(pub u32);
+        pub struct $name(
+            /// The raw flag word, with the same bit values as the matching C
+            /// `#define`s in `ta_abstract.h`.
+            pub u32
+        );
         impl $name {
-            $(pub const $cn: Self = Self($cv);)*
+            $($(#[$cm])* pub const $cn: Self = Self($cv);)*
             /// Raw bits.
             #[inline] pub const fn bits(self) -> u32 { self.0 }
             /// True if all bits of `other` are set.
@@ -1303,61 +1346,124 @@ macro_rules! flag_newtype {
     };
 }
 
-flag_newtype!(FuncFlags {
+flag_newtype!(
+    /// What a function is, for a caller deciding how to call or plot it
+    /// (C: `TA_FuncFlags`).
+    FuncFlags {
+    /// Output is on the same scale as the input data, so it can be drawn over
+    /// the price series.
     OVERLAP = 0x0100_0000,
+    /// The function also has a streaming tier — `<F>_Open` / `Update` /
+    /// `Peek` / `Close` — bit-identical to the batch function.
     STREAM = 0x0200_0000,
+    /// Output is over the volume data rather than the price scale.
     VOLUME = 0x0400_0000,
+    /// The function has an unstable initial period, settable through
+    /// [`CoreBuilder::unstable_period`](crate::CoreBuilder::unstable_period).
     UNSTABLE_PERIOD = 0x0800_0000,
+    /// Output is a candlestick-pattern verdict.
     CANDLESTICK = 0x1000_0000,
+    /// Output is path-dependent: built up from the first bar, so it depends on
+    /// the requested `startIdx` and never converges across ranges — the same bar
+    /// computed from a different `startIdx` can differ. E.g. AD, ADOSC, OBV,
+    /// NVI, PVI, SAR, SAREXT.
     PATH_DEPENDENT = 0x2000_0000,
+    /// Inputs of ordinary magnitude can have no finite result, so a successful
+    /// call may write NaN or ±Inf (e.g. ACOS outside `[-1, 1]`, LN of zero,
+    /// `0/0`). Not set where a non-finite value needs magnitudes large enough to
+    /// overflow the intermediate arithmetic. Set on ACOS, ASIN, DIV, LN, LOG10,
+    /// SQRT and VWMA, and on no others.
     NAN_INF_OUTPUT = 0x4000_0000,
+    /// A period of 1 performs no smoothing: the lookback is 0 and every output
+    /// value is a bit-exact copy of its input value.
     PERIOD1_IDENTITY = 0x0000_0001,
 });
-flag_newtype!(InputFlags {
+flag_newtype!(
+    /// Which OHLCV components an [`InputType::Price`] input reads
+    /// (C: the `TA_IN_PRICE_*` bits).
+    InputFlags {
+    /// Reads the open price.
     PRICE_OPEN = 0x0000_0001,
+    /// Reads the high price.
     PRICE_HIGH = 0x0000_0002,
+    /// Reads the low price.
     PRICE_LOW = 0x0000_0004,
+    /// Reads the close price.
     PRICE_CLOSE = 0x0000_0008,
+    /// Reads the volume.
     PRICE_VOLUME = 0x0000_0010,
+    /// Reads the open interest. No shipped function sets this.
     PRICE_OPENINTEREST = 0x0000_0020,
+    /// Reads the timestamp. No shipped function sets this.
     PRICE_TIMESTAMP = 0x0000_0040,
 });
-flag_newtype!(OptInputFlags {
+flag_newtype!(
+    /// How a UI should present an optional input (C: the `TA_OPTIN_*` bits).
+    OptInputFlags {
+    /// The value is a percentage.
     IS_PERCENT = 0x0010_0000,
+    /// The value is a degree, in `0..=360`.
     IS_DEGREE = 0x0020_0000,
+    /// The value is a currency amount.
     IS_CURRENCY = 0x0040_0000,
+    /// The parameter is for advanced users; a UI may hide it by default.
     ADVANCED = 0x0100_0000,
 });
-flag_newtype!(OutputFlags {
+flag_newtype!(
+    /// How an output should be drawn, and what its values can be
+    /// (C: the `TA_OUT_*` bits).
+    OutputFlags {
+    /// Suggest displaying as a connected line.
     LINE = 0x0000_0001,
+    /// Suggest displaying as a dotted line.
     DOT_LINE = 0x0000_0002,
+    /// Suggest displaying as a dashed line.
     DASH_LINE = 0x0000_0004,
+    /// Suggest displaying with dots only.
     DOT = 0x0000_0008,
+    /// Suggest displaying as a histogram.
     HISTO = 0x0000_0010,
+    /// The value says whether the pattern exists: non-zero yes, zero no.
     PATTERN_BOOL = 0x0000_0020,
+    /// Zero is no pattern, positive is bullish, negative is bearish.
     PATTERN_BULL_BEAR = 0x0000_0040,
+    /// Zero is neutral; `]0..100]` getting bullish, `]100..200]` bullish,
+    /// `[-100..0[` getting bearish, `[-200..-100[` bearish.
     PATTERN_STRENGTH = 0x0000_0080,
+    /// The output can be positive.
     POSITIVE = 0x0000_0100,
+    /// The output can be negative.
     NEGATIVE = 0x0000_0200,
+    /// The output can be zero.
     ZERO = 0x0000_0400,
+    /// The values represent an upper limit.
     UPPER_LIMIT = 0x0000_0800,
+    /// The values represent a lower limit.
     LOWER_LIMIT = 0x0000_1000,
+    /// The caller may discard this output — it is computed but need not be
+    /// kept. E.g. MAMA's FAMA line when only the MAMA line is wanted.
     NULLABLE = 0x0000_2000,
 });
 
 /// A required input parameter.
 #[derive(Debug, Clone, Copy)]
 pub struct InputInfo {
+    /// The parameter's name in the generated signature, e.g. `inReal`.
     pub param_name: &'static str,
+    /// Which shape the input has.
     pub kind: InputType,
+    /// For an [`InputType::Price`], the OHLCV components it reads; empty otherwise.
     pub flags: InputFlags,
 }
 
 /// An output parameter.
 #[derive(Debug, Clone, Copy)]
 pub struct OutputInfo {
+    /// The parameter's name in the generated signature, e.g. `outReal`.
     pub param_name: &'static str,
+    /// Which element type the output is written as.
     pub kind: OutputType,
+    /// Plotting and value-domain hints for this output.
     pub flags: OutputFlags,
 }
 
@@ -1369,40 +1475,90 @@ pub struct OutputInfo {
 /// `OptInputType`; C# ships this same fused shape under `OptInputDomain`.
 #[derive(Debug, Clone, Copy)]
 pub enum OptInputType {
-    RealRange { min: f64, max: f64, precision: u8, default: f64, suggested: (f64, f64, f64) },
-    IntegerRange { min: i32, max: i32, default: i32, suggested: (i32, i32, i32) },
-    RealList { values: &'static [(f64, &'static str)], default: f64 },
-    IntegerList { values: &'static [(i64, &'static str)], default: i64 },
+    /// A real parameter, valid anywhere in `min..=max`.
+    RealRange {
+        /// Smallest accepted value.
+        min: f64,
+        /// Largest accepted value.
+        max: f64,
+        /// Digits after the decimal point a UI should display.
+        precision: u8,
+        /// The value [`Core::REAL_DEFAULT`](crate::Core::REAL_DEFAULT) selects.
+        default: f64,
+        /// Three values worth offering, from low to high.
+        suggested: (f64, f64, f64),
+    },
+    /// An integer parameter, valid anywhere in `min..=max`.
+    IntegerRange {
+        /// Smallest accepted value.
+        min: i32,
+        /// Largest accepted value.
+        max: i32,
+        /// The value [`Core::INTEGER_DEFAULT`](crate::Core::INTEGER_DEFAULT) selects.
+        default: i32,
+        /// Three values worth offering, from low to high.
+        suggested: (i32, i32, i32),
+    },
+    /// A real parameter drawn from a closed list.
+    RealList {
+        /// The accepted values, each with its display string.
+        values: &'static [(f64, &'static str)],
+        /// The value [`Core::REAL_DEFAULT`](crate::Core::REAL_DEFAULT) selects.
+        default: f64,
+    },
+    /// An integer parameter drawn from a closed list — a moving-average type, say.
+    IntegerList {
+        /// The accepted values, each with its display string.
+        values: &'static [(i64, &'static str)],
+        /// The value [`Core::INTEGER_DEFAULT`](crate::Core::INTEGER_DEFAULT) selects.
+        default: i64,
+    },
 }
 
 /// An optional input parameter.
 #[derive(Debug, Clone, Copy)]
 pub struct OptInputInfo {
+    /// The parameter's name in the generated signature, e.g. `optInTimePeriod`.
     pub param_name: &'static str,
+    /// A short label for a UI, e.g. `Time Period`.
     pub display_name: &'static str,
+    /// One line describing what the parameter does.
     pub hint: &'static str,
+    /// How a UI should present the value.
     pub flags: OptInputFlags,
+    /// The parameter's shape and its domain.
     pub kind: OptInputType,
 }
 
 /// Metadata for one TA-Lib function (C: `TA_FuncInfo` + its parameter tables).
 #[derive(Debug, Clone, Copy)]
 pub struct FuncInfo {
+    /// This function's id — also its index into [`FUNCS`].
     pub id: FuncId,
+    /// Upper-case TA name, e.g. `"RSI"`.
     pub name: &'static str,
+    /// The group the function is filed under.
     pub group: Group,
+    /// One line describing what the function computes.
     pub hint: &'static str,
+    /// What the function is, for a caller deciding how to call or plot it.
     pub flags: FuncFlags,
+    /// Required inputs, in call order.
     pub inputs: &'static [InputInfo],
+    /// Optional inputs, in call order.
     pub opt_inputs: &'static [OptInputInfo],
+    /// Outputs, in call order.
     pub outputs: &'static [OutputInfo],
     /// Stable unstable-period id (the one metadata kept aligned to C); `None` if N/A.
     pub unst_id: Option<FuncUnstId>,
 }
 
 impl FuncInfo {
+    /// Number of required inputs.
     #[inline] pub const fn nb_input(&self) -> usize { self.inputs.len() }
+    /// Number of optional inputs.
     #[inline] pub const fn nb_opt_input(&self) -> usize { self.opt_inputs.len() }
+    /// Number of outputs.
     #[inline] pub const fn nb_output(&self) -> usize { self.outputs.len() }
 }
 
