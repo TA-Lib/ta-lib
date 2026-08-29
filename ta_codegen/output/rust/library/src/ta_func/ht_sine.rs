@@ -1532,6 +1532,30 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::ht_sine_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_sine = vec![0.0; 252];
+    /// let mut batch_lead_sine = vec![0.0; 252];
+    /// let batch = core.HT_SINE(0, data.len() - 1, &data, &mut batch_sine, &mut batch_lead_sine)?;
+    ///
+    /// let mut sine = vec![0.0; 252];
+    /// let mut lead_sine = vec![0.0; 252];
+    /// let (_stream, filled) = core.ht_sine_open_and_fill(&data, &mut sine, &mut lead_sine)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(sine[..filled.count].iter().zip(&batch_sine[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(lead_sine[..filled.count].iter().zip(&batch_lead_sine[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_HT_SINE_OpenAndFill")]
     pub fn ht_sine_open_and_fill(
         &self, inReal: &[f64], outSine: &mut [f64], outLeadSine: &mut [f64],

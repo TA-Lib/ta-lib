@@ -482,6 +482,31 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::pvi_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_out = vec![0.0; 252];
+    /// let batch = core.PVI(0, close.len() - 1, &close, &volume, &mut batch_out)?;
+    ///
+    /// let mut out = vec![0.0; 252];
+    /// let (_stream, filled) = core.pvi_open_and_fill(&close, &volume, &mut out)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(out[..filled.count].iter().zip(&batch_out[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_PVI_OpenAndFill")]
     pub fn pvi_open_and_fill(
         &self, inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],

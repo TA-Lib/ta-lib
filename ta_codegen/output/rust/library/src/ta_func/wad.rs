@@ -538,6 +538,30 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::wad_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_out = vec![0.0; 252];
+    /// let batch = core.WAD(0, high.len() - 1, &high, &low, &close, &mut batch_out)?;
+    ///
+    /// let mut out = vec![0.0; 252];
+    /// let (_stream, filled) = core.wad_open_and_fill(&high, &low, &close, &mut out)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(out[..filled.count].iter().zip(&batch_out[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_WAD_OpenAndFill")]
     pub fn wad_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outReal: &mut [f64],

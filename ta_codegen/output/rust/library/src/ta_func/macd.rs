@@ -877,6 +877,34 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::macd_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_macd = vec![0.0; 252];
+    /// let mut batch_macd_signal = vec![0.0; 252];
+    /// let mut batch_macd_hist = vec![0.0; 252];
+    /// let batch = core.MACD(0, data.len() - 1, &data, 12, 26, 9, &mut batch_macd, &mut batch_macd_signal, &mut batch_macd_hist)?;
+    ///
+    /// let mut macd = vec![0.0; 252];
+    /// let mut macd_signal = vec![0.0; 252];
+    /// let mut macd_hist = vec![0.0; 252];
+    /// let (_stream, filled) = core.macd_open_and_fill(&data, 12, 26, 9, &mut macd, &mut macd_signal, &mut macd_hist)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(macd[..filled.count].iter().zip(&batch_macd[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(macd_signal[..filled.count].iter().zip(&batch_macd_signal[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(macd_hist[..filled.count].iter().zip(&batch_macd_hist[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_MACD_OpenAndFill")]
     pub fn macd_open_and_fill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],

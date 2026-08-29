@@ -618,6 +618,28 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::minmaxindex_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_min_idx = vec![0_i32; 252];
+    /// let mut batch_max_idx = vec![0_i32; 252];
+    /// let batch = core.MINMAXINDEX(0, data.len() - 1, &data, 30, &mut batch_min_idx, &mut batch_max_idx)?;
+    ///
+    /// let mut min_idx = vec![0_i32; 252];
+    /// let mut max_idx = vec![0_i32; 252];
+    /// let (_stream, filled) = core.minmaxindex_open_and_fill(&data, 30, &mut min_idx, &mut max_idx)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert_eq!(min_idx[..filled.count], batch_min_idx[..batch.count]);
+    /// assert_eq!(max_idx[..filled.count], batch_max_idx[..batch.count]);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_MINMAXINDEX_OpenAndFill")]
     pub fn minmaxindex_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],

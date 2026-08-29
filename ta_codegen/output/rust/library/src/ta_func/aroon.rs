@@ -659,6 +659,31 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::aroon_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_aroon_down = vec![0.0; 252];
+    /// let mut batch_aroon_up = vec![0.0; 252];
+    /// let batch = core.AROON(0, high.len() - 1, &high, &low, 14, &mut batch_aroon_down, &mut batch_aroon_up)?;
+    ///
+    /// let mut aroon_down = vec![0.0; 252];
+    /// let mut aroon_up = vec![0.0; 252];
+    /// let (_stream, filled) = core.aroon_open_and_fill(&high, &low, 14, &mut aroon_down, &mut aroon_up)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(aroon_down[..filled.count].iter().zip(&batch_aroon_down[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(aroon_up[..filled.count].iter().zip(&batch_aroon_up[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_AROON_OpenAndFill")]
     pub fn aroon_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outAroonDown: &mut [f64], outAroonUp: &mut [f64],

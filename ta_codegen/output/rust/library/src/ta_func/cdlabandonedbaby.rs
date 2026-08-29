@@ -1243,6 +1243,32 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::cdlabandonedbaby_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_out = vec![0_i32; 252];
+    /// let batch = core.CDLABANDONEDBABY(0, open.len() - 1, &open, &high, &low, &close, 0.3, &mut batch_out)?;
+    ///
+    /// let mut out = vec![0_i32; 252];
+    /// let (_stream, filled) = core.cdlabandonedbaby_open_and_fill(&open, &high, &low, &close, 0.3, &mut out)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert_eq!(out[..filled.count], batch_out[..batch.count]);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_CDLABANDONEDBABY_OpenAndFill")]
     pub fn cdlabandonedbaby_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outInteger: &mut [i32],

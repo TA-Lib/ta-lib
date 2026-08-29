@@ -533,10 +533,10 @@ fn emit_loop(
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
     emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter);
-    emit_open_internal_wrapper(o, func, model);
+    emit_open_internal_wrapper(o, func, model, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
-    emit_open_and_fill_internal_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape, false);
@@ -547,15 +547,25 @@ fn emit_loop(
 /// `open_internal`: the scalar wrapper onto `<n>_open_impl`. One 1-element array per
 /// output stands in for the caller's slice; at stride 0 every per-bar write
 /// lands on slot 0, so after the replay it holds the last history value.
-fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    emit_open_internal_wrapper_named(o, func, &model.outputs);
+fn emit_open_internal_wrapper(
+    o: &mut String,
+    func: &FuncDef,
+    model: &StreamModel,
+    enums: &HashMap<String, EnumDef>,
+) {
+    emit_open_internal_wrapper_named(o, func, &model.outputs, enums);
 }
 
 /// [`emit_open_internal_wrapper`] over an explicit output-name list, for tiers
 /// whose outputs come from a plan rather than a `StreamModel`.
-fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[String]) {
+fn emit_open_internal_wrapper_named(
+    o: &mut String,
+    func: &FuncDef,
+    outputs: &[String],
+    enums: &HashMap<String, EnumDef>,
+) {
     let sn = snake(func);
-    emit_open_sig(o, func, OutMode::Scalar);
+    emit_open_sig(o, func, OutMode::Scalar, enums);
     let _ = writeln!(o, "        let mut dummyBegIdx: usize = 0;");
     let _ = writeln!(o, "        let mut dummyNBElement: usize = 0;");
     for out in outputs {
@@ -674,7 +684,7 @@ fn emit_open_and_fill_wrapper(
     enums: &HashMap<String, EnumDef>,
 ) {
     let sn = snake(func);
-    emit_open_sig(o, func, OutMode::Fill);
+    emit_open_sig(o, func, OutMode::Fill, enums);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     o.push_str(&open_fill_capacity_guards(func, true));
     for (a, b) in distinct_output_pairs(func) {
@@ -715,9 +725,13 @@ fn emit_open_and_fill_wrapper(
 /// `open_and_fill_internal` for every tier that owns an `<n>_open_impl`: the same single
 /// pass as `OpenAndFill`, at the caller's `startIdx`. See [`OutMode::FillInternal`]
 /// for why it carries no distinctness guard.
-fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
+fn emit_open_and_fill_internal_wrapper(
+    o: &mut String,
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+) {
     let sn = snake(func);
-    emit_open_sig(o, func, OutMode::FillInternal);
+    emit_open_sig(o, func, OutMode::FillInternal, enums);
     let ins: Vec<String> = streaming::input_array_names(func);
     let opt_names: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
@@ -1483,7 +1497,7 @@ fn emit_open_internal(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_open_sig(o, func, OutMode::Core);
+    emit_open_sig(o, func, OutMode::Core, enums);
     emit_open_validation_head(o, func, OutMode::Core, enums);
     emit_open_inits(o, func, &model.outputs, typing, registry, helpers);
 
@@ -1505,7 +1519,7 @@ fn emit_open_internal(
 /// Doc comment + signature line of `open_internal` (Scalar) / `open_and_fill`
 /// (Fill). Shared by every tier, including the hand-rolled dispatch and
 /// period-bank opens.
-fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
+fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let sn = snake(func);
     let n = func.name.to_uppercase();
     let handle = stream_type_name(func);
@@ -1556,6 +1570,17 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 o,
                 "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{n}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —\n    /// or when two of them are the same slice. Everything [`Core::{sn}_open`] rejects\n    /// is rejected here too."
             );
+            // The example is the summary's own claim, made runnable.
+            if let Some(doctest) = open_and_fill_doctest(func, enums) {
+                let _ = writeln!(o, "    ///\n    /// # Examples\n    ///");
+                for line in doctest {
+                    if line.is_empty() {
+                        let _ = writeln!(o, "    ///");
+                    } else {
+                        let _ = writeln!(o, "    /// {line}");
+                    }
+                }
+            }
             let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_OpenAndFill\")]");
             let opts_head = sig_opts.trim_start_matches(", ");
             let opts_head = if opts_head.is_empty() {
@@ -2327,6 +2352,32 @@ fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String 
     d
 }
 
+/// One example input series for the streaming doctests, as `(variable name,
+/// series expression, the literal for one further bar)`. Shared by the
+/// `peek == update` witness on `<name>_open` and the batch-parity witness on
+/// `<name>_open_and_fill`, so both examples feed the *same* history and a
+/// reader can carry one into the other. `None` for an input shape with no
+/// series, which drops the example rather than emitting one that will not
+/// compile.
+fn stream_example_input(
+    func: &FuncDef,
+    input: &str,
+) -> Option<(&'static str, &'static str, &'static str)> {
+    Some(match input {
+        "inReal" if unit_domain(func) => ("data", UNIT_SERIES, "0.42"),
+        "inOpen" => ("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()", "100.2"),
+        "inHigh" => ("high", "101.0 + 10.0 * (0.1 * i as f64).sin()", "101.4"),
+        "inLow" => ("low", "99.0 + 10.0 * (0.1 * i as f64).sin()", "99.1"),
+        "inClose" => ("close", CLOSE_SERIES, "100.9"),
+        "inVolume" => ("volume", VOLUME_SERIES, "12_345.0"),
+        "inPeriods" => ("periods", "5.0 + (i % 10) as f64", "14.0"),
+        "inReal" => ("data", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
+        "inReal0" => ("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
+        "inReal1" => ("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()", "101.3"),
+        _ => return None,
+    })
+}
+
 /// A runnable peek==update doctest (the per-function bit-exactness witness).
 fn stream_doctest(
     func: &FuncDef,
@@ -2341,19 +2392,7 @@ fn stream_doctest(
     let mut args: Vec<String> = Vec::new();
     let mut bar_args: Vec<String> = Vec::new();
     for input in &func.inputs {
-        let (var, def, bar) = match input.name.as_str() {
-            "inReal" if unit_domain(func) => ("data", UNIT_SERIES, "0.42"),
-            "inOpen" => ("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()", "100.2"),
-            "inHigh" => ("high", "101.0 + 10.0 * (0.1 * i as f64).sin()", "101.4"),
-            "inLow" => ("low", "99.0 + 10.0 * (0.1 * i as f64).sin()", "99.1"),
-            "inClose" => ("close", CLOSE_SERIES, "100.9"),
-            "inVolume" => ("volume", VOLUME_SERIES, "12_345.0"),
-            "inPeriods" => ("periods", "5.0 + (i % 10) as f64", "14.0"),
-            "inReal" => ("data", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
-            "inReal0" => ("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
-            "inReal1" => ("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()", "101.3"),
-            _ => return None,
-        };
+        let (var, def, bar) = stream_example_input(func, &input.name)?;
         lines.extend(series_def(var, def));
         args.push(format!("&{var}"));
         bar_args.push(bar.to_string());
@@ -2406,6 +2445,125 @@ fn stream_doctest(
             }
         }
     }
+    lines.push("```".to_string());
+    Some(lines)
+}
+
+/// A runnable `# Examples` doctest for `<name>_open_and_fill`.
+///
+/// The example asserts exactly what the item's own summary claims — that the
+/// fill is bit-identical to the batch entry point over the same history — by
+/// running both on one series and comparing the reported [`OutRange`] and every
+/// produced value bit-for-bit. That makes it a witness rather than a smoke
+/// test: it discriminates against a fill that is merely finite, merely the
+/// right length, or off by one bar. Before this the 168 fill entry points
+/// carried no doctest at all (#179 E8).
+fn open_and_fill_doctest(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+) -> Option<Vec<String>> {
+    let sn = snake(func);
+    let batch = &func.name;
+    let len = super::rust_doc::EXAMPLE_LEN;
+
+    let mut lines: Vec<String> = vec!["```".to_string()];
+    let mut imports = vec!["Core".to_string()];
+    imports.extend(super::rust_doc::example_enum_imports(func));
+    lines.push(super::rust_doc::example_use_line(&imports));
+
+    let mut series: Vec<&str> = Vec::new();
+    for input in &func.inputs {
+        let (var, def, _bar) = stream_example_input(func, &input.name)?;
+        lines.extend(series_def(var, def));
+        series.push(var);
+    }
+    // A function with no series input has no example to write.
+    let first = *series.first()?;
+
+    let opts: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|o| super::rust_doc::example_opt_literal(o, enums))
+        .collect();
+
+    // (example variable, integer output?, declinable?) per output, in order.
+    let nullable = common::nullable_output_names(func);
+    let out_vars: Vec<(String, bool, bool)> = func
+        .outputs
+        .iter()
+        .map(|out| {
+            (
+                super::rust_doc::output_var_name(out),
+                out_is_int(func, &out.name),
+                nullable.contains(&out.name),
+            )
+        })
+        .collect();
+
+    let buffer = |var: &str, is_int: bool| {
+        let zero = if is_int { "0_i32" } else { "0.0" };
+        format!("let mut {var} = vec![{zero}; {len}];")
+    };
+    // A declinable output is `Option<&mut [_]>` on BOTH tiers, so the example
+    // supplies it on both and compares the pair like any other.
+    let pass = |var: &str, declinable: bool| {
+        if declinable {
+            format!("Some(&mut {var}[..])")
+        } else {
+            format!("&mut {var}")
+        }
+    };
+
+    lines.push(String::new());
+    lines.push("let core = Core::new();".to_string());
+
+    // The batch tier over the whole history.
+    for (var, is_int, _) in &out_vars {
+        lines.push(buffer(&format!("batch_{var}"), *is_int));
+    }
+    let mut batch_args: Vec<String> = vec!["0".to_string(), format!("{first}.len() - 1")];
+    batch_args.extend(series.iter().map(|v| format!("&{v}")));
+    batch_args.extend(opts.iter().cloned());
+    batch_args.extend(
+        out_vars.iter()
+            .map(|(var, _, decl)| pass(&format!("batch_{var}"), *decl)),
+    );
+    lines.push(format!(
+        "let batch = core.{batch}({})?;",
+        batch_args.join(", ")
+    ));
+
+    // The same history through the opener, filling as it goes.
+    lines.push(String::new());
+    for (var, is_int, _) in &out_vars {
+        lines.push(buffer(var, *is_int));
+    }
+    let mut fill_args: Vec<String> = series.iter().map(|v| format!("&{v}")).collect();
+    fill_args.extend(opts);
+    fill_args.extend(out_vars.iter().map(|(var, _, decl)| pass(var, *decl)));
+    lines.push(format!(
+        "let (_stream, filled) = core.{sn}_open_and_fill({})?;",
+        fill_args.join(", ")
+    ));
+
+    lines.push(String::new());
+    lines.push("assert_eq!(filled.beg_idx, batch.beg_idx);".to_string());
+    lines.push("assert_eq!(filled.count, batch.count);".to_string());
+    for (var, is_int, _) in &out_vars {
+        if *is_int {
+            // An integer output has one representation per value, so `==` on the
+            // produced extent already is the bitwise comparison.
+            lines.push(format!(
+                "assert_eq!({var}[..filled.count], batch_{var}[..batch.count]);"
+            ));
+        } else {
+            lines.push(format!(
+                "assert!({var}[..filled.count].iter().zip(&batch_{var}[..batch.count])"
+            ));
+            lines.push("    .all(|(a, b)| a.to_bits() == b.to_bits()));".to_string());
+        }
+    }
+    lines.push("# Ok::<(), ta_lib::RetCode>(())".to_string());
     lines.push("```".to_string());
     Some(lines)
 }
@@ -2942,10 +3100,10 @@ fn emit_dual_mode(
     emit_step_end(o, false);
 
     emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter);
-    emit_open_internal_wrapper(o, func, ma);
+    emit_open_internal_wrapper(o, func, ma, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
-    emit_open_and_fill_internal_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape, false);
@@ -2970,7 +3128,7 @@ fn emit_dual_open(
 ) {
     let ma = &dmp.mode_a;
     let mb = &dmp.mode_b;
-    emit_open_sig(o, func, OutMode::Core);
+    emit_open_sig(o, func, OutMode::Core, enums);
     emit_open_validation_head(o, func, OutMode::Core, enums);
     emit_open_inits(o, func, &ma.outputs, typing, registry, helpers);
 
@@ -3231,7 +3389,7 @@ fn emit_dispatch(
     // them. `open` itself is the public one-liner over `open_internal`, emitted
     // next to the body it wraps; the two fills are their own public surface.
     for mode in [OutMode::Scalar, OutMode::Fill, OutMode::FillInternal] {
-        emit_open_sig(o, func, mode);
+        emit_open_sig(o, func, mode, enums);
         emit_open_validation_head(o, func, mode, enums);
         let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
         if let Some(idp) = &dp.identity {
@@ -3550,7 +3708,7 @@ fn emit_period_bank(
     emit_step_end(o, true);
 
     // --- open_internal ------------------------------------------------------
-    emit_open_sig(o, func, OutMode::Scalar);
+    emit_open_sig(o, func, OutMode::Scalar, enums);
     emit_open_validation_head(o, func, OutMode::Scalar, enums);
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
@@ -3599,7 +3757,7 @@ fn emit_period_bank(
     // selected scalar per bar), so fill genuinely re-runs history: seed the
     // bank on the first-output-bar prefix, emit that bar, then REPLAY updates
     // over the remaining history selecting the clamped-period slot per bar.
-    emit_open_sig(o, func, OutMode::Fill);
+    emit_open_sig(o, func, OutMode::Fill, enums);
     emit_open_validation_head(o, func, OutMode::Fill, enums);
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
@@ -4113,7 +4271,7 @@ fn emit_composed_open(
         .map(|p| p.name.clone())
         .collect();
 
-    emit_open_sig(o, func, OutMode::Core);
+    emit_open_sig(o, func, OutMode::Core, enums);
     emit_open_validation_head(o, func, OutMode::Core, enums);
     emit_open_inits(o, func, outputs, typing, registry, helpers);
     // The core already receives real `&mut usize` out-meta under the batch
@@ -4545,10 +4703,10 @@ fn emit_composed(
     emit_composed_open(
         o, func, cp, &typing, &outputs, enums, registry, helpers, counter,
     );
-    emit_open_internal_wrapper_named(o, func, &outputs);
+    emit_open_internal_wrapper_named(o, func, &outputs, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
-    emit_open_and_fill_internal_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape, true);

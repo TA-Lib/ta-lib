@@ -1507,6 +1507,30 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::mama_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_mama = vec![0.0; 252];
+    /// let mut batch_fama = vec![0.0; 252];
+    /// let batch = core.MAMA(0, data.len() - 1, &data, 0.5, 0.05, &mut batch_mama, Some(&mut batch_fama[..]))?;
+    ///
+    /// let mut mama = vec![0.0; 252];
+    /// let mut fama = vec![0.0; 252];
+    /// let (_stream, filled) = core.mama_open_and_fill(&data, 0.5, 0.05, &mut mama, Some(&mut fama[..]))?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(mama[..filled.count].iter().zip(&batch_mama[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(fama[..filled.count].iter().zip(&batch_fama[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_MAMA_OpenAndFill")]
     pub fn mama_open_and_fill(
         &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,

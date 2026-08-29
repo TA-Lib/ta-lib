@@ -695,6 +695,27 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::ao_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_out = vec![0.0; 252];
+    /// let batch = core.AO(0, high.len() - 1, &high, &low, 5, 34, &mut batch_out)?;
+    ///
+    /// let mut out = vec![0.0; 252];
+    /// let (_stream, filled) = core.ao_open_and_fill(&high, &low, 5, 34, &mut out)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(out[..filled.count].iter().zip(&batch_out[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_AO_OpenAndFill")]
     pub fn ao_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],

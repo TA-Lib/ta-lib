@@ -715,6 +715,38 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::accbands_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_upper_band = vec![0.0; 252];
+    /// let mut batch_middle_band = vec![0.0; 252];
+    /// let mut batch_lower_band = vec![0.0; 252];
+    /// let batch = core.ACCBANDS(0, high.len() - 1, &high, &low, &close, 20, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
+    ///
+    /// let mut upper_band = vec![0.0; 252];
+    /// let mut middle_band = vec![0.0; 252];
+    /// let mut lower_band = vec![0.0; 252];
+    /// let (_stream, filled) = core.accbands_open_and_fill(&high, &low, &close, 20, &mut upper_band, &mut middle_band, &mut lower_band)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(upper_band[..filled.count].iter().zip(&batch_upper_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(middle_band[..filled.count].iter().zip(&batch_middle_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(lower_band[..filled.count].iter().zip(&batch_lower_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_ACCBANDS_OpenAndFill")]
     pub fn accbands_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
