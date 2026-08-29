@@ -570,6 +570,21 @@ if(UNIX)
 		@ONLY
 	)
 	install(SCRIPT "${CMAKE_BINARY_DIR}/warn-stale-installs.cmake")
+
+    set(prefix ${CMAKE_INSTALL_PREFIX})
+    set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
+    set(libdir ${CMAKE_INSTALL_PREFIX}/lib)
+    set(includedir ${CMAKE_INSTALL_PREFIX}/include)
+    set(PACKAGE_VERSION ${PROJECT_VERSION})
+    if(NOT WIN32)
+        set(LIBM "-lm")
+    else()
+        set(LIBM "")
+    endif()
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/ta-lib.pc.in"
+        "${CMAKE_BINARY_DIR}/ta-lib.pc" @ONLY)
+    install(FILES ${CMAKE_BINARY_DIR}/ta-lib.pc DESTINATION lib/pkgconfig)
 endif()
 
 # The dev tools use internal, non-exported library symbols, so they need the
