@@ -432,7 +432,7 @@
    /**
     * A live CDL3STARSINSOUTH stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDL3STARSINSOUTH} over the same series.
-    * Open with {@link Core#CDL3STARSINSOUTH_Open}; there is no close — the handle is
+    * Open with {@link Core#cdl3starsinsouthOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -443,7 +443,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDL3STARSINSOUTH_Stream {
+   public static final class Cdl3starsinsouthStream {
       Core core;
       double BodyLongPeriodTotal;
       double BodyShortPeriodTotal;
@@ -488,7 +488,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDL3STARSINSOUTH_Stream( Core core ) { this.core = core; }
+      Cdl3starsinsouthStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -502,7 +502,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDL3STARSINSOUTH_Stream( CDL3STARSINSOUTH_Stream other ) {
+      Cdl3starsinsouthStream( Cdl3starsinsouthStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -548,7 +548,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDL3STARSINSOUTH_Stream other ) {
+      void copyFrom( Cdl3starsinsouthStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -615,7 +615,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDL3STARSINSOUTH_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdl3starsinsouthStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -632,7 +632,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3STARSINSOUTH update: BadParam", RetCode.BadParam);
-         core.CDL3STARSINSOUTH_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdl3starsinsouthStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -661,7 +661,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDL3STARSINSOUTH updateAndFill: BadParam", RetCode.BadParam);
-            core.CDL3STARSINSOUTH_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdl3starsinsouthStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -679,14 +679,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3STARSINSOUTH peek: BadParam", RetCode.BadParam);
-         CDL3STARSINSOUTH_Stream scratch = PEEK_SCRATCH.get();
+         Cdl3starsinsouthStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDL3STARSINSOUTH_Stream(this);
+            scratch = new Cdl3starsinsouthStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDL3STARSINSOUTH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdl3starsinsouthStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -703,11 +703,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDL3STARSINSOUTH_Stream copy() {
-         return new CDL3STARSINSOUTH_Stream(this);
+      public Cdl3starsinsouthStream copy() {
+         return new Cdl3starsinsouthStream(this);
       }
    }
-   void CDL3STARSINSOUTH_StepImpl( CDL3STARSINSOUTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdl3starsinsouthStepImpl( Cdl3starsinsouthStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -784,7 +784,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3STARSINSOUTH_OpenImpl( CDL3STARSINSOUTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdl3starsinsouthOpenImpl( Cdl3starsinsouthStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double BodyShortPeriodTotal = 0;
@@ -1009,11 +1009,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDL3STARSINSOUTH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdl3starsinsouthOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdl3starsinsouthStream cdl3starsinsouthOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
-      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdl3starsinsouthStream sp = new Cdl3starsinsouthStream(this);
+      RetCode retCode = cdl3starsinsouthOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1027,14 +1027,14 @@
       }
       throw new TaLibArgumentException("CDL3STARSINSOUTH openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDL3STARSINSOUTH_Open (composition seam). */
-   CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdl3starsinsouthOpen (composition seam). */
+   Cdl3starsinsouthStream cdl3starsinsouthOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
+      Cdl3starsinsouthStream sp = new Cdl3starsinsouthStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdl3starsinsouthOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1061,7 +1061,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdl3starsinsouthStream cdl3starsinsouthOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDL3STARSINSOUTH open", "inOpen", inOpen);
       requireHistory("CDL3STARSINSOUTH open", inOpen.length);
@@ -1071,10 +1071,10 @@
       requireHistoryLength("CDL3STARSINSOUTH open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDL3STARSINSOUTH open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDL3STARSINSOUTH open", "inClose", inClose.length, inOpen.length);
-      return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdl3starsinsouthOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDL3STARSINSOUTH_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdl3starsinsouthOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDL3STARSINSOUTH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1082,9 +1082,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDL3STARSINSOUTH_Stream#outRange()}.
+    * {@link Cdl3starsinsouthStream#outRange()}.
     */
-   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdl3starsinsouthStream cdl3starsinsouthOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDL3STARSINSOUTH openAndFill", "inOpen", inOpen);
       requireHistory("CDL3STARSINSOUTH openAndFill", inOpen.length);
@@ -1101,5 +1101,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDL3STARSINSOUTH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdl3starsinsouthOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

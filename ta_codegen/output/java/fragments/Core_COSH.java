@@ -185,7 +185,7 @@
    /**
     * A live COSH stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#COSH} over the same series.
-    * Open with {@link Core#COSH_Open}; there is no close — the handle is
+    * Open with {@link Core#coshOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -196,13 +196,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class COSH_Stream {
+   public static final class CoshStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      COSH_Stream( Core core ) { this.core = core; }
+      CoshStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -216,14 +216,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      COSH_Stream( COSH_Stream other ) {
+      CoshStream( CoshStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( COSH_Stream other ) {
+      void copyFrom( CoshStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
-         core.COSH_StepImpl(this, inReal);
+         core.coshStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("COSH updateAndFill: BadParam", RetCode.BadParam);
-            core.COSH_StepImpl(this, inReal[i]);
+            core.coshStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -287,8 +287,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
-         COSH_Stream scratch = new COSH_Stream(this);
-         core.COSH_StepImpl(scratch, inReal);
+         CoshStream scratch = new CoshStream(this);
+         core.coshStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -305,15 +305,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public COSH_Stream copy() {
-         return new COSH_Stream(this);
+      public CoshStream copy() {
+         return new CoshStream(this);
       }
    }
-   void COSH_StepImpl( COSH_Stream sp, double inReal )
+   void coshStepImpl( CoshStream sp, double inReal )
    {
       sp.cur_outReal = Math.cosh(inReal);
    }
-   private RetCode COSH_OpenImpl( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode coshOpenImpl( CoshStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -339,11 +339,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   COSH_Stream COSH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* coshOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CoshStream coshOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      CoshStream sp = new CoshStream(this);
+      RetCode retCode = coshOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -357,14 +357,14 @@
       }
       throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind COSH_Open (composition seam). */
-   COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind coshOpen (composition seam). */
+   CoshStream coshOpenInternal( double inReal[], int startIdx )
    {
-      COSH_Stream sp = new COSH_Stream(this);
+      CoshStream sp = new CoshStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = coshOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -391,14 +391,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public COSH_Stream COSH_Open( double inReal[] )
+   public CoshStream coshOpen( double inReal[] )
    {
       requireArgument("COSH open", "inReal", inReal);
       requireHistory("COSH open", inReal.length);
-      return COSH_OpenInternal(inReal, 0);
+      return coshOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#COSH_Open} that also fills the output array(s) bit-identically
+    * {@link Core#coshOpen} that also fills the output array(s) bit-identically
     * to {@link Core#COSH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -406,9 +406,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link COSH_Stream#outRange()}.
+    * {@link CoshStream#outRange()}.
     */
-   public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
+   public CoshStream coshOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("COSH openAndFill", "inReal", inReal);
       requireHistory("COSH openAndFill", inReal.length);
@@ -419,5 +419,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return COSH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return coshOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

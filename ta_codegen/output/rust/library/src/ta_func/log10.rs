@@ -212,23 +212,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live LOG10 stream: one value per closed bar, bit-identical to [`Core::LOG10`]
-/// over the same series. Open with [`Core::LOG10_Open`]; dropping the handle
+/// over the same series. Open with [`Core::log10_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LOG10_Stream")]
-pub struct LOG10_Stream {
-    state: LOG10_StreamState,
+pub struct Log10Stream {
+    state: Log10StreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl LOG10_Stream {
+impl Log10Stream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `LOG10_StreamState::restore_from`.
+    /// allocating new ones. See `Log10StreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -237,33 +237,32 @@ impl LOG10_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct LOG10_StreamState {
+struct Log10StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl LOG10_StreamState {
+impl Log10StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LOG10_step_impl(sp: &mut LOG10_StreamState, inReal: f64, outReal: &mut f64) {
+    fn log10_step_impl(sp: &mut Log10StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).log10();
     }
 
-    /// The single whole-history transcription behind [`Core::LOG10_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::LOG10_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LOG10_OpenImpl(
+    /// The single whole-history transcription behind [`Core::log10_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::log10_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn log10_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<LOG10_Stream, RetCode> {
+    ) -> Result<Log10Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -294,19 +293,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = LOG10_StreamState {
+        let state = Log10StreamState {
         };
-        Ok(LOG10_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(Log10Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::LOG10_Open`] (composition seam).
-    pub(crate) fn LOG10_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::log10_open`] (composition seam).
+    pub(crate) fn log10_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(LOG10_Stream, f64), RetCode> {
+    ) -> Result<(Log10Stream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LOG10_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.log10_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -326,7 +325,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.LOG10_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.log10_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -336,11 +335,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_LOG10_Open")]
-    pub fn LOG10_Open(&self, inReal: &[f64], ) -> Result<(LOG10_Stream, f64), RetCode> {
-        self.LOG10_OpenInternal(inReal, 0)
+    pub fn log10_open(&self, inReal: &[f64], ) -> Result<(Log10Stream, f64), RetCode> {
+        self.log10_open_internal(inReal, 0)
     }
 
-    /// [`Core::LOG10_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::log10_open`] that also fills the output array(s) bit-identically to
     /// [`Core::LOG10`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -348,12 +347,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::LOG10_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::log10_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_LOG10_OpenAndFill")]
-    pub fn LOG10_OpenAndFill(
+    pub fn log10_open_and_fill(
         &self, inReal: &[f64], outReal: &mut [f64],
-    ) -> Result<(LOG10_Stream, OutRange), RetCode> {
+    ) -> Result<(Log10Stream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -367,23 +366,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LOG10_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.log10_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::LOG10_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::log10_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn LOG10_OpenAndFillInternal(
+    pub(crate) fn log10_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<LOG10_Stream, RetCode> {
-        self.LOG10_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<Log10Stream, RetCode> {
+        self.log10_open_impl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl LOG10_Stream {
+impl Log10Stream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -401,7 +400,7 @@ impl LOG10_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::LOG10_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::log10_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -434,7 +433,7 @@ impl LOG10_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::LOG10_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::log10_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -477,7 +476,7 @@ impl LOG10_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<LOG10_Stream>();
+    _assert_auto::<Log10Stream>();
 };
 
 /***************/

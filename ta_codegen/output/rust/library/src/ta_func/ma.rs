@@ -407,23 +407,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MA stream: one value per closed bar, bit-identical to [`Core::MA`]
-/// over the same series. Open with [`Core::MA_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ma_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MA_Stream")]
-pub struct MA_Stream {
-    state: MA_StreamState,
+pub struct MaStream {
+    state: MaStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MA_Stream {
+impl MaStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MA_StreamState::restore_from`.
+    /// allocating new ones. See `MaStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -432,15 +432,15 @@ impl MA_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MA_StreamState {
+struct MaStreamState {
     optInTimePeriod: i32,
     optInMAType: MAType,
-    // Sub-stream, tagged by optInMAType; `MA_Sub::Identity` on the identity path.
-    sub: MA_Sub,
+    // Sub-stream, tagged by optInMAType; `MaSub::Identity` on the identity path.
+    sub: MaSub,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MA_StreamState {
+impl MaStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -451,22 +451,22 @@ impl MA_StreamState {
 }
 
 #[derive(Debug, Clone)]
-enum MA_Sub {
+enum MaSub {
     Identity,
-    SMA(SMA_Stream),
-    EMA(EMA_Stream),
-    WMA(WMA_Stream),
-    DEMA(DEMA_Stream),
-    TEMA(TEMA_Stream),
-    TRIMA(TRIMA_Stream),
-    KAMA(KAMA_Stream),
-    MAMA(MAMA_Stream),
-    T3(T3_Stream),
-    HMA(HMA_Stream),
+    Sma(SmaStream),
+    Ema(EmaStream),
+    Wma(WmaStream),
+    Dema(DemaStream),
+    Tema(TemaStream),
+    Trima(TrimaStream),
+    Kama(KamaStream),
+    Mama(MamaStream),
+    T3(T3Stream),
+    Hma(HmaStream),
 }
 
 #[allow(dead_code)]
-impl MA_Sub {
+impl MaSub {
     /// Overwrite from `src`, reusing the sub-handle's buffers.
     fn restore_from(&mut self, src: &Self) {
         if std::mem::discriminant(&*self) != std::mem::discriminant(src) {
@@ -474,76 +474,75 @@ impl MA_Sub {
             return;
         }
         match (self, src) {
-            (MA_Sub::SMA(dst), MA_Sub::SMA(s)) => dst.restore_from(s),
-            (MA_Sub::EMA(dst), MA_Sub::EMA(s)) => dst.restore_from(s),
-            (MA_Sub::WMA(dst), MA_Sub::WMA(s)) => dst.restore_from(s),
-            (MA_Sub::DEMA(dst), MA_Sub::DEMA(s)) => dst.restore_from(s),
-            (MA_Sub::TEMA(dst), MA_Sub::TEMA(s)) => dst.restore_from(s),
-            (MA_Sub::TRIMA(dst), MA_Sub::TRIMA(s)) => dst.restore_from(s),
-            (MA_Sub::KAMA(dst), MA_Sub::KAMA(s)) => dst.restore_from(s),
-            (MA_Sub::MAMA(dst), MA_Sub::MAMA(s)) => dst.restore_from(s),
-            (MA_Sub::T3(dst), MA_Sub::T3(s)) => dst.restore_from(s),
-            (MA_Sub::HMA(dst), MA_Sub::HMA(s)) => dst.restore_from(s),
+            (MaSub::Sma(dst), MaSub::Sma(s)) => dst.restore_from(s),
+            (MaSub::Ema(dst), MaSub::Ema(s)) => dst.restore_from(s),
+            (MaSub::Wma(dst), MaSub::Wma(s)) => dst.restore_from(s),
+            (MaSub::Dema(dst), MaSub::Dema(s)) => dst.restore_from(s),
+            (MaSub::Tema(dst), MaSub::Tema(s)) => dst.restore_from(s),
+            (MaSub::Trima(dst), MaSub::Trima(s)) => dst.restore_from(s),
+            (MaSub::Kama(dst), MaSub::Kama(s)) => dst.restore_from(s),
+            (MaSub::Mama(dst), MaSub::Mama(s)) => dst.restore_from(s),
+            (MaSub::T3(dst), MaSub::T3(s)) => dst.restore_from(s),
+            (MaSub::Hma(dst), MaSub::Hma(s)) => dst.restore_from(s),
             _ => {}
         }
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MA_step_impl(sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn ma_step_impl(sp: &mut MaStreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
             (*outReal) = inReal;
             return Ok(());
         }
         match &mut sp.sub {
-            MA_Sub::Identity => {
+            MaSub::Identity => {
                 (*outReal) = inReal;
             }
-            MA_Sub::SMA(sub) => {
+            MaSub::Sma(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::EMA(sub) => {
+            MaSub::Ema(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::WMA(sub) => {
+            MaSub::Wma(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::DEMA(sub) => {
+            MaSub::Dema(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::TEMA(sub) => {
+            MaSub::Tema(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::TRIMA(sub) => {
+            MaSub::Trima(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::KAMA(sub) => {
+            MaSub::Kama(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::MAMA(sub) => {
+            MaSub::Mama(sub) => {
                 let subValue = sub.update(inReal)?;
                 (*outReal) = subValue.0;
             }
-            MA_Sub::T3(sub) => {
+            MaSub::T3(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
-            MA_Sub::HMA(sub) => {
+            MaSub::Hma(sub) => {
                 (*outReal) = sub.update(inReal)?;
             }
         }
         Ok(())
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MA_Open`] (composition seam).
-    pub(crate) fn MA_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ma_open`] (composition seam).
+    pub(crate) fn ma_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: MAType,
-    ) -> Result<(MA_Stream, f64), RetCode> {
+    ) -> Result<(MaStream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -568,64 +567,64 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
+            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
+            return Ok((MaStream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
         }
         let (sub, value, subRange) = match optInMAType {
             MAType::SMA => {
-                let (sub, subValue) = self.SMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.sma_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::SMA(sub), subValue, subRange)
+                (MaSub::Sma(sub), subValue, subRange)
             }
             MAType::EMA => {
-                let (sub, subValue) = self.EMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.ema_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::EMA(sub), subValue, subRange)
+                (MaSub::Ema(sub), subValue, subRange)
             }
             MAType::WMA => {
-                let (sub, subValue) = self.WMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.wma_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::WMA(sub), subValue, subRange)
+                (MaSub::Wma(sub), subValue, subRange)
             }
             MAType::DEMA => {
-                let (sub, subValue) = self.DEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.dema_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::DEMA(sub), subValue, subRange)
+                (MaSub::Dema(sub), subValue, subRange)
             }
             MAType::TEMA => {
-                let (sub, subValue) = self.TEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.tema_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::TEMA(sub), subValue, subRange)
+                (MaSub::Tema(sub), subValue, subRange)
             }
             MAType::TRIMA => {
-                let (sub, subValue) = self.TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.trima_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::TRIMA(sub), subValue, subRange)
+                (MaSub::Trima(sub), subValue, subRange)
             }
             MAType::KAMA => {
-                let (sub, subValue) = self.KAMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.kama_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::KAMA(sub), subValue, subRange)
+                (MaSub::Kama(sub), subValue, subRange)
             }
             MAType::MAMA => {
-                let (sub, subValue) = self.MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05)?;
+                let (sub, subValue) = self.mama_open_internal(inReal, startIdx, 0.5, 0.05)?;
                 let subRange = sub.out_range();
-                (MA_Sub::MAMA(sub), subValue.0, subRange)
+                (MaSub::Mama(sub), subValue.0, subRange)
             }
             MAType::T3 => {
-                let (sub, subValue) = self.T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7)?;
+                let (sub, subValue) = self.t3_open_internal(inReal, startIdx, optInTimePeriod, 0.7)?;
                 let subRange = sub.out_range();
-                (MA_Sub::T3(sub), subValue, subRange)
+                (MaSub::T3(sub), subValue, subRange)
             }
             MAType::HMA => {
-                let (sub, subValue) = self.HMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                let (sub, subValue) = self.hma_open_internal(inReal, startIdx, optInTimePeriod)?;
                 let subRange = sub.out_range();
-                (MA_Sub::HMA(sub), subValue, subRange)
+                (MaSub::Hma(sub), subValue, subRange)
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { state, out: subRange }, value))
+        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
+        Ok((MaStream { state, out: subRange }, value))
     }
 
     /// Open a live MA stream over the warm-up history; returns the handle and
@@ -644,7 +643,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MA_Open(&data, 30, MAType::SMA).expect("enough history");
+    /// let (mut s, _last) = core.ma_open(&data, 30, MAType::SMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -654,11 +653,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MA_Open")]
-    pub fn MA_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: MAType) -> Result<(MA_Stream, f64), RetCode> {
-        self.MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType)
+    pub fn ma_open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: MAType) -> Result<(MaStream, f64), RetCode> {
+        self.ma_open_internal(inReal, 0, optInTimePeriod, optInMAType)
     }
 
-    /// [`Core::MA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ma_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MA`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -666,12 +665,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MA_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ma_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MA_OpenAndFill")]
-    pub fn MA_OpenAndFill(
+    pub fn ma_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
-    ) -> Result<(MA_Stream, OutRange), RetCode> {
+    ) -> Result<(MaStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -702,61 +701,61 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
+            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
+            return Ok((MaStream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
         }
         let (sub, fillRange) = match optInMAType {
             MAType::SMA => {
-                let (sub, fillRange) = self.SMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::SMA(sub), fillRange)
+                let (sub, fillRange) = self.sma_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Sma(sub), fillRange)
             }
             MAType::EMA => {
-                let (sub, fillRange) = self.EMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::EMA(sub), fillRange)
+                let (sub, fillRange) = self.ema_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Ema(sub), fillRange)
             }
             MAType::WMA => {
-                let (sub, fillRange) = self.WMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::WMA(sub), fillRange)
+                let (sub, fillRange) = self.wma_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Wma(sub), fillRange)
             }
             MAType::DEMA => {
-                let (sub, fillRange) = self.DEMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::DEMA(sub), fillRange)
+                let (sub, fillRange) = self.dema_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Dema(sub), fillRange)
             }
             MAType::TEMA => {
-                let (sub, fillRange) = self.TEMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::TEMA(sub), fillRange)
+                let (sub, fillRange) = self.tema_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Tema(sub), fillRange)
             }
             MAType::TRIMA => {
-                let (sub, fillRange) = self.TRIMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::TRIMA(sub), fillRange)
+                let (sub, fillRange) = self.trima_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Trima(sub), fillRange)
             }
             MAType::KAMA => {
-                let (sub, fillRange) = self.KAMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::KAMA(sub), fillRange)
+                let (sub, fillRange) = self.kama_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Kama(sub), fillRange)
             }
             MAType::MAMA => {
-                let (sub, fillRange) = self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, None)?;
-                (MA_Sub::MAMA(sub), fillRange)
+                let (sub, fillRange) = self.mama_open_and_fill(inReal, 0.5, 0.05, outReal, None)?;
+                (MaSub::Mama(sub), fillRange)
             }
             MAType::T3 => {
-                let (sub, fillRange) = self.T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outReal)?;
-                (MA_Sub::T3(sub), fillRange)
+                let (sub, fillRange) = self.t3_open_and_fill(inReal, optInTimePeriod, 0.7, outReal)?;
+                (MaSub::T3(sub), fillRange)
             }
             MAType::HMA => {
-                let (sub, fillRange) = self.HMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
-                (MA_Sub::HMA(sub), fillRange)
+                let (sub, fillRange) = self.hma_open_and_fill(inReal, optInTimePeriod, outReal)?;
+                (MaSub::Hma(sub), fillRange)
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { state, out: fillRange }, fillRange))
+        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
+        Ok((MaStream { state, out: fillRange }, fillRange))
     }
 
-    /// [`Core::MA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MA_OpenAndFillInternal(
+    pub(crate) fn ma_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MA_Stream, RetCode> {
+    ) -> Result<MaStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -788,51 +787,51 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok(MA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
+            return Ok(MaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let sub = match optInMAType {
-            MAType::SMA => MA_Sub::SMA(
-                self.SMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::SMA => MaSub::Sma(
+                self.sma_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::EMA => MA_Sub::EMA(
-                self.EMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::EMA => MaSub::Ema(
+                self.ema_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::WMA => MA_Sub::WMA(
-                self.WMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::WMA => MaSub::Wma(
+                self.wma_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::DEMA => MA_Sub::DEMA(
-                self.DEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::DEMA => MaSub::Dema(
+                self.dema_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::TEMA => MA_Sub::TEMA(
-                self.TEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::TEMA => MaSub::Tema(
+                self.tema_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::TRIMA => MA_Sub::TRIMA(
-                self.TRIMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::TRIMA => MaSub::Trima(
+                self.trima_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::KAMA => MA_Sub::KAMA(
-                self.KAMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::KAMA => MaSub::Kama(
+                self.kama_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::MAMA => MA_Sub::MAMA(
-                self.MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, None)?,
+            MAType::MAMA => MaSub::Mama(
+                self.mama_open_and_fill_internal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, None)?,
             ),
-            MAType::T3 => MA_Sub::T3(
-                self.T3_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
+            MAType::T3 => MaSub::T3(
+                self.t3_open_and_fill_internal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
             ),
-            MAType::HMA => MA_Sub::HMA(
-                self.HMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            MAType::HMA => MaSub::Hma(
+                self.hma_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
             _ => return Err(RetCode::BadParam),
         };
-        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok(MA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
+        Ok(MaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MA_Stream {
+impl MaStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -850,7 +849,7 @@ impl MA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MA_step_impl(&mut self.state, inReal, &mut outReal)?;
+        Core::ma_step_impl(&mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -883,7 +882,7 @@ impl MA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MA_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            Core::ma_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -928,7 +927,7 @@ impl MA_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MA_Stream>();
+    _assert_auto::<MaStream>();
 };
 
 /***************/

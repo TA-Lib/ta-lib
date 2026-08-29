@@ -396,23 +396,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live EFI stream: one value per closed bar, bit-identical to [`Core::EFI`]
-/// over the same series. Open with [`Core::EFI_Open`]; dropping the handle
+/// over the same series. Open with [`Core::efi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_EFI_Stream")]
-pub struct EFI_Stream {
-    state: EFI_StreamState,
+pub struct EfiStream {
+    state: EfiStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl EFI_Stream {
+impl EfiStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `EFI_StreamState::restore_from`.
+    /// allocating new ones. See `EfiStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -421,7 +421,7 @@ impl EFI_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct EFI_StreamState {
+struct EfiStreamState {
     optInTimePeriod: i32,
     prevClose: f64,
     optInK_1: f64,
@@ -429,7 +429,7 @@ struct EFI_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl EFI_StreamState {
+impl EfiStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -440,14 +440,13 @@ impl EFI_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn EFI_step_impl(sp: &mut EFI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn efi_step_impl(sp: &mut EfiStreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
@@ -462,11 +461,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::EFI_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::EFI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn EFI_OpenImpl(
+    /// The single whole-history transcription behind [`Core::efi_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::efi_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn efi_open_impl(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<EFI_Stream, RetCode> {
+    ) -> Result<EfiStream, RetCode> {
         if inClose.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -561,13 +560,13 @@ impl Core {
             (*outNBElement) = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = EFI_StreamState {
+            let state = EfiStreamState {
                 optInTimePeriod,
                 prevClose,
                 optInK_1,
                 prevMA,
             };
-            Ok(EFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(EfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut optInK_1: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
@@ -666,24 +665,24 @@ impl Core {
             (*outNBElement) = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = EFI_StreamState {
+            let state = EfiStreamState {
                 optInTimePeriod,
                 prevClose,
                 optInK_1,
                 prevMA,
             };
-            Ok(EFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(EfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::EFI_Open`] (composition seam).
-    pub(crate) fn EFI_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::efi_open`] (composition seam).
+    pub(crate) fn efi_open_internal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(EFI_Stream, f64), RetCode> {
+    ) -> Result<(EfiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.EFI_OpenImpl(inClose, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.efi_open_impl(inClose, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -708,7 +707,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.EFI_Open(&close, &volume, 13).expect("enough history");
+    /// let (mut s, _last) = core.efi_open(&close, &volume, 13).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 12_345.0).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -718,11 +717,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_EFI_Open")]
-    pub fn EFI_Open(&self, inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(EFI_Stream, f64), RetCode> {
-        self.EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod)
+    pub fn efi_open(&self, inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(EfiStream, f64), RetCode> {
+        self.efi_open_internal(inClose, inVolume, 0, optInTimePeriod)
     }
 
-    /// [`Core::EFI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::efi_open`] that also fills the output array(s) bit-identically to
     /// [`Core::EFI`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -730,12 +729,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::EFI_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::efi_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_EFI_OpenAndFill")]
-    pub fn EFI_OpenAndFill(
+    pub fn efi_open_and_fill(
         &self, inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(EFI_Stream, OutRange), RetCode> {
+    ) -> Result<(EfiStream, OutRange), RetCode> {
         if inClose.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -752,23 +751,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.EFI_OpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.efi_open_and_fill_internal(inClose, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::EFI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::efi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn EFI_OpenAndFillInternal(
+    pub(crate) fn efi_open_and_fill_internal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<EFI_Stream, RetCode> {
-        self.EFI_OpenImpl(inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<EfiStream, RetCode> {
+        self.efi_open_impl(inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl EFI_Stream {
+impl EfiStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -786,7 +785,7 @@ impl EFI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::EFI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
+        Core::efi_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -819,7 +818,7 @@ impl EFI_Stream {
             if !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::EFI_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
+            Core::efi_step_impl(&mut self.state, inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -862,7 +861,7 @@ impl EFI_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<EFI_Stream>();
+    _assert_auto::<EfiStream>();
 };
 
 /***************/

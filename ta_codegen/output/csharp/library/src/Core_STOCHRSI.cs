@@ -490,12 +490,12 @@ public partial class Core
    /// </remarks>
    /// <param name="FastK">Unsmoothed stochastic of the RSI (raw %K)</param>
    /// <param name="FastD">%K smoothed over FastD_Period (signal line)</param>
-   public readonly record struct STOCHRSI_Value( double FastK, double FastD );
+   public readonly record struct StochrsiValue( double FastK, double FastD );
 
    /// <summary>A live <c>STOCHRSI</c> stream: one value per closed bar, bit-identical to
    /// <c>STOCHRSI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.STOCHRSI_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.StochrsiOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -508,7 +508,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class STOCHRSI_Stream
+   public sealed class StochrsiStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -517,17 +517,17 @@ public partial class Core
       internal MAType optInFastD_MAType;
       internal double cur_outFastK;
       internal double cur_outFastD;
-      internal RSI_Stream sub0 = null!;
-      internal STOCHF_Stream sub1 = null!;
+      internal RsiStream sub0 = null!;
+      internal StochfStream sub1 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal STOCHRSI_Stream( Core core ) { this.core = core; }
+      internal StochrsiStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.STOCHRSI</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Stochrsi</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -536,7 +536,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal STOCHRSI_Stream( STOCHRSI_Stream other )
+      internal StochrsiStream( StochrsiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -545,13 +545,13 @@ public partial class Core
          this.optInFastD_MAType = other.optInFastD_MAType;
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
-         this.sub0 = new RSI_Stream(other.sub0);
-         this.sub1 = new STOCHF_Stream(other.sub1);
+         this.sub0 = new RsiStream(other.sub0);
+         this.sub1 = new StochfStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( STOCHRSI_Stream other )
+      internal void CopyFrom( StochrsiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -561,12 +561,12 @@ public partial class Core
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
          if( this.sub0 is null ) {
-            this.sub0 = new RSI_Stream(other.sub0);
+            this.sub0 = new RsiStream(other.sub0);
          } else {
             this.sub0.CopyFrom(other.sub0);
          }
          if( this.sub1 is null ) {
-            this.sub1 = new STOCHF_Stream(other.sub1);
+            this.sub1 = new StochfStream(other.sub1);
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
@@ -575,7 +575,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static STOCHRSI_Stream? peekScratch;
+      [ThreadStatic] private static StochrsiStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -590,12 +590,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public STOCHRSI_Value Update( double inReal )
+      public StochrsiValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STOCHRSI", "update", RetCode.BadParam);
-         core.STOCHRSI_StepImpl(this, inReal);
+         core.StochrsiStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new STOCHRSI_Value(cur_outFastK, cur_outFastD);
+         return new StochrsiValue(cur_outFastK, cur_outFastD);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -609,18 +609,18 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public STOCHRSI_Value Peek( double inReal )
+      public StochrsiValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STOCHRSI", "peek", RetCode.BadParam);
-         STOCHRSI_Stream? scratch = peekScratch;
+         StochrsiStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new STOCHRSI_Stream(this);
+            scratch = new StochrsiStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.STOCHRSI_StepImpl(scratch, inReal);
-         return new STOCHRSI_Value(scratch.cur_outFastK, scratch.cur_outFastD);
+         core.StochrsiStepImpl(scratch, inReal);
+         return new StochrsiValue(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -644,7 +644,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("STOCHRSI", "updateAndFill", RetCode.BadParam);
-            core.STOCHRSI_StepImpl(this, inReal[i]);
+            core.StochrsiStepImpl(this, inReal[i]);
             outFastK[i] = cur_outFastK;
             outFastD[i] = cur_outFastD;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -656,18 +656,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public STOCHRSI_Value Value => new STOCHRSI_Value(cur_outFastK, cur_outFastD);
+      public StochrsiValue Value => new StochrsiValue(cur_outFastK, cur_outFastD);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public STOCHRSI_Stream Clone()
+      public StochrsiStream Clone()
       {
-         return new STOCHRSI_Stream(this);
+         return new StochrsiStream(this);
       }
    }
 
-   internal void STOCHRSI_StepImpl( STOCHRSI_Stream sp, double inReal )
+   internal void StochrsiStepImpl( StochrsiStream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;
@@ -675,7 +675,7 @@ public partial class Core
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempRSIBuffer = sp.sub0.Update(inReal);
       {
-         STOCHF_Value subOut1 = sp.sub1.Update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+         StochfValue subOut1 = sp.sub1.Update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
          cur_outFastK = subOut1.FastK;
          cur_outFastD = subOut1.FastD;
       }
@@ -683,7 +683,7 @@ public partial class Core
       sp.cur_outFastD = cur_outFastD;
    }
 
-   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
+   private RetCode StochrsiOpenImpl( StochrsiStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -776,7 +776,7 @@ public partial class Core
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RSI_Stream sub0 = RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      RsiStream sub0 = RsiOpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       retCode = RetCode.Success;
       if( outNbElement1 == 0 ) {
          outBegIdx = 0;
@@ -788,7 +788,7 @@ public partial class Core
       int subLen1 = (tempArraySize - 1) + 1;
       double[] subSrc1_0 = new double[subLen1];
       tempRSIBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
-      STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(subSrc1_0, subSrc1_0, subSrc1_0, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, sc_outFastK, sc_outFastD);
+      StochfStream sub1 = StochfOpenAndFillInternal(subSrc1_0, subSrc1_0, subSrc1_0, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, sc_outFastK, sc_outFastD);
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
@@ -810,11 +810,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
+   /* StochrsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal StochrsiStream StochrsiOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
+      StochrsiStream sp = new StochrsiStream(this);
+      RetCode retCode = StochrsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -823,13 +823,13 @@ public partial class Core
       throw StreamFailure("STOCHRSI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind STOCHRSI_Open (composition seam). */
-   internal STOCHRSI_Stream STOCHRSI_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   /* Internal startIdx-anchored open behind StochrsiOpen (composition seam). */
+   internal StochrsiStream StochrsiOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      StochrsiStream sp = new StochrsiStream(this);
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, sink_outFastK, sink_outFastD, 0);
+      RetCode retCode = StochrsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, sink_outFastK, sink_outFastD, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -840,12 +840,11 @@ public partial class Core
 
    /// <summary>Open a live <c>STOCHRSI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="STOCHRSI_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>STOCHRSI</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="StochrsiStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>STOCHRSI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>STOCHRSI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>STOCHRSI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>StochrsiOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series fed into the RSI calculation. The warm-up history, oldest
    /// bar first.</param>
@@ -864,14 +863,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public STOCHRSI_Stream STOCHRSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public StochrsiStream StochrsiOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STOCHRSI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STOCHRSI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      return StochrsiOpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
-   /// <summary><c>STOCHRSI_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>StochrsiOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>STOCHRSI</c> produces over
@@ -883,7 +882,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="STOCHRSI_Stream.OutRange"/>.</para>
+   /// <see cref="StochrsiStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series fed into the RSI calculation. The warm-up history, oldest
    /// bar first.</param>
@@ -907,7 +906,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
+   public StochrsiStream StochrsiOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STOCHRSI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STOCHRSI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -917,6 +916,6 @@ public partial class Core
       if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || outFastK.Overlaps(outFastD) ) {
          throw StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
       }
-      return STOCHRSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, outFastK, outFastD);
+      return StochrsiOpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, outFastK, outFastD);
    }
 }

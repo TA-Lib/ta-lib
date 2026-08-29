@@ -2230,11 +2230,17 @@ fn test_rust_generic_output_smoke() {
     // 6. Exactly 4 pub fn: guarded + lookback + the stream tier's open +
     // open_and_fill (open_internal is pub(crate), update/peek live on the handle
     // type).
-    let pub_fn_count = r.matches("pub fn SMA").count();
+    let batch_pub_fn_count = r.matches("pub fn SMA").count();
     assert_eq!(
-        pub_fn_count, 4,
-        "Rust SMA should have exactly 4 pub fn (sma, SMA_Lookback, SMA_Open, SMA_OpenAndFill), got {}",
-        pub_fn_count
+        batch_pub_fn_count, 2,
+        "Rust SMA batch tier should have exactly 2 pub fn (sma, SMA_Lookback), got {}",
+        batch_pub_fn_count
+    );
+    let stream_pub_fn_count = r.matches("pub fn sma_open").count();
+    assert_eq!(
+        stream_pub_fn_count, 2,
+        "Rust SMA stream tier should have exactly 2 pub fn (sma_open, sma_open_and_fill), got {}",
+        stream_pub_fn_count
     );
 }
 
@@ -8818,9 +8824,9 @@ fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
         ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
          "outReal, None)", "vec![0.0_f64; inReal.len()][..]"),
         ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
-         "MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, null)", "new double[historyLen])"),
+         "mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)", "new double[historyLen])"),
         ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
-         "MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, default)", "new double[historyLen])"),
+         "MamaOpenAndFill(inReal, 0.5, 0.05, outReal, default)", "new double[historyLen])"),
     ] {
         assert!(out.contains(want), "{lang}: MA's streaming MAMA arm must decline FAMA ({want})");
         assert!(
@@ -8904,7 +8910,7 @@ fn test_mama_nullable_fama_is_declinable_at_update_and_fill_in_every_backend() {
         "Java: the store into a declined output is guarded"
     );
     assert!(
-        j.contains("core.MAMA_StepImpl(this, inReal[i]);") && !j.contains("if( outFAMA != null ) core."),
+        j.contains("core.mamaStepImpl(this, inReal[i]);") && !j.contains("if( outFAMA != null ) core."),
         "Java: the step runs unconditionally — declining suppresses the write, not the computation"
     );
     // U2 is what makes U6a mean something here: a DECLINED output is accepted, an
@@ -8938,7 +8944,7 @@ fn test_mama_nullable_fama_is_declinable_at_update_and_fill_in_every_backend() {
         "C#: the store into a declined output is guarded"
     );
     assert!(
-        c_sharp.contains("core.MAMA_StepImpl(this, inReal[i]);")
+        c_sharp.contains("core.MamaStepImpl(this, inReal[i]);")
             && !c_sharp.contains("if( !outFAMA.IsEmpty ) core."),
         "C#: the step runs unconditionally — declining suppresses the write, not the computation"
     );
@@ -9023,7 +9029,7 @@ fn test_synth10_two_nullable_outputs_are_declinable_at_update_and_fill() {
         );
     }
     assert!(
-        rust.contains("SYNTH10_step_impl(&mut self.state, inReal[i], slot_outFirstOptional, &mut outRequired[i], slot_outSecondOptional);"),
+        rust.contains("synth10_step_impl(&mut self.state, inReal[i], slot_outFirstOptional, &mut outRequired[i], slot_outSecondOptional);"),
         "Rust: the step takes a slot per declinable output and the array for the required one"
     );
 
@@ -9538,22 +9544,22 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             // No `&self`: SMA's step reads nothing from `Core`, and a step that
             // does reads only the `cs_<setting>` parameters its handle carries
             // (issue #274).
-            "fn SMA_step_impl(sp: &mut SMA_StreamState,",
-            &["Core::SMA_step_impl(&mut self.state,"],
+            "fn sma_step_impl(sp: &mut SmaStreamState,",
+            &["Core::sma_step_impl(&mut self.state,"],
             "step_internal",
         ),
         (
             "java",
             &java,
-            "void SMA_StepImpl( SMA_Stream sp,",
-            &["core.SMA_StepImpl(this,", "core.SMA_StepImpl(scratch,"],
+            "void smaStepImpl( SmaStream sp,",
+            &["core.smaStepImpl(this,", "core.smaStepImpl(scratch,"],
             "StreamStep",
         ),
         (
             "csharp",
             &csharp,
-            "internal void SMA_StepImpl( SMA_Stream sp,",
-            &["core.SMA_StepImpl(this,", "core.SMA_StepImpl(scratch,"],
+            "internal void SmaStepImpl( SmaStream sp,",
+            &["core.SmaStepImpl(this,", "core.SmaStepImpl(scratch,"],
             "StreamStep",
         ),
     ];
@@ -12307,7 +12313,7 @@ fn test_composed_open_fuses_every_sub_call() {
         // definitions break the line right after the paren).
         let r = backends::rust_stream::generate(&func, &enums, &registry, &helpers);
         assert_eq!(
-            (r.matches("_OpenAndFillInternal(&").count(), r.matches("_OpenInternal(&").count()),
+            (r.matches("_open_and_fill_internal(&").count(), r.matches("_open_internal(&").count()),
             (fused, unfused),
             "{name}: Rust fused/unfused split differs from C"
         );
@@ -12321,7 +12327,7 @@ fn test_composed_open_fuses_every_sub_call() {
             j.lines().filter(|l| l.contains("sub") && l.contains(needle)).count()
         };
         assert_eq!(
-            (sub_opens("_OpenAndFillInternal("), sub_opens("_OpenInternal(")),
+            (sub_opens("OpenAndFillInternal("), sub_opens("OpenInternal(")),
             (fused, unfused),
             "{name}: Java fused/unfused split differs from C"
         );
@@ -12378,7 +12384,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
         }
         let src = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
         let sn = func.name.to_lowercase();
-        let entry = format!("pub fn {}_OpenAndFill(", func.name.to_uppercase());
+        let entry = format!("pub fn {}_open_and_fill(", backends::common::snake_words(&func.name));
         let at = src
             .find(&entry)
             .unwrap_or_else(|| panic!("{}: no public OpenAndFill", func.name));
@@ -12489,10 +12495,11 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
         }
         let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
         let base = func.name.to_uppercase();
+        let ident = backends::common::pascal_words(&func.name);
         let inputs = streaming::input_array_names(&func);
         for (verb, entry) in [
-            ("open", format!("public {base}_Stream {base}_Open( ")),
-            ("openAndFill", format!("public {base}_Stream {base}_OpenAndFill( ")),
+            ("open", format!("public {ident}Stream {ident}Open( ")),
+            ("openAndFill", format!("public {ident}Stream {ident}OpenAndFill( ")),
         ] {
             let at = src
                 .find(&entry)
@@ -12607,9 +12614,11 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
         }
         let src = backends::java::generate(&func, &enums, &registry, &helpers);
         let base = func.name.to_uppercase();
+        let ident_type = backends::common::pascal_words(&func.name);
+        let ident_method = backends::common::camel_words(&func.name);
         for (verb, entry, with_outputs) in [
-            ("open", format!("public {base}_Stream {base}_Open( "), false),
-            ("openAndFill", format!("public {base}_Stream {base}_OpenAndFill( "), true),
+            ("open", format!("public {ident_type}Stream {ident_method}Open( "), false),
+            ("openAndFill", format!("public {ident_type}Stream {ident_method}OpenAndFill( "), true),
         ] {
             let at = src
                 .find(&entry)
@@ -12737,12 +12746,15 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
     let helpers = HelperRegistry::empty();
     let enums = load_enums();
 
-    // The definition keyword that tells a definition from a call site, and the
-    // bare-code return this tier may not contain.
-    let specs: [(&str, &str, &str); 3] = [
-        ("Rust", "pub(crate) fn", "return Err(retCode)"),
-        ("Java", "private RetCode", "return retCode ;"),
-        ("C#", "private RetCode", "return retCode ;"),
+    // The definition keyword that tells a definition from a call site, the
+    // bare-code return this tier may not contain, and the substring that marks
+    // an Open-family identifier in this backend's own casing (Rust keeps the
+    // `_open` underscore; Java/C# dropped the underscore but kept `Open`
+    // PascalCase, issue #278).
+    let specs: [(&str, &str, &str, &str); 3] = [
+        ("Rust", "pub(crate) fn", "return Err(retCode)", "_open"),
+        ("Java", "private RetCode", "return retCode ;", "Open"),
+        ("C#", "private RetCode", "return retCode ;", "Open"),
     ];
 
     let mut per_backend = [0usize; 3];
@@ -12757,11 +12769,11 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
             backends::csharp::generate(&func, &enums, &registry, &helpers),
         ];
         for (b, src) in sources.iter().enumerate() {
-            let (lang, def_kw, bare) = specs[b];
+            let (lang, def_kw, bare, needle) = specs[b];
             let mut at = 0;
-            while let Some(i) = src[at..].find("_Open") {
+            while let Some(i) = src[at..].find(needle) {
                 let abs = at + i;
-                at = abs + "_Open".len();
+                at = abs + needle.len();
                 let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
                 if !src[line_start..abs].contains(def_kw) {
                     continue;
@@ -12885,12 +12897,12 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     /// line. And in Java and C# the two exempt tiers (MA, MAVP) wear the same
     /// name over a hand-rolled body that is not the strided numerics and owns no
     /// anchor of its own, so the parameter list must carry `outStride`.
-    fn open_impls<'a>(src: &'a str, def_kw: &str) -> Vec<&'a str> {
+    fn open_impls<'a>(src: &'a str, def_kw: &str, needle: &str) -> Vec<&'a str> {
         let mut out = Vec::new();
         let mut at = 0;
-        while let Some(i) = src[at..].find("_OpenImpl(") {
+        while let Some(i) = src[at..].find(needle) {
             let abs = at + i;
-            at = abs + "_OpenImpl(".len();
+            at = abs + needle.len();
             let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
             let params_end = src[abs..].find('{').map_or(src.len(), |b| abs + b);
             if src[line_start..abs].contains(def_kw) && src[abs..params_end].contains("outStride") {
@@ -12913,6 +12925,10 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     ];
     // The definition keyword, which is what tells a definition from a call site.
     let def_kws = ["static TA_RetCode", "pub(crate) fn", "private RetCode", "private RetCode"];
+    // The `_OpenImpl` marker in this backend's own casing (issue #278): C keeps
+    // `_OpenImpl(`, Rust lower-cases the whole family to `_open_impl(`, and
+    // Java/C# dropped the underscore joiner but kept `OpenImpl(` PascalCase.
+    let open_impl_needles = ["_OpenImpl(", "_open_impl(", "OpenImpl(", "OpenImpl("];
 
     let mut checked = 0usize;
     let mut per_backend = [0usize; 4];
@@ -12928,7 +12944,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 
         for (b, src) in sources.iter().enumerate() {
             let (lang, guard, empty_check) = specs[b];
-            for body in open_impls(src, def_kws[b]) {
+            for body in open_impls(src, def_kws[b], open_impl_needles[b]) {
                 if body.is_empty() {
                     continue;
                 }
@@ -13155,10 +13171,10 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
 
     // (indicator, handle, the settings its step reads, in field order)
     let cases: [(&str, &str, &[&str]); 3] = [
-        ("cdldoji", "CDLDOJI_Stream", &["cs_body_doji"]),
+        ("cdldoji", "CdldojiStream", &["cs_body_doji"]),
         (
             "cdladvanceblock",
-            "CDLADVANCEBLOCK_Stream",
+            "CdladvanceblockStream",
             &[
                 "cs_body_long",
                 "cs_far",
@@ -13167,7 +13183,7 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
                 "cs_shadow_short",
             ],
         ),
-        ("sma", "SMA_Stream", &[]),
+        ("sma", "SmaStream", &[]),
     ];
 
     for (name, handle, settings) in cases {
@@ -13203,16 +13219,15 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
             .map(|f| format!(", {f}: &CandleSetting"))
             .collect();
         let args: String = settings.iter().map(|f| format!("&self.{f}, ")).collect();
-        let upper = name.to_uppercase();
         assert!(
             rust.contains(&format!(
-                "fn {upper}_step_impl(sp: &mut {upper}_StreamState{params},"
+                "fn {name}_step_impl(sp: &mut {handle}State{params},"
             )),
             "{name}: step signature does not take exactly its settings"
         );
         assert!(
             rust.contains(&format!(
-                "Core::{upper}_step_impl(&mut self.state, {args}"
+                "Core::{name}_step_impl(&mut self.state, {args}"
             )),
             "{name}: `update` does not hand the step its settings"
         );
@@ -13230,7 +13245,7 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
     let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     let step = rust
-        .find("fn CDLDOJI_step_impl(")
+        .find("fn cdldoji_step_impl(")
         .expect("cdldoji renders a step");
     let step_body = &rust[step..step + rust[step..].find("\n    }").expect("step end")];
 
@@ -13247,5 +13262,72 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
     assert!(
         rust.contains("let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;"),
         "the batch tier must still read the Core it runs on"
+    );
+}
+
+/// `peek`'s reusable scratch is a bare `<N>StreamState`, stepped directly.
+///
+/// #201 put `update` on a scratch *handle* here to keep the transition down to
+/// one call site. That copied, every peek, the two things a peek cannot use:
+/// the settings, which no step writes, and the `out` range, which only a
+/// committed bar moves. It also re-ran the bar's `is_finite` check.
+///
+/// Two rows, each the other's control:
+///
+/// * `BBANDS` — in the reuse tier. Pins all four halves: the scratch is a bare
+///   state, the step runs on it with the settings still read off the live
+///   handle, `update` is not re-entered, and the bar is checked once.
+/// * `SMA` — outside it. Must keep the pre-#201 throwaway clone verbatim, so a
+///   generator that rewrites every peek reddens here rather than passing on
+///   BBANDS alone.
+#[test]
+fn a_reused_peek_scratch_is_a_bare_state_stepped_directly() {
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    let (func, enums) = load_indicator("bbands");
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        rust.contains(
+            "static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BbandsStreamState>>>"
+        ),
+        "the reused scratch holds a bare state, not a whole handle"
+    );
+    let peek = {
+        let at = rust.find("    pub fn peek(&self").expect("bbands has a peek");
+        &rust[at..at + rust[at..].find("\n    }").expect("peek end")]
+    };
+    assert!(
+        peek.contains("Core::bbands_step_impl(&mut scratch,"),
+        "peek runs the step on the scratch directly\n{peek}"
+    );
+    assert!(
+        !peek.contains("scratch.update("),
+        "peek must not re-enter `update`, which re-checks the bar\n{peek}"
+    );
+    assert!(
+        !peek.contains("out.count"),
+        "peek commits nothing, so it does no range bookkeeping\n{peek}"
+    );
+    assert_eq!(
+        peek.matches("is_finite").count(),
+        1,
+        "the bar is checked once, not twice\n{peek}"
+    );
+
+    // The control: outside the reuse tier the throwaway clone is unchanged.
+    let (func, enums) = load_indicator("sma");
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        !rust.contains("SMA_PEEK_SCRATCH"),
+        "SMA is outside the reuse tier and must have no scratch"
+    );
+    let peek = {
+        let at = rust.find("    pub fn peek(&self").expect("sma has a peek");
+        &rust[at..at + rust[at..].find("\n    }").expect("peek end")]
+    };
+    assert!(
+        peek.contains("let mut scratch = self.clone();") && peek.contains("scratch.update("),
+        "the throwaway tier keeps the pre-#201 clone verbatim\n{peek}"
     );
 }

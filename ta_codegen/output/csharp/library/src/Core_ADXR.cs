@@ -366,7 +366,7 @@ public partial class Core
    /// <summary>A live <c>ADXR</c> stream: one value per closed bar, bit-identical to
    /// <c>ADXR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.ADXR_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.AdxrOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -379,7 +379,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class ADXR_Stream
+   public sealed class AdxrStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -387,16 +387,16 @@ public partial class Core
       internal int lagRingPos_adx;
       internal int lagRingCap_adx;
       internal double[] lagRing_adx = [];
-      internal ADX_Stream sub0 = null!;
+      internal AdxStream sub0 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal ADXR_Stream( Core core ) { this.core = core; }
+      internal AdxrStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.ADXR</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Adxr</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -404,7 +404,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal ADXR_Stream( ADXR_Stream other )
+      internal AdxrStream( AdxrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -413,12 +413,12 @@ public partial class Core
          this.lagRingCap_adx = other.lagRingCap_adx;
          this.lagRing_adx = new double[other.lagRing_adx.Length];
          Array.Copy( other.lagRing_adx, this.lagRing_adx, other.lagRing_adx.Length );
-         this.sub0 = new ADX_Stream(other.sub0);
+         this.sub0 = new AdxStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( ADXR_Stream other )
+      internal void CopyFrom( AdxrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -430,7 +430,7 @@ public partial class Core
          }
          Array.Copy( other.lagRing_adx, this.lagRing_adx, other.lagRing_adx.Length );
          if( this.sub0 is null ) {
-            this.sub0 = new ADX_Stream(other.sub0);
+            this.sub0 = new AdxStream(other.sub0);
          } else {
             this.sub0.CopyFrom(other.sub0);
          }
@@ -456,7 +456,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ADXR", "update", RetCode.BadParam);
-         core.ADXR_StepImpl(this, inHigh, inLow, inClose);
+         core.AdxrStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -477,8 +477,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ADXR", "peek", RetCode.BadParam);
-         ADXR_Stream scratch = new ADXR_Stream(this);
-         core.ADXR_StepImpl(scratch, inHigh, inLow, inClose);
+         AdxrStream scratch = new AdxrStream(this);
+         core.AdxrStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -504,7 +504,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("ADXR", "updateAndFill", RetCode.BadParam);
-            core.ADXR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.AdxrStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -520,13 +520,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public ADXR_Stream Clone()
+      public AdxrStream Clone()
       {
-         return new ADXR_Stream(this);
+         return new AdxrStream(this);
       }
    }
 
-   internal void ADXR_StepImpl( ADXR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void AdxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;
@@ -539,7 +539,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode ADXR_OpenImpl( ADXR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AdxrOpenImpl( AdxrStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -605,7 +605,7 @@ public partial class Core
        */
       /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      ADX_Stream sub0 = ADX_OpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      AdxStream sub0 = AdxOpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, out outBegIdx, out outNBElement, adx);
       retCode = RetCode.Success;
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
@@ -635,11 +635,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* ADXR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ADXR_Stream ADXR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* AdxrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AdxrStream AdxrOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      ADXR_Stream sp = new ADXR_Stream(this);
-      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      AdxrStream sp = new AdxrStream(this);
+      RetCode retCode = AdxrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -648,12 +648,12 @@ public partial class Core
       throw StreamFailure("ADXR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind ADXR_Open (composition seam). */
-   internal ADXR_Stream ADXR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind AdxrOpen (composition seam). */
+   internal AdxrStream AdxrOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      ADXR_Stream sp = new ADXR_Stream(this);
+      AdxrStream sp = new AdxrStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = AdxrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -664,11 +664,11 @@ public partial class Core
 
    /// <summary>Open a live <c>ADXR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="ADXR_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="AdxrStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>ADXR</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>ADXR_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>ADXR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AdxrOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -682,7 +682,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ADXR_Stream ADXR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public AdxrStream AdxrOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADXR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADXR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -690,11 +690,11 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("ADXR open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("ADXR", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ADXR", "open", "inClose", inClose.Length, inHigh.Length);
-      return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return AdxrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>ADXR_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>AdxrOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>ADXR</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -705,7 +705,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ADXR_Stream.OutRange"/>.</para>
+   /// <see cref="AdxrStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -722,7 +722,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ADXR_Stream ADXR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public AdxrStream AdxrOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADXR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADXR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -735,6 +735,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("ADXR", "openAndFill", RetCode.BadParam);
       }
-      return ADXR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return AdxrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -348,7 +348,7 @@ public partial class Core
    /// <summary>A live <c>TRANGE</c> stream: one value per closed bar, bit-identical to
    /// <c>TRANGE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.TRANGE_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.TrangeOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -361,7 +361,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class TRANGE_Stream
+   public sealed class TrangeStream
    {
       internal Core core;
       internal double lag1_inClose;
@@ -369,12 +369,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal TRANGE_Stream( Core core ) { this.core = core; }
+      internal TrangeStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.TRANGE</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Trange</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -383,7 +383,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal TRANGE_Stream( TRANGE_Stream other )
+      internal TrangeStream( TrangeStream other )
       {
          this.core = other.core;
          this.lag1_inClose = other.lag1_inClose;
@@ -392,7 +392,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( TRANGE_Stream other )
+      internal void CopyFrom( TrangeStream other )
       {
          this.core = other.core;
          this.lag1_inClose = other.lag1_inClose;
@@ -419,7 +419,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("TRANGE", "update", RetCode.BadParam);
-         core.TRANGE_StepImpl(this, inHigh, inLow, inClose);
+         core.TrangeStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -440,8 +440,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("TRANGE", "peek", RetCode.BadParam);
-         TRANGE_Stream scratch = new TRANGE_Stream(this);
-         core.TRANGE_StepImpl(scratch, inHigh, inLow, inClose);
+         TrangeStream scratch = new TrangeStream(this);
+         core.TrangeStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -467,7 +467,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("TRANGE", "updateAndFill", RetCode.BadParam);
-            core.TRANGE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.TrangeStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -483,13 +483,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public TRANGE_Stream Clone()
+      public TrangeStream Clone()
       {
-         return new TRANGE_Stream(this);
+         return new TrangeStream(this);
       }
    }
 
-   internal void TRANGE_StepImpl( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
+   internal void TrangeStepImpl( TrangeStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;
@@ -515,7 +515,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TrangeOpenImpl( TrangeStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -596,11 +596,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* TRANGE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal TRANGE_Stream TRANGE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* TrangeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal TrangeStream TrangeOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      TrangeStream sp = new TrangeStream(this);
+      RetCode retCode = TrangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -609,12 +609,12 @@ public partial class Core
       throw StreamFailure("TRANGE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind TRANGE_Open (composition seam). */
-   internal TRANGE_Stream TRANGE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind TrangeOpen (composition seam). */
+   internal TrangeStream TrangeOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      TRANGE_Stream sp = new TRANGE_Stream(this);
+      TrangeStream sp = new TrangeStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = TrangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -625,11 +625,11 @@ public partial class Core
 
    /// <summary>Open a live <c>TRANGE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="TRANGE_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="TrangeStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>TRANGE</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>TRANGE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>TRANGE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>TrangeOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -641,7 +641,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TRANGE_Stream TRANGE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public TrangeStream TrangeOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "TRANGE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "TRANGE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -649,10 +649,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("TRANGE open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("TRANGE", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("TRANGE", "open", "inClose", inClose.Length, inHigh.Length);
-      return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
+      return TrangeOpenInternal(inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>TRANGE_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>TrangeOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>TRANGE</c> produces over
@@ -664,7 +664,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="TRANGE_Stream.OutRange"/>.</para>
+   /// <see cref="TrangeStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -679,7 +679,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TRANGE_Stream TRANGE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
+   public TrangeStream TrangeOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "TRANGE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "TRANGE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -692,6 +692,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("TRANGE", "openAndFill", RetCode.BadParam);
       }
-      return TRANGE_OpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
+      return TrangeOpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

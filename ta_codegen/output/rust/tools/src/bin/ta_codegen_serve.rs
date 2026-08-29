@@ -1020,9 +1020,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ac_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AC_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ac_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1136,9 +1136,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ACCBANDS_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.accbands_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ACCBANDS_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.accbands_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1236,9 +1236,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ACOS_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.acos_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ACOS_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.acos_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1356,9 +1356,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AD_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ad_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AD_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ad_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1460,9 +1460,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ADD_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.add_open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ADD_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.add_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1584,9 +1584,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ADOSC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.adosc_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ADOSC_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.adosc_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1701,9 +1701,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ADX_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.adx_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ADX_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.adx_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1815,9 +1815,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ADXR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.adxr_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ADXR_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.adxr_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -1923,9 +1923,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AO_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ao_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AO_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ao_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2029,9 +2029,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.APO_Open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.apo_open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.APO_OpenAndFill(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.apo_open_and_fill(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2137,9 +2137,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AROON_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.aroon_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AROON_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.aroon_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2245,9 +2245,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AROONOSC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.aroonosc_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AROONOSC_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.aroonosc_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2341,9 +2341,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ASIN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.asin_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ASIN_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.asin_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2437,9 +2437,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ATAN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.atan_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ATAN_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.atan_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2554,9 +2554,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ATR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.atr_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ATR_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.atr_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2652,9 +2652,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AVGDEV_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.avgdev_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AVGDEV_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.avgdev_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2772,9 +2772,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.AVGPRICE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.avgprice_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.AVGPRICE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.avgprice_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2882,9 +2882,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.BBANDS_Open(&inReal[..=endIdx], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.bbands_open(&inReal[..=endIdx], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.BBANDS_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.bbands_open_and_fill(&inReal[..=endIdx], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -2993,9 +2993,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.BETA_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.beta_open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.BETA_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.beta_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3113,9 +3113,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.BOP_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.bop_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.BOP_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.bop_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3227,9 +3227,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CCI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cci_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CCI_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cci_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3347,9 +3347,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL2CROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl2crows_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL2CROWS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl2crows_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3467,9 +3467,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL3BLACKCROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl3blackcrows_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL3BLACKCROWS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl3blackcrows_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3587,9 +3587,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL3INSIDE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl3inside_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL3INSIDE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl3inside_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3707,9 +3707,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL3LINESTRIKE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl3linestrike_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL3LINESTRIKE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl3linestrike_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3827,9 +3827,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL3OUTSIDE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl3outside_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL3OUTSIDE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl3outside_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -3947,9 +3947,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL3STARSINSOUTH_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl3starsinsouth_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL3STARSINSOUTH_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl3starsinsouth_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4067,9 +4067,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDL3WHITESOLDIERS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdl3whitesoldiers_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDL3WHITESOLDIERS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdl3whitesoldiers_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4189,9 +4189,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLABANDONEDBABY_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlabandonedbaby_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLABANDONEDBABY_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlabandonedbaby_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4309,9 +4309,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLADVANCEBLOCK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdladvanceblock_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLADVANCEBLOCK_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdladvanceblock_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4429,9 +4429,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLBELTHOLD_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlbelthold_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLBELTHOLD_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlbelthold_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4549,9 +4549,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLBREAKAWAY_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlbreakaway_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLBREAKAWAY_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlbreakaway_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4669,9 +4669,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLCLOSINGMARUBOZU_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlclosingmarubozu_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLCLOSINGMARUBOZU_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlclosingmarubozu_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4789,9 +4789,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLCONCEALBABYSWALL_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlconcealbabyswall_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLCONCEALBABYSWALL_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlconcealbabyswall_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -4909,9 +4909,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLCOUNTERATTACK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlcounterattack_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLCOUNTERATTACK_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlcounterattack_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5031,9 +5031,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLDARKCLOUDCOVER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdldarkcloudcover_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLDARKCLOUDCOVER_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdldarkcloudcover_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5151,9 +5151,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdldoji_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLDOJI_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdldoji_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5271,9 +5271,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLDOJISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdldojistar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLDOJISTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdldojistar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5391,9 +5391,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLDRAGONFLYDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdldragonflydoji_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLDRAGONFLYDOJI_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdldragonflydoji_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5511,9 +5511,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLENGULFING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlengulfing_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLENGULFING_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlengulfing_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5633,9 +5633,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLEVENINGDOJISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdleveningdojistar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLEVENINGDOJISTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdleveningdojistar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5755,9 +5755,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLEVENINGSTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdleveningstar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLEVENINGSTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdleveningstar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5875,9 +5875,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLGAPSIDESIDEWHITE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlgapsidesidewhite_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLGAPSIDESIDEWHITE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlgapsidesidewhite_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -5995,9 +5995,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLGRAVESTONEDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlgravestonedoji_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLGRAVESTONEDOJI_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlgravestonedoji_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6115,9 +6115,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHAMMER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlhammer_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHAMMER_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlhammer_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6235,9 +6235,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHANGINGMAN_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlhangingman_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHANGINGMAN_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlhangingman_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6355,9 +6355,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHARAMI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlharami_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHARAMI_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlharami_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6475,9 +6475,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHARAMICROSS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlharamicross_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHARAMICROSS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlharamicross_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6595,9 +6595,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHIGHWAVE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlhighwave_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHIGHWAVE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlhighwave_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6715,9 +6715,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHIKKAKE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlhikkake_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHIKKAKE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlhikkake_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6835,9 +6835,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHIKKAKEMOD_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlhikkakemod_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHIKKAKEMOD_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlhikkakemod_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -6955,9 +6955,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLHOMINGPIGEON_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlhomingpigeon_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLHOMINGPIGEON_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlhomingpigeon_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7075,9 +7075,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLIDENTICAL3CROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlidentical3crows_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLIDENTICAL3CROWS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlidentical3crows_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7195,9 +7195,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLINNECK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlinneck_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLINNECK_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlinneck_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7315,9 +7315,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLINVERTEDHAMMER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlinvertedhammer_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLINVERTEDHAMMER_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlinvertedhammer_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7435,9 +7435,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLKICKING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlkicking_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLKICKING_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlkicking_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7555,9 +7555,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLKICKINGBYLENGTH_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlkickingbylength_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLKICKINGBYLENGTH_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlkickingbylength_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7675,9 +7675,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLLADDERBOTTOM_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlladderbottom_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLLADDERBOTTOM_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlladderbottom_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7795,9 +7795,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLLONGLEGGEDDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdllongleggeddoji_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLLONGLEGGEDDOJI_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdllongleggeddoji_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -7915,9 +7915,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLLONGLINE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdllongline_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLLONGLINE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdllongline_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8035,9 +8035,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLMARUBOZU_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlmarubozu_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLMARUBOZU_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlmarubozu_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8155,9 +8155,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLMATCHINGLOW_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlmatchinglow_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLMATCHINGLOW_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlmatchinglow_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8277,9 +8277,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLMATHOLD_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlmathold_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLMATHOLD_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlmathold_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8399,9 +8399,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLMORNINGDOJISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlmorningdojistar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLMORNINGDOJISTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlmorningdojistar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8521,9 +8521,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLMORNINGSTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlmorningstar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLMORNINGSTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlmorningstar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8641,9 +8641,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLONNECK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlonneck_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLONNECK_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlonneck_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8761,9 +8761,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLPIERCING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlpiercing_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLPIERCING_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlpiercing_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -8881,9 +8881,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLRICKSHAWMAN_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlrickshawman_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLRICKSHAWMAN_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlrickshawman_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9001,9 +9001,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLRISEFALL3METHODS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlrisefall3methods_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLRISEFALL3METHODS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlrisefall3methods_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9121,9 +9121,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLSEPARATINGLINES_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlseparatinglines_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLSEPARATINGLINES_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlseparatinglines_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9241,9 +9241,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLSHOOTINGSTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlshootingstar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLSHOOTINGSTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlshootingstar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9361,9 +9361,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLSHORTLINE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlshortline_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLSHORTLINE_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlshortline_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9481,9 +9481,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLSPINNINGTOP_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlspinningtop_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLSPINNINGTOP_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlspinningtop_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9601,9 +9601,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLSTALLEDPATTERN_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlstalledpattern_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLSTALLEDPATTERN_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlstalledpattern_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9721,9 +9721,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLSTICKSANDWICH_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlsticksandwich_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLSTICKSANDWICH_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlsticksandwich_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9841,9 +9841,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLTAKURI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdltakuri_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLTAKURI_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdltakuri_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -9961,9 +9961,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLTASUKIGAP_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdltasukigap_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLTASUKIGAP_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdltasukigap_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10081,9 +10081,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLTHRUSTING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlthrusting_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLTHRUSTING_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlthrusting_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10201,9 +10201,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLTRISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdltristar_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLTRISTAR_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdltristar_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10321,9 +10321,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLUNIQUE3RIVER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlunique3river_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLUNIQUE3RIVER_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlunique3river_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10441,9 +10441,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLUPSIDEGAP2CROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlupsidegap2crows_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLUPSIDEGAP2CROWS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlupsidegap2crows_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10561,9 +10561,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CDLXSIDEGAP3METHODS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cdlxsidegap3methods_open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CDLXSIDEGAP3METHODS_OpenAndFill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cdlxsidegap3methods_open_and_fill(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10657,9 +10657,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CEIL_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ceil_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CEIL_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ceil_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10779,9 +10779,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CMF_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cmf_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CMF_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cmf_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10880,9 +10880,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CMO_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cmo_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CMO_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cmo_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -10978,9 +10978,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CMOU_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cmou_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CMOU_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cmou_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11084,9 +11084,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.CORREL_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.correl_open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.CORREL_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.correl_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11180,9 +11180,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.COS_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cos_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.COS_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cos_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11276,9 +11276,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.COSH_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.cosh_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.COSH_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.cosh_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11374,9 +11374,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.DEMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.dema_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.DEMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.dema_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11478,9 +11478,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.DIV_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.div_open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.DIV_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.div_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11595,9 +11595,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.DX_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.dx_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.DX_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.dx_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11701,9 +11701,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.EFI_Open(&inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.efi_open(&inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.EFI_OpenAndFill(&inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.efi_open_and_fill(&inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11802,9 +11802,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.EMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ema_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.EMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ema_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11898,9 +11898,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.EXP_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.exp_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.EXP_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.exp_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -11994,9 +11994,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.FLOOR_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.floor_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.FLOOR_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.floor_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12092,9 +12092,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.hma_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.hma_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12191,9 +12191,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HT_DCPERIOD_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ht_dcperiod_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HT_DCPERIOD_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ht_dcperiod_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12290,9 +12290,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HT_DCPHASE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ht_dcphase_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HT_DCPHASE_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ht_dcphase_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12390,9 +12390,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HT_PHASOR_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ht_phasor_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HT_PHASOR_OpenAndFill(&inReal[..=endIdx], &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ht_phasor_open_and_fill(&inReal[..=endIdx], &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12492,9 +12492,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HT_SINE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ht_sine_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HT_SINE_OpenAndFill(&inReal[..=endIdx], &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ht_sine_open_and_fill(&inReal[..=endIdx], &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12593,9 +12593,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HT_TRENDLINE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ht_trendline_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HT_TRENDLINE_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ht_trendline_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12692,9 +12692,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.HT_TRENDMODE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ht_trendmode_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.HT_TRENDMODE_OpenAndFill(&inReal[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ht_trendmode_open_and_fill(&inReal[..=endIdx], &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12798,9 +12798,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.IMI_Open(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.imi_open(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.IMI_OpenAndFill(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.imi_open_and_fill(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12899,9 +12899,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.KAMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.kama_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.KAMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.kama_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -12997,9 +12997,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.LINEARREG_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.linearreg_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.LINEARREG_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.linearreg_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13095,9 +13095,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.LINEARREG_ANGLE_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.linearreg_angle_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.LINEARREG_ANGLE_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.linearreg_angle_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13193,9 +13193,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.LINEARREG_INTERCEPT_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.linearreg_intercept_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.LINEARREG_INTERCEPT_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.linearreg_intercept_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13291,9 +13291,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.LINEARREG_SLOPE_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.linearreg_slope_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.LINEARREG_SLOPE_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.linearreg_slope_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13387,9 +13387,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.LN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ln_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.LN_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ln_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13483,9 +13483,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.LOG10_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.log10_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.LOG10_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.log10_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13587,9 +13587,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MA_Open(&inReal[..=endIdx], optInTimePeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ma_open(&inReal[..=endIdx], optInTimePeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ma_open_and_fill(&inReal[..=endIdx], optInTimePeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13692,9 +13692,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MACD_Open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.macd_open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MACD_OpenAndFill(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.macd_open_and_fill(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13814,9 +13814,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MACDEXT_Open(&inReal[..=endIdx], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.macdext_open(&inReal[..=endIdx], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MACDEXT_OpenAndFill(&inReal[..=endIdx], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.macdext_open_and_fill(&inReal[..=endIdx], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -13919,9 +13919,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MACDFIX_Open(&inReal[..=endIdx], optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.macdfix_open(&inReal[..=endIdx], optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MACDFIX_OpenAndFill(&inReal[..=endIdx], optInSignalPeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.macdfix_open_and_fill(&inReal[..=endIdx], optInSignalPeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14027,9 +14027,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MAMA_Open(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.mama_open(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MAMA_OpenAndFill(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, &mut outBuf0, Some(&mut outBuf1)) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.mama_open_and_fill(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, &mut outBuf0, Some(&mut outBuf1)) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14141,9 +14141,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MARKETFI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.marketfi_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MARKETFI_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.marketfi_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14255,9 +14255,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MAVP_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInMinPeriod, optInMaxPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.mavp_open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInMinPeriod, optInMaxPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MAVP_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], optInMinPeriod, optInMaxPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.mavp_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], optInMinPeriod, optInMaxPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14354,9 +14354,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MAX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.max_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MAX_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.max_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14452,9 +14452,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MAXINDEX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.maxindex_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MAXINDEX_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.maxindex_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14556,9 +14556,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MEDPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.medprice_open(&inHigh[..=endIdx], &inLow[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MEDPRICE_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.medprice_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14678,9 +14678,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MFI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.mfi_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MFI_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.mfi_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14776,9 +14776,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MIDPOINT_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.midpoint_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MIDPOINT_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.midpoint_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14882,9 +14882,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MIDPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.midprice_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MIDPRICE_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.midprice_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -14980,9 +14980,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MIN_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.min_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MIN_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.min_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15078,9 +15078,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MININDEX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.minindex_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MININDEX_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.minindex_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outIntBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15177,9 +15177,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MINMAX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.minmax_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MINMAX_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.minmax_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15278,9 +15278,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MINMAXINDEX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.minmaxindex_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MINMAXINDEX_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outIntBuf0, &mut outIntBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.minmaxindex_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outIntBuf0, &mut outIntBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15397,9 +15397,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MINUS_DI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.minus_di_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MINUS_DI_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.minus_di_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15506,9 +15506,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MINUS_DM_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.minus_dm_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MINUS_DM_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.minus_dm_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15604,9 +15604,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MOM_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.mom_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MOM_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.mom_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15708,9 +15708,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.MULT_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.mult_open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.MULT_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.mult_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15825,9 +15825,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.NATR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.natr_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.NATR_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.natr_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -15929,9 +15929,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.NVI_Open(&inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.nvi_open(&inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.NVI_OpenAndFill(&inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.nvi_open_and_fill(&inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16033,9 +16033,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.OBV_Open(&inReal[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.obv_open(&inReal[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.OBV_OpenAndFill(&inReal[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.obv_open_and_fill(&inReal[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16150,9 +16150,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.PLUS_DI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.plus_di_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.PLUS_DI_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.plus_di_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16259,9 +16259,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.PLUS_DM_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.plus_dm_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.PLUS_DM_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.plus_dm_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16365,9 +16365,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.PPO_Open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ppo_open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.PPO_OpenAndFill(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ppo_open_and_fill(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16470,9 +16470,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.PVI_Open(&inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.pvi_open(&inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.PVI_OpenAndFill(&inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.pvi_open_and_fill(&inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16576,9 +16576,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.PVO_Open(&inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.pvo_open(&inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.PVO_OpenAndFill(&inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.pvo_open_and_fill(&inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16683,9 +16683,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.QSTICK_Open(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.qstick_open(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.QSTICK_OpenAndFill(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.qstick_open_and_fill(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16781,9 +16781,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ROC_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.roc_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ROC_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.roc_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16879,9 +16879,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ROCP_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.rocp_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ROCP_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.rocp_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -16977,9 +16977,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ROCR_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.rocr_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ROCR_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.rocr_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17075,9 +17075,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ROCR100_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.rocr100_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ROCR100_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.rocr100_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17176,9 +17176,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.RSI_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.rsi_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.RSI_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.rsi_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17284,9 +17284,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SAR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInAcceleration, optInMaximum, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sar_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInAcceleration, optInMaximum, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SAR_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInAcceleration, optInMaximum, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sar_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInAcceleration, optInMaximum, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17404,9 +17404,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SAREXT_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sarext_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SAREXT_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sarext_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17500,9 +17500,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SIN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sin_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SIN_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sin_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17596,9 +17596,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SINH_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sinh_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SINH_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sinh_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17694,9 +17694,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sma_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sma_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17815,9 +17815,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SMI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.smi_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SMI_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.smi_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -17913,9 +17913,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SQRT_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sqrt_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SQRT_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sqrt_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18013,9 +18013,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.STDDEV_Open(&inReal[..=endIdx], optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.stddev_open(&inReal[..=endIdx], optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.STDDEV_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, optInNbDev, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.stddev_open_and_fill(&inReal[..=endIdx], optInTimePeriod, optInNbDev, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18142,9 +18142,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.STOCH_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.stoch_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.STOCH_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.stoch_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18268,9 +18268,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.STOCHF_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.stochf_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.STOCHF_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.stochf_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18380,9 +18380,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.STOCHRSI_Open(&inReal[..=endIdx], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.stochrsi_open(&inReal[..=endIdx], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.STOCHRSI_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.stochrsi_open_and_fill(&inReal[..=endIdx], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18487,9 +18487,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SUB_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sub_open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SUB_OpenAndFill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sub_open_and_fill(&inReal0[..=endIdx], &inReal1[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18585,9 +18585,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.SUM_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.sum_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.SUM_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.sum_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18688,9 +18688,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.T3_Open(&inReal[..=endIdx], optInTimePeriod, optInVFactor, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.t3_open(&inReal[..=endIdx], optInTimePeriod, optInVFactor, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.T3_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, optInVFactor, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.t3_open_and_fill(&inReal[..=endIdx], optInTimePeriod, optInVFactor, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18784,9 +18784,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TAN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.tan_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TAN_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.tan_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18880,9 +18880,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TANH_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.tanh_open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TANH_OpenAndFill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.tanh_open_and_fill(&inReal[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -18978,9 +18978,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TEMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.tema_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TEMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.tema_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19090,9 +19090,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TRANGE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.trange_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TRANGE_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.trange_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19188,9 +19188,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TRIMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.trima_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TRIMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.trima_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19286,9 +19286,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TRIX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.trix_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TRIX_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.trix_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19384,9 +19384,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TSF_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.tsf_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TSF_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.tsf_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19496,9 +19496,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.TYPPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.typprice_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.TYPPRICE_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.typprice_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19614,9 +19614,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.ULTOSC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.ultosc_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.ULTOSC_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.ultosc_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19714,9 +19714,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.VAR_Open(&inReal[..=endIdx], optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.var_open(&inReal[..=endIdx], optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.VAR_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, optInNbDev, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.var_open_and_fill(&inReal[..=endIdx], optInTimePeriod, optInNbDev, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19834,9 +19834,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.VWAP_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.vwap_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.VWAP_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.vwap_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -19940,9 +19940,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.VWMA_Open(&inReal[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.vwma_open(&inReal[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.VWMA_OpenAndFill(&inReal[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.vwma_open_and_fill(&inReal[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -20052,9 +20052,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.WAD_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.wad_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.WAD_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.wad_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -20164,9 +20164,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.WCLPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.wclprice_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.WCLPRICE_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.wclprice_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -20278,9 +20278,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.WILLR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.willr_open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.WILLR_OpenAndFill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.willr_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -20376,9 +20376,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             };
             } else {
             if bench_mode == 1 {
-                rc = match core.WMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+                rc = match core.wma_open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.WMA_OpenAndFill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.wma_open_and_fill(&inReal[..=endIdx], optInTimePeriod, &mut outBuf0) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -21078,13 +21078,13 @@ fn sv_ac(core: &Core, params: &Value) -> String {
         let rc = match c2.AC(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AC_Open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
+            let open_rejects = c2.ac_open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AC_OpenAndFill(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0) {
+        match c2.ac_open_and_fill(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21103,7 +21103,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AC_Open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+            match c2.ac_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21127,7 +21127,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AC_Open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+            match c2.ac_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21149,7 +21149,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AC_Open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ac_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21206,7 +21206,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
         let rc = match c2.ACCBANDS(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ACCBANDS_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ACCBANDS_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.accbands_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
@@ -21214,7 +21214,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ACCBANDS_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0, &mut f1, &mut f2) {
+        match c2.accbands_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21237,7 +21237,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ACCBANDS_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.accbands_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21269,7 +21269,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ACCBANDS_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.accbands_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21297,7 +21297,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ACCBANDS_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.accbands_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21351,13 +21351,13 @@ fn sv_acos(core: &Core, params: &Value) -> String {
         let rc = match c2.ACOS(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ACOS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ACOS_Open(&fz_c).is_err();
+            let open_rejects = c2.acos_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ACOS_OpenAndFill(&fz_c, &mut f0) {
+        match c2.acos_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21376,7 +21376,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ACOS_Open(&fz_c[..p]) {
+            match c2.acos_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21400,7 +21400,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ACOS_Open(&fz_c[..p]) {
+            match c2.acos_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21422,7 +21422,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ACOS_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.acos_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21476,13 +21476,13 @@ fn sv_ad(core: &Core, params: &Value) -> String {
         let rc = match c2.AD(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AD_Open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
+            let open_rejects = c2.ad_open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AD_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, &mut f0) {
+        match c2.ad_open_and_fill(&fz_h, &fz_l, &fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21501,7 +21501,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AD_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
+            match c2.ad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21525,7 +21525,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AD_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
+            match c2.ad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21547,7 +21547,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AD_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21601,13 +21601,13 @@ fn sv_add(core: &Core, params: &Value) -> String {
         let rc = match c2.ADD(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ADD_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.add_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ADD_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.add_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21626,7 +21626,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ADD_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.add_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21650,7 +21650,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ADD_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.add_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21672,7 +21672,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ADD_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.add_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21729,13 +21729,13 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
         let rc = match c2.ADOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ADOSC_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod).is_err();
+            let open_rejects = c2.adosc_open(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ADOSC_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut f0) {
+        match c2.adosc_open_and_fill(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21754,7 +21754,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ADOSC_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod) {
+            match c2.adosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21778,7 +21778,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ADOSC_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod) {
+            match c2.adosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21800,7 +21800,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ADOSC_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.adosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21856,13 +21856,13 @@ fn sv_adx(core: &Core, params: &Value) -> String {
         let rc = match c2.ADX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ADX_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.adx_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ADX_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.adx_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -21881,7 +21881,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ADX_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.adx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -21905,7 +21905,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ADX_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.adx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -21927,7 +21927,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ADX_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.adx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -21983,13 +21983,13 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
         let rc = match c2.ADXR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADXR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ADXR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.adxr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ADXR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.adxr_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22008,7 +22008,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ADXR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.adxr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22032,7 +22032,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ADXR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.adxr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22054,7 +22054,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ADXR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.adxr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22110,13 +22110,13 @@ fn sv_ao(core: &Core, params: &Value) -> String {
         let rc = match c2.AO(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AO_Open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod).is_err();
+            let open_rejects = c2.ao_open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AO_OpenAndFill(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut f0) {
+        match c2.ao_open_and_fill(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22135,7 +22135,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AO_Open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
+            match c2.ao_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22159,7 +22159,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AO_Open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
+            match c2.ao_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22181,7 +22181,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AO_Open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ao_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22246,13 +22246,13 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         let rc = match c2.APO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.APO_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
+            let open_rejects = c2.apo_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.APO_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
+        match c2.apo_open_and_fill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22271,7 +22271,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.APO_Open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+            match c2.apo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22295,7 +22295,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.APO_Open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+            match c2.apo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22317,7 +22317,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.APO_Open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.apo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22373,14 +22373,14 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
         let rc = match c2.AROON(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AROON_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AROON_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
+            let open_rejects = c2.aroon_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AROON_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0, &mut f1) {
+        match c2.aroon_open_and_fill(&fz_h, &fz_l, optInTimePeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22401,7 +22401,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AROON_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.aroon_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22429,7 +22429,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AROON_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.aroon_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22454,7 +22454,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AROON_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.aroon_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22509,13 +22509,13 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
         let rc = match c2.AROONOSC(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AROONOSC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AROONOSC_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
+            let open_rejects = c2.aroonosc_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AROONOSC_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
+        match c2.aroonosc_open_and_fill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22534,7 +22534,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AROONOSC_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.aroonosc_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22558,7 +22558,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AROONOSC_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.aroonosc_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22580,7 +22580,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AROONOSC_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.aroonosc_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22634,13 +22634,13 @@ fn sv_asin(core: &Core, params: &Value) -> String {
         let rc = match c2.ASIN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ASIN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ASIN_Open(&fz_c).is_err();
+            let open_rejects = c2.asin_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ASIN_OpenAndFill(&fz_c, &mut f0) {
+        match c2.asin_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22659,7 +22659,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ASIN_Open(&fz_c[..p]) {
+            match c2.asin_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22683,7 +22683,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ASIN_Open(&fz_c[..p]) {
+            match c2.asin_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22705,7 +22705,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ASIN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.asin_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22759,13 +22759,13 @@ fn sv_atan(core: &Core, params: &Value) -> String {
         let rc = match c2.ATAN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ATAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ATAN_Open(&fz_c).is_err();
+            let open_rejects = c2.atan_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ATAN_OpenAndFill(&fz_c, &mut f0) {
+        match c2.atan_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22784,7 +22784,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ATAN_Open(&fz_c[..p]) {
+            match c2.atan_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22808,7 +22808,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ATAN_Open(&fz_c[..p]) {
+            match c2.atan_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22830,7 +22830,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ATAN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.atan_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -22886,13 +22886,13 @@ fn sv_atr(core: &Core, params: &Value) -> String {
         let rc = match c2.ATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ATR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ATR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.atr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ATR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.atr_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -22911,7 +22911,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ATR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.atr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -22935,7 +22935,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ATR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.atr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -22957,7 +22957,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ATR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.atr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23012,13 +23012,13 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
         let rc = match c2.AVGDEV(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AVGDEV_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AVGDEV_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.avgdev_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AVGDEV_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.avgdev_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23037,7 +23037,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AVGDEV_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.avgdev_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23061,7 +23061,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AVGDEV_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.avgdev_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23083,7 +23083,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AVGDEV_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.avgdev_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23137,13 +23137,13 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
         let rc = match c2.AVGPRICE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AVGPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.AVGPRICE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.avgprice_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.AVGPRICE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.avgprice_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23162,7 +23162,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.AVGPRICE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.avgprice_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23186,7 +23186,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.AVGPRICE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.avgprice_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23208,7 +23208,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.AVGPRICE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.avgprice_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23276,7 +23276,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         let rc = match c2.BBANDS(0, svN - 1, &fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.BBANDS_Open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
+            let open_rejects = c2.bbands_open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
@@ -23284,7 +23284,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.BBANDS_OpenAndFill(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut f0, &mut f1, &mut f2) {
+        match c2.bbands_open_and_fill(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23307,7 +23307,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.BBANDS_Open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
+            match c2.bbands_open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23339,7 +23339,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.BBANDS_Open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
+            match c2.bbands_open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23367,7 +23367,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.BBANDS_Open(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.bbands_open(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23422,13 +23422,13 @@ fn sv_beta(core: &Core, params: &Value) -> String {
         let rc = match c2.BETA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.BETA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.BETA_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
+            let open_rejects = c2.beta_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.BETA_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
+        match c2.beta_open_and_fill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23447,7 +23447,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.BETA_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.beta_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23471,7 +23471,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.BETA_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.beta_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23493,7 +23493,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.BETA_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.beta_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23547,13 +23547,13 @@ fn sv_bop(core: &Core, params: &Value) -> String {
         let rc = match c2.BOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.BOP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.BOP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.bop_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.BOP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.bop_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23572,7 +23572,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.BOP_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.bop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23596,7 +23596,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.BOP_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.bop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23618,7 +23618,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.BOP_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.bop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23673,13 +23673,13 @@ fn sv_cci(core: &Core, params: &Value) -> String {
         let rc = match c2.CCI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CCI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CCI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.cci_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.CCI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.cci_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23698,7 +23698,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CCI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.cci_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23722,7 +23722,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CCI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.cci_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23744,7 +23744,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CCI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cci_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23800,7 +23800,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL2CROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL2CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl2crows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -23808,7 +23808,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL2CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl2crows_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23827,7 +23827,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL2CROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23851,7 +23851,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL2CROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -23873,7 +23873,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL2CROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -23929,7 +23929,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL3BLACKCROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3BLACKCROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL3BLACKCROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl3blackcrows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -23937,7 +23937,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL3BLACKCROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl3blackcrows_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -23956,7 +23956,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL3BLACKCROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3blackcrows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -23980,7 +23980,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL3BLACKCROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3blackcrows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24002,7 +24002,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL3BLACKCROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl3blackcrows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24058,7 +24058,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL3INSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3INSIDE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL3INSIDE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl3inside_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24066,7 +24066,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL3INSIDE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl3inside_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24085,7 +24085,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL3INSIDE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3inside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24109,7 +24109,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL3INSIDE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3inside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24131,7 +24131,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL3INSIDE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl3inside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24187,7 +24187,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL3LINESTRIKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3LINESTRIKE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL3LINESTRIKE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl3linestrike_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24195,7 +24195,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL3LINESTRIKE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl3linestrike_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24214,7 +24214,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL3LINESTRIKE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3linestrike_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24238,7 +24238,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL3LINESTRIKE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3linestrike_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24260,7 +24260,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL3LINESTRIKE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl3linestrike_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24316,7 +24316,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL3OUTSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3OUTSIDE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL3OUTSIDE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl3outside_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24324,7 +24324,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL3OUTSIDE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl3outside_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24343,7 +24343,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL3OUTSIDE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3outside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24367,7 +24367,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL3OUTSIDE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3outside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24389,7 +24389,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL3OUTSIDE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl3outside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24445,7 +24445,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL3STARSINSOUTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3STARSINSOUTH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL3STARSINSOUTH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl3starsinsouth_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24453,7 +24453,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL3STARSINSOUTH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl3starsinsouth_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24472,7 +24472,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL3STARSINSOUTH_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3starsinsouth_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24496,7 +24496,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL3STARSINSOUTH_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3starsinsouth_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24518,7 +24518,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL3STARSINSOUTH_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl3starsinsouth_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24574,7 +24574,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         let rc = match c2.CDL3WHITESOLDIERS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3WHITESOLDIERS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDL3WHITESOLDIERS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdl3whitesoldiers_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24582,7 +24582,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDL3WHITESOLDIERS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdl3whitesoldiers_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24601,7 +24601,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDL3WHITESOLDIERS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3whitesoldiers_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24625,7 +24625,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDL3WHITESOLDIERS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdl3whitesoldiers_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24647,7 +24647,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDL3WHITESOLDIERS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdl3whitesoldiers_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24704,7 +24704,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLABANDONEDBABY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLABANDONEDBABY_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdlabandonedbaby_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24712,7 +24712,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLABANDONEDBABY_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdlabandonedbaby_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24731,7 +24731,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLABANDONEDBABY_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlabandonedbaby_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24755,7 +24755,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLABANDONEDBABY_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlabandonedbaby_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24777,7 +24777,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLABANDONEDBABY_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlabandonedbaby_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24833,7 +24833,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLADVANCEBLOCK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLADVANCEBLOCK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLADVANCEBLOCK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdladvanceblock_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24841,7 +24841,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLADVANCEBLOCK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdladvanceblock_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24860,7 +24860,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLADVANCEBLOCK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdladvanceblock_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -24884,7 +24884,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLADVANCEBLOCK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdladvanceblock_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -24906,7 +24906,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLADVANCEBLOCK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdladvanceblock_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -24962,7 +24962,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLBELTHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLBELTHOLD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLBELTHOLD_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlbelthold_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -24970,7 +24970,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLBELTHOLD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlbelthold_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -24989,7 +24989,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLBELTHOLD_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlbelthold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25013,7 +25013,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLBELTHOLD_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlbelthold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25035,7 +25035,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLBELTHOLD_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlbelthold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25091,7 +25091,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLBREAKAWAY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLBREAKAWAY_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLBREAKAWAY_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlbreakaway_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25099,7 +25099,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLBREAKAWAY_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlbreakaway_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25118,7 +25118,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLBREAKAWAY_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlbreakaway_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25142,7 +25142,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLBREAKAWAY_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlbreakaway_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25164,7 +25164,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLBREAKAWAY_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlbreakaway_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25220,7 +25220,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLCLOSINGMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLCLOSINGMARUBOZU_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLCLOSINGMARUBOZU_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlclosingmarubozu_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25228,7 +25228,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLCLOSINGMARUBOZU_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlclosingmarubozu_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25247,7 +25247,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLCLOSINGMARUBOZU_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlclosingmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25271,7 +25271,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLCLOSINGMARUBOZU_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlclosingmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25293,7 +25293,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLCLOSINGMARUBOZU_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlclosingmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25349,7 +25349,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLCONCEALBABYSWALL(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLCONCEALBABYSWALL_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLCONCEALBABYSWALL_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlconcealbabyswall_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25357,7 +25357,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLCONCEALBABYSWALL_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlconcealbabyswall_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25376,7 +25376,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLCONCEALBABYSWALL_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlconcealbabyswall_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25400,7 +25400,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLCONCEALBABYSWALL_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlconcealbabyswall_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25422,7 +25422,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLCONCEALBABYSWALL_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlconcealbabyswall_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25478,7 +25478,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLCOUNTERATTACK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLCOUNTERATTACK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLCOUNTERATTACK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlcounterattack_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25486,7 +25486,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLCOUNTERATTACK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlcounterattack_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25505,7 +25505,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLCOUNTERATTACK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlcounterattack_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25529,7 +25529,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLCOUNTERATTACK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlcounterattack_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25551,7 +25551,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLCOUNTERATTACK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlcounterattack_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25608,7 +25608,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLDARKCLOUDCOVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLDARKCLOUDCOVER_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdldarkcloudcover_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25616,7 +25616,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLDARKCLOUDCOVER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdldarkcloudcover_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25635,7 +25635,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLDARKCLOUDCOVER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdldarkcloudcover_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25659,7 +25659,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLDARKCLOUDCOVER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdldarkcloudcover_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25681,7 +25681,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLDARKCLOUDCOVER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdldarkcloudcover_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25737,7 +25737,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdldoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25745,7 +25745,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdldoji_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25764,7 +25764,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdldoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25788,7 +25788,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdldoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25810,7 +25810,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdldoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25866,7 +25866,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDOJISTAR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdldojistar_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -25874,7 +25874,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdldojistar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -25893,7 +25893,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLDOJISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdldojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -25917,7 +25917,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLDOJISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdldojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -25939,7 +25939,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLDOJISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdldojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -25995,7 +25995,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLDRAGONFLYDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDRAGONFLYDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLDRAGONFLYDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdldragonflydoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26003,7 +26003,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLDRAGONFLYDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdldragonflydoji_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26022,7 +26022,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLDRAGONFLYDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdldragonflydoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26046,7 +26046,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLDRAGONFLYDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdldragonflydoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26068,7 +26068,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLDRAGONFLYDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdldragonflydoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26124,7 +26124,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLENGULFING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLENGULFING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLENGULFING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlengulfing_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26132,7 +26132,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLENGULFING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlengulfing_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26151,7 +26151,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLENGULFING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlengulfing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26175,7 +26175,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLENGULFING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlengulfing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26197,7 +26197,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLENGULFING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlengulfing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26254,7 +26254,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLEVENINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLEVENINGDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdleveningdojistar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26262,7 +26262,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLEVENINGDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdleveningdojistar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26281,7 +26281,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLEVENINGDOJISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdleveningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26305,7 +26305,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLEVENINGDOJISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdleveningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26327,7 +26327,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLEVENINGDOJISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdleveningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26384,7 +26384,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLEVENINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLEVENINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdleveningstar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26392,7 +26392,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLEVENINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdleveningstar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26411,7 +26411,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLEVENINGSTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdleveningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26435,7 +26435,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLEVENINGSTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdleveningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26457,7 +26457,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLEVENINGSTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdleveningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26513,7 +26513,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLGAPSIDESIDEWHITE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLGAPSIDESIDEWHITE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLGAPSIDESIDEWHITE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlgapsidesidewhite_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26521,7 +26521,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLGAPSIDESIDEWHITE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlgapsidesidewhite_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26540,7 +26540,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLGAPSIDESIDEWHITE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlgapsidesidewhite_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26564,7 +26564,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLGAPSIDESIDEWHITE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlgapsidesidewhite_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26586,7 +26586,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLGAPSIDESIDEWHITE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlgapsidesidewhite_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26642,7 +26642,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLGRAVESTONEDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLGRAVESTONEDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLGRAVESTONEDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlgravestonedoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26650,7 +26650,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLGRAVESTONEDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlgravestonedoji_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26669,7 +26669,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLGRAVESTONEDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlgravestonedoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26693,7 +26693,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLGRAVESTONEDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlgravestonedoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26715,7 +26715,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLGRAVESTONEDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlgravestonedoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26771,7 +26771,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHAMMER_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHAMMER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlhammer_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26779,7 +26779,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHAMMER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlhammer_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26798,7 +26798,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHAMMER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26822,7 +26822,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHAMMER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26844,7 +26844,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHAMMER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -26900,7 +26900,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHANGINGMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHANGINGMAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHANGINGMAN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlhangingman_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -26908,7 +26908,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHANGINGMAN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlhangingman_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -26927,7 +26927,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHANGINGMAN_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhangingman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -26951,7 +26951,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHANGINGMAN_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhangingman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -26973,7 +26973,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHANGINGMAN_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlhangingman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27029,7 +27029,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHARAMI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHARAMI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHARAMI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlharami_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27037,7 +27037,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHARAMI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlharami_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27056,7 +27056,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHARAMI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlharami_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27080,7 +27080,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHARAMI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlharami_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27102,7 +27102,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHARAMI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlharami_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27158,7 +27158,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHARAMICROSS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHARAMICROSS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHARAMICROSS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlharamicross_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27166,7 +27166,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHARAMICROSS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlharamicross_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27185,7 +27185,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHARAMICROSS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlharamicross_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27209,7 +27209,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHARAMICROSS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlharamicross_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27231,7 +27231,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHARAMICROSS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlharamicross_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27287,7 +27287,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHIGHWAVE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHIGHWAVE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHIGHWAVE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlhighwave_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27295,7 +27295,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHIGHWAVE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlhighwave_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27314,7 +27314,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHIGHWAVE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhighwave_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27338,7 +27338,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHIGHWAVE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhighwave_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27360,7 +27360,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHIGHWAVE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlhighwave_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27416,7 +27416,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHIKKAKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHIKKAKE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHIKKAKE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlhikkake_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27424,7 +27424,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHIKKAKE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlhikkake_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27443,7 +27443,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHIKKAKE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhikkake_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27467,7 +27467,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHIKKAKE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhikkake_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27489,7 +27489,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHIKKAKE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlhikkake_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27545,7 +27545,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHIKKAKEMOD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHIKKAKEMOD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHIKKAKEMOD_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlhikkakemod_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27553,7 +27553,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHIKKAKEMOD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlhikkakemod_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27572,7 +27572,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHIKKAKEMOD_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhikkakemod_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27596,7 +27596,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHIKKAKEMOD_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhikkakemod_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27618,7 +27618,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHIKKAKEMOD_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlhikkakemod_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27674,7 +27674,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLHOMINGPIGEON(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHOMINGPIGEON_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLHOMINGPIGEON_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlhomingpigeon_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27682,7 +27682,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLHOMINGPIGEON_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlhomingpigeon_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27701,7 +27701,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLHOMINGPIGEON_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhomingpigeon_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27725,7 +27725,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLHOMINGPIGEON_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlhomingpigeon_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27747,7 +27747,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLHOMINGPIGEON_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlhomingpigeon_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27803,7 +27803,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLIDENTICAL3CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLIDENTICAL3CROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLIDENTICAL3CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlidentical3crows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27811,7 +27811,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLIDENTICAL3CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlidentical3crows_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27830,7 +27830,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLIDENTICAL3CROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlidentical3crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27854,7 +27854,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLIDENTICAL3CROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlidentical3crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -27876,7 +27876,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLIDENTICAL3CROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlidentical3crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -27932,7 +27932,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLINNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLINNECK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLINNECK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlinneck_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -27940,7 +27940,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLINNECK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlinneck_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -27959,7 +27959,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLINNECK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlinneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -27983,7 +27983,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLINNECK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlinneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28005,7 +28005,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLINNECK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlinneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28061,7 +28061,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLINVERTEDHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLINVERTEDHAMMER_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLINVERTEDHAMMER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlinvertedhammer_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28069,7 +28069,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLINVERTEDHAMMER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlinvertedhammer_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28088,7 +28088,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLINVERTEDHAMMER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlinvertedhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28112,7 +28112,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLINVERTEDHAMMER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlinvertedhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28134,7 +28134,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLINVERTEDHAMMER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlinvertedhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28190,7 +28190,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLKICKING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLKICKING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLKICKING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlkicking_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28198,7 +28198,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLKICKING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlkicking_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28217,7 +28217,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLKICKING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlkicking_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28241,7 +28241,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLKICKING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlkicking_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28263,7 +28263,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLKICKING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlkicking_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28319,7 +28319,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLKICKINGBYLENGTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLKICKINGBYLENGTH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLKICKINGBYLENGTH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlkickingbylength_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28327,7 +28327,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLKICKINGBYLENGTH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlkickingbylength_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28346,7 +28346,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLKICKINGBYLENGTH_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlkickingbylength_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28370,7 +28370,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLKICKINGBYLENGTH_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlkickingbylength_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28392,7 +28392,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLKICKINGBYLENGTH_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlkickingbylength_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28448,7 +28448,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLLADDERBOTTOM(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLLADDERBOTTOM_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLLADDERBOTTOM_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlladderbottom_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28456,7 +28456,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLLADDERBOTTOM_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlladderbottom_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28475,7 +28475,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLLADDERBOTTOM_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlladderbottom_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28499,7 +28499,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLLADDERBOTTOM_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlladderbottom_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28521,7 +28521,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLLADDERBOTTOM_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlladderbottom_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28577,7 +28577,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLLONGLEGGEDDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLLONGLEGGEDDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLLONGLEGGEDDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdllongleggeddoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28585,7 +28585,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLLONGLEGGEDDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdllongleggeddoji_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28604,7 +28604,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLLONGLEGGEDDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdllongleggeddoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28628,7 +28628,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLLONGLEGGEDDOJI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdllongleggeddoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28650,7 +28650,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLLONGLEGGEDDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdllongleggeddoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28706,7 +28706,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLLONGLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLLONGLINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLLONGLINE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdllongline_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28714,7 +28714,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLLONGLINE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdllongline_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28733,7 +28733,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLLONGLINE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdllongline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28757,7 +28757,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLLONGLINE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdllongline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28779,7 +28779,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLLONGLINE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdllongline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28835,7 +28835,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMARUBOZU_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLMARUBOZU_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlmarubozu_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28843,7 +28843,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLMARUBOZU_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlmarubozu_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28862,7 +28862,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLMARUBOZU_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -28886,7 +28886,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLMARUBOZU_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -28908,7 +28908,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLMARUBOZU_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -28964,7 +28964,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLMATCHINGLOW(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMATCHINGLOW_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLMATCHINGLOW_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlmatchinglow_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -28972,7 +28972,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLMATCHINGLOW_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlmatchinglow_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -28991,7 +28991,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLMATCHINGLOW_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlmatchinglow_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29015,7 +29015,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLMATCHINGLOW_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlmatchinglow_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29037,7 +29037,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLMATCHINGLOW_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlmatchinglow_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29094,7 +29094,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLMATHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMATHOLD_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLMATHOLD_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdlmathold_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29102,7 +29102,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLMATHOLD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdlmathold_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29121,7 +29121,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLMATHOLD_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlmathold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29145,7 +29145,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLMATHOLD_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlmathold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29167,7 +29167,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLMATHOLD_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlmathold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29224,7 +29224,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLMORNINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLMORNINGDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdlmorningdojistar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29232,7 +29232,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLMORNINGDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdlmorningdojistar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29251,7 +29251,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLMORNINGDOJISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlmorningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29275,7 +29275,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLMORNINGDOJISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlmorningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29297,7 +29297,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLMORNINGDOJISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlmorningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29354,7 +29354,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLMORNINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLMORNINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
+            let open_rejects = c2.cdlmorningstar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29362,7 +29362,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLMORNINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
+        match c2.cdlmorningstar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29381,7 +29381,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLMORNINGSTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlmorningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29405,7 +29405,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLMORNINGSTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+            match c2.cdlmorningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29427,7 +29427,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLMORNINGSTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlmorningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29483,7 +29483,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLONNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLONNECK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLONNECK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlonneck_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29491,7 +29491,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLONNECK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlonneck_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29510,7 +29510,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLONNECK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlonneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29534,7 +29534,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLONNECK_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlonneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29556,7 +29556,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLONNECK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlonneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29612,7 +29612,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLPIERCING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLPIERCING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLPIERCING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlpiercing_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29620,7 +29620,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLPIERCING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlpiercing_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29639,7 +29639,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLPIERCING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlpiercing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29663,7 +29663,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLPIERCING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlpiercing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29685,7 +29685,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLPIERCING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlpiercing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29741,7 +29741,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLRICKSHAWMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLRICKSHAWMAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLRICKSHAWMAN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlrickshawman_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29749,7 +29749,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLRICKSHAWMAN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlrickshawman_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29768,7 +29768,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLRICKSHAWMAN_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlrickshawman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29792,7 +29792,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLRICKSHAWMAN_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlrickshawman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29814,7 +29814,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLRICKSHAWMAN_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlrickshawman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29870,7 +29870,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLRISEFALL3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLRISEFALL3METHODS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLRISEFALL3METHODS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlrisefall3methods_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -29878,7 +29878,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLRISEFALL3METHODS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlrisefall3methods_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -29897,7 +29897,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLRISEFALL3METHODS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlrisefall3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -29921,7 +29921,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLRISEFALL3METHODS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlrisefall3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -29943,7 +29943,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLRISEFALL3METHODS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlrisefall3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -29999,7 +29999,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLSEPARATINGLINES(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSEPARATINGLINES_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLSEPARATINGLINES_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlseparatinglines_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30007,7 +30007,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLSEPARATINGLINES_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlseparatinglines_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30026,7 +30026,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLSEPARATINGLINES_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlseparatinglines_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30050,7 +30050,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLSEPARATINGLINES_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlseparatinglines_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30072,7 +30072,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLSEPARATINGLINES_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlseparatinglines_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30128,7 +30128,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLSHOOTINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSHOOTINGSTAR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLSHOOTINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlshootingstar_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30136,7 +30136,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLSHOOTINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlshootingstar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30155,7 +30155,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLSHOOTINGSTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlshootingstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30179,7 +30179,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLSHOOTINGSTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlshootingstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30201,7 +30201,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLSHOOTINGSTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlshootingstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30257,7 +30257,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLSHORTLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSHORTLINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLSHORTLINE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlshortline_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30265,7 +30265,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLSHORTLINE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlshortline_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30284,7 +30284,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLSHORTLINE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlshortline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30308,7 +30308,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLSHORTLINE_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlshortline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30330,7 +30330,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLSHORTLINE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlshortline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30386,7 +30386,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLSPINNINGTOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSPINNINGTOP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLSPINNINGTOP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlspinningtop_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30394,7 +30394,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLSPINNINGTOP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlspinningtop_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30413,7 +30413,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLSPINNINGTOP_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlspinningtop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30437,7 +30437,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLSPINNINGTOP_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlspinningtop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30459,7 +30459,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLSPINNINGTOP_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlspinningtop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30515,7 +30515,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLSTALLEDPATTERN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSTALLEDPATTERN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLSTALLEDPATTERN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlstalledpattern_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30523,7 +30523,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLSTALLEDPATTERN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlstalledpattern_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30542,7 +30542,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLSTALLEDPATTERN_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlstalledpattern_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30566,7 +30566,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLSTALLEDPATTERN_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlstalledpattern_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30588,7 +30588,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLSTALLEDPATTERN_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlstalledpattern_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30644,7 +30644,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLSTICKSANDWICH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSTICKSANDWICH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLSTICKSANDWICH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlsticksandwich_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30652,7 +30652,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLSTICKSANDWICH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlsticksandwich_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30671,7 +30671,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLSTICKSANDWICH_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlsticksandwich_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30695,7 +30695,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLSTICKSANDWICH_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlsticksandwich_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30717,7 +30717,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLSTICKSANDWICH_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlsticksandwich_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30773,7 +30773,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLTAKURI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTAKURI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLTAKURI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdltakuri_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30781,7 +30781,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLTAKURI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdltakuri_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30800,7 +30800,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLTAKURI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdltakuri_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30824,7 +30824,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLTAKURI_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdltakuri_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30846,7 +30846,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLTAKURI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdltakuri_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -30902,7 +30902,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLTASUKIGAP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTASUKIGAP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLTASUKIGAP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdltasukigap_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -30910,7 +30910,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLTASUKIGAP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdltasukigap_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -30929,7 +30929,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLTASUKIGAP_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdltasukigap_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -30953,7 +30953,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLTASUKIGAP_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdltasukigap_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -30975,7 +30975,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLTASUKIGAP_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdltasukigap_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31031,7 +31031,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLTHRUSTING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTHRUSTING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLTHRUSTING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlthrusting_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -31039,7 +31039,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLTHRUSTING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlthrusting_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31058,7 +31058,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLTHRUSTING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlthrusting_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31082,7 +31082,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLTHRUSTING_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlthrusting_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31104,7 +31104,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLTHRUSTING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlthrusting_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31160,7 +31160,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLTRISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTRISTAR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLTRISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdltristar_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -31168,7 +31168,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLTRISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdltristar_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31187,7 +31187,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLTRISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdltristar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31211,7 +31211,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLTRISTAR_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdltristar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31233,7 +31233,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLTRISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdltristar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31289,7 +31289,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLUNIQUE3RIVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLUNIQUE3RIVER_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLUNIQUE3RIVER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlunique3river_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -31297,7 +31297,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLUNIQUE3RIVER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlunique3river_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31316,7 +31316,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLUNIQUE3RIVER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlunique3river_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31340,7 +31340,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLUNIQUE3RIVER_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlunique3river_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31362,7 +31362,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLUNIQUE3RIVER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlunique3river_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31418,7 +31418,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLUPSIDEGAP2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLUPSIDEGAP2CROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLUPSIDEGAP2CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlupsidegap2crows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -31426,7 +31426,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLUPSIDEGAP2CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlupsidegap2crows_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31445,7 +31445,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLUPSIDEGAP2CROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlupsidegap2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31469,7 +31469,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLUPSIDEGAP2CROWS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlupsidegap2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31491,7 +31491,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLUPSIDEGAP2CROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlupsidegap2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31547,7 +31547,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         let rc = match c2.CDLXSIDEGAP3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLXSIDEGAP3METHODS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CDLXSIDEGAP3METHODS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.cdlxsidegap3methods_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
             return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);
@@ -31555,7 +31555,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.CDLXSIDEGAP3METHODS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.cdlxsidegap3methods_open_and_fill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31574,7 +31574,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CDLXSIDEGAP3METHODS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlxsidegap3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31598,7 +31598,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CDLXSIDEGAP3METHODS_Open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.cdlxsidegap3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31620,7 +31620,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CDLXSIDEGAP3METHODS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cdlxsidegap3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31674,13 +31674,13 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
         let rc = match c2.CEIL(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CEIL_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CEIL_Open(&fz_c).is_err();
+            let open_rejects = c2.ceil_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.CEIL_OpenAndFill(&fz_c, &mut f0) {
+        match c2.ceil_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31699,7 +31699,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CEIL_Open(&fz_c[..p]) {
+            match c2.ceil_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31723,7 +31723,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CEIL_Open(&fz_c[..p]) {
+            match c2.ceil_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31745,7 +31745,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CEIL_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ceil_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31800,13 +31800,13 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
         let rc = match c2.CMF(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CMF_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CMF_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
+            let open_rejects = c2.cmf_open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.CMF_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut f0) {
+        match c2.cmf_open_and_fill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31825,7 +31825,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CMF_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.cmf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31849,7 +31849,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CMF_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.cmf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31871,7 +31871,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CMF_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cmf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -31927,13 +31927,13 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
         let rc = match c2.CMO(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CMO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CMO_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.cmo_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.CMO_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.cmo_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -31952,7 +31952,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CMO_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.cmo_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -31976,7 +31976,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CMO_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.cmo_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -31998,7 +31998,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CMO_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cmo_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32053,13 +32053,13 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
         let rc = match c2.CMOU(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CMOU_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CMOU_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.cmou_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.CMOU_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.cmou_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32078,7 +32078,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CMOU_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.cmou_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32102,7 +32102,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CMOU_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.cmou_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32124,7 +32124,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CMOU_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cmou_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32179,13 +32179,13 @@ fn sv_correl(core: &Core, params: &Value) -> String {
         let rc = match c2.CORREL(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CORREL_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.CORREL_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
+            let open_rejects = c2.correl_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.CORREL_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
+        match c2.correl_open_and_fill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32204,7 +32204,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.CORREL_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.correl_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32228,7 +32228,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.CORREL_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.correl_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32250,7 +32250,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.CORREL_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.correl_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32304,13 +32304,13 @@ fn sv_cos(core: &Core, params: &Value) -> String {
         let rc = match c2.COS(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.COS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.COS_Open(&fz_c).is_err();
+            let open_rejects = c2.cos_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.COS_OpenAndFill(&fz_c, &mut f0) {
+        match c2.cos_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32329,7 +32329,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.COS_Open(&fz_c[..p]) {
+            match c2.cos_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32353,7 +32353,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.COS_Open(&fz_c[..p]) {
+            match c2.cos_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32375,7 +32375,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.COS_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cos_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32429,13 +32429,13 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
         let rc = match c2.COSH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.COSH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.COSH_Open(&fz_c).is_err();
+            let open_rejects = c2.cosh_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.COSH_OpenAndFill(&fz_c, &mut f0) {
+        match c2.cosh_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32454,7 +32454,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.COSH_Open(&fz_c[..p]) {
+            match c2.cosh_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32478,7 +32478,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.COSH_Open(&fz_c[..p]) {
+            match c2.cosh_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32500,7 +32500,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.COSH_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.cosh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32556,13 +32556,13 @@ fn sv_dema(core: &Core, params: &Value) -> String {
         let rc = match c2.DEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.DEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.DEMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.dema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.DEMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.dema_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32581,7 +32581,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.DEMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.dema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32605,7 +32605,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.DEMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.dema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32627,7 +32627,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.DEMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.dema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32681,13 +32681,13 @@ fn sv_div(core: &Core, params: &Value) -> String {
         let rc = match c2.DIV(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.DIV_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.DIV_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.div_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.DIV_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.div_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32706,7 +32706,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.DIV_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.div_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32730,7 +32730,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.DIV_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.div_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32752,7 +32752,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.DIV_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.div_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32808,13 +32808,13 @@ fn sv_dx(core: &Core, params: &Value) -> String {
         let rc = match c2.DX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.DX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.DX_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.dx_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.DX_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.dx_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32833,7 +32833,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.DX_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.dx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32857,7 +32857,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.DX_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.dx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -32879,7 +32879,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.DX_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.dx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -32934,13 +32934,13 @@ fn sv_efi(core: &Core, params: &Value) -> String {
         let rc = match c2.EFI(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.EFI_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
+            let open_rejects = c2.efi_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.EFI_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
+        match c2.efi_open_and_fill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -32959,7 +32959,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.EFI_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.efi_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -32983,7 +32983,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.EFI_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.efi_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33005,7 +33005,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.EFI_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.efi_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33061,13 +33061,13 @@ fn sv_ema(core: &Core, params: &Value) -> String {
         let rc = match c2.EMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.EMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.ema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.EMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.ema_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33086,7 +33086,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.EMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.ema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33110,7 +33110,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.EMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.ema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33132,7 +33132,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.EMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33186,13 +33186,13 @@ fn sv_exp(core: &Core, params: &Value) -> String {
         let rc = match c2.EXP(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.EXP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.EXP_Open(&fz_c).is_err();
+            let open_rejects = c2.exp_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.EXP_OpenAndFill(&fz_c, &mut f0) {
+        match c2.exp_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33211,7 +33211,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.EXP_Open(&fz_c[..p]) {
+            match c2.exp_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33235,7 +33235,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.EXP_Open(&fz_c[..p]) {
+            match c2.exp_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33257,7 +33257,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.EXP_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.exp_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33311,13 +33311,13 @@ fn sv_floor(core: &Core, params: &Value) -> String {
         let rc = match c2.FLOOR(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.FLOOR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.FLOOR_Open(&fz_c).is_err();
+            let open_rejects = c2.floor_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.FLOOR_OpenAndFill(&fz_c, &mut f0) {
+        match c2.floor_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33336,7 +33336,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.FLOOR_Open(&fz_c[..p]) {
+            match c2.floor_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33360,7 +33360,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.FLOOR_Open(&fz_c[..p]) {
+            match c2.floor_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33382,7 +33382,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.FLOOR_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.floor_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33437,13 +33437,13 @@ fn sv_hma(core: &Core, params: &Value) -> String {
         let rc = match c2.HMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.hma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.HMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.hma_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33462,7 +33462,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.hma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33486,7 +33486,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.hma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33508,7 +33508,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.hma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33563,13 +33563,13 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
         let rc = match c2.HT_DCPERIOD(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_DCPERIOD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HT_DCPERIOD_Open(&fz_c).is_err();
+            let open_rejects = c2.ht_dcperiod_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.HT_DCPERIOD_OpenAndFill(&fz_c, &mut f0) {
+        match c2.ht_dcperiod_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33588,7 +33588,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HT_DCPERIOD_Open(&fz_c[..p]) {
+            match c2.ht_dcperiod_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33612,7 +33612,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HT_DCPERIOD_Open(&fz_c[..p]) {
+            match c2.ht_dcperiod_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33634,7 +33634,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HT_DCPERIOD_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ht_dcperiod_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33689,13 +33689,13 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
         let rc = match c2.HT_DCPHASE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_DCPHASE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HT_DCPHASE_Open(&fz_c).is_err();
+            let open_rejects = c2.ht_dcphase_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.HT_DCPHASE_OpenAndFill(&fz_c, &mut f0) {
+        match c2.ht_dcphase_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33714,7 +33714,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HT_DCPHASE_Open(&fz_c[..p]) {
+            match c2.ht_dcphase_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33738,7 +33738,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HT_DCPHASE_Open(&fz_c[..p]) {
+            match c2.ht_dcphase_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33760,7 +33760,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HT_DCPHASE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ht_dcphase_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33816,14 +33816,14 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
         let rc = match c2.HT_PHASOR(0, svN - 1, &fz_c, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_PHASOR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HT_PHASOR_Open(&fz_c).is_err();
+            let open_rejects = c2.ht_phasor_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.HT_PHASOR_OpenAndFill(&fz_c, &mut f0, &mut f1) {
+        match c2.ht_phasor_open_and_fill(&fz_c, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33844,7 +33844,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HT_PHASOR_Open(&fz_c[..p]) {
+            match c2.ht_phasor_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -33872,7 +33872,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HT_PHASOR_Open(&fz_c[..p]) {
+            match c2.ht_phasor_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -33897,7 +33897,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HT_PHASOR_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ht_phasor_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -33953,14 +33953,14 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
         let rc = match c2.HT_SINE(0, svN - 1, &fz_c, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_SINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HT_SINE_Open(&fz_c).is_err();
+            let open_rejects = c2.ht_sine_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.HT_SINE_OpenAndFill(&fz_c, &mut f0, &mut f1) {
+        match c2.ht_sine_open_and_fill(&fz_c, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -33981,7 +33981,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HT_SINE_Open(&fz_c[..p]) {
+            match c2.ht_sine_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34009,7 +34009,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HT_SINE_Open(&fz_c[..p]) {
+            match c2.ht_sine_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34034,7 +34034,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HT_SINE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ht_sine_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34089,13 +34089,13 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
         let rc = match c2.HT_TRENDLINE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_TRENDLINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HT_TRENDLINE_Open(&fz_c).is_err();
+            let open_rejects = c2.ht_trendline_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.HT_TRENDLINE_OpenAndFill(&fz_c, &mut f0) {
+        match c2.ht_trendline_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34114,7 +34114,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HT_TRENDLINE_Open(&fz_c[..p]) {
+            match c2.ht_trendline_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34138,7 +34138,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HT_TRENDLINE_Open(&fz_c[..p]) {
+            match c2.ht_trendline_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34160,7 +34160,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HT_TRENDLINE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ht_trendline_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34215,13 +34215,13 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
         let rc = match c2.HT_TRENDMODE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_TRENDMODE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.HT_TRENDMODE_Open(&fz_c).is_err();
+            let open_rejects = c2.ht_trendmode_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.HT_TRENDMODE_OpenAndFill(&fz_c, &mut f0) {
+        match c2.ht_trendmode_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34240,7 +34240,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.HT_TRENDMODE_Open(&fz_c[..p]) {
+            match c2.ht_trendmode_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34264,7 +34264,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.HT_TRENDMODE_Open(&fz_c[..p]) {
+            match c2.ht_trendmode_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34286,7 +34286,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.HT_TRENDMODE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ht_trendmode_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34341,13 +34341,13 @@ fn sv_imi(core: &Core, params: &Value) -> String {
         let rc = match c2.IMI(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.IMI_Open(&fz_o, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.imi_open(&fz_o, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.IMI_OpenAndFill(&fz_o, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.imi_open_and_fill(&fz_o, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34366,7 +34366,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.IMI_Open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.imi_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34390,7 +34390,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.IMI_Open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.imi_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34412,7 +34412,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.IMI_Open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.imi_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34468,13 +34468,13 @@ fn sv_kama(core: &Core, params: &Value) -> String {
         let rc = match c2.KAMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.KAMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.KAMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.kama_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.KAMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.kama_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34493,7 +34493,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.KAMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.kama_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34517,7 +34517,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.KAMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.kama_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34539,7 +34539,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.KAMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.kama_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34594,13 +34594,13 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
         let rc = match c2.LINEARREG(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.LINEARREG_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.linearreg_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.LINEARREG_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.linearreg_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34619,7 +34619,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.LINEARREG_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34643,7 +34643,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.LINEARREG_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34665,7 +34665,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.LINEARREG_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.linearreg_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34720,13 +34720,13 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
         let rc = match c2.LINEARREG_ANGLE(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.LINEARREG_ANGLE_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.linearreg_angle_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.LINEARREG_ANGLE_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.linearreg_angle_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34745,7 +34745,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.LINEARREG_ANGLE_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_angle_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34769,7 +34769,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.LINEARREG_ANGLE_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_angle_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34791,7 +34791,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.LINEARREG_ANGLE_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.linearreg_angle_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34846,13 +34846,13 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
         let rc = match c2.LINEARREG_INTERCEPT(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.LINEARREG_INTERCEPT_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.linearreg_intercept_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.LINEARREG_INTERCEPT_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.linearreg_intercept_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34871,7 +34871,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.LINEARREG_INTERCEPT_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_intercept_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -34895,7 +34895,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.LINEARREG_INTERCEPT_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_intercept_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -34917,7 +34917,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.LINEARREG_INTERCEPT_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.linearreg_intercept_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -34972,13 +34972,13 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
         let rc = match c2.LINEARREG_SLOPE(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.LINEARREG_SLOPE_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.linearreg_slope_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.LINEARREG_SLOPE_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.linearreg_slope_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -34997,7 +34997,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.LINEARREG_SLOPE_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_slope_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35021,7 +35021,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.LINEARREG_SLOPE_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.linearreg_slope_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35043,7 +35043,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.LINEARREG_SLOPE_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.linearreg_slope_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35097,13 +35097,13 @@ fn sv_ln(core: &Core, params: &Value) -> String {
         let rc = match c2.LN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.LN_Open(&fz_c).is_err();
+            let open_rejects = c2.ln_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.LN_OpenAndFill(&fz_c, &mut f0) {
+        match c2.ln_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35122,7 +35122,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.LN_Open(&fz_c[..p]) {
+            match c2.ln_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35146,7 +35146,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.LN_Open(&fz_c[..p]) {
+            match c2.ln_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35168,7 +35168,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.LN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ln_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35222,13 +35222,13 @@ fn sv_log10(core: &Core, params: &Value) -> String {
         let rc = match c2.LOG10(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LOG10_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.LOG10_Open(&fz_c).is_err();
+            let open_rejects = c2.log10_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.LOG10_OpenAndFill(&fz_c, &mut f0) {
+        match c2.log10_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35247,7 +35247,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.LOG10_Open(&fz_c[..p]) {
+            match c2.log10_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35271,7 +35271,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.LOG10_Open(&fz_c[..p]) {
+            match c2.log10_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35293,7 +35293,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.LOG10_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.log10_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35357,13 +35357,13 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         let rc = match c2.MA(0, svN - 1, &fz_c, optInTimePeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MA_Lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MA_Open(&fz_c, optInTimePeriod, optInMAType).is_err();
+            let open_rejects = c2.ma_open(&fz_c, optInTimePeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MA_OpenAndFill(&fz_c, optInTimePeriod, optInMAType, &mut f0) {
+        match c2.ma_open_and_fill(&fz_c, optInTimePeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35382,7 +35382,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MA_Open(&fz_c[..p], optInTimePeriod, optInMAType) {
+            match c2.ma_open(&fz_c[..p], optInTimePeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35406,7 +35406,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MA_Open(&fz_c[..p], optInTimePeriod, optInMAType) {
+            match c2.ma_open(&fz_c[..p], optInTimePeriod, optInMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35428,7 +35428,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MA_Open(&fz_c[..lb], optInTimePeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ma_open(&fz_c[..lb], optInTimePeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35488,7 +35488,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         let rc = match c2.MACD(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MACD_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
+            let open_rejects = c2.macd_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
@@ -35496,7 +35496,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MACD_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1, &mut f2) {
+        match c2.macd_open_and_fill(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35519,7 +35519,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MACD_Open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+            match c2.macd_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35551,7 +35551,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MACD_Open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+            match c2.macd_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35579,7 +35579,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MACD_Open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.macd_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35657,7 +35657,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         let rc = match c2.MACDEXT(0, svN - 1, &fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MACDEXT_Open(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_err();
+            let open_rejects = c2.macdext_open(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
@@ -35665,7 +35665,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MACDEXT_OpenAndFill(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut f0, &mut f1, &mut f2) {
+        match c2.macdext_open_and_fill(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35688,7 +35688,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MACDEXT_Open(&fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) {
+            match c2.macdext_open(&fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35720,7 +35720,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MACDEXT_Open(&fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) {
+            match c2.macdext_open(&fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35748,7 +35748,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MACDEXT_Open(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.macdext_open(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35806,7 +35806,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         let rc = match c2.MACDFIX(0, svN - 1, &fz_c, optInSignalPeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MACDFIX_Lookback(optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MACDFIX_Open(&fz_c, optInSignalPeriod).is_err();
+            let open_rejects = c2.macdfix_open(&fz_c, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
@@ -35814,7 +35814,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MACDFIX_OpenAndFill(&fz_c, optInSignalPeriod, &mut f0, &mut f1, &mut f2) {
+        match c2.macdfix_open_and_fill(&fz_c, optInSignalPeriod, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35837,7 +35837,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MACDFIX_Open(&fz_c[..p], optInSignalPeriod) {
+            match c2.macdfix_open(&fz_c[..p], optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -35869,7 +35869,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MACDFIX_Open(&fz_c[..p], optInSignalPeriod) {
+            match c2.macdfix_open(&fz_c[..p], optInSignalPeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -35897,7 +35897,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MACDFIX_Open(&fz_c[..lb], optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.macdfix_open(&fz_c[..lb], optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -35955,14 +35955,14 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         let rc = match c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, Some(&mut b1)) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MAMA_Open(&fz_c, optInFastLimit, optInSlowLimit).is_err();
+            let open_rejects = c2.mama_open(&fz_c, optInFastLimit, optInSlowLimit).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MAMA_OpenAndFill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) {
+        match c2.mama_open_and_fill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -35983,7 +35983,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MAMA_Open(&fz_c[..p], optInFastLimit, optInSlowLimit) {
+            match c2.mama_open(&fz_c[..p], optInFastLimit, optInSlowLimit) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36011,7 +36011,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MAMA_Open(&fz_c[..p], optInFastLimit, optInSlowLimit) {
+            match c2.mama_open(&fz_c[..p], optInFastLimit, optInSlowLimit) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36036,7 +36036,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MAMA_Open(&fz_c[..lb], optInFastLimit, optInSlowLimit).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.mama_open(&fz_c[..lb], optInFastLimit, optInSlowLimit).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36090,13 +36090,13 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
         let rc = match c2.MARKETFI(0, svN - 1, &fz_h, &fz_l, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MARKETFI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MARKETFI_Open(&fz_h, &fz_l, &fz_v).is_err();
+            let open_rejects = c2.marketfi_open(&fz_h, &fz_l, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MARKETFI_OpenAndFill(&fz_h, &fz_l, &fz_v, &mut f0) {
+        match c2.marketfi_open_and_fill(&fz_h, &fz_l, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36115,7 +36115,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MARKETFI_Open(&fz_h[..p], &fz_l[..p], &fz_v[..p]) {
+            match c2.marketfi_open(&fz_h[..p], &fz_l[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36139,7 +36139,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MARKETFI_Open(&fz_h[..p], &fz_l[..p], &fz_v[..p]) {
+            match c2.marketfi_open(&fz_h[..p], &fz_l[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36161,7 +36161,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MARKETFI_Open(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.marketfi_open(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36227,13 +36227,13 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         let rc = match c2.MAVP(0, svN - 1, &fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MAVP_Open(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType).is_err();
+            let open_rejects = c2.mavp_open(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MAVP_OpenAndFill(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut f0) {
+        match c2.mavp_open_and_fill(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36252,7 +36252,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MAVP_Open(&fz_c[..p], &fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType) {
+            match c2.mavp_open(&fz_c[..p], &fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36276,7 +36276,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MAVP_Open(&fz_c[..p], &fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType) {
+            match c2.mavp_open(&fz_c[..p], &fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36298,7 +36298,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MAVP_Open(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.mavp_open(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36353,13 +36353,13 @@ fn sv_max(core: &Core, params: &Value) -> String {
         let rc = match c2.MAX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MAX_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.max_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MAX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.max_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36378,7 +36378,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MAX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.max_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36402,7 +36402,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MAX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.max_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36424,7 +36424,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MAX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.max_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36479,13 +36479,13 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
         let rc = match c2.MAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MAXINDEX_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.maxindex_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.MAXINDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.maxindex_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36504,7 +36504,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MAXINDEX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.maxindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36528,7 +36528,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MAXINDEX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.maxindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36550,7 +36550,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MAXINDEX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.maxindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36604,13 +36604,13 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
         let rc = match c2.MEDPRICE(0, svN - 1, &fz_h, &fz_l, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MEDPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MEDPRICE_Open(&fz_h, &fz_l).is_err();
+            let open_rejects = c2.medprice_open(&fz_h, &fz_l).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MEDPRICE_OpenAndFill(&fz_h, &fz_l, &mut f0) {
+        match c2.medprice_open_and_fill(&fz_h, &fz_l, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36629,7 +36629,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MEDPRICE_Open(&fz_h[..p], &fz_l[..p]) {
+            match c2.medprice_open(&fz_h[..p], &fz_l[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36653,7 +36653,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MEDPRICE_Open(&fz_h[..p], &fz_l[..p]) {
+            match c2.medprice_open(&fz_h[..p], &fz_l[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36675,7 +36675,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MEDPRICE_Open(&fz_h[..lb], &fz_l[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.medprice_open(&fz_h[..lb], &fz_l[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36730,13 +36730,13 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
         let rc = match c2.MFI(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MFI_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
+            let open_rejects = c2.mfi_open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MFI_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut f0) {
+        match c2.mfi_open_and_fill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36755,7 +36755,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MFI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.mfi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36779,7 +36779,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MFI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.mfi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36801,7 +36801,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MFI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.mfi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36856,13 +36856,13 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
         let rc = match c2.MIDPOINT(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MIDPOINT_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MIDPOINT_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.midpoint_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MIDPOINT_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.midpoint_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -36881,7 +36881,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MIDPOINT_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.midpoint_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -36905,7 +36905,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MIDPOINT_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.midpoint_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -36927,7 +36927,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MIDPOINT_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.midpoint_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -36982,13 +36982,13 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
         let rc = match c2.MIDPRICE(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MIDPRICE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MIDPRICE_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
+            let open_rejects = c2.midprice_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MIDPRICE_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
+        match c2.midprice_open_and_fill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37007,7 +37007,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MIDPRICE_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.midprice_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37031,7 +37031,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MIDPRICE_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.midprice_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37053,7 +37053,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MIDPRICE_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.midprice_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37108,13 +37108,13 @@ fn sv_min(core: &Core, params: &Value) -> String {
         let rc = match c2.MIN(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MIN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MIN_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.min_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MIN_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.min_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37133,7 +37133,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MIN_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.min_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37157,7 +37157,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MIN_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.min_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37179,7 +37179,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MIN_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.min_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37234,13 +37234,13 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
         let rc = match c2.MININDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MININDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MININDEX_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.minindex_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
-        match c2.MININDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.minindex_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37259,7 +37259,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MININDEX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.minindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37283,7 +37283,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MININDEX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.minindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37305,7 +37305,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MININDEX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.minindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37361,14 +37361,14 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
         let rc = match c2.MINMAX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINMAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MINMAX_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.minmax_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MINMAX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0, &mut f1) {
+        match c2.minmax_open_and_fill(&fz_c, optInTimePeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37389,7 +37389,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MINMAX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.minmax_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37417,7 +37417,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MINMAX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.minmax_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37442,7 +37442,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MINMAX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.minmax_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37498,14 +37498,14 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
         let rc = match c2.MINMAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINMAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MINMAXINDEX_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.minmaxindex_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut f1: Vec<i32> = vec![-987654321i32; svN];
-        match c2.MINMAXINDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0, &mut f1) {
+        match c2.minmaxindex_open_and_fill(&fz_c, optInTimePeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37526,7 +37526,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MINMAXINDEX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.minmaxindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37554,7 +37554,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MINMAXINDEX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.minmaxindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37579,7 +37579,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MINMAXINDEX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.minmaxindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37635,13 +37635,13 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
         let rc = match c2.MINUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINUS_DI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MINUS_DI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.minus_di_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MINUS_DI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.minus_di_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37660,7 +37660,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MINUS_DI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.minus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37684,7 +37684,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MINUS_DI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.minus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37706,7 +37706,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MINUS_DI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.minus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37762,13 +37762,13 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
         let rc = match c2.MINUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MINUS_DM_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
+            let open_rejects = c2.minus_dm_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MINUS_DM_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
+        match c2.minus_dm_open_and_fill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37787,7 +37787,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MINUS_DM_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.minus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37811,7 +37811,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MINUS_DM_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.minus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37833,7 +37833,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MINUS_DM_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.minus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -37888,13 +37888,13 @@ fn sv_mom(core: &Core, params: &Value) -> String {
         let rc = match c2.MOM(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MOM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MOM_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.mom_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MOM_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.mom_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -37913,7 +37913,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MOM_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.mom_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -37937,7 +37937,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MOM_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.mom_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -37959,7 +37959,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MOM_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.mom_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38013,13 +38013,13 @@ fn sv_mult(core: &Core, params: &Value) -> String {
         let rc = match c2.MULT(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MULT_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.MULT_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.mult_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.MULT_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.mult_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38038,7 +38038,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.MULT_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.mult_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38062,7 +38062,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.MULT_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.mult_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38084,7 +38084,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.MULT_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.mult_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38140,13 +38140,13 @@ fn sv_natr(core: &Core, params: &Value) -> String {
         let rc = match c2.NATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.NATR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.NATR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.natr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.NATR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.natr_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38165,7 +38165,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.NATR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.natr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38189,7 +38189,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.NATR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.natr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38211,7 +38211,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.NATR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.natr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38265,13 +38265,13 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
         let rc = match c2.NVI(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.NVI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.NVI_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.nvi_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.NVI_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.nvi_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38290,7 +38290,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.NVI_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.nvi_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38314,7 +38314,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.NVI_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.nvi_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38336,7 +38336,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.NVI_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.nvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38390,13 +38390,13 @@ fn sv_obv(core: &Core, params: &Value) -> String {
         let rc = match c2.OBV(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.OBV_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.OBV_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.obv_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.OBV_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.obv_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38415,7 +38415,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.OBV_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.obv_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38439,7 +38439,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.OBV_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.obv_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38461,7 +38461,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.OBV_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.obv_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38517,13 +38517,13 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
         let rc = match c2.PLUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PLUS_DI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.PLUS_DI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.plus_di_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.PLUS_DI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.plus_di_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38542,7 +38542,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.PLUS_DI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.plus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38566,7 +38566,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.PLUS_DI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.plus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38588,7 +38588,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.PLUS_DI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.plus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38644,13 +38644,13 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
         let rc = match c2.PLUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PLUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.PLUS_DM_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
+            let open_rejects = c2.plus_dm_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.PLUS_DM_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
+        match c2.plus_dm_open_and_fill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38669,7 +38669,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.PLUS_DM_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.plus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38693,7 +38693,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.PLUS_DM_Open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+            match c2.plus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38715,7 +38715,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.PLUS_DM_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.plus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38780,13 +38780,13 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         let rc = match c2.PPO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.PPO_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
+            let open_rejects = c2.ppo_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.PPO_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
+        match c2.ppo_open_and_fill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38805,7 +38805,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.PPO_Open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+            match c2.ppo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38829,7 +38829,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.PPO_Open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+            match c2.ppo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38851,7 +38851,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.PPO_Open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ppo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -38905,13 +38905,13 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
         let rc = match c2.PVI(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PVI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.PVI_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.pvi_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.PVI_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.pvi_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -38930,7 +38930,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.PVI_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.pvi_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -38954,7 +38954,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.PVI_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.pvi_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -38976,7 +38976,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.PVI_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.pvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39041,13 +39041,13 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
         let rc = match c2.PVO(0, svN - 1, &fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.PVO_Open(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
+            let open_rejects = c2.pvo_open(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.PVO_OpenAndFill(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
+        match c2.pvo_open_and_fill(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39066,7 +39066,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.PVO_Open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+            match c2.pvo_open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39090,7 +39090,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.PVO_Open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+            match c2.pvo_open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39112,7 +39112,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.PVO_Open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.pvo_open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39167,13 +39167,13 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
         let rc = match c2.QSTICK(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.QSTICK_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.QSTICK_Open(&fz_o, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.qstick_open(&fz_o, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.QSTICK_OpenAndFill(&fz_o, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.qstick_open_and_fill(&fz_o, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39192,7 +39192,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.QSTICK_Open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.qstick_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39216,7 +39216,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.QSTICK_Open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.qstick_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39238,7 +39238,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.QSTICK_Open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.qstick_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39293,13 +39293,13 @@ fn sv_roc(core: &Core, params: &Value) -> String {
         let rc = match c2.ROC(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ROC_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.roc_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ROC_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.roc_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39318,7 +39318,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ROC_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.roc_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39342,7 +39342,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ROC_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.roc_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39364,7 +39364,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ROC_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.roc_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39419,13 +39419,13 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
         let rc = match c2.ROCP(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROCP_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ROCP_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.rocp_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ROCP_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.rocp_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39444,7 +39444,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ROCP_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rocp_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39468,7 +39468,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ROCP_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rocp_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39490,7 +39490,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ROCP_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.rocp_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39545,13 +39545,13 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
         let rc = match c2.ROCR(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROCR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ROCR_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.rocr_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ROCR_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.rocr_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39570,7 +39570,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ROCR_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rocr_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39594,7 +39594,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ROCR_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rocr_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39616,7 +39616,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ROCR_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.rocr_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39671,13 +39671,13 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
         let rc = match c2.ROCR100(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROCR100_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ROCR100_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.rocr100_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ROCR100_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.rocr100_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39696,7 +39696,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ROCR100_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rocr100_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39720,7 +39720,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ROCR100_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rocr100_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39742,7 +39742,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ROCR100_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.rocr100_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39798,13 +39798,13 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
         let rc = match c2.RSI(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.RSI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.RSI_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.rsi_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.RSI_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.rsi_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39823,7 +39823,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.RSI_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rsi_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39847,7 +39847,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.RSI_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.rsi_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39869,7 +39869,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.RSI_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.rsi_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -39925,13 +39925,13 @@ fn sv_sar(core: &Core, params: &Value) -> String {
         let rc = match c2.SAR(0, svN - 1, &fz_h, &fz_l, optInAcceleration, optInMaximum, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SAR_Lookback(optInAcceleration, optInMaximum).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SAR_Open(&fz_h, &fz_l, optInAcceleration, optInMaximum).is_err();
+            let open_rejects = c2.sar_open(&fz_h, &fz_l, optInAcceleration, optInMaximum).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SAR_OpenAndFill(&fz_h, &fz_l, optInAcceleration, optInMaximum, &mut f0) {
+        match c2.sar_open_and_fill(&fz_h, &fz_l, optInAcceleration, optInMaximum, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -39950,7 +39950,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SAR_Open(&fz_h[..p], &fz_l[..p], optInAcceleration, optInMaximum) {
+            match c2.sar_open(&fz_h[..p], &fz_l[..p], optInAcceleration, optInMaximum) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -39974,7 +39974,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SAR_Open(&fz_h[..p], &fz_l[..p], optInAcceleration, optInMaximum) {
+            match c2.sar_open(&fz_h[..p], &fz_l[..p], optInAcceleration, optInMaximum) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -39996,7 +39996,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SAR_Open(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sar_open(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40058,13 +40058,13 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
         let rc = match c2.SAREXT(0, svN - 1, &fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SAREXT_Open(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_err();
+            let open_rejects = c2.sarext_open(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SAREXT_OpenAndFill(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut f0) {
+        match c2.sarext_open_and_fill(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40083,7 +40083,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SAREXT_Open(&fz_h[..p], &fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) {
+            match c2.sarext_open(&fz_h[..p], &fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40107,7 +40107,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SAREXT_Open(&fz_h[..p], &fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) {
+            match c2.sarext_open(&fz_h[..p], &fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40129,7 +40129,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SAREXT_Open(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sarext_open(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40183,13 +40183,13 @@ fn sv_sin(core: &Core, params: &Value) -> String {
         let rc = match c2.SIN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SIN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SIN_Open(&fz_c).is_err();
+            let open_rejects = c2.sin_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SIN_OpenAndFill(&fz_c, &mut f0) {
+        match c2.sin_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40208,7 +40208,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SIN_Open(&fz_c[..p]) {
+            match c2.sin_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40232,7 +40232,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SIN_Open(&fz_c[..p]) {
+            match c2.sin_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40254,7 +40254,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SIN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sin_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40308,13 +40308,13 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
         let rc = match c2.SINH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SINH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SINH_Open(&fz_c).is_err();
+            let open_rejects = c2.sinh_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SINH_OpenAndFill(&fz_c, &mut f0) {
+        match c2.sinh_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40333,7 +40333,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SINH_Open(&fz_c[..p]) {
+            match c2.sinh_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40357,7 +40357,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SINH_Open(&fz_c[..p]) {
+            match c2.sinh_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40379,7 +40379,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SINH_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sinh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40434,13 +40434,13 @@ fn sv_sma(core: &Core, params: &Value) -> String {
         let rc = match c2.SMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.sma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.sma_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40459,7 +40459,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.sma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40483,7 +40483,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.sma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40505,7 +40505,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40565,14 +40565,14 @@ fn sv_smi(core: &Core, params: &Value) -> String {
         let rc = match c2.SMI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SMI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
+            let open_rejects = c2.smi_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SMI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1) {
+        match c2.smi_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40593,7 +40593,7 @@ fn sv_smi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SMI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+            match c2.smi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40621,7 +40621,7 @@ fn sv_smi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SMI_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+            match c2.smi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40646,7 +40646,7 @@ fn sv_smi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SMI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.smi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40700,13 +40700,13 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
         let rc = match c2.SQRT(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SQRT_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SQRT_Open(&fz_c).is_err();
+            let open_rejects = c2.sqrt_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SQRT_OpenAndFill(&fz_c, &mut f0) {
+        match c2.sqrt_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40725,7 +40725,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SQRT_Open(&fz_c[..p]) {
+            match c2.sqrt_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40749,7 +40749,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SQRT_Open(&fz_c[..p]) {
+            match c2.sqrt_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40771,7 +40771,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SQRT_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sqrt_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40827,13 +40827,13 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
         let rc = match c2.STDDEV(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.STDDEV_Open(&fz_c, optInTimePeriod, optInNbDev).is_err();
+            let open_rejects = c2.stddev_open(&fz_c, optInTimePeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.STDDEV_OpenAndFill(&fz_c, optInTimePeriod, optInNbDev, &mut f0) {
+        match c2.stddev_open_and_fill(&fz_c, optInTimePeriod, optInNbDev, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40852,7 +40852,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.STDDEV_Open(&fz_c[..p], optInTimePeriod, optInNbDev) {
+            match c2.stddev_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -40876,7 +40876,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.STDDEV_Open(&fz_c[..p], optInTimePeriod, optInNbDev) {
+            match c2.stddev_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -40898,7 +40898,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.STDDEV_Open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.stddev_open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -40970,14 +40970,14 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         let rc = match c2.STOCH(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.STOCH_Open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
+            let open_rejects = c2.stoch_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.STOCH_OpenAndFill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut f0, &mut f1) {
+        match c2.stoch_open_and_fill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -40998,7 +40998,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.STOCH_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
+            match c2.stoch_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41026,7 +41026,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.STOCH_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
+            match c2.stoch_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41051,7 +41051,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.STOCH_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.stoch_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41117,14 +41117,14 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         let rc = match c2.STOCHF(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.STOCHF_Open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
+            let open_rejects = c2.stochf_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.STOCHF_OpenAndFill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) {
+        match c2.stochf_open_and_fill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41145,7 +41145,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.STOCHF_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
+            match c2.stochf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41173,7 +41173,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.STOCHF_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
+            match c2.stochf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41198,7 +41198,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.STOCHF_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.stochf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41266,14 +41266,14 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         let rc = match c2.STOCHRSI(0, svN - 1, &fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.STOCHRSI_Open(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
+            let open_rejects = c2.stochrsi_open(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.STOCHRSI_OpenAndFill(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) {
+        match c2.stochrsi_open_and_fill(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41294,7 +41294,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.STOCHRSI_Open(&fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
+            match c2.stochrsi_open(&fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41322,7 +41322,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.STOCHRSI_Open(&fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
+            match c2.stochrsi_open(&fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41347,7 +41347,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.STOCHRSI_Open(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.stochrsi_open(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41401,13 +41401,13 @@ fn sv_sub(core: &Core, params: &Value) -> String {
         let rc = match c2.SUB(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SUB_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SUB_Open(&fz_c, &fz_v).is_err();
+            let open_rejects = c2.sub_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SUB_OpenAndFill(&fz_c, &fz_v, &mut f0) {
+        match c2.sub_open_and_fill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41426,7 +41426,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SUB_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.sub_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41450,7 +41450,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SUB_Open(&fz_c[..p], &fz_v[..p]) {
+            match c2.sub_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41472,7 +41472,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SUB_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sub_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41527,13 +41527,13 @@ fn sv_sum(core: &Core, params: &Value) -> String {
         let rc = match c2.SUM(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SUM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.SUM_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.sum_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.SUM_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.sum_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41552,7 +41552,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.SUM_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.sum_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41576,7 +41576,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.SUM_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.sum_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41598,7 +41598,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.SUM_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.sum_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41655,13 +41655,13 @@ fn sv_t3(core: &Core, params: &Value) -> String {
         let rc = match c2.T3(0, svN - 1, &fz_c, optInTimePeriod, optInVFactor, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.T3_Lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.T3_Open(&fz_c, optInTimePeriod, optInVFactor).is_err();
+            let open_rejects = c2.t3_open(&fz_c, optInTimePeriod, optInVFactor).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.T3_OpenAndFill(&fz_c, optInTimePeriod, optInVFactor, &mut f0) {
+        match c2.t3_open_and_fill(&fz_c, optInTimePeriod, optInVFactor, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41680,7 +41680,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.T3_Open(&fz_c[..p], optInTimePeriod, optInVFactor) {
+            match c2.t3_open(&fz_c[..p], optInTimePeriod, optInVFactor) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41704,7 +41704,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.T3_Open(&fz_c[..p], optInTimePeriod, optInVFactor) {
+            match c2.t3_open(&fz_c[..p], optInTimePeriod, optInVFactor) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41726,7 +41726,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.T3_Open(&fz_c[..lb], optInTimePeriod, optInVFactor).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.t3_open(&fz_c[..lb], optInTimePeriod, optInVFactor).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41780,13 +41780,13 @@ fn sv_tan(core: &Core, params: &Value) -> String {
         let rc = match c2.TAN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TAN_Open(&fz_c).is_err();
+            let open_rejects = c2.tan_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TAN_OpenAndFill(&fz_c, &mut f0) {
+        match c2.tan_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41805,7 +41805,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TAN_Open(&fz_c[..p]) {
+            match c2.tan_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41829,7 +41829,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TAN_Open(&fz_c[..p]) {
+            match c2.tan_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41851,7 +41851,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TAN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.tan_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -41905,13 +41905,13 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
         let rc = match c2.TANH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TANH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TANH_Open(&fz_c).is_err();
+            let open_rejects = c2.tanh_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TANH_OpenAndFill(&fz_c, &mut f0) {
+        match c2.tanh_open_and_fill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -41930,7 +41930,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TANH_Open(&fz_c[..p]) {
+            match c2.tanh_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -41954,7 +41954,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TANH_Open(&fz_c[..p]) {
+            match c2.tanh_open(&fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -41976,7 +41976,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TANH_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.tanh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42032,13 +42032,13 @@ fn sv_tema(core: &Core, params: &Value) -> String {
         let rc = match c2.TEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TEMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.tema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TEMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.tema_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42057,7 +42057,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TEMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.tema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42081,7 +42081,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TEMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.tema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42103,7 +42103,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TEMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.tema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42157,13 +42157,13 @@ fn sv_trange(core: &Core, params: &Value) -> String {
         let rc = match c2.TRANGE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TRANGE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TRANGE_Open(&fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.trange_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TRANGE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.trange_open_and_fill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42182,7 +42182,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TRANGE_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.trange_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42206,7 +42206,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TRANGE_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.trange_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42228,7 +42228,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TRANGE_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.trange_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42283,13 +42283,13 @@ fn sv_trima(core: &Core, params: &Value) -> String {
         let rc = match c2.TRIMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TRIMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TRIMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.trima_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TRIMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.trima_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42308,7 +42308,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TRIMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.trima_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42332,7 +42332,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TRIMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.trima_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42354,7 +42354,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TRIMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.trima_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42410,13 +42410,13 @@ fn sv_trix(core: &Core, params: &Value) -> String {
         let rc = match c2.TRIX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TRIX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TRIX_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.trix_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TRIX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.trix_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42435,7 +42435,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TRIX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.trix_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42459,7 +42459,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TRIX_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.trix_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42481,7 +42481,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TRIX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.trix_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42536,13 +42536,13 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
         let rc = match c2.TSF(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TSF_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TSF_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.tsf_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TSF_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.tsf_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42561,7 +42561,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TSF_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.tsf_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42585,7 +42585,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TSF_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.tsf_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42607,7 +42607,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TSF_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.tsf_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42661,13 +42661,13 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
         let rc = match c2.TYPPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TYPPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.TYPPRICE_Open(&fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.typprice_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.TYPPRICE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.typprice_open_and_fill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42686,7 +42686,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.TYPPRICE_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.typprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42710,7 +42710,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.TYPPRICE_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.typprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42732,7 +42732,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.TYPPRICE_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.typprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42789,13 +42789,13 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
         let rc = match c2.ULTOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.ULTOSC_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_err();
+            let open_rejects = c2.ultosc_open(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.ULTOSC_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut f0) {
+        match c2.ultosc_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42814,7 +42814,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.ULTOSC_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) {
+            match c2.ultosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42838,7 +42838,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.ULTOSC_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) {
+            match c2.ultosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42860,7 +42860,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ULTOSC_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.ultosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -42916,13 +42916,13 @@ fn sv_var(core: &Core, params: &Value) -> String {
         let rc = match c2.VAR(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.VAR_Open(&fz_c, optInTimePeriod, optInNbDev).is_err();
+            let open_rejects = c2.var_open(&fz_c, optInTimePeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.VAR_OpenAndFill(&fz_c, optInTimePeriod, optInNbDev, &mut f0) {
+        match c2.var_open_and_fill(&fz_c, optInTimePeriod, optInNbDev, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -42941,7 +42941,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.VAR_Open(&fz_c[..p], optInTimePeriod, optInNbDev) {
+            match c2.var_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -42965,7 +42965,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.VAR_Open(&fz_c[..p], optInTimePeriod, optInNbDev) {
+            match c2.var_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -42987,7 +42987,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.VAR_Open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.var_open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -43041,13 +43041,13 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
         let rc = match c2.VWAP(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.VWAP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.VWAP_Open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
+            let open_rejects = c2.vwap_open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.VWAP_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, &mut f0) {
+        match c2.vwap_open_and_fill(&fz_h, &fz_l, &fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -43066,7 +43066,7 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.VWAP_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
+            match c2.vwap_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -43090,7 +43090,7 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.VWAP_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
+            match c2.vwap_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -43112,7 +43112,7 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.VWAP_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.vwap_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -43167,13 +43167,13 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
         let rc = match c2.VWMA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.VWMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.VWMA_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
+            let open_rejects = c2.vwma_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.VWMA_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
+        match c2.vwma_open_and_fill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -43192,7 +43192,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.VWMA_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.vwma_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -43216,7 +43216,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.VWMA_Open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+            match c2.vwma_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -43238,7 +43238,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.VWMA_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.vwma_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -43292,13 +43292,13 @@ fn sv_wad(core: &Core, params: &Value) -> String {
         let rc = match c2.WAD(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WAD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.WAD_Open(&fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.wad_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.WAD_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.wad_open_and_fill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -43317,7 +43317,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.WAD_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.wad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -43341,7 +43341,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.WAD_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.wad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -43363,7 +43363,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.WAD_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.wad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -43417,13 +43417,13 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
         let rc = match c2.WCLPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WCLPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.WCLPRICE_Open(&fz_h, &fz_l, &fz_c).is_err();
+            let open_rejects = c2.wclprice_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.WCLPRICE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
+        match c2.wclprice_open_and_fill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -43442,7 +43442,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.WCLPRICE_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.wclprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -43466,7 +43466,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.WCLPRICE_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+            match c2.wclprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -43488,7 +43488,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.WCLPRICE_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.wclprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -43543,13 +43543,13 @@ fn sv_willr(core: &Core, params: &Value) -> String {
         let rc = match c2.WILLR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WILLR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.WILLR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.willr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.WILLR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
+        match c2.willr_open_and_fill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -43568,7 +43568,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.WILLR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.willr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -43592,7 +43592,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.WILLR_Open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+            match c2.willr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -43614,7 +43614,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.WILLR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.willr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
@@ -43669,13 +43669,13 @@ fn sv_wma(core: &Core, params: &Value) -> String {
         let rc = match c2.WMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
-            let open_rejects = c2.WMA_Open(&fz_c, optInTimePeriod).is_err();
+            let open_rejects = c2.wma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.WMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
+        match c2.wma_open_and_fill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -43694,7 +43694,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
-            match c2.WMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.wma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
                     legs += 1;
@@ -43718,7 +43718,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             }
         }
         if let Some(&p) = pcs.first() {
-            match c2.WMA_Open(&fz_c[..p], optInTimePeriod) {
+            match c2.wma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { ufill_ok = false; }
                 Ok((mut stu, _uv0)) => {
                     ufill_checked = 1;
@@ -43740,7 +43740,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.WMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            if c2.wma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)

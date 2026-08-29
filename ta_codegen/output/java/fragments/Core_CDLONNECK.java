@@ -350,7 +350,7 @@
    /**
     * A live CDLONNECK stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLONNECK} over the same series.
-    * Open with {@link Core#CDLONNECK_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlonneckOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -361,7 +361,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLONNECK_Stream {
+   public static final class CdlonneckStream {
       Core core;
       double EqualPeriodTotal;
       double BodyLongPeriodTotal;
@@ -387,7 +387,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLONNECK_Stream( Core core ) { this.core = core; }
+      CdlonneckStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -401,7 +401,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLONNECK_Stream( CDLONNECK_Stream other ) {
+      CdlonneckStream( CdlonneckStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -428,7 +428,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLONNECK_Stream other ) {
+      void copyFrom( CdlonneckStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -464,7 +464,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLONNECK_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlonneckStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -481,7 +481,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
-         core.CDLONNECK_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlonneckStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -510,7 +510,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLONNECK updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLONNECK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlonneckStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -528,14 +528,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
-         CDLONNECK_Stream scratch = PEEK_SCRATCH.get();
+         CdlonneckStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLONNECK_Stream(this);
+            scratch = new CdlonneckStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLONNECK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlonneckStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -552,11 +552,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLONNECK_Stream copy() {
-         return new CDLONNECK_Stream(this);
+      public CdlonneckStream copy() {
+         return new CdlonneckStream(this);
       }
    }
-   void CDLONNECK_StepImpl( CDLONNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlonneckStepImpl( CdlonneckStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -595,7 +595,7 @@
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLONNECK_OpenImpl( CDLONNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlonneckOpenImpl( CdlonneckStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -737,11 +737,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLONNECK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLONNECK_Stream CDLONNECK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlonneckOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlonneckStream cdlonneckOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
-      RetCode retCode = CDLONNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlonneckStream sp = new CdlonneckStream(this);
+      RetCode retCode = cdlonneckOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -755,14 +755,14 @@
       }
       throw new TaLibArgumentException("CDLONNECK openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLONNECK_Open (composition seam). */
-   CDLONNECK_Stream CDLONNECK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlonneckOpen (composition seam). */
+   CdlonneckStream cdlonneckOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
+      CdlonneckStream sp = new CdlonneckStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLONNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlonneckOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -789,7 +789,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLONNECK_Stream CDLONNECK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlonneckStream cdlonneckOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLONNECK open", "inOpen", inOpen);
       requireHistory("CDLONNECK open", inOpen.length);
@@ -799,10 +799,10 @@
       requireHistoryLength("CDLONNECK open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLONNECK open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLONNECK open", "inClose", inClose.length, inOpen.length);
-      return CDLONNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlonneckOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLONNECK_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlonneckOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLONNECK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -810,9 +810,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLONNECK_Stream#outRange()}.
+    * {@link CdlonneckStream#outRange()}.
     */
-   public CDLONNECK_Stream CDLONNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlonneckStream cdlonneckOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLONNECK openAndFill", "inOpen", inOpen);
       requireHistory("CDLONNECK openAndFill", inOpen.length);
@@ -829,5 +829,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLONNECK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlonneckOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

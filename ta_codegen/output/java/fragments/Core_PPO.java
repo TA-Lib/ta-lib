@@ -370,7 +370,7 @@
    /**
     * A live PPO stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#PPO} over the same series.
-    * Open with {@link Core#PPO_Open}; there is no close — the handle is
+    * Open with {@link Core#ppoOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -381,18 +381,18 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class PPO_Stream {
+   public static final class PpoStream {
       Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
       MAType optInMAType;
       double cur_outReal;
-      MA_Stream sub0;
-      MA_Stream sub1;
+      MaStream sub0;
+      MaStream sub1;
       int outRangeBegIdx;
       int outRangeCount;
 
-      PPO_Stream( Core core ) { this.core = core; }
+      PpoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -406,31 +406,31 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      PPO_Stream( PPO_Stream other ) {
+      PpoStream( PpoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PPO_Stream other ) {
+      void copyFrom( PpoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
          if( this.sub0 == null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
          if( this.sub1 == null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.copyFrom(other.sub1);
          }
@@ -439,7 +439,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<PPO_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<PpoStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -456,7 +456,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("PPO update: BadParam", RetCode.BadParam);
-         core.PPO_StepImpl(this, inReal);
+         core.ppoStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -482,7 +482,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("PPO updateAndFill: BadParam", RetCode.BadParam);
-            core.PPO_StepImpl(this, inReal[i]);
+            core.ppoStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -500,14 +500,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("PPO peek: BadParam", RetCode.BadParam);
-         PPO_Stream scratch = PEEK_SCRATCH.get();
+         PpoStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new PPO_Stream(this);
+            scratch = new PpoStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.PPO_StepImpl(scratch, inReal);
+         core.ppoStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -524,11 +524,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public PPO_Stream copy() {
-         return new PPO_Stream(this);
+      public PpoStream copy() {
+         return new PpoStream(this);
       }
    }
-   void PPO_StepImpl( PPO_Stream sp, double inReal )
+   void ppoStepImpl( PpoStream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;
@@ -545,7 +545,7 @@
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode PPO_OpenImpl( PPO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ppoOpenImpl( PpoStream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -616,12 +616,12 @@
       /* Calculate the fast MA into the tempBuffer. */
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      MaStream sub0 = maOpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       retCode = RetCode.Success;
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
+      MaStream sub1 = maOpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
@@ -649,11 +649,11 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* PPO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   PPO_Stream PPO_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* ppoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PpoStream ppoOpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      PPO_Stream sp = new PPO_Stream(this);
-      RetCode retCode = PPO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
+      PpoStream sp = new PpoStream(this);
+      RetCode retCode = ppoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -667,14 +667,14 @@
       }
       throw new TaLibArgumentException("PPO openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind PPO_Open (composition seam). */
-   PPO_Stream PPO_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind ppoOpen (composition seam). */
+   PpoStream ppoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      PPO_Stream sp = new PPO_Stream(this);
+      PpoStream sp = new PpoStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = PPO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = ppoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -701,15 +701,15 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public PPO_Stream PPO_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public PpoStream ppoOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       requireArgument("PPO open", "inReal", inReal);
       requireHistory("PPO open", inReal.length);
       requireArgument("PPO open", "optInMAType", optInMAType);
-      return PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+      return ppoOpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
-    * {@link Core#PPO_Open} that also fills the output array(s) bit-identically
+    * {@link Core#ppoOpen} that also fills the output array(s) bit-identically
     * to {@link Core#PPO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -717,9 +717,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link PPO_Stream#outRange()}.
+    * {@link PpoStream#outRange()}.
     */
-   public PPO_Stream PPO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
+   public PpoStream ppoOpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
       requireArgument("PPO openAndFill", "inReal", inReal);
       requireHistory("PPO openAndFill", inReal.length);
@@ -731,5 +731,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return PPO_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      return ppoOpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
    }

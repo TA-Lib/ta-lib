@@ -869,12 +869,12 @@ public partial class Core
    /// </remarks>
    /// <param name="InPhase">In-phase component (detrender delayed 3 bars)</param>
    /// <param name="Quadrature">Quadrature component (Q1 of the Hilbert Transform)</param>
-   public readonly record struct HT_PHASOR_Value( double InPhase, double Quadrature );
+   public readonly record struct HtPhasorValue( double InPhase, double Quadrature );
 
    /// <summary>A live <c>HT_PHASOR</c> stream: one value per closed bar, bit-identical to
    /// <c>HT_PHASOR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.HT_PHASOR_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.HtPhasorOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -887,7 +887,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class HT_PHASOR_Stream
+   public sealed class HtPhasorStream
    {
       internal Core core;
       internal double period;
@@ -939,12 +939,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal HT_PHASOR_Stream( Core core ) { this.core = core; }
+      internal HtPhasorStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.HT_PHASOR</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.HtPhasor</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -953,7 +953,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal HT_PHASOR_Stream( HT_PHASOR_Stream other )
+      internal HtPhasorStream( HtPhasorStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1015,7 +1015,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HT_PHASOR_Stream other )
+      internal void CopyFrom( HtPhasorStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1096,7 +1096,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HT_PHASOR_Stream? peekScratch;
+      [ThreadStatic] private static HtPhasorStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1111,12 +1111,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public HT_PHASOR_Value Update( double inReal )
+      public HtPhasorValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_PHASOR", "update", RetCode.BadParam);
-         core.HT_PHASOR_StepImpl(this, inReal);
+         core.HtPhasorStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new HT_PHASOR_Value(cur_outInPhase, cur_outQuadrature);
+         return new HtPhasorValue(cur_outInPhase, cur_outQuadrature);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -1130,18 +1130,18 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public HT_PHASOR_Value Peek( double inReal )
+      public HtPhasorValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_PHASOR", "peek", RetCode.BadParam);
-         HT_PHASOR_Stream? scratch = peekScratch;
+         HtPhasorStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new HT_PHASOR_Stream(this);
+            scratch = new HtPhasorStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_PHASOR_StepImpl(scratch, inReal);
-         return new HT_PHASOR_Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
+         core.HtPhasorStepImpl(scratch, inReal);
+         return new HtPhasorValue(scratch.cur_outInPhase, scratch.cur_outQuadrature);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -1165,7 +1165,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HT_PHASOR", "updateAndFill", RetCode.BadParam);
-            core.HT_PHASOR_StepImpl(this, inReal[i]);
+            core.HtPhasorStepImpl(this, inReal[i]);
             outInPhase[i] = cur_outInPhase;
             outQuadrature[i] = cur_outQuadrature;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -1177,18 +1177,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public HT_PHASOR_Value Value => new HT_PHASOR_Value(cur_outInPhase, cur_outQuadrature);
+      public HtPhasorValue Value => new HtPhasorValue(cur_outInPhase, cur_outQuadrature);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public HT_PHASOR_Stream Clone()
+      public HtPhasorStream Clone()
       {
-         return new HT_PHASOR_Stream(this);
+         return new HtPhasorStream(this);
       }
    }
 
-   internal void HT_PHASOR_StepImpl( HT_PHASOR_Stream sp, double inReal )
+   internal void HtPhasorStepImpl( HtPhasorStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -1349,7 +1349,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
+   private RetCode HtPhasorOpenImpl( HtPhasorStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1751,11 +1751,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
+   /* HtPhasorOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal HtPhasorStream HtPhasorOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
+      HtPhasorStream sp = new HtPhasorStream(this);
+      RetCode retCode = HtPhasorOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1764,13 +1764,13 @@ public partial class Core
       throw StreamFailure("HT_PHASOR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind HT_PHASOR_Open (composition seam). */
-   internal HT_PHASOR_Stream HT_PHASOR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind HtPhasorOpen (composition seam). */
+   internal HtPhasorStream HtPhasorOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
+      HtPhasorStream sp = new HtPhasorStream(this);
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInPhase, sink_outQuadrature, 0);
+      RetCode retCode = HtPhasorOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInPhase, sink_outQuadrature, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1781,12 +1781,11 @@ public partial class Core
 
    /// <summary>Open a live <c>HT_PHASOR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="HT_PHASOR_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>HT_PHASOR</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="HtPhasorStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>HT_PHASOR</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>HT_PHASOR_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>HT_PHASOR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>HtPhasorOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -1796,14 +1795,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_PHASOR_Stream HT_PHASOR_Open( ReadOnlySpan<double> inReal )
+   public HtPhasorStream HtPhasorOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return HT_PHASOR_OpenInternal(inReal, 0);
+      return HtPhasorOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>HT_PHASOR_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>HtPhasorOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>HT_PHASOR</c> produces
@@ -1816,7 +1815,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HT_PHASOR_Stream.OutRange"/>.</para>
+   /// <see cref="HtPhasorStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <param name="outInPhase">In-phase component (detrender delayed 3 bars) Must hold at least
@@ -1831,7 +1830,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
+   public HtPhasorStream HtPhasorOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1841,6 +1840,6 @@ public partial class Core
       if( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || outInPhase.Overlaps(outQuadrature) ) {
          throw StreamFailure("HT_PHASOR", "openAndFill", RetCode.BadParam);
       }
-      return HT_PHASOR_OpenAndFillInternal(inReal, 0, out _, out _, outInPhase, outQuadrature);
+      return HtPhasorOpenAndFillInternal(inReal, 0, out _, out _, outInPhase, outQuadrature);
    }
 }

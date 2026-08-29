@@ -326,7 +326,7 @@
    /**
     * A live QSTICK stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#QSTICK} over the same series.
-    * Open with {@link Core#QSTICK_Open}; there is no close — the handle is
+    * Open with {@link Core#qstickOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -337,7 +337,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class QSTICK_Stream {
+   public static final class QstickStream {
       Core core;
       int optInTimePeriod;
       double periodTotal;
@@ -348,7 +348,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      QSTICK_Stream( Core core ) { this.core = core; }
+      QstickStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -362,7 +362,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      QSTICK_Stream( QSTICK_Stream other ) {
+      QstickStream( QstickStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -374,7 +374,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( QSTICK_Stream other ) {
+      void copyFrom( QstickStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -405,7 +405,7 @@
       public double update( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
-         core.QSTICK_StepImpl(this, inOpen, inClose);
+         core.qstickStepImpl(this, inOpen, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -432,7 +432,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("QSTICK updateAndFill: BadParam", RetCode.BadParam);
-            core.QSTICK_StepImpl(this, inOpen[i], inClose[i]);
+            core.qstickStepImpl(this, inOpen[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -448,8 +448,8 @@
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
-         QSTICK_Stream scratch = new QSTICK_Stream(this);
-         core.QSTICK_StepImpl(scratch, inOpen, inClose);
+         QstickStream scratch = new QstickStream(this);
+         core.qstickStepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -466,11 +466,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public QSTICK_Stream copy() {
-         return new QSTICK_Stream(this);
+      public QstickStream copy() {
+         return new QstickStream(this);
       }
    }
-   void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
+   void qstickStepImpl( QstickStream sp, double inOpen, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -486,7 +486,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode QSTICK_OpenImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode qstickOpenImpl( QstickStream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -595,11 +595,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* QSTICK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   QSTICK_Stream QSTICK_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* qstickOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   QstickStream qstickOpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      QSTICK_Stream sp = new QSTICK_Stream(this);
-      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      QstickStream sp = new QstickStream(this);
+      RetCode retCode = qstickOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -613,14 +613,14 @@
       }
       throw new TaLibArgumentException("QSTICK openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind QSTICK_Open (composition seam). */
-   QSTICK_Stream QSTICK_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind qstickOpen (composition seam). */
+   QstickStream qstickOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      QSTICK_Stream sp = new QSTICK_Stream(this);
+      QstickStream sp = new QstickStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = qstickOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -647,16 +647,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public QSTICK_Stream QSTICK_Open( double inOpen[], double inClose[], int optInTimePeriod )
+   public QstickStream qstickOpen( double inOpen[], double inClose[], int optInTimePeriod )
    {
       requireArgument("QSTICK open", "inOpen", inOpen);
       requireHistory("QSTICK open", inOpen.length);
       requireArgument("QSTICK open", "inClose", inClose);
       requireHistoryLength("QSTICK open", "inClose", inClose.length, inOpen.length);
-      return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
+      return qstickOpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#QSTICK_Open} that also fills the output array(s) bit-identically
+    * {@link Core#qstickOpen} that also fills the output array(s) bit-identically
     * to {@link Core#QSTICK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -664,9 +664,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link QSTICK_Stream#outRange()}.
+    * {@link QstickStream#outRange()}.
     */
-   public QSTICK_Stream QSTICK_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
+   public QstickStream qstickOpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("QSTICK openAndFill", "inOpen", inOpen);
       requireHistory("QSTICK openAndFill", inOpen.length);
@@ -679,5 +679,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return QSTICK_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return qstickOpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

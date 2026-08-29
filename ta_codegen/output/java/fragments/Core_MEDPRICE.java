@@ -209,7 +209,7 @@
    /**
     * A live MEDPRICE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MEDPRICE} over the same series.
-    * Open with {@link Core#MEDPRICE_Open}; there is no close — the handle is
+    * Open with {@link Core#medpriceOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -220,13 +220,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MEDPRICE_Stream {
+   public static final class MedpriceStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      MEDPRICE_Stream( Core core ) { this.core = core; }
+      MedpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -240,14 +240,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MEDPRICE_Stream( MEDPRICE_Stream other ) {
+      MedpriceStream( MedpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MEDPRICE_Stream other ) {
+      void copyFrom( MedpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -269,7 +269,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
-         core.MEDPRICE_StepImpl(this, inHigh, inLow);
+         core.medpriceStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -296,7 +296,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("MEDPRICE updateAndFill: BadParam", RetCode.BadParam);
-            core.MEDPRICE_StepImpl(this, inHigh[i], inLow[i]);
+            core.medpriceStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -312,8 +312,8 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
-         MEDPRICE_Stream scratch = new MEDPRICE_Stream(this);
-         core.MEDPRICE_StepImpl(scratch, inHigh, inLow);
+         MedpriceStream scratch = new MedpriceStream(this);
+         core.medpriceStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -330,15 +330,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MEDPRICE_Stream copy() {
-         return new MEDPRICE_Stream(this);
+      public MedpriceStream copy() {
+         return new MedpriceStream(this);
       }
    }
-   void MEDPRICE_StepImpl( MEDPRICE_Stream sp, double inHigh, double inLow )
+   void medpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
-   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode medpriceOpenImpl( MedpriceStream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -374,11 +374,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* medpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MedpriceStream medpriceOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
+      MedpriceStream sp = new MedpriceStream(this);
+      RetCode retCode = medpriceOpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -392,14 +392,14 @@
       }
       throw new TaLibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MEDPRICE_Open (composition seam). */
-   MEDPRICE_Stream MEDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx )
+   /* Internal startIdx-anchored open behind medpriceOpen (composition seam). */
+   MedpriceStream medpriceOpenInternal( double inHigh[], double inLow[], int startIdx )
    {
-      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
+      MedpriceStream sp = new MedpriceStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = medpriceOpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -426,16 +426,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MEDPRICE_Stream MEDPRICE_Open( double inHigh[], double inLow[] )
+   public MedpriceStream medpriceOpen( double inHigh[], double inLow[] )
    {
       requireArgument("MEDPRICE open", "inHigh", inHigh);
       requireHistory("MEDPRICE open", inHigh.length);
       requireArgument("MEDPRICE open", "inLow", inLow);
       requireHistoryLength("MEDPRICE open", "inLow", inLow.length, inHigh.length);
-      return MEDPRICE_OpenInternal(inHigh, inLow, 0);
+      return medpriceOpenInternal(inHigh, inLow, 0);
    }
    /**
-    * {@link Core#MEDPRICE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#medpriceOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MEDPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -443,9 +443,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MEDPRICE_Stream#outRange()}.
+    * {@link MedpriceStream#outRange()}.
     */
-   public MEDPRICE_Stream MEDPRICE_OpenAndFill( double inHigh[], double inLow[], double outReal[] )
+   public MedpriceStream medpriceOpenAndFill( double inHigh[], double inLow[], double outReal[] )
    {
       requireArgument("MEDPRICE openAndFill", "inHigh", inHigh);
       requireHistory("MEDPRICE openAndFill", inHigh.length);
@@ -458,5 +458,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MEDPRICE_OpenAndFillInternal(inHigh, inLow, 0, outBegIdx, outNBElement, outReal);
+      return medpriceOpenAndFillInternal(inHigh, inLow, 0, outBegIdx, outNBElement, outReal);
    }

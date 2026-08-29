@@ -1104,7 +1104,7 @@ public partial class Core
    /// <summary>A live <c>HT_TRENDMODE</c> stream: one value per closed bar, bit-identical
    /// to <c>HT_TRENDMODE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.HT_TRENDMODE_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.HtTrendmodeOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -1117,7 +1117,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class HT_TRENDMODE_Stream
+   public sealed class HtTrendmodeStream
    {
       internal Core core;
       internal double period;
@@ -1185,12 +1185,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal HT_TRENDMODE_Stream( Core core ) { this.core = core; }
+      internal HtTrendmodeStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.HT_TRENDMODE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.HtTrendmode</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -1199,7 +1199,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal HT_TRENDMODE_Stream( HT_TRENDMODE_Stream other )
+      internal HtTrendmodeStream( HtTrendmodeStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1279,7 +1279,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HT_TRENDMODE_Stream other )
+      internal void CopyFrom( HtTrendmodeStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1382,7 +1382,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HT_TRENDMODE_Stream? peekScratch;
+      [ThreadStatic] private static HtTrendmodeStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1400,7 +1400,7 @@ public partial class Core
       public int Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_TRENDMODE", "update", RetCode.BadParam);
-         core.HT_TRENDMODE_StepImpl(this, inReal);
+         core.HtTrendmodeStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -1419,14 +1419,14 @@ public partial class Core
       public int Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_TRENDMODE", "peek", RetCode.BadParam);
-         HT_TRENDMODE_Stream? scratch = peekScratch;
+         HtTrendmodeStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new HT_TRENDMODE_Stream(this);
+            scratch = new HtTrendmodeStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_TRENDMODE_StepImpl(scratch, inReal);
+         core.HtTrendmodeStepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -1450,7 +1450,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HT_TRENDMODE", "updateAndFill", RetCode.BadParam);
-            core.HT_TRENDMODE_StepImpl(this, inReal[i]);
+            core.HtTrendmodeStepImpl(this, inReal[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -1466,13 +1466,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public HT_TRENDMODE_Stream Clone()
+      public HtTrendmodeStream Clone()
       {
-         return new HT_TRENDMODE_Stream(this);
+         return new HtTrendmodeStream(this);
       }
    }
 
-   internal void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
+   internal void HtTrendmodeStepImpl( HtTrendmodeStream sp, double inReal )
    {
       int i = 0;
       int j = 0;
@@ -1748,7 +1748,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode HtTrendmodeOpenImpl( HtTrendmodeStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -2320,11 +2320,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* HtTrendmodeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal HtTrendmodeStream HtTrendmodeOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      HtTrendmodeStream sp = new HtTrendmodeStream(this);
+      RetCode retCode = HtTrendmodeOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2333,12 +2333,12 @@ public partial class Core
       throw StreamFailure("HT_TRENDMODE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind HT_TRENDMODE_Open (composition seam). */
-   internal HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind HtTrendmodeOpen (composition seam). */
+   internal HtTrendmodeStream HtTrendmodeOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
+      HtTrendmodeStream sp = new HtTrendmodeStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = HtTrendmodeOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2349,12 +2349,12 @@ public partial class Core
 
    /// <summary>Open a live <c>HT_TRENDMODE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="HT_TRENDMODE_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="HtTrendmodeStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>HT_TRENDMODE</c> reports
    /// for that bar.</para>
    /// <para>The history must hold at least <c>HT_TRENDMODE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>HT_TRENDMODE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>HtTrendmodeOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -2364,15 +2364,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_TRENDMODE_Stream HT_TRENDMODE_Open( ReadOnlySpan<double> inReal )
+   public HtTrendmodeStream HtTrendmodeOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return HT_TRENDMODE_OpenInternal(inReal, 0);
+      return HtTrendmodeOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>HT_TRENDMODE_Open</c> that also fills the output array(s) over the
-   /// whole history in the same single pass.</summary>
+   /// <summary><c>HtTrendmodeOpen</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>HT_TRENDMODE</c> produces
    /// over the same series, so no separate batch call is needed for the warm-up
@@ -2385,7 +2385,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HT_TRENDMODE_Stream.OutRange"/>.</para>
+   /// <see cref="HtTrendmodeStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <param name="outInteger">1 = trend mode, 0 = cycle mode. Must hold at least <c>historyLen -
@@ -2398,12 +2398,12 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( ReadOnlySpan<double> inReal, Span<int> outInteger )
+   public HtTrendmodeStream HtTrendmodeOpenAndFill( ReadOnlySpan<double> inReal, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDMODE", "openAndFill", inReal.Length, HT_TRENDMODE_Lookback());
       RequireFillLength("HT_TRENDMODE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return HT_TRENDMODE_OpenAndFillInternal(inReal, 0, out _, out _, outInteger);
+      return HtTrendmodeOpenAndFillInternal(inReal, 0, out _, out _, outInteger);
    }
 }

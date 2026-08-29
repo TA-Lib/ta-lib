@@ -210,7 +210,7 @@
    /**
     * A live WCLPRICE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#WCLPRICE} over the same series.
-    * Open with {@link Core#WCLPRICE_Open}; there is no close — the handle is
+    * Open with {@link Core#wclpriceOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -221,13 +221,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class WCLPRICE_Stream {
+   public static final class WclpriceStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      WCLPRICE_Stream( Core core ) { this.core = core; }
+      WclpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -241,14 +241,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      WCLPRICE_Stream( WCLPRICE_Stream other ) {
+      WclpriceStream( WclpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WCLPRICE_Stream other ) {
+      void copyFrom( WclpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -270,7 +270,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
-         core.WCLPRICE_StepImpl(this, inHigh, inLow, inClose);
+         core.wclpriceStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -298,7 +298,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("WCLPRICE updateAndFill: BadParam", RetCode.BadParam);
-            core.WCLPRICE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.wclpriceStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -314,8 +314,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
-         WCLPRICE_Stream scratch = new WCLPRICE_Stream(this);
-         core.WCLPRICE_StepImpl(scratch, inHigh, inLow, inClose);
+         WclpriceStream scratch = new WclpriceStream(this);
+         core.wclpriceStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -332,15 +332,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public WCLPRICE_Stream copy() {
-         return new WCLPRICE_Stream(this);
+      public WclpriceStream copy() {
+         return new WclpriceStream(this);
       }
    }
-   void WCLPRICE_StepImpl( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   void wclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    }
-   private RetCode WCLPRICE_OpenImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode wclpriceOpenImpl( WclpriceStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -371,11 +371,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* WCLPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* wclpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WclpriceStream wclpriceOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
-      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      WclpriceStream sp = new WclpriceStream(this);
+      RetCode retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -389,14 +389,14 @@
       }
       throw new TaLibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind WCLPRICE_Open (composition seam). */
-   WCLPRICE_Stream WCLPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind wclpriceOpen (composition seam). */
+   WclpriceStream wclpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
+      WclpriceStream sp = new WclpriceStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -423,7 +423,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public WCLPRICE_Stream WCLPRICE_Open( double inHigh[], double inLow[], double inClose[] )
+   public WclpriceStream wclpriceOpen( double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("WCLPRICE open", "inHigh", inHigh);
       requireHistory("WCLPRICE open", inHigh.length);
@@ -431,10 +431,10 @@
       requireArgument("WCLPRICE open", "inClose", inClose);
       requireHistoryLength("WCLPRICE open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("WCLPRICE open", "inClose", inClose.length, inHigh.length);
-      return WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0);
+      return wclpriceOpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#WCLPRICE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#wclpriceOpen} that also fills the output array(s) bit-identically
     * to {@link Core#WCLPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -442,9 +442,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link WCLPRICE_Stream#outRange()}.
+    * {@link WclpriceStream#outRange()}.
     */
-   public WCLPRICE_Stream WCLPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public WclpriceStream wclpriceOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       requireArgument("WCLPRICE openAndFill", "inHigh", inHigh);
       requireHistory("WCLPRICE openAndFill", inHigh.length);
@@ -459,5 +459,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return WCLPRICE_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+      return wclpriceOpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }

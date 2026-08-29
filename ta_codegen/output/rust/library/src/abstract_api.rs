@@ -23,6 +23,9 @@
 //!  * For reference, C's `TA_GetFuncHandle` is an O(n) linear `strcmp` within a
 //!    26-way first-letter bucket (up to 67 compares for the `CDL*` bucket) plus
 //!    several pointer hops per entry. The generated `match` is strictly less work.
+//!  * `get_func_handle` tries this exact match first, and only falls back to an
+//!    O(n) ASCII case-insensitive scan over [`FUNCS`] on a miss (#278) — a cold
+//!    path within a cold path, so the fallback's linearity doesn't matter.
 #![allow(clippy::all)]
 #![allow(non_camel_case_types)]
 
@@ -2336,213 +2339,207 @@ pub static FUNCS: [FuncInfo; 176] = [
     },
 ];
 
-/// Resolve a function name (e.g. "RSI") to its [`FuncId`].
+/// Resolve a function name (e.g. "RSI") to its [`FuncId`], exact-case first.
 ///
-/// The name is matched under an ASCII case fold, so `"RSI"`, `"rsi"` and
-/// `"Rsi"` all resolve to the same handle. Only the *match* folds: the name
-/// this crate reports back — [`FuncId::name`], [`FuncInfo::name`] — stays the
-/// canonical upper-case spelling whatever was passed in.
-///
-/// ASCII and not [`str::to_lowercase`] on purpose. Unicode case mapping is
-/// locale-shaped, and the Turkish dotless `ı` is the classic way a lookup
-/// like this one starts failing for some users and not others. Every
-/// function name is invariant ASCII, so the fold that matches it is too.
-///
-/// Uses a generated `match` — see the module-level docs for why this is O(1)
-/// and faster than C's linear `strcmp` scan. The fold is a fixed-size stack
-/// buffer, so it stays allocation-free and dependency-free.
-pub fn get_func_handle(name: &str) -> Option<FuncId> {
-    /// The longest canonical name; nothing longer can be one.
-    const MAX_NAME_LEN: usize = 19;
-
-    let raw = name.as_bytes();
-    if raw.len() > MAX_NAME_LEN {
-        return None;
-    }
-    let mut folded = [0u8; MAX_NAME_LEN];
-    for (slot, byte) in folded.iter_mut().zip(raw) {
-        *slot = byte.to_ascii_uppercase();
-    }
-
-    Some(match &folded[..raw.len()] {
-        b"AC" => FuncId::AC,
-        b"ACCBANDS" => FuncId::ACCBANDS,
-        b"ACOS" => FuncId::ACOS,
-        b"AD" => FuncId::AD,
-        b"ADD" => FuncId::ADD,
-        b"ADOSC" => FuncId::ADOSC,
-        b"ADX" => FuncId::ADX,
-        b"ADXR" => FuncId::ADXR,
-        b"AO" => FuncId::AO,
-        b"APO" => FuncId::APO,
-        b"AROON" => FuncId::AROON,
-        b"AROONOSC" => FuncId::AROONOSC,
-        b"ASIN" => FuncId::ASIN,
-        b"ATAN" => FuncId::ATAN,
-        b"ATR" => FuncId::ATR,
-        b"AVGDEV" => FuncId::AVGDEV,
-        b"AVGPRICE" => FuncId::AVGPRICE,
-        b"BBANDS" => FuncId::BBANDS,
-        b"BETA" => FuncId::BETA,
-        b"BOP" => FuncId::BOP,
-        b"CCI" => FuncId::CCI,
-        b"CDL2CROWS" => FuncId::CDL2CROWS,
-        b"CDL3BLACKCROWS" => FuncId::CDL3BLACKCROWS,
-        b"CDL3INSIDE" => FuncId::CDL3INSIDE,
-        b"CDL3LINESTRIKE" => FuncId::CDL3LINESTRIKE,
-        b"CDL3OUTSIDE" => FuncId::CDL3OUTSIDE,
-        b"CDL3STARSINSOUTH" => FuncId::CDL3STARSINSOUTH,
-        b"CDL3WHITESOLDIERS" => FuncId::CDL3WHITESOLDIERS,
-        b"CDLABANDONEDBABY" => FuncId::CDLABANDONEDBABY,
-        b"CDLADVANCEBLOCK" => FuncId::CDLADVANCEBLOCK,
-        b"CDLBELTHOLD" => FuncId::CDLBELTHOLD,
-        b"CDLBREAKAWAY" => FuncId::CDLBREAKAWAY,
-        b"CDLCLOSINGMARUBOZU" => FuncId::CDLCLOSINGMARUBOZU,
-        b"CDLCONCEALBABYSWALL" => FuncId::CDLCONCEALBABYSWALL,
-        b"CDLCOUNTERATTACK" => FuncId::CDLCOUNTERATTACK,
-        b"CDLDARKCLOUDCOVER" => FuncId::CDLDARKCLOUDCOVER,
-        b"CDLDOJI" => FuncId::CDLDOJI,
-        b"CDLDOJISTAR" => FuncId::CDLDOJISTAR,
-        b"CDLDRAGONFLYDOJI" => FuncId::CDLDRAGONFLYDOJI,
-        b"CDLENGULFING" => FuncId::CDLENGULFING,
-        b"CDLEVENINGDOJISTAR" => FuncId::CDLEVENINGDOJISTAR,
-        b"CDLEVENINGSTAR" => FuncId::CDLEVENINGSTAR,
-        b"CDLGAPSIDESIDEWHITE" => FuncId::CDLGAPSIDESIDEWHITE,
-        b"CDLGRAVESTONEDOJI" => FuncId::CDLGRAVESTONEDOJI,
-        b"CDLHAMMER" => FuncId::CDLHAMMER,
-        b"CDLHANGINGMAN" => FuncId::CDLHANGINGMAN,
-        b"CDLHARAMI" => FuncId::CDLHARAMI,
-        b"CDLHARAMICROSS" => FuncId::CDLHARAMICROSS,
-        b"CDLHIGHWAVE" => FuncId::CDLHIGHWAVE,
-        b"CDLHIKKAKE" => FuncId::CDLHIKKAKE,
-        b"CDLHIKKAKEMOD" => FuncId::CDLHIKKAKEMOD,
-        b"CDLHOMINGPIGEON" => FuncId::CDLHOMINGPIGEON,
-        b"CDLIDENTICAL3CROWS" => FuncId::CDLIDENTICAL3CROWS,
-        b"CDLINNECK" => FuncId::CDLINNECK,
-        b"CDLINVERTEDHAMMER" => FuncId::CDLINVERTEDHAMMER,
-        b"CDLKICKING" => FuncId::CDLKICKING,
-        b"CDLKICKINGBYLENGTH" => FuncId::CDLKICKINGBYLENGTH,
-        b"CDLLADDERBOTTOM" => FuncId::CDLLADDERBOTTOM,
-        b"CDLLONGLEGGEDDOJI" => FuncId::CDLLONGLEGGEDDOJI,
-        b"CDLLONGLINE" => FuncId::CDLLONGLINE,
-        b"CDLMARUBOZU" => FuncId::CDLMARUBOZU,
-        b"CDLMATCHINGLOW" => FuncId::CDLMATCHINGLOW,
-        b"CDLMATHOLD" => FuncId::CDLMATHOLD,
-        b"CDLMORNINGDOJISTAR" => FuncId::CDLMORNINGDOJISTAR,
-        b"CDLMORNINGSTAR" => FuncId::CDLMORNINGSTAR,
-        b"CDLONNECK" => FuncId::CDLONNECK,
-        b"CDLPIERCING" => FuncId::CDLPIERCING,
-        b"CDLRICKSHAWMAN" => FuncId::CDLRICKSHAWMAN,
-        b"CDLRISEFALL3METHODS" => FuncId::CDLRISEFALL3METHODS,
-        b"CDLSEPARATINGLINES" => FuncId::CDLSEPARATINGLINES,
-        b"CDLSHOOTINGSTAR" => FuncId::CDLSHOOTINGSTAR,
-        b"CDLSHORTLINE" => FuncId::CDLSHORTLINE,
-        b"CDLSPINNINGTOP" => FuncId::CDLSPINNINGTOP,
-        b"CDLSTALLEDPATTERN" => FuncId::CDLSTALLEDPATTERN,
-        b"CDLSTICKSANDWICH" => FuncId::CDLSTICKSANDWICH,
-        b"CDLTAKURI" => FuncId::CDLTAKURI,
-        b"CDLTASUKIGAP" => FuncId::CDLTASUKIGAP,
-        b"CDLTHRUSTING" => FuncId::CDLTHRUSTING,
-        b"CDLTRISTAR" => FuncId::CDLTRISTAR,
-        b"CDLUNIQUE3RIVER" => FuncId::CDLUNIQUE3RIVER,
-        b"CDLUPSIDEGAP2CROWS" => FuncId::CDLUPSIDEGAP2CROWS,
-        b"CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
-        b"CEIL" => FuncId::CEIL,
-        b"CMF" => FuncId::CMF,
-        b"CMO" => FuncId::CMO,
-        b"CMOU" => FuncId::CMOU,
-        b"CORREL" => FuncId::CORREL,
-        b"COS" => FuncId::COS,
-        b"COSH" => FuncId::COSH,
-        b"DEMA" => FuncId::DEMA,
-        b"DIV" => FuncId::DIV,
-        b"DX" => FuncId::DX,
-        b"EFI" => FuncId::EFI,
-        b"EMA" => FuncId::EMA,
-        b"EXP" => FuncId::EXP,
-        b"FLOOR" => FuncId::FLOOR,
-        b"HMA" => FuncId::HMA,
-        b"HT_DCPERIOD" => FuncId::HT_DCPERIOD,
-        b"HT_DCPHASE" => FuncId::HT_DCPHASE,
-        b"HT_PHASOR" => FuncId::HT_PHASOR,
-        b"HT_SINE" => FuncId::HT_SINE,
-        b"HT_TRENDLINE" => FuncId::HT_TRENDLINE,
-        b"HT_TRENDMODE" => FuncId::HT_TRENDMODE,
-        b"IMI" => FuncId::IMI,
-        b"KAMA" => FuncId::KAMA,
-        b"LINEARREG" => FuncId::LINEARREG,
-        b"LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
-        b"LINEARREG_INTERCEPT" => FuncId::LINEARREG_INTERCEPT,
-        b"LINEARREG_SLOPE" => FuncId::LINEARREG_SLOPE,
-        b"LN" => FuncId::LN,
-        b"LOG10" => FuncId::LOG10,
-        b"MA" => FuncId::MA,
-        b"MACD" => FuncId::MACD,
-        b"MACDEXT" => FuncId::MACDEXT,
-        b"MACDFIX" => FuncId::MACDFIX,
-        b"MAMA" => FuncId::MAMA,
-        b"MARKETFI" => FuncId::MARKETFI,
-        b"MAVP" => FuncId::MAVP,
-        b"MAX" => FuncId::MAX,
-        b"MAXINDEX" => FuncId::MAXINDEX,
-        b"MEDPRICE" => FuncId::MEDPRICE,
-        b"MFI" => FuncId::MFI,
-        b"MIDPOINT" => FuncId::MIDPOINT,
-        b"MIDPRICE" => FuncId::MIDPRICE,
-        b"MIN" => FuncId::MIN,
-        b"MININDEX" => FuncId::MININDEX,
-        b"MINMAX" => FuncId::MINMAX,
-        b"MINMAXINDEX" => FuncId::MINMAXINDEX,
-        b"MINUS_DI" => FuncId::MINUS_DI,
-        b"MINUS_DM" => FuncId::MINUS_DM,
-        b"MOM" => FuncId::MOM,
-        b"MULT" => FuncId::MULT,
-        b"NATR" => FuncId::NATR,
-        b"NVI" => FuncId::NVI,
-        b"OBV" => FuncId::OBV,
-        b"PLUS_DI" => FuncId::PLUS_DI,
-        b"PLUS_DM" => FuncId::PLUS_DM,
-        b"PPO" => FuncId::PPO,
-        b"PVI" => FuncId::PVI,
-        b"PVO" => FuncId::PVO,
-        b"QSTICK" => FuncId::QSTICK,
-        b"ROC" => FuncId::ROC,
-        b"ROCP" => FuncId::ROCP,
-        b"ROCR" => FuncId::ROCR,
-        b"ROCR100" => FuncId::ROCR100,
-        b"RSI" => FuncId::RSI,
-        b"SAR" => FuncId::SAR,
-        b"SAREXT" => FuncId::SAREXT,
-        b"SIN" => FuncId::SIN,
-        b"SINH" => FuncId::SINH,
-        b"SMA" => FuncId::SMA,
-        b"SMI" => FuncId::SMI,
-        b"SQRT" => FuncId::SQRT,
-        b"STDDEV" => FuncId::STDDEV,
-        b"STOCH" => FuncId::STOCH,
-        b"STOCHF" => FuncId::STOCHF,
-        b"STOCHRSI" => FuncId::STOCHRSI,
-        b"SUB" => FuncId::SUB,
-        b"SUM" => FuncId::SUM,
-        b"T3" => FuncId::T3,
-        b"TAN" => FuncId::TAN,
-        b"TANH" => FuncId::TANH,
-        b"TEMA" => FuncId::TEMA,
-        b"TRANGE" => FuncId::TRANGE,
-        b"TRIMA" => FuncId::TRIMA,
-        b"TRIX" => FuncId::TRIX,
-        b"TSF" => FuncId::TSF,
-        b"TYPPRICE" => FuncId::TYPPRICE,
-        b"ULTOSC" => FuncId::ULTOSC,
-        b"VAR" => FuncId::VAR,
-        b"VWAP" => FuncId::VWAP,
-        b"VWMA" => FuncId::VWMA,
-        b"WAD" => FuncId::WAD,
-        b"WCLPRICE" => FuncId::WCLPRICE,
-        b"WILLR" => FuncId::WILLR,
-        b"WMA" => FuncId::WMA,
+/// A generated `match` — see the module-level docs for why this is O(1) and
+/// faster than C's linear scan, with zero allocation/dependencies. Private:
+/// [`get_func_handle`] is the public entry, and falls back to a case-insensitive
+/// scan this fast path cannot express.
+fn get_func_handle_exact(name: &str) -> Option<FuncId> {
+    Some(match name {
+        "AC" => FuncId::AC,
+        "ACCBANDS" => FuncId::ACCBANDS,
+        "ACOS" => FuncId::ACOS,
+        "AD" => FuncId::AD,
+        "ADD" => FuncId::ADD,
+        "ADOSC" => FuncId::ADOSC,
+        "ADX" => FuncId::ADX,
+        "ADXR" => FuncId::ADXR,
+        "AO" => FuncId::AO,
+        "APO" => FuncId::APO,
+        "AROON" => FuncId::AROON,
+        "AROONOSC" => FuncId::AROONOSC,
+        "ASIN" => FuncId::ASIN,
+        "ATAN" => FuncId::ATAN,
+        "ATR" => FuncId::ATR,
+        "AVGDEV" => FuncId::AVGDEV,
+        "AVGPRICE" => FuncId::AVGPRICE,
+        "BBANDS" => FuncId::BBANDS,
+        "BETA" => FuncId::BETA,
+        "BOP" => FuncId::BOP,
+        "CCI" => FuncId::CCI,
+        "CDL2CROWS" => FuncId::CDL2CROWS,
+        "CDL3BLACKCROWS" => FuncId::CDL3BLACKCROWS,
+        "CDL3INSIDE" => FuncId::CDL3INSIDE,
+        "CDL3LINESTRIKE" => FuncId::CDL3LINESTRIKE,
+        "CDL3OUTSIDE" => FuncId::CDL3OUTSIDE,
+        "CDL3STARSINSOUTH" => FuncId::CDL3STARSINSOUTH,
+        "CDL3WHITESOLDIERS" => FuncId::CDL3WHITESOLDIERS,
+        "CDLABANDONEDBABY" => FuncId::CDLABANDONEDBABY,
+        "CDLADVANCEBLOCK" => FuncId::CDLADVANCEBLOCK,
+        "CDLBELTHOLD" => FuncId::CDLBELTHOLD,
+        "CDLBREAKAWAY" => FuncId::CDLBREAKAWAY,
+        "CDLCLOSINGMARUBOZU" => FuncId::CDLCLOSINGMARUBOZU,
+        "CDLCONCEALBABYSWALL" => FuncId::CDLCONCEALBABYSWALL,
+        "CDLCOUNTERATTACK" => FuncId::CDLCOUNTERATTACK,
+        "CDLDARKCLOUDCOVER" => FuncId::CDLDARKCLOUDCOVER,
+        "CDLDOJI" => FuncId::CDLDOJI,
+        "CDLDOJISTAR" => FuncId::CDLDOJISTAR,
+        "CDLDRAGONFLYDOJI" => FuncId::CDLDRAGONFLYDOJI,
+        "CDLENGULFING" => FuncId::CDLENGULFING,
+        "CDLEVENINGDOJISTAR" => FuncId::CDLEVENINGDOJISTAR,
+        "CDLEVENINGSTAR" => FuncId::CDLEVENINGSTAR,
+        "CDLGAPSIDESIDEWHITE" => FuncId::CDLGAPSIDESIDEWHITE,
+        "CDLGRAVESTONEDOJI" => FuncId::CDLGRAVESTONEDOJI,
+        "CDLHAMMER" => FuncId::CDLHAMMER,
+        "CDLHANGINGMAN" => FuncId::CDLHANGINGMAN,
+        "CDLHARAMI" => FuncId::CDLHARAMI,
+        "CDLHARAMICROSS" => FuncId::CDLHARAMICROSS,
+        "CDLHIGHWAVE" => FuncId::CDLHIGHWAVE,
+        "CDLHIKKAKE" => FuncId::CDLHIKKAKE,
+        "CDLHIKKAKEMOD" => FuncId::CDLHIKKAKEMOD,
+        "CDLHOMINGPIGEON" => FuncId::CDLHOMINGPIGEON,
+        "CDLIDENTICAL3CROWS" => FuncId::CDLIDENTICAL3CROWS,
+        "CDLINNECK" => FuncId::CDLINNECK,
+        "CDLINVERTEDHAMMER" => FuncId::CDLINVERTEDHAMMER,
+        "CDLKICKING" => FuncId::CDLKICKING,
+        "CDLKICKINGBYLENGTH" => FuncId::CDLKICKINGBYLENGTH,
+        "CDLLADDERBOTTOM" => FuncId::CDLLADDERBOTTOM,
+        "CDLLONGLEGGEDDOJI" => FuncId::CDLLONGLEGGEDDOJI,
+        "CDLLONGLINE" => FuncId::CDLLONGLINE,
+        "CDLMARUBOZU" => FuncId::CDLMARUBOZU,
+        "CDLMATCHINGLOW" => FuncId::CDLMATCHINGLOW,
+        "CDLMATHOLD" => FuncId::CDLMATHOLD,
+        "CDLMORNINGDOJISTAR" => FuncId::CDLMORNINGDOJISTAR,
+        "CDLMORNINGSTAR" => FuncId::CDLMORNINGSTAR,
+        "CDLONNECK" => FuncId::CDLONNECK,
+        "CDLPIERCING" => FuncId::CDLPIERCING,
+        "CDLRICKSHAWMAN" => FuncId::CDLRICKSHAWMAN,
+        "CDLRISEFALL3METHODS" => FuncId::CDLRISEFALL3METHODS,
+        "CDLSEPARATINGLINES" => FuncId::CDLSEPARATINGLINES,
+        "CDLSHOOTINGSTAR" => FuncId::CDLSHOOTINGSTAR,
+        "CDLSHORTLINE" => FuncId::CDLSHORTLINE,
+        "CDLSPINNINGTOP" => FuncId::CDLSPINNINGTOP,
+        "CDLSTALLEDPATTERN" => FuncId::CDLSTALLEDPATTERN,
+        "CDLSTICKSANDWICH" => FuncId::CDLSTICKSANDWICH,
+        "CDLTAKURI" => FuncId::CDLTAKURI,
+        "CDLTASUKIGAP" => FuncId::CDLTASUKIGAP,
+        "CDLTHRUSTING" => FuncId::CDLTHRUSTING,
+        "CDLTRISTAR" => FuncId::CDLTRISTAR,
+        "CDLUNIQUE3RIVER" => FuncId::CDLUNIQUE3RIVER,
+        "CDLUPSIDEGAP2CROWS" => FuncId::CDLUPSIDEGAP2CROWS,
+        "CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
+        "CEIL" => FuncId::CEIL,
+        "CMF" => FuncId::CMF,
+        "CMO" => FuncId::CMO,
+        "CMOU" => FuncId::CMOU,
+        "CORREL" => FuncId::CORREL,
+        "COS" => FuncId::COS,
+        "COSH" => FuncId::COSH,
+        "DEMA" => FuncId::DEMA,
+        "DIV" => FuncId::DIV,
+        "DX" => FuncId::DX,
+        "EFI" => FuncId::EFI,
+        "EMA" => FuncId::EMA,
+        "EXP" => FuncId::EXP,
+        "FLOOR" => FuncId::FLOOR,
+        "HMA" => FuncId::HMA,
+        "HT_DCPERIOD" => FuncId::HT_DCPERIOD,
+        "HT_DCPHASE" => FuncId::HT_DCPHASE,
+        "HT_PHASOR" => FuncId::HT_PHASOR,
+        "HT_SINE" => FuncId::HT_SINE,
+        "HT_TRENDLINE" => FuncId::HT_TRENDLINE,
+        "HT_TRENDMODE" => FuncId::HT_TRENDMODE,
+        "IMI" => FuncId::IMI,
+        "KAMA" => FuncId::KAMA,
+        "LINEARREG" => FuncId::LINEARREG,
+        "LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
+        "LINEARREG_INTERCEPT" => FuncId::LINEARREG_INTERCEPT,
+        "LINEARREG_SLOPE" => FuncId::LINEARREG_SLOPE,
+        "LN" => FuncId::LN,
+        "LOG10" => FuncId::LOG10,
+        "MA" => FuncId::MA,
+        "MACD" => FuncId::MACD,
+        "MACDEXT" => FuncId::MACDEXT,
+        "MACDFIX" => FuncId::MACDFIX,
+        "MAMA" => FuncId::MAMA,
+        "MARKETFI" => FuncId::MARKETFI,
+        "MAVP" => FuncId::MAVP,
+        "MAX" => FuncId::MAX,
+        "MAXINDEX" => FuncId::MAXINDEX,
+        "MEDPRICE" => FuncId::MEDPRICE,
+        "MFI" => FuncId::MFI,
+        "MIDPOINT" => FuncId::MIDPOINT,
+        "MIDPRICE" => FuncId::MIDPRICE,
+        "MIN" => FuncId::MIN,
+        "MININDEX" => FuncId::MININDEX,
+        "MINMAX" => FuncId::MINMAX,
+        "MINMAXINDEX" => FuncId::MINMAXINDEX,
+        "MINUS_DI" => FuncId::MINUS_DI,
+        "MINUS_DM" => FuncId::MINUS_DM,
+        "MOM" => FuncId::MOM,
+        "MULT" => FuncId::MULT,
+        "NATR" => FuncId::NATR,
+        "NVI" => FuncId::NVI,
+        "OBV" => FuncId::OBV,
+        "PLUS_DI" => FuncId::PLUS_DI,
+        "PLUS_DM" => FuncId::PLUS_DM,
+        "PPO" => FuncId::PPO,
+        "PVI" => FuncId::PVI,
+        "PVO" => FuncId::PVO,
+        "QSTICK" => FuncId::QSTICK,
+        "ROC" => FuncId::ROC,
+        "ROCP" => FuncId::ROCP,
+        "ROCR" => FuncId::ROCR,
+        "ROCR100" => FuncId::ROCR100,
+        "RSI" => FuncId::RSI,
+        "SAR" => FuncId::SAR,
+        "SAREXT" => FuncId::SAREXT,
+        "SIN" => FuncId::SIN,
+        "SINH" => FuncId::SINH,
+        "SMA" => FuncId::SMA,
+        "SMI" => FuncId::SMI,
+        "SQRT" => FuncId::SQRT,
+        "STDDEV" => FuncId::STDDEV,
+        "STOCH" => FuncId::STOCH,
+        "STOCHF" => FuncId::STOCHF,
+        "STOCHRSI" => FuncId::STOCHRSI,
+        "SUB" => FuncId::SUB,
+        "SUM" => FuncId::SUM,
+        "T3" => FuncId::T3,
+        "TAN" => FuncId::TAN,
+        "TANH" => FuncId::TANH,
+        "TEMA" => FuncId::TEMA,
+        "TRANGE" => FuncId::TRANGE,
+        "TRIMA" => FuncId::TRIMA,
+        "TRIX" => FuncId::TRIX,
+        "TSF" => FuncId::TSF,
+        "TYPPRICE" => FuncId::TYPPRICE,
+        "ULTOSC" => FuncId::ULTOSC,
+        "VAR" => FuncId::VAR,
+        "VWAP" => FuncId::VWAP,
+        "VWMA" => FuncId::VWMA,
+        "WAD" => FuncId::WAD,
+        "WCLPRICE" => FuncId::WCLPRICE,
+        "WILLR" => FuncId::WILLR,
+        "WMA" => FuncId::WMA,
         _ => return None,
     })
+}
+
+/// Resolve a function name (e.g. "RSI", "rsi") to its [`FuncId`].
+///
+/// Every name is invariant ASCII, so an exact match (`get_func_handle_exact`,
+/// O(1), zero allocation) is tried first; a caller spelling the name in any
+/// other case falls back to an ASCII-only case-insensitive linear scan over
+/// [`FUNCS`] (`eq_ignore_ascii_case` — not a locale-aware `to_uppercase`, which
+/// has the classic Turkish-locale bug). Either way the returned [`FuncId`] and
+/// its [`FuncInfo::name`] stay the canonical upper-case spelling.
+pub fn get_func_handle(name: &str) -> Option<FuncId> {
+    if let Some(id) = get_func_handle_exact(name) {
+        return Some(id);
+    }
+    FUNCS.iter().find(|f| f.name.eq_ignore_ascii_case(name)).map(|f| f.id)
 }
 
 /// C-style variant returning the familiar `RetCode` error channel.
@@ -5452,21 +5449,26 @@ mod registry_tests {
         assert!(get_func_handle_rc("definitely_not_a_ta_func").is_err());
     }
 
-    /// The lookup folds case; the name it reports back does not.
-    ///
-    /// Swept over the whole corpus rather than spot-checked on `"sma"`, because
-    /// the fold runs over a fixed-size buffer and the interesting names are the
-    /// long ones (`CDL3STARSINSOUTH`) and the ones carrying a digit or an
-    /// underscore (`HT_DCPERIOD`), which no single case can stand in for.
+    /// #278: the lookup folds ASCII case, but every name it hands back
+    /// (`FuncId`, `FuncInfo::name`) stays the canonical upper-case spelling.
     #[test]
-    fn lookup_folds_ascii_case_but_the_name_does_not() {
+    fn lookup_is_ascii_case_insensitive() {
         for f in FUNCS.iter() {
-            let lower = f.name.to_ascii_lowercase();
-            assert_eq!(get_func_handle(&lower), Some(f.id), "lower-case lookup of {}", f.name);
+            assert_eq!(get_func_handle(&f.name.to_ascii_lowercase()), Some(f.id));
+        }
+        assert_eq!(get_func_handle("sma"), Some(FuncId::SMA));
+        assert_eq!(get_func_handle("Sma"), Some(FuncId::SMA));
+        assert_eq!(get_func_handle("sMa"), Some(FuncId::SMA));
+        assert_eq!(get_func_info(get_func_handle("sma").unwrap()).name, "SMA");
 
-            // Alternating case: every letter position is exercised in both
-            // spellings across the two probes, so a fold applied to only part
-            // of the buffer fails here.
+        // Alternating case, swept over the corpus: between this spelling and
+        // the all-lower one above, every letter position of every name is
+        // presented in both cases, so a fold applied to only part of the name
+        // fails here. The long names and the ones carrying a digit or an
+        // underscore (`CDL3STARSINSOUTH`, `CDL2CROWS`, `HT_DCPERIOD`) are the
+        // ones a partial fold gets wrong, and no single probe stands in for
+        // them.
+        for f in FUNCS.iter() {
             let mixed: String = f
                 .name
                 .chars()
@@ -5476,28 +5478,28 @@ mod registry_tests {
                 })
                 .collect();
             assert_eq!(get_func_handle(&mixed), Some(f.id), "mixed-case lookup of {}", f.name);
-
-            // The canonical spelling is what comes back, whichever went in.
-            assert_eq!(get_func_info(get_func_handle(&lower).unwrap()).name, f.name);
-            assert_eq!(get_func_handle_rc(&lower).unwrap().name(), f.name);
+            assert_eq!(get_func_info(f.id).name, f.name, "{} reports its canonical name", f.name);
         }
     }
 
-    /// The fold is ASCII-only, and it is only a fold — not a normalisation that
-    /// would start accepting names no function has.
+    /// #278: the fold is ASCII-only, and it is only a fold — not a
+    /// normalisation that would start resolving names no function has.
     #[test]
     fn the_fold_does_not_widen_what_resolves() {
-        // Non-ASCII bytes are left alone by the fold, so they cannot collide
-        // with an ASCII name. `SİN` (dotted capital I) is the Turkish-locale
-        // trap: a locale-aware fold maps it onto `sin`.
+        // The two traps a `to_uppercase`-based fold falls into, in either
+        // direction: `U+0130`/`U+0131` are the Turkish dotted/dotless `I`, and
+        // `U+017F` is the long `s`. Unicode uppercases the latter two onto
+        // ASCII `I` and `S`, so a locale- or Unicode-aware fold resolves
+        // `"s\u{131}n"` to SIN and `"\u{17f}ma"` to SMA. An ASCII fold does not.
         assert_eq!(get_func_handle("S\u{130}N"), None);
         assert_eq!(get_func_handle("s\u{131}n"), None);
+        assert_eq!(get_func_handle("\u{17f}ma"), None);
         // Length, padding and separators are still part of the name.
         assert_eq!(get_func_handle("sma "), None);
         assert_eq!(get_func_handle(" sma"), None);
         assert_eq!(get_func_handle("ht-dcperiod"), None);
         assert_eq!(get_func_handle(""), None);
-        // Longer than any name: the early return, not a truncating match.
+        // Longer than any name: no truncating match.
         assert_eq!(get_func_handle(&"s".repeat(512)), None);
     }
 

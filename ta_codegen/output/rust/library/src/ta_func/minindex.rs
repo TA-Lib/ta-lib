@@ -282,23 +282,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MININDEX stream: one value per closed bar, bit-identical to [`Core::MININDEX`]
-/// over the same series. Open with [`Core::MININDEX_Open`]; dropping the handle
+/// over the same series. Open with [`Core::minindex_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MININDEX_Stream")]
-pub struct MININDEX_Stream {
-    state: MININDEX_StreamState,
+pub struct MinindexStream {
+    state: MinindexStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MININDEX_Stream {
+impl MinindexStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MININDEX_StreamState::restore_from`.
+    /// allocating new ones. See `MinindexStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -307,7 +307,7 @@ impl MININDEX_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MININDEX_StreamState {
+struct MinindexStreamState {
     optInTimePeriod: i32,
     lowest: f64,
     trailingIdx: i32,
@@ -319,7 +319,7 @@ struct MININDEX_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MININDEX_StreamState {
+impl MinindexStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -334,14 +334,13 @@ impl MININDEX_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MININDEX_step_impl(sp: &mut MININDEX_StreamState, inReal: f64, outInteger: &mut i32) {
+    fn minindex_step_impl(sp: &mut MinindexStreamState, inReal: f64, outInteger: &mut i32) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -372,11 +371,11 @@ impl Core {
         sp.today += 1;
     }
 
-    /// The single whole-history transcription behind [`Core::MININDEX_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MININDEX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MININDEX_OpenImpl(
+    /// The single whole-history transcription behind [`Core::minindex_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::minindex_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn minindex_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<MININDEX_Stream, RetCode> {
+    ) -> Result<MinindexStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -472,7 +471,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MININDEX_StreamState {
+        let state = MinindexStreamState {
             optInTimePeriod,
             lowest,
             trailingIdx: (trailingIdx) as i32,
@@ -482,17 +481,17 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(MININDEX_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MinindexStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MININDEX_Open`] (composition seam).
-    pub(crate) fn MININDEX_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::minindex_open`] (composition seam).
+    pub(crate) fn minindex_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MININDEX_Stream, i32), RetCode> {
+    ) -> Result<(MinindexStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.MININDEX_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.minindex_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -512,7 +511,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MININDEX_Open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.minindex_open(&data, 30).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -522,11 +521,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_MININDEX_Open")]
-    pub fn MININDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MININDEX_Stream, i32), RetCode> {
-        self.MININDEX_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn minindex_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MinindexStream, i32), RetCode> {
+        self.minindex_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::MININDEX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::minindex_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MININDEX`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -534,12 +533,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MININDEX_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::minindex_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MININDEX_OpenAndFill")]
-    pub fn MININDEX_OpenAndFill(
+    pub fn minindex_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outInteger: &mut [i32],
-    ) -> Result<(MININDEX_Stream, OutRange), RetCode> {
+    ) -> Result<(MinindexStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -553,23 +552,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MININDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.minindex_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MININDEX_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::minindex_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MININDEX_OpenAndFillInternal(
+    pub(crate) fn minindex_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<MININDEX_Stream, RetCode> {
-        self.MININDEX_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<MinindexStream, RetCode> {
+        self.minindex_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MININDEX_Stream {
+impl MinindexStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -587,7 +586,7 @@ impl MININDEX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::MININDEX_step_impl(&mut self.state, inReal, &mut outInteger);
+        Core::minindex_step_impl(&mut self.state, inReal, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -620,7 +619,7 @@ impl MININDEX_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MININDEX_step_impl(&mut self.state, inReal[i], &mut outInteger[i]);
+            Core::minindex_step_impl(&mut self.state, inReal[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -665,7 +664,7 @@ impl MININDEX_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MININDEX_Stream>();
+    _assert_auto::<MinindexStream>();
 };
 
 /***************/

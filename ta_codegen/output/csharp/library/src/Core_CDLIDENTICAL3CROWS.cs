@@ -425,8 +425,8 @@ public partial class Core
    /// <summary>A live <c>CDLIDENTICAL3CROWS</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLIDENTICAL3CROWS</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLIDENTICAL3CROWS_Open"/>. There is no close
-   /// and nothing to dispose — the handle is ordinary managed state, and an
+   /// <para>Open with <see cref="Core.Cdlidentical3crowsOpen"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
@@ -438,7 +438,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLIDENTICAL3CROWS_Stream
+   public sealed class Cdlidentical3crowsStream
    {
       internal Core core;
       internal double[] ShadowVeryShortPeriodTotal = [];
@@ -469,12 +469,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLIDENTICAL3CROWS_Stream( Core core ) { this.core = core; }
+      internal Cdlidentical3crowsStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLIDENTICAL3CROWS</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdlidentical3crows</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -483,7 +483,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLIDENTICAL3CROWS_Stream( CDLIDENTICAL3CROWS_Stream other )
+      internal Cdlidentical3crowsStream( Cdlidentical3crowsStream other )
       {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = new double[other.ShadowVeryShortPeriodTotal.Length];
@@ -519,7 +519,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLIDENTICAL3CROWS_Stream other )
+      internal void CopyFrom( Cdlidentical3crowsStream other )
       {
          this.core = other.core;
          if( this.ShadowVeryShortPeriodTotal.Length != other.ShadowVeryShortPeriodTotal.Length ) {
@@ -564,7 +564,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLIDENTICAL3CROWS_Stream? peekScratch;
+      [ThreadStatic] private static Cdlidentical3crowsStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -585,7 +585,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLIDENTICAL3CROWS", "update", RetCode.BadParam);
-         core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.Cdlidentical3crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -607,14 +607,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLIDENTICAL3CROWS", "peek", RetCode.BadParam);
-         CDLIDENTICAL3CROWS_Stream? scratch = peekScratch;
+         Cdlidentical3crowsStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLIDENTICAL3CROWS_Stream(this);
+            scratch = new Cdlidentical3crowsStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLIDENTICAL3CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.Cdlidentical3crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -641,7 +641,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLIDENTICAL3CROWS", "updateAndFill", RetCode.BadParam);
-            core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.Cdlidentical3crowsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -657,13 +657,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLIDENTICAL3CROWS_Stream Clone()
+      public Cdlidentical3crowsStream Clone()
       {
-         return new CDLIDENTICAL3CROWS_Stream(this);
+         return new Cdlidentical3crowsStream(this);
       }
    }
 
-   internal void CDLIDENTICAL3CROWS_StepImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void Cdlidentical3crowsStepImpl( Cdlidentical3crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -718,7 +718,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLIDENTICAL3CROWS_OpenImpl( CDLIDENTICAL3CROWS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode Cdlidentical3crowsOpenImpl( Cdlidentical3crowsStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -887,11 +887,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLIDENTICAL3CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* Cdlidentical3crowsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Cdlidentical3crowsStream Cdlidentical3crowsOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      Cdlidentical3crowsStream sp = new Cdlidentical3crowsStream(this);
+      RetCode retCode = Cdlidentical3crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -900,12 +900,12 @@ public partial class Core
       throw StreamFailure("CDLIDENTICAL3CROWS", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLIDENTICAL3CROWS_Open (composition seam). */
-   internal CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind Cdlidentical3crowsOpen (composition seam). */
+   internal Cdlidentical3crowsStream Cdlidentical3crowsOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
+      Cdlidentical3crowsStream sp = new Cdlidentical3crowsStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdlidentical3crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -916,12 +916,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLIDENTICAL3CROWS</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLIDENTICAL3CROWS_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="Cdlidentical3crowsStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what <c>CDLIDENTICAL3CROWS</c>
    /// reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLIDENTICAL3CROWS_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLIDENTICAL3CROWS_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Cdlidentical3crowsOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -935,7 +935,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public Cdlidentical3crowsStream Cdlidentical3crowsOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -945,11 +945,11 @@ public partial class Core
       RequireHistoryLength("CDLIDENTICAL3CROWS", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLIDENTICAL3CROWS", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLIDENTICAL3CROWS", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return Cdlidentical3crowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLIDENTICAL3CROWS_Open</c> that also fills the output array(s) over
-   /// the whole history in the same single pass.</summary>
+   /// <summary><c>Cdlidentical3crowsOpen</c> that also fills the output array(s) over the
+   /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLIDENTICAL3CROWS</c>
    /// produces over the same series, so no separate batch call is needed for the
@@ -962,7 +962,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLIDENTICAL3CROWS_Stream.OutRange"/>.</para>
+   /// <see cref="Cdlidentical3crowsStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -980,7 +980,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public Cdlidentical3crowsStream Cdlidentical3crowsOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLIDENTICAL3CROWS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -992,6 +992,6 @@ public partial class Core
       RequireHistoryLength("CDLIDENTICAL3CROWS", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLIDENTICAL3CROWS", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLIDENTICAL3CROWS", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLIDENTICAL3CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return Cdlidentical3crowsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

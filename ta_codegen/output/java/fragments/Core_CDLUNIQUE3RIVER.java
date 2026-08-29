@@ -348,7 +348,7 @@
    /**
     * A live CDLUNIQUE3RIVER stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLUNIQUE3RIVER} over the same series.
-    * Open with {@link Core#CDLUNIQUE3RIVER_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlunique3riverOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -359,7 +359,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLUNIQUE3RIVER_Stream {
+   public static final class Cdlunique3riverStream {
       Core core;
       double BodyShortPeriodTotal;
       double BodyLongPeriodTotal;
@@ -387,7 +387,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLUNIQUE3RIVER_Stream( Core core ) { this.core = core; }
+      Cdlunique3riverStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -401,7 +401,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLUNIQUE3RIVER_Stream( CDLUNIQUE3RIVER_Stream other ) {
+      Cdlunique3riverStream( Cdlunique3riverStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -430,7 +430,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLUNIQUE3RIVER_Stream other ) {
+      void copyFrom( Cdlunique3riverStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -468,7 +468,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLUNIQUE3RIVER_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdlunique3riverStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -485,7 +485,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
-         core.CDLUNIQUE3RIVER_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlunique3riverStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -514,7 +514,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLUNIQUE3RIVER updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLUNIQUE3RIVER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlunique3riverStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -532,14 +532,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
-         CDLUNIQUE3RIVER_Stream scratch = PEEK_SCRATCH.get();
+         Cdlunique3riverStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLUNIQUE3RIVER_Stream(this);
+            scratch = new Cdlunique3riverStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLUNIQUE3RIVER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlunique3riverStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -556,11 +556,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLUNIQUE3RIVER_Stream copy() {
-         return new CDLUNIQUE3RIVER_Stream(this);
+      public Cdlunique3riverStream copy() {
+         return new Cdlunique3riverStream(this);
       }
    }
-   void CDLUNIQUE3RIVER_StepImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlunique3riverStepImpl( Cdlunique3riverStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -612,7 +612,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLUNIQUE3RIVER_OpenImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlunique3riverOpenImpl( Cdlunique3riverStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -758,11 +758,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLUNIQUE3RIVER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlunique3riverOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdlunique3riverStream cdlunique3riverOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
-      RetCode retCode = CDLUNIQUE3RIVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdlunique3riverStream sp = new Cdlunique3riverStream(this);
+      RetCode retCode = cdlunique3riverOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -776,14 +776,14 @@
       }
       throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLUNIQUE3RIVER_Open (composition seam). */
-   CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlunique3riverOpen (composition seam). */
+   Cdlunique3riverStream cdlunique3riverOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
+      Cdlunique3riverStream sp = new Cdlunique3riverStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLUNIQUE3RIVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlunique3riverOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -810,7 +810,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdlunique3riverStream cdlunique3riverOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLUNIQUE3RIVER open", "inOpen", inOpen);
       requireHistory("CDLUNIQUE3RIVER open", inOpen.length);
@@ -820,10 +820,10 @@
       requireHistoryLength("CDLUNIQUE3RIVER open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLUNIQUE3RIVER open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLUNIQUE3RIVER open", "inClose", inClose.length, inOpen.length);
-      return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlunique3riverOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLUNIQUE3RIVER_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlunique3riverOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLUNIQUE3RIVER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -831,9 +831,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLUNIQUE3RIVER_Stream#outRange()}.
+    * {@link Cdlunique3riverStream#outRange()}.
     */
-   public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdlunique3riverStream cdlunique3riverOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLUNIQUE3RIVER openAndFill", "inOpen", inOpen);
       requireHistory("CDLUNIQUE3RIVER openAndFill", inOpen.length);
@@ -850,5 +850,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLUNIQUE3RIVER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlunique3riverOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

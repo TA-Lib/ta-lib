@@ -469,7 +469,7 @@
    /**
     * A live CMF stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CMF} over the same series.
-    * Open with {@link Core#CMF_Open}; there is no close — the handle is
+    * Open with {@link Core#cmfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -480,7 +480,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CMF_Stream {
+   public static final class CmfStream {
       Core core;
       int optInTimePeriod;
       double sumMFV;
@@ -494,7 +494,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CMF_Stream( Core core ) { this.core = core; }
+      CmfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -508,7 +508,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CMF_Stream( CMF_Stream other ) {
+      CmfStream( CmfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
@@ -523,7 +523,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CMF_Stream other ) {
+      void copyFrom( CmfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
@@ -547,7 +547,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CMF_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CmfStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -564,7 +564,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("CMF update: BadParam", RetCode.BadParam);
-         core.CMF_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.cmfStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -593,7 +593,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("CMF updateAndFill: BadParam", RetCode.BadParam);
-            core.CMF_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.cmfStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -611,14 +611,14 @@
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("CMF peek: BadParam", RetCode.BadParam);
-         CMF_Stream scratch = PEEK_SCRATCH.get();
+         CmfStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CMF_Stream(this);
+            scratch = new CmfStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CMF_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         core.cmfStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -635,11 +635,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CMF_Stream copy() {
-         return new CMF_Stream(this);
+      public CmfStream copy() {
+         return new CmfStream(this);
       }
    }
-   void CMF_StepImpl( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void cmfStepImpl( CmfStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -671,7 +671,7 @@
          sp.mfv_Idx = 0;
       }
    }
-   private RetCode CMF_OpenImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode cmfOpenImpl( CmfStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -819,11 +819,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CMF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CMF_Stream CMF_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* cmfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CmfStream cmfOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      CMF_Stream sp = new CMF_Stream(this);
-      RetCode retCode = CMF_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      CmfStream sp = new CmfStream(this);
+      RetCode retCode = cmfOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -837,14 +837,14 @@
       }
       throw new TaLibArgumentException("CMF openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
-   CMF_Stream CMF_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind cmfOpen (composition seam). */
+   CmfStream cmfOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
-      CMF_Stream sp = new CMF_Stream(this);
+      CmfStream sp = new CmfStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = CMF_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = cmfOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -871,7 +871,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CMF_Stream CMF_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
+   public CmfStream cmfOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
    {
       requireArgument("CMF open", "inHigh", inHigh);
       requireHistory("CMF open", inHigh.length);
@@ -881,10 +881,10 @@
       requireHistoryLength("CMF open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("CMF open", "inClose", inClose.length, inHigh.length);
       requireHistoryLength("CMF open", "inVolume", inVolume.length, inHigh.length);
-      return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
+      return cmfOpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#CMF_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cmfOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CMF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -892,9 +892,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CMF_Stream#outRange()}.
+    * {@link CmfStream#outRange()}.
     */
-   public CMF_Stream CMF_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
+   public CmfStream cmfOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("CMF openAndFill", "inHigh", inHigh);
       requireHistory("CMF openAndFill", inHigh.length);
@@ -911,5 +911,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CMF_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return cmfOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

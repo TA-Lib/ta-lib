@@ -703,26 +703,26 @@ public class BatchApiTest {
 
         // Streaming's one recoverable condition, which is why it has a code.
         checkCode(RetCode.InsufficientHistory,
-            () -> Core.DEFAULT.SMA_Open(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
+            () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
             "a short history carries InsufficientHistory");
 
         // ...and the REST of the streaming tier, which is a separate reject
         // ladder from the batch one. Totality is a property of every failure the
         // library raises, not of the tier someone happened to convert first.
         checkCode(RetCode.OutOfRangeStartIndex,
-            () -> Core.DEFAULT.SMA_Open(new double[0], 30),
+            () -> Core.DEFAULT.smaOpen(new double[0], 30),
             "an empty history carries OutOfRangeStartIndex");
         checkCode(RetCode.BadParam,
-            () -> Core.DEFAULT.SMA_Open(in, 0),
+            () -> Core.DEFAULT.smaOpen(in, 0),
             "an out-of-range period on a stream open carries BadParam");
         checkCode(RetCode.BadParam,
-            () -> Core.DEFAULT.BBANDS_OpenAndFill(in, 20, 2.0, 2.0, MAType.SMA, out, out, new double[200]),
+            () -> Core.DEFAULT.bbandsOpenAndFill(in, 20, 2.0, 2.0, MAType.SMA, out, out, new double[200]),
             "aliased OpenAndFill outputs carry BadParam");
 
         // ...and it is still an InsufficientHistoryException, so an existing
         // catch keeps working.
         checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.SMA_Open(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
+            () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
             "a short history is still typed");
 
         // The numbers the cross-language harness compares. Hardcoded, because
@@ -967,32 +967,32 @@ public class BatchApiTest {
         Arrays.fill(periods, 5.0);
 
         // B4's shapes, through the openers.
-        streamRejects(() -> Core.DEFAULT.SMA_Open(null, 30),
-            "SMA_Open(inReal=null)", "SMA open", "inReal");
-        streamRejects(() -> Core.DEFAULT.SMA_OpenAndFill(null, 30, out),
-            "SMA_OpenAndFill(inReal=null)", "SMA openAndFill", "inReal");
-        streamRejects(() -> Core.DEFAULT.SMA_OpenAndFill(in, 30, null),
-            "SMA_OpenAndFill(outReal=null)", "SMA openAndFill", "outReal");
+        streamRejects(() -> Core.DEFAULT.smaOpen(null, 30),
+            "smaOpen(inReal=null)", "SMA open", "inReal");
+        streamRejects(() -> Core.DEFAULT.smaOpenAndFill(null, 30, out),
+            "smaOpenAndFill(inReal=null)", "SMA openAndFill", "inReal");
+        streamRejects(() -> Core.DEFAULT.smaOpenAndFill(in, 30, null),
+            "smaOpenAndFill(outReal=null)", "SMA openAndFill", "outReal");
         // A candlestick leg the body never indexes is still a declared input (#260).
-        streamRejects(() -> Core.DEFAULT.CDL3OUTSIDE_Open(in, null, in, in),
-            "CDL3OUTSIDE_Open(inHigh=null)", "CDL3OUTSIDE open", "inHigh");
-        streamRejects(() -> Core.DEFAULT.CDL3OUTSIDE_OpenAndFill(in, in, null, in, outI),
-            "CDL3OUTSIDE_OpenAndFill(inLow=null)", "CDL3OUTSIDE openAndFill", "inLow");
-        streamRejects(() -> Core.DEFAULT.CDLDOJI_Open(in, in, in, null),
-            "CDLDOJI_Open(inClose=null)", "CDLDOJI open", "inClose");
+        streamRejects(() -> Core.DEFAULT.cdl3outsideOpen(in, null, in, in),
+            "cdl3outsideOpen(inHigh=null)", "CDL3OUTSIDE open", "inHigh");
+        streamRejects(() -> Core.DEFAULT.cdl3outsideOpenAndFill(in, in, null, in, outI),
+            "cdl3outsideOpenAndFill(inLow=null)", "CDL3OUTSIDE openAndFill", "inLow");
+        streamRejects(() -> Core.DEFAULT.cdldojiOpen(in, in, in, null),
+            "cdldojiOpen(inClose=null)", "CDLDOJI open", "inClose");
         // Multi-input, multi-output.
-        streamRejects(() -> Core.DEFAULT.STOCH_Open(in, in, null, 5, 3, MAType.SMA, 3, MAType.SMA),
-            "STOCH_Open(inClose=null)", "STOCH open", "inClose");
-        streamRejects(() -> Core.DEFAULT.STOCH_OpenAndFill(in, in, in, 5, 3, MAType.SMA, 3,
+        streamRejects(() -> Core.DEFAULT.stochOpen(in, in, null, 5, 3, MAType.SMA, 3, MAType.SMA),
+            "stochOpen(inClose=null)", "STOCH open", "inClose");
+        streamRejects(() -> Core.DEFAULT.stochOpenAndFill(in, in, in, 5, 3, MAType.SMA, 3,
                 MAType.SMA, out, null),
-            "STOCH_OpenAndFill(outSlowD=null)", "STOCH openAndFill", "outSlowD");
+            "stochOpenAndFill(outSlowD=null)", "STOCH openAndFill", "outSlowD");
         // The two hand-rolled tiers: the dispatch and the period bank.
-        streamRejects(() -> Core.DEFAULT.MA_Open(null, 30, MAType.EMA),
-            "MA_Open(inReal=null)", "MA open", "inReal");
-        streamRejects(() -> Core.DEFAULT.MAVP_Open(in, null, 2, 30, MAType.SMA),
-            "MAVP_Open(inPeriods=null)", "MAVP open", "inPeriods");
-        streamRejects(() -> Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA, null),
-            "MAVP_OpenAndFill(outReal=null)", "MAVP openAndFill", "outReal");
+        streamRejects(() -> Core.DEFAULT.maOpen(null, 30, MAType.EMA),
+            "maOpen(inReal=null)", "MA open", "inReal");
+        streamRejects(() -> Core.DEFAULT.mavpOpen(in, null, 2, 30, MAType.SMA),
+            "mavpOpen(inPeriods=null)", "MAVP open", "inPeriods");
+        streamRejects(() -> Core.DEFAULT.mavpOpenAndFill(in, periods, 2, 30, MAType.SMA, null),
+            "mavpOpenAndFill(outReal=null)", "MAVP openAndFill", "outReal");
         // A nullable output may be DECLINED at the opener, exactly as in the
         // batch tier (rule B6a) and as C has always allowed: `null` is not an
         // absent argument here, it is an answer. Proved below, in
@@ -1005,18 +1005,18 @@ public class BatchApiTest {
         // `openFillCount`'s raise from the flooring it replaced: with a rejected
         // parameter AND an absent output, flooring the `-1` lookback to 0 let
         // the output be reported (S4), where the fault is the parameter.
-        streamRejects(() -> Core.DEFAULT.SMA_OpenAndFill(in, 0, null),
+        streamRejects(() -> Core.DEFAULT.smaOpenAndFill(in, 0, null),
             "a bad parameter outranks an absent output", "SMA openAndFill", "bad parameter");
         s5Reject++;
 
         // Controls: the same calls with every argument supplied still open.
-        streamAccepts(() -> Core.DEFAULT.SMA_Open(in, 30), "SMA_Open");
-        streamAccepts(() -> Core.DEFAULT.SMA_OpenAndFill(in, 30, out), "SMA_OpenAndFill");
-        streamAccepts(() -> Core.DEFAULT.CDL3OUTSIDE_Open(in, in, in, in), "CDL3OUTSIDE_Open");
-        streamAccepts(() -> Core.DEFAULT.STOCH_OpenAndFill(in, in, in, 5, 3, MAType.SMA, 3,
-                MAType.SMA, out, out2), "STOCH_OpenAndFill");
-        streamAccepts(() -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, out, out2),
-            "MAMA_OpenAndFill");
+        streamAccepts(() -> Core.DEFAULT.smaOpen(in, 30), "smaOpen");
+        streamAccepts(() -> Core.DEFAULT.smaOpenAndFill(in, 30, out), "smaOpenAndFill");
+        streamAccepts(() -> Core.DEFAULT.cdl3outsideOpen(in, in, in, in), "cdl3outsideOpen");
+        streamAccepts(() -> Core.DEFAULT.stochOpenAndFill(in, in, in, 5, 3, MAType.SMA, 3,
+                MAType.SMA, out, out2), "stochOpenAndFill");
+        streamAccepts(() -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, out, out2),
+            "mamaOpenAndFill");
     }
 
     /**
@@ -1037,47 +1037,47 @@ public class BatchApiTest {
         final double[] out = new double[252];
 
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA_Open(empty, 30),
+            () -> Core.DEFAULT.smaOpen(empty, 30),
             "an empty history is an index fault", "SMA open");
         s1Reject++;
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA_OpenAndFill(empty, 30, out),
+            () -> Core.DEFAULT.smaOpenAndFill(empty, 30, out),
             "an empty history is an index fault on the fill too", "SMA openAndFill");
         s1Reject++;
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA_OpenAndFill(empty, 30, null),
+            () -> Core.DEFAULT.smaOpenAndFill(empty, 30, null),
             "an empty history outranks a null output", "SMA openAndFill");
         s1Reject++;
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.CDLDOJI_Open(empty, empty, empty, empty),
+            () -> Core.DEFAULT.cdldojiOpen(empty, empty, empty, empty),
             "a candlestick reaches it through four legs", "CDLDOJI open");
         s1Reject++;
         // The leg that is NOT the history is an ordinary argument, so it is
         // checked after the pair — the same call reports the empty history in C.
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.CDLDOJI_Open(empty, null, empty, empty),
+            () -> Core.DEFAULT.cdldojiOpen(empty, null, empty, empty),
             "an empty history outranks a null leg", "CDLDOJI open");
         s1Reject++;
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.MA_Open(empty, 30, MAType.EMA),
+            () -> Core.DEFAULT.maOpen(empty, 30, MAType.EMA),
             "the dispatch tier answers it too", "MA open");
         s1Reject++;
 
         // The code, not just the type: one IndexOutOfBoundsException serves both
         // index rules, so the type alone cannot say which fired.
-        check(codeOf(() -> Core.DEFAULT.SMA_Open(empty, 30)) == RetCode.OutOfRangeStartIndex,
+        check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.OutOfRangeStartIndex,
             "an empty history carries OutOfRangeStartIndex");
 
         // A history of exactly one bar is inside the domain: that is S7's
         // business, and this is what keeps the cases above about EMPTY.
         checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.SMA_Open(new double[1], 30),
+            () -> Core.DEFAULT.smaOpen(new double[1], 30),
             "a one-bar history reaches the warm-up check");
 
         // The exception: a null history is an absent argument, because its
         // length is what the rule above is about.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA_Open(null, 30),
+            () -> Core.DEFAULT.smaOpen(null, 30),
             "a null history is an absent argument, not an empty one",
             "SMA open", "inReal");
     }
@@ -1115,12 +1115,12 @@ public class BatchApiTest {
 
         double[] refMama = new double[produced];
         double[] refFama = new double[produced];
-        Core.MAMA_Stream both =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, refMama, refFama);
+        Core.MamaStream both =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, refMama, refFama);
 
         double[] soloMama = new double[produced];
-        Core.MAMA_Stream declined =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, soloMama, null);
+        Core.MamaStream declined =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, soloMama, null);
 
         b6aOpen++;
         check(java.util.Arrays.equals(refMama, soloMama),
@@ -1141,12 +1141,12 @@ public class BatchApiTest {
         // Declining one output does not disarm the other's bound, nor its own
         // when it IS supplied.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced - 1], null),
+            () -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced - 1], null),
             "an undersized outMAMA is still rejected when outFAMA is declined",
             "outMAMA");
         b6aOpen++;
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced],
+            () -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced],
                     new double[produced - 1]),
             "a supplied outFAMA is still bounded", "outFAMA");
         b6aOpen++;
@@ -1192,8 +1192,8 @@ public class BatchApiTest {
         }
 
         // The oracle: supplied at open, supplied here.
-        Core.MAMA_Stream oracle =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        Core.MamaStream oracle =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
         // Canary-filled, not zero-filled: comparing two arrays the fill never
         // wrote would otherwise pass on their shared initial value, which is
         // exactly the break the supplied/supplied leg below is meant to catch.
@@ -1208,9 +1208,9 @@ public class BatchApiTest {
         for (boolean declinedAtOpen : new boolean[] { false, true }) {
             String what = declinedAtOpen ? "declined at open" : "supplied at open";
 
-            Core.MAMA_Stream h = declinedAtOpen
-                ? Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], null)
-                : Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced],
+            Core.MamaStream h = declinedAtOpen
+                ? Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], null)
+                : Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced],
                         new double[produced]);
             double[] mama = canaryFilled(bars.length);
             h.updateAndFill(bars, mama, null);
@@ -1229,9 +1229,9 @@ public class BatchApiTest {
             check(Double.doubleToRawLongBits(h.value().mama()) == oracleMama,
                 what + ", declined here: the handle's outMAMA");
 
-            Core.MAMA_Stream h2 = declinedAtOpen
-                ? Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], null)
-                : Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced],
+            Core.MamaStream h2 = declinedAtOpen
+                ? Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], null)
+                : Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced],
                         new double[produced]);
             double[] mama2 = canaryFilled(bars.length);
             double[] fama2 = canaryFilled(bars.length);
@@ -1246,10 +1246,10 @@ public class BatchApiTest {
         // "May differ again on the NEXT call" — the sentence the whole rule rests
         // on. One handle, three fills, alternating; each has to agree with an
         // oracle driven the same way with everything supplied.
-        Core.MAMA_Stream alt =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
-        Core.MAMA_Stream altRef =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        Core.MamaStream alt =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        Core.MamaStream altRef =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
         boolean[] plan = { true, false, true };
         for (int k = 0; k < plan.length; k++) {
             double[] leg = new double[bars.length];
@@ -1283,8 +1283,8 @@ public class BatchApiTest {
         // rule U2, and the fault has to be the documented exception naming the
         // argument, not the raw NullPointerException reading a length off a null
         // array used to produce.
-        Core.MAMA_Stream named =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        Core.MamaStream named =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
         checkThrows(TaLibArgumentException.class,
             () -> named.updateAndFill(bars, null, new double[bars.length]),
             "an absent required output names itself", "MAMA updateAndFill", "outMAMA");
@@ -1296,8 +1296,8 @@ public class BatchApiTest {
 
         // Declining one output disarms neither the other's bound nor its own
         // where it IS supplied, and a rejected fill commits nothing.
-        Core.MAMA_Stream guarded =
-            Core.DEFAULT.MAMA_OpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
+        Core.MamaStream guarded =
+            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced], new double[produced]);
         int before = guarded.outRange().count();
         checkThrows(IllegalArgumentException.class,
             () -> guarded.updateAndFill(bars, new double[bars.length - 1], null),
@@ -1344,12 +1344,12 @@ public class BatchApiTest {
         check(produced < in.length, "the produced count is shorter than the history");
 
         double[] exact = new double[produced];
-        Core.SMA_Stream h = Core.DEFAULT.SMA_OpenAndFill(in, 30, exact);
+        Core.SmaStream h = Core.DEFAULT.smaOpenAndFill(in, 30, exact);
         check(h.outRange().begIdx() == lookback, "the fill starts at the lookback");
         check(h.outRange().count() == produced, "the fill wrote exactly the bound");
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA_OpenAndFill(in, 30, new double[produced - 1]),
+            () -> Core.DEFAULT.smaOpenAndFill(in, 30, new double[produced - 1]),
             "one element short of the produced count -> IllegalArgument",
             "SMA openAndFill", "outReal", String.valueOf(produced - 1), String.valueOf(produced));
         s5Reject++;
@@ -1359,7 +1359,7 @@ public class BatchApiTest {
         final double[] shortOut = new double[produced - 1];
         Arrays.fill(shortOut, -3e37);
         try {
-            Core.DEFAULT.SMA_OpenAndFill(in, 30, shortOut);
+            Core.DEFAULT.smaOpenAndFill(in, 30, shortOut);
             check(false, "expected the undersized fill to be rejected");
         } catch (IllegalArgumentException expected) {
             boolean untouched = true;
@@ -1372,7 +1372,7 @@ public class BatchApiTest {
         // An oversized output is legal and bit-identical: the bound is a
         // minimum, which is what says the exact case above was not luck.
         double[] roomy = new double[in.length];
-        Core.DEFAULT.SMA_OpenAndFill(in, 30, roomy);
+        Core.DEFAULT.smaOpenAndFill(in, 30, roomy);
         boolean same = true;
         for (int i = 0; i < produced; i++) {
             if (Double.doubleToRawLongBits(exact[i]) != Double.doubleToRawLongBits(roomy[i])) {
@@ -1397,28 +1397,28 @@ public class BatchApiTest {
             final int period = arm[0];
             final int lb = Core.DEFAULT.MA_Lookback(period, MAType.EMA);
             final int produced = in.length - lb;
-            Core.DEFAULT.MA_OpenAndFill(in, period, MAType.EMA, new double[produced]);
+            Core.DEFAULT.maOpenAndFill(in, period, MAType.EMA, new double[produced]);
             checkThrows(IllegalArgumentException.class,
-                () -> Core.DEFAULT.MA_OpenAndFill(in, period, MAType.EMA, new double[produced - 1]),
+                () -> Core.DEFAULT.maOpenAndFill(in, period, MAType.EMA, new double[produced - 1]),
                 "MA one short of the bound", "MA openAndFill", "outReal");
             s5Reject++;
         }
 
         final int mavpLb = Core.DEFAULT.MAVP_Lookback(2, 30, MAType.SMA);
         final int mavpProduced = in.length - mavpLb;
-        Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
+        Core.DEFAULT.mavpOpenAndFill(in, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MAVP_OpenAndFill(in, periods, 2, 30, MAType.SMA,
+            () -> Core.DEFAULT.mavpOpenAndFill(in, periods, 2, 30, MAType.SMA,
                 new double[mavpProduced - 1]),
             "MAVP one short of the bound", "MAVP openAndFill", "outReal");
         s5Reject++;
 
         final int bbLb = Core.DEFAULT.BBANDS_Lookback(20, 2.0, 2.0, MAType.SMA);
         final int bbProduced = in.length - bbLb;
-        Core.DEFAULT.BBANDS_OpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
+        Core.DEFAULT.bbandsOpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
             new double[bbProduced], new double[bbProduced], new double[bbProduced]);
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.BBANDS_OpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
+            () -> Core.DEFAULT.bbandsOpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
                 new double[bbProduced], new double[bbProduced], new double[bbProduced - 1]),
             "each output is bounded separately", "BBANDS openAndFill", "outRealLowerBand");
         s5Reject++;
@@ -1426,7 +1426,7 @@ public class BatchApiTest {
         // A history too short to produce anything is still S7, whatever the
         // output holds: the bound floors at zero rather than going negative.
         checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.SMA_OpenAndFill(Arrays.copyOf(in, 29), 30, new double[0]),
+            () -> Core.DEFAULT.smaOpenAndFill(Arrays.copyOf(in, 29), 30, new double[0]),
             "a short history reaches the warm-up check, not the capacity one");
 
         // A null enum is a parameter outside its domain, named — it reaches the
@@ -1436,7 +1436,7 @@ public class BatchApiTest {
         // bound is derived from, but it is not one of S5's cases and is not
         // counted as one.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MA_OpenAndFill(in, 30, null, new double[in.length]),
+            () -> Core.DEFAULT.maOpenAndFill(in, 30, null, new double[in.length]),
             "a null enum at the opener is named", "MA openAndFill", "optInMAType");
     }
 
@@ -1477,7 +1477,7 @@ public class BatchApiTest {
 
         // Literal floors, not derived from the calls above: a count computed
         // from the cases would move with a deleted one and still "pass".
-        // s4Reject is 11, not 12: the twelfth was `MAMA_OpenAndFill(outFAMA=null)`,
+        // s4Reject is 11, not 12: the twelfth was `mamaOpenAndFill(outFAMA=null)`,
         // which is no longer an absent argument but a declined output — rule B6a,
         // and it has its own counter and its own probe.
         if (s4Reject < 11 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5 || b6aOpen < 6

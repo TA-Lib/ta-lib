@@ -564,7 +564,7 @@ public partial class Core
    /// <summary>A live <c>MIDPRICE</c> stream: one value per closed bar, bit-identical to
    /// <c>MIDPRICE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MIDPRICE_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.MidpriceOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -577,7 +577,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MIDPRICE_Stream
+   public sealed class MidpriceStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -595,12 +595,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MIDPRICE_Stream( Core core ) { this.core = core; }
+      internal MidpriceStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MIDPRICE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Midprice</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -609,7 +609,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MIDPRICE_Stream( MIDPRICE_Stream other )
+      internal MidpriceStream( MidpriceStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -630,7 +630,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MIDPRICE_Stream other )
+      internal void CopyFrom( MidpriceStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -656,7 +656,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MIDPRICE_Stream? peekScratch;
+      [ThreadStatic] private static MidpriceStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -675,7 +675,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MIDPRICE", "update", RetCode.BadParam);
-         core.MIDPRICE_StepImpl(this, inHigh, inLow);
+         core.MidpriceStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -695,14 +695,14 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MIDPRICE", "peek", RetCode.BadParam);
-         MIDPRICE_Stream? scratch = peekScratch;
+         MidpriceStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new MIDPRICE_Stream(this);
+            scratch = new MidpriceStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.MIDPRICE_StepImpl(scratch, inHigh, inLow);
+         core.MidpriceStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -727,7 +727,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("MIDPRICE", "updateAndFill", RetCode.BadParam);
-            core.MIDPRICE_StepImpl(this, inHigh[i], inLow[i]);
+            core.MidpriceStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -743,13 +743,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MIDPRICE_Stream Clone()
+      public MidpriceStream Clone()
       {
-         return new MIDPRICE_Stream(this);
+         return new MidpriceStream(this);
       }
    }
 
-   internal void MIDPRICE_StepImpl( MIDPRICE_Stream sp, double inHigh, double inLow )
+   internal void MidpriceStepImpl( MidpriceStream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;
@@ -800,7 +800,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MIDPRICE_OpenImpl( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MidpriceOpenImpl( MidpriceStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -958,11 +958,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MIDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MIDPRICE_Stream MIDPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* MidpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MidpriceStream MidpriceOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
-      RetCode retCode = MIDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      MidpriceStream sp = new MidpriceStream(this);
+      RetCode retCode = MidpriceOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -971,12 +971,12 @@ public partial class Core
       throw StreamFailure("MIDPRICE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MIDPRICE_Open (composition seam). */
-   internal MIDPRICE_Stream MIDPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MidpriceOpen (composition seam). */
+   internal MidpriceStream MidpriceOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
-      MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
+      MidpriceStream sp = new MidpriceStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = MIDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = MidpriceOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -987,12 +987,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MIDPRICE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MIDPRICE_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>MIDPRICE</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="MidpriceStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MIDPRICE</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MIDPRICE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MIDPRICE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MidpriceOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1005,16 +1004,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MIDPRICE_Stream MIDPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
+   public MidpriceStream MidpriceOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("MIDPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("MIDPRICE", "open", "inLow", inLow.Length, inHigh.Length);
-      return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return MidpriceOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
-   /// <summary><c>MIDPRICE_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MidpriceOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MIDPRICE</c> produces over
@@ -1026,7 +1025,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MIDPRICE_Stream.OutRange"/>.</para>
+   /// <see cref="MidpriceStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1042,7 +1041,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MIDPRICE_Stream MIDPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
+   public MidpriceStream MidpriceOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1053,6 +1052,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("MIDPRICE", "openAndFill", RetCode.BadParam);
       }
-      return MIDPRICE_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
+      return MidpriceOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

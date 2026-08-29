@@ -369,7 +369,7 @@
    /**
     * A live CDLRICKSHAWMAN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLRICKSHAWMAN} over the same series.
-    * Open with {@link Core#CDLRICKSHAWMAN_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlrickshawmanOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -380,7 +380,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLRICKSHAWMAN_Stream {
+   public static final class CdlrickshawmanStream {
       Core core;
       double BodyDojiPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -407,7 +407,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLRICKSHAWMAN_Stream( Core core ) { this.core = core; }
+      CdlrickshawmanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -421,7 +421,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLRICKSHAWMAN_Stream( CDLRICKSHAWMAN_Stream other ) {
+      CdlrickshawmanStream( CdlrickshawmanStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -449,7 +449,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLRICKSHAWMAN_Stream other ) {
+      void copyFrom( CdlrickshawmanStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -490,7 +490,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLRICKSHAWMAN_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlrickshawmanStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -507,7 +507,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRICKSHAWMAN update: BadParam", RetCode.BadParam);
-         core.CDLRICKSHAWMAN_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlrickshawmanStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -536,7 +536,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLRICKSHAWMAN updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLRICKSHAWMAN_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlrickshawmanStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -554,14 +554,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRICKSHAWMAN peek: BadParam", RetCode.BadParam);
-         CDLRICKSHAWMAN_Stream scratch = PEEK_SCRATCH.get();
+         CdlrickshawmanStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLRICKSHAWMAN_Stream(this);
+            scratch = new CdlrickshawmanStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLRICKSHAWMAN_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlrickshawmanStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -578,11 +578,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLRICKSHAWMAN_Stream copy() {
-         return new CDLRICKSHAWMAN_Stream(this);
+      public CdlrickshawmanStream copy() {
+         return new CdlrickshawmanStream(this);
       }
    }
-   void CDLRICKSHAWMAN_StepImpl( CDLRICKSHAWMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlrickshawmanStepImpl( CdlrickshawmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -633,7 +633,7 @@
          sp.ringPos_ShadowLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLRICKSHAWMAN_OpenImpl( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlrickshawmanOpenImpl( CdlrickshawmanStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -794,11 +794,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLRICKSHAWMAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlrickshawmanOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlrickshawmanStream cdlrickshawmanOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
-      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlrickshawmanStream sp = new CdlrickshawmanStream(this);
+      RetCode retCode = cdlrickshawmanOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -812,14 +812,14 @@
       }
       throw new TaLibArgumentException("CDLRICKSHAWMAN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLRICKSHAWMAN_Open (composition seam). */
-   CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlrickshawmanOpen (composition seam). */
+   CdlrickshawmanStream cdlrickshawmanOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
+      CdlrickshawmanStream sp = new CdlrickshawmanStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlrickshawmanOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -846,7 +846,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlrickshawmanStream cdlrickshawmanOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLRICKSHAWMAN open", "inOpen", inOpen);
       requireHistory("CDLRICKSHAWMAN open", inOpen.length);
@@ -856,10 +856,10 @@
       requireHistoryLength("CDLRICKSHAWMAN open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLRICKSHAWMAN open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLRICKSHAWMAN open", "inClose", inClose.length, inOpen.length);
-      return CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlrickshawmanOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLRICKSHAWMAN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlrickshawmanOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLRICKSHAWMAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -867,9 +867,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLRICKSHAWMAN_Stream#outRange()}.
+    * {@link CdlrickshawmanStream#outRange()}.
     */
-   public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlrickshawmanStream cdlrickshawmanOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLRICKSHAWMAN openAndFill", "inOpen", inOpen);
       requireHistory("CDLRICKSHAWMAN openAndFill", inOpen.length);
@@ -886,5 +886,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLRICKSHAWMAN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlrickshawmanOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

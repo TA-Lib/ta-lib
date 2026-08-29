@@ -314,23 +314,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live QSTICK stream: one value per closed bar, bit-identical to [`Core::QSTICK`]
-/// over the same series. Open with [`Core::QSTICK_Open`]; dropping the handle
+/// over the same series. Open with [`Core::qstick_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_QSTICK_Stream")]
-pub struct QSTICK_Stream {
-    state: QSTICK_StreamState,
+pub struct QstickStream {
+    state: QstickStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl QSTICK_Stream {
+impl QstickStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `QSTICK_StreamState::restore_from`.
+    /// allocating new ones. See `QstickStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -339,7 +339,7 @@ impl QSTICK_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct QSTICK_StreamState {
+struct QstickStreamState {
     optInTimePeriod: i32,
     periodTotal: f64,
     ringPos_trailingIdx: usize,
@@ -348,7 +348,7 @@ struct QSTICK_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl QSTICK_StreamState {
+impl QstickStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -360,14 +360,13 @@ impl QSTICK_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn QSTICK_step_impl(sp: &mut QSTICK_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
+    fn qstick_step_impl(sp: &mut QstickStreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_derived[0] = (inClose - inOpen) as f64;
@@ -383,11 +382,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::QSTICK_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::QSTICK_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn QSTICK_OpenImpl(
+    /// The single whole-history transcription behind [`Core::qstick_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::qstick_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn qstick_open_impl(
         &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<QSTICK_Stream, RetCode> {
+    ) -> Result<QstickStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -491,24 +490,24 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = QSTICK_StreamState {
+        let state = QstickStreamState {
             optInTimePeriod,
             periodTotal,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_derived,
         };
-        Ok(QSTICK_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(QstickStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::QSTICK_Open`] (composition seam).
-    pub(crate) fn QSTICK_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::qstick_open`] (composition seam).
+    pub(crate) fn qstick_open_internal(
         &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(QSTICK_Stream, f64), RetCode> {
+    ) -> Result<(QstickStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.QSTICK_OpenImpl(inOpen, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.qstick_open_impl(inOpen, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -533,7 +532,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.QSTICK_Open(&open, &close, 10).expect("enough history");
+    /// let (mut s, _last) = core.qstick_open(&open, &close, 10).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -543,11 +542,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_QSTICK_Open")]
-    pub fn QSTICK_Open(&self, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(QSTICK_Stream, f64), RetCode> {
-        self.QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod)
+    pub fn qstick_open(&self, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(QstickStream, f64), RetCode> {
+        self.qstick_open_internal(inOpen, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::QSTICK_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::qstick_open`] that also fills the output array(s) bit-identically to
     /// [`Core::QSTICK`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -555,12 +554,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::QSTICK_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::qstick_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_QSTICK_OpenAndFill")]
-    pub fn QSTICK_OpenAndFill(
+    pub fn qstick_open_and_fill(
         &self, inOpen: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(QSTICK_Stream, OutRange), RetCode> {
+    ) -> Result<(QstickStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -577,23 +576,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.QSTICK_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.qstick_open_and_fill_internal(inOpen, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::QSTICK_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::qstick_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn QSTICK_OpenAndFillInternal(
+    pub(crate) fn qstick_open_and_fill_internal(
         &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<QSTICK_Stream, RetCode> {
-        self.QSTICK_OpenImpl(inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<QstickStream, RetCode> {
+        self.qstick_open_impl(inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl QSTICK_Stream {
+impl QstickStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -611,7 +610,7 @@ impl QSTICK_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::QSTICK_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
+        Core::qstick_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -644,7 +643,7 @@ impl QSTICK_Stream {
             if !inOpen[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::QSTICK_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
+            Core::qstick_step_impl(&mut self.state, inOpen[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -689,7 +688,7 @@ impl QSTICK_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<QSTICK_Stream>();
+    _assert_auto::<QstickStream>();
 };
 
 /***************/

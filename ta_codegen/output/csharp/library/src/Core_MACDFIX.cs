@@ -558,14 +558,14 @@ public partial class Core
    /// <param name="MACD">Fixed EMA12 minus EMA26.</param>
    /// <param name="MACDSignal">EMA of the MACD line.</param>
    /// <param name="MACDHist">MACD minus signal.</param>
-   public readonly record struct MACDFIX_Value( double MACD, double MACDSignal, double MACDHist );
+   public readonly record struct MacdfixValue( double MACD, double MACDSignal, double MACDHist );
 
    /// <summary>A live <c>MACDFIX</c> stream: one value per closed bar, bit-identical to
    /// <c>MACDFIX</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MACDFIX_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.MacdfixOpen"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -576,7 +576,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MACDFIX_Stream
+   public sealed class MacdfixStream
    {
       internal Core core;
       internal int optInSignalPeriod;
@@ -592,12 +592,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MACDFIX_Stream( Core core ) { this.core = core; }
+      internal MacdfixStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MACDFIX</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Macdfix</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -606,7 +606,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MACDFIX_Stream( MACDFIX_Stream other )
+      internal MacdfixStream( MacdfixStream other )
       {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
@@ -623,7 +623,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MACDFIX_Stream other )
+      internal void CopyFrom( MacdfixStream other )
       {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
@@ -653,12 +653,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public MACDFIX_Value Update( double inReal )
+      public MacdfixValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDFIX", "update", RetCode.BadParam);
-         core.MACDFIX_StepImpl(this, inReal);
+         core.MacdfixStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new MACDFIX_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+         return new MacdfixValue(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -672,12 +672,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public MACDFIX_Value Peek( double inReal )
+      public MacdfixValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDFIX", "peek", RetCode.BadParam);
-         MACDFIX_Stream scratch = new MACDFIX_Stream(this);
-         core.MACDFIX_StepImpl(scratch, inReal);
-         return new MACDFIX_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         MacdfixStream scratch = new MacdfixStream(this);
+         core.MacdfixStepImpl(scratch, inReal);
+         return new MacdfixValue(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -702,7 +702,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MACDFIX", "updateAndFill", RetCode.BadParam);
-            core.MACDFIX_StepImpl(this, inReal[i]);
+            core.MacdfixStepImpl(this, inReal[i]);
             outMACD[i] = cur_outMACD;
             outMACDSignal[i] = cur_outMACDSignal;
             outMACDHist[i] = cur_outMACDHist;
@@ -715,18 +715,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public MACDFIX_Value Value => new MACDFIX_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+      public MacdfixValue Value => new MacdfixValue(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MACDFIX_Stream Clone()
+      public MacdfixStream Clone()
       {
-         return new MACDFIX_Stream(this);
+         return new MacdfixStream(this);
       }
    }
 
-   internal void MACDFIX_StepImpl( MACDFIX_Stream sp, double inReal )
+   internal void MacdfixStepImpl( MacdfixStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;
@@ -744,7 +744,7 @@ public partial class Core
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
 
-   private RetCode MACDFIX_OpenImpl( MACDFIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
+   private RetCode MacdfixOpenImpl( MacdfixStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -935,11 +935,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MACDFIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MACDFIX_Stream MACDFIX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
+   /* MacdfixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MacdfixStream MacdfixOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
+      MacdfixStream sp = new MacdfixStream(this);
+      RetCode retCode = MacdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -948,14 +948,14 @@ public partial class Core
       throw StreamFailure("MACDFIX", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MACDFIX_Open (composition seam). */
-   internal MACDFIX_Stream MACDFIX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind MacdfixOpen (composition seam). */
+   internal MacdfixStream MacdfixOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod )
    {
-      MACDFIX_Stream sp = new MACDFIX_Stream(this);
+      MacdfixStream sp = new MacdfixStream(this);
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
       double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      RetCode retCode = MacdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -966,11 +966,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MACDFIX</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MACDFIX_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MacdfixStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MACDFIX</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MACDFIX_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MACDFIX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MacdfixOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series (typically close) The warm-up history, oldest bar first.</param>
    /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MACDFIX_Lookback"/> for its default
@@ -982,14 +982,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MACDFIX_Stream MACDFIX_Open( ReadOnlySpan<double> inReal, int optInSignalPeriod )
+   public MacdfixStream MacdfixOpen( ReadOnlySpan<double> inReal, int optInSignalPeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
+      return MacdfixOpenInternal(inReal, 0, optInSignalPeriod);
    }
 
-   /// <summary><c>MACDFIX_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MacdfixOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MACDFIX</c> produces over
@@ -1001,7 +1001,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MACDFIX_Stream.OutRange"/>.</para>
+   /// <see cref="MacdfixStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series (typically close) The warm-up history, oldest bar first.</param>
    /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MACDFIX_Lookback"/> for its default
@@ -1020,7 +1020,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MACDFIX_Stream MACDFIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
+   public MacdfixStream MacdfixOpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1031,6 +1031,6 @@ public partial class Core
       if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          throw StreamFailure("MACDFIX", "openAndFill", RetCode.BadParam);
       }
-      return MACDFIX_OpenAndFillInternal(inReal, 0, optInSignalPeriod, out _, out _, outMACD, outMACDSignal, outMACDHist);
+      return MacdfixOpenAndFillInternal(inReal, 0, optInSignalPeriod, out _, out _, outMACD, outMACDSignal, outMACDHist);
    }
 }

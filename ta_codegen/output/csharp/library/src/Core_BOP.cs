@@ -296,7 +296,7 @@ public partial class Core
    /// <summary>A live <c>BOP</c> stream: one value per closed bar, bit-identical to
    /// <c>BOP</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.BOP_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.BopOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -309,19 +309,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class BOP_Stream
+   public sealed class BopStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal BOP_Stream( Core core ) { this.core = core; }
+      internal BopStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.BOP</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Bop</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -329,7 +329,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal BOP_Stream( BOP_Stream other )
+      internal BopStream( BopStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -337,7 +337,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( BOP_Stream other )
+      internal void CopyFrom( BopStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -364,7 +364,7 @@ public partial class Core
       public double Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("BOP", "update", RetCode.BadParam);
-         core.BOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.BopStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -386,8 +386,8 @@ public partial class Core
       public double Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("BOP", "peek", RetCode.BadParam);
-         BOP_Stream scratch = new BOP_Stream(this);
-         core.BOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         BopStream scratch = new BopStream(this);
+         core.BopStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -414,7 +414,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("BOP", "updateAndFill", RetCode.BadParam);
-            core.BOP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.BopStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -430,13 +430,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public BOP_Stream Clone()
+      public BopStream Clone()
       {
-         return new BOP_Stream(this);
+         return new BopStream(this);
       }
    }
 
-   internal void BOP_StepImpl( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void BopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       /* BOP is a fraction of the bar's own range, so it is scale-free and the
@@ -453,7 +453,7 @@ public partial class Core
       }
    }
 
-   private RetCode BOP_OpenImpl( BOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode BopOpenImpl( BopStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -499,11 +499,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* BOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal BOP_Stream BOP_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* BopOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal BopStream BopOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      BOP_Stream sp = new BOP_Stream(this);
-      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      BopStream sp = new BopStream(this);
+      RetCode retCode = BopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -512,12 +512,12 @@ public partial class Core
       throw StreamFailure("BOP", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind BOP_Open (composition seam). */
-   internal BOP_Stream BOP_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind BopOpen (composition seam). */
+   internal BopStream BopOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      BOP_Stream sp = new BOP_Stream(this);
+      BopStream sp = new BopStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = BopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -528,11 +528,11 @@ public partial class Core
 
    /// <summary>Open a live <c>BOP</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="BOP_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="BopStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>BOP</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>BOP_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>BOP_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>BopOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -545,7 +545,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public BOP_Stream BOP_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public BopStream BopOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "BOP open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "BOP open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -555,10 +555,10 @@ public partial class Core
       RequireHistoryLength("BOP", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("BOP", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("BOP", "open", "inClose", inClose.Length, inOpen.Length);
-      return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return BopOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>BOP_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>BopOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>BOP</c> produces over the
@@ -570,7 +570,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="BOP_Stream.OutRange"/>.</para>
+   /// <see cref="BopStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -586,7 +586,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public BOP_Stream BOP_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
+   public BopStream BopOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "BOP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "BOP openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -601,6 +601,6 @@ public partial class Core
       if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("BOP", "openAndFill", RetCode.BadParam);
       }
-      return BOP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outReal);
+      return BopOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

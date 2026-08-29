@@ -70,13 +70,13 @@ fn body_of(src: &str, needle: &str) -> String {
 fn test_rust_sma_ring_stream_section() {
     let s = rust_stream_section("sma");
     // Handle + state struct shapes.
-    assert!(s.contains("pub struct SMA_Stream {"));
+    assert!(s.contains("pub struct SmaStream {"));
     // No `Core` on the handle: SMA's step reads no candle setting, so it
     // carries none (#274). `backend_suite`'s handle gate owns that claim
     // across the tiers that do read one.
     assert!(!s.contains("core: Core,"));
-    assert!(s.contains("state: SMA_StreamState,"));
-    assert!(s.contains("struct SMA_StreamState {"));
+    assert!(s.contains("state: SmaStreamState,"));
+    assert!(s.contains("struct SmaStreamState {"));
     assert!(s.contains("ring_trailingIdx_inReal: Vec<f64>,"));
     assert!(s.contains("ringPos_trailingIdx: usize,"));
     // The C mirror/peekMode machinery is deleted by design (clone-peek).
@@ -84,18 +84,18 @@ fn test_rust_sma_ring_stream_section() {
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
     // Step: ring read-old-then-push order, `(*outReal)` write.
-    assert!(s.contains("fn SMA_step_impl(sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
+    assert!(s.contains("fn sma_step_impl(sp: &mut SmaStreamState, inReal: f64, outReal: &mut f64)"));
     // `tempReal` is step-local scratch, not a handle field (#252).
     assert!(s.contains("(*outReal) = tempReal / (sp.optInTimePeriod as f64);"));
     assert!(!s.contains("tempReal: f64,"), "no scratch field on the state struct");
     assert!(s.contains("sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
-    assert!(s.contains("pub(crate) fn SMA_OpenInternal("));
-    assert!(s.contains("self.SMA_OpenInternal(inReal, 0, optInTimePeriod)"));
+    assert!(s.contains("pub(crate) fn sma_open_internal("));
+    assert!(s.contains("self.sma_open_internal(inReal, 0, optInTimePeriod)"));
     // The public fill takes the batch output tail MINUS the out-meta pair, and
     // hands the range back as the `OutRange` the batch entry point returns
     // (#179 C15) — the crate ships one convention for "which slots were filled".
-    assert!(s.contains("pub fn SMA_OpenAndFill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],\n    ) -> Result<(SMA_Stream, OutRange), RetCode> {"));
+    assert!(s.contains("pub fn sma_open_and_fill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],\n    ) -> Result<(SmaStream, OutRange), RetCode> {"));
     assert!(s.contains("Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))"));
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
@@ -112,7 +112,7 @@ fn test_rust_sma_ring_stream_section() {
     assert!(s.contains("let mut scratch = self.clone();"));
     assert!(s.contains("scratch.update(inReal)"));
     assert!(!s.contains("PEEK_SCRATCH"));
-    assert!(s.contains("_assert_auto::<SMA_Stream>();"));
+    assert!(s.contains("_assert_auto::<SmaStream>();"));
     // Short history is an error, not batch's empty success.
     assert!(s.contains("return Err(RetCode::BadParam);"));
 }
@@ -121,7 +121,7 @@ fn test_rust_sma_ring_stream_section() {
 fn test_rust_ema_scalar_recurrence_stream_section() {
     let s = rust_stream_section("ema");
     // T2 scalar state incl. the private K factor; no heap buffers at all.
-    assert!(s.contains("struct EMA_StreamState {"));
+    assert!(s.contains("struct EmaStreamState {"));
     assert!(s.contains("prevMA: f64,"));
     assert!(s.contains("optInK_1: f64,"));
     assert!(!s.contains("Vec<f64>,"), "EMA carries only scalars");
@@ -141,7 +141,7 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
 #[test]
 fn test_rust_macd_three_output_tuple() {
     let s = rust_stream_section("macd");
-    assert!(s.contains("-> Result<(MACD_Stream, (f64, f64, f64)), RetCode>"));
+    assert!(s.contains("-> Result<(MacdStream, (f64, f64, f64)), RetCode>"));
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {"));
     assert!(s.contains(", outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64)"));
     // Tuple assembled in batch output order.
@@ -215,7 +215,7 @@ fn test_rust_ht_dcperiod_parity_stream_section() {
     assert!(s.contains("sp.streamParity"));
     // The gate strip + parity carry leave no cursor/startIdx leak in the step.
     let step = s
-        .split("fn HT_DCPERIOD_step_impl")
+        .split("fn ht_dcperiod_step_impl")
         .nth(1)
         .and_then(|t| t.split("/// The single whole-history transcription").next())
         .expect("step body");
@@ -314,7 +314,7 @@ fn every_streamable_func_emits_rust_stream() {
 fn rust_open_family_is_one_core_with_three_entries() {
     let s = rust_stream_section("cdlhammer");
     assert_eq!(
-        s.matches("fn CDLHAMMER_OpenImpl(").count(),
+        s.matches("fn cdlhammer_open_impl(").count(),
         1,
         "the core is emitted exactly once"
     );
@@ -323,9 +323,9 @@ fn rust_open_family_is_one_core_with_three_entries() {
     // goes through the anchored seam, which is what gives that seam a caller for
     // all 175 rather than only the 16 something composes over.
     for (w, callee) in [
-        ("fn CDLHAMMER_OpenInternal(", "CDLHAMMER_OpenImpl("),
-        ("fn CDLHAMMER_OpenAndFillInternal(", "CDLHAMMER_OpenImpl("),
-        ("pub fn CDLHAMMER_OpenAndFill(", "CDLHAMMER_OpenAndFillInternal("),
+        ("fn cdlhammer_open_internal(", "cdlhammer_open_impl("),
+        ("fn cdlhammer_open_and_fill_internal(", "cdlhammer_open_impl("),
+        ("pub fn cdlhammer_open_and_fill(", "cdlhammer_open_and_fill_internal("),
     ] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
         // To the frame's end, not to a byte budget: a frame grows when a rule
@@ -343,7 +343,7 @@ fn rust_open_family_is_one_core_with_three_entries() {
 #[test]
 fn rust_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
     let s = rust_stream_section("cdlhammer");
-    let at = s.find("fn CDLHAMMER_OpenInternal(").expect("scalar wrapper");
+    let at = s.find("fn cdlhammer_open_internal(").expect("scalar wrapper");
     let body = &s[at..at + 900.min(s.len() - at)];
     assert!(body.contains("[0_i32; 1]"), "an int output sinks into a 1-element array:\n{body}");
     assert!(body.contains(", 0)?"), "scalar passes stride 0:\n{body}");
@@ -365,7 +365,7 @@ fn rust_fill_wrapper_keeps_the_output_distinctness_guard() {
     // so two outputs may not share a slice. Rust's borrow checker rules out
     // output-vs-input, but not output-vs-output.
     let s = rust_stream_section("minmax");
-    let at = s.find("pub fn MINMAX_OpenAndFill(").expect("fill wrapper");
+    let at = s.find("pub fn minmax_open_and_fill(").expect("fill wrapper");
     let end = s[at..].find("\n    }\n").map_or(s.len() - at, |e| e + 6);
     let body = &s[at..at + end];
     assert!(
@@ -377,7 +377,7 @@ fn rust_fill_wrapper_keeps_the_output_distinctness_guard() {
     let alias = body.find("outMin.as_ptr() == outMax.as_ptr()").unwrap();
     assert!(cap < alias, "S5 is specified ahead of S6:\n{body}");
     // The scalar wrapper's sinks are its own locals — it must not pay for it.
-    let sat = s.find("fn MINMAX_OpenInternal(").expect("scalar wrapper");
+    let sat = s.find("fn minmax_open_internal(").expect("scalar wrapper");
     let sbody = &s[sat..sat + 700.min(s.len() - sat)];
     assert!(
         !sbody.contains("as_ptr()"),
@@ -388,7 +388,7 @@ fn rust_fill_wrapper_keeps_the_output_distinctness_guard() {
 #[test]
 fn rust_multi_output_scalar_wrapper_rebuilds_the_value_tuple() {
     let s = rust_stream_section("minmax");
-    let at = s.find("fn MINMAX_OpenInternal(").expect("scalar wrapper");
+    let at = s.find("fn minmax_open_internal(").expect("scalar wrapper");
     let body = &s[at..at + 900.min(s.len() - at)];
     assert!(
         body.contains("(sink_outMin[0], sink_outMax[0])"),
@@ -398,14 +398,14 @@ fn rust_multi_output_scalar_wrapper_rebuilds_the_value_tuple() {
 
 #[test]
 fn rust_exempt_tiers_keep_their_own_bodies() {
-    for (name, upper) in [("ma", "MA"), ("mavp", "MAVP")] {
+    for name in ["ma", "mavp"] {
         let s = rust_stream_section(name);
         assert!(
-            !s.contains(&format!("fn {upper}_OpenImpl(")),
-            "{upper} is an exempt tier and must keep its own bodies"
+            !s.contains(&format!("fn {name}_open_impl(")),
+            "{name} is an exempt tier and must keep its own bodies"
         );
-        assert!(s.contains(&format!("fn {upper}_OpenInternal(")));
-        assert!(s.contains(&format!("fn {upper}_OpenAndFill(")));
+        assert!(s.contains(&format!("fn {name}_open_internal(")));
+        assert!(s.contains(&format!("fn {name}_open_and_fill(")));
     }
 }
 
@@ -418,9 +418,9 @@ fn rust_exempt_tiers_keep_their_own_bodies() {
 #[test]
 fn rust_dispatch_open_modes_differ_only_where_intended() {
     let s = rust_stream_section("ma");
-    let scalar = body_of(&s, "fn MA_OpenInternal(");
-    let fill = body_of(&s, "fn MA_OpenAndFill(");
-    let internal = body_of(&s, "fn MA_OpenAndFillInternal(");
+    let scalar = body_of(&s, "fn ma_open_internal(");
+    let fill = body_of(&s, "fn ma_open_and_fill(");
+    let internal = body_of(&s, "fn ma_open_and_fill_internal(");
 
     // Only the internal seam still reports through out-parameters: the public
     // fill returns an `OutRange` beside the handle, like the batch tier (#179
@@ -428,7 +428,7 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
     assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
     assert!(!fill.contains("outBegIdx"), "the public fill carries no out-meta pair:\n{fill}");
     assert!(
-        fill.contains("Ok((MA_Stream { state, out: fillRange }, fillRange))"),
+        fill.contains("Ok((MaStream { state, out: fillRange }, fillRange))"),
         "the public fill returns the arm's own range beside the handle, and keeps it \
          on the handle too (#241):\n{fill}"
     );
@@ -449,15 +449,15 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
     assert!(!fill.contains("startIdx"), "the public fill is anchored at bar 0:\n{fill}");
 
     assert!(
-        scalar.contains("SMA_OpenInternal(") && !scalar.contains("_OpenAndFill"),
+        scalar.contains("sma_open_internal(") && !scalar.contains("_OpenAndFill"),
         "the scalar arms open the sub's OpenInternal:\n{scalar}"
     );
     assert!(
-        fill.contains("SMA_OpenAndFill(") && !fill.contains("_OpenAndFillInternal("),
+        fill.contains("sma_open_and_fill(") && !fill.contains("_OpenAndFillInternal("),
         "the public fill arms call the sub's public OpenAndFill:\n{fill}"
     );
     assert!(
-        internal.contains("SMA_OpenAndFillInternal("),
+        internal.contains("sma_open_and_fill_internal("),
         "the internal fill arms call the sub's OpenAndFillInternal:\n{internal}"
     );
 }

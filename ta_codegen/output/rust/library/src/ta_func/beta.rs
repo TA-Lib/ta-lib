@@ -572,23 +572,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live BETA stream: one value per closed bar, bit-identical to [`Core::BETA`]
-/// over the same series. Open with [`Core::BETA_Open`]; dropping the handle
+/// over the same series. Open with [`Core::beta_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BETA_Stream")]
-pub struct BETA_Stream {
-    state: BETA_StreamState,
+pub struct BetaStream {
+    state: BetaStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl BETA_Stream {
+impl BetaStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `BETA_StreamState::restore_from`.
+    /// allocating new ones. See `BetaStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -597,7 +597,7 @@ impl BETA_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct BETA_StreamState {
+struct BetaStreamState {
     optInTimePeriod: i32,
     S_xx: f64,
     S_xy: f64,
@@ -623,7 +623,7 @@ struct BETA_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl BETA_StreamState {
+impl BetaStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -652,14 +652,13 @@ impl BETA_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BETA_step_impl(sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn beta_step_impl(sp: &mut BetaStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut tmp_real: f64 = 0.0_f64;
         let mut denom: f64 = 0.0_f64;
         let mut denom_scale: f64 = 0.0_f64;
@@ -851,11 +850,11 @@ impl Core {
         sp.S_y -= y;
     }
 
-    /// The single whole-history transcription behind [`Core::BETA_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::BETA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn BETA_OpenImpl(
+    /// The single whole-history transcription behind [`Core::beta_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::beta_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn beta_open_impl(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<BETA_Stream, RetCode> {
+    ) -> Result<BetaStream, RetCode> {
         if inReal0.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1226,7 +1225,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = BETA_StreamState {
+        let state = BetaStreamState {
             optInTimePeriod,
             S_xx,
             S_xy,
@@ -1250,17 +1249,17 @@ impl Core {
             x_inReal0,
             x_inReal1,
         };
-        Ok(BETA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BetaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::BETA_Open`] (composition seam).
-    pub(crate) fn BETA_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::beta_open`] (composition seam).
+    pub(crate) fn beta_open_internal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(BETA_Stream, f64), RetCode> {
+    ) -> Result<(BetaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.BETA_OpenImpl(inReal0, inReal1, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.beta_open_impl(inReal0, inReal1, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1283,7 +1282,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.BETA_Open(&data0, &data1, 5).expect("enough history");
+    /// let (mut s, _last) = core.beta_open(&data0, &data1, 5).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 101.3).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1293,11 +1292,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_BETA_Open")]
-    pub fn BETA_Open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BETA_Stream, f64), RetCode> {
-        self.BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod)
+    pub fn beta_open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BetaStream, f64), RetCode> {
+        self.beta_open_internal(inReal0, inReal1, 0, optInTimePeriod)
     }
 
-    /// [`Core::BETA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::beta_open`] that also fills the output array(s) bit-identically to
     /// [`Core::BETA`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1305,12 +1304,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::BETA_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::beta_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_BETA_OpenAndFill")]
-    pub fn BETA_OpenAndFill(
+    pub fn beta_open_and_fill(
         &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(BETA_Stream, OutRange), RetCode> {
+    ) -> Result<(BetaStream, OutRange), RetCode> {
         if inReal0.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1327,31 +1326,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.BETA_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.beta_open_and_fill_internal(inReal0, inReal1, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::BETA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::beta_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn BETA_OpenAndFillInternal(
+    pub(crate) fn beta_open_and_fill_internal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<BETA_Stream, RetCode> {
-        self.BETA_OpenImpl(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<BetaStream, RetCode> {
+        self.beta_open_impl(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `BETA_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `BetaStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static BETA_PEEK_SCRATCH: std::cell::Cell<Option<Box<BETA_Stream>>> =
+    static BETA_PEEK_SCRATCH: std::cell::Cell<Option<Box<BetaStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl BETA_Stream {
+impl BetaStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1369,7 +1368,7 @@ impl BETA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::BETA_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::beta_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1402,7 +1401,7 @@ impl BETA_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::BETA_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::beta_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1426,11 +1425,12 @@ impl BETA_Stream {
             return Err(RetCode::BadParam);
         }
         BETA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal0, inReal1);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::beta_step_impl(&mut scratch, inReal0, inReal1, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 
@@ -1450,7 +1450,7 @@ impl BETA_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<BETA_Stream>();
+    _assert_auto::<BetaStream>();
 };
 
 /***************/

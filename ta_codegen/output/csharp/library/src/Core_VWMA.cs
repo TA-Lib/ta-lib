@@ -434,7 +434,7 @@ public partial class Core
    /// <summary>A live <c>VWMA</c> stream: one value per closed bar, bit-identical to
    /// <c>VWMA</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.VWMA_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.VwmaOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -447,7 +447,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class VWMA_Stream
+   public sealed class VwmaStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -461,12 +461,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal VWMA_Stream( Core core ) { this.core = core; }
+      internal VwmaStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.VWMA</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Vwma</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -474,7 +474,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal VWMA_Stream( VWMA_Stream other )
+      internal VwmaStream( VwmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -491,7 +491,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( VWMA_Stream other )
+      internal void CopyFrom( VwmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -513,7 +513,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static VWMA_Stream? peekScratch;
+      [ThreadStatic] private static VwmaStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -532,7 +532,7 @@ public partial class Core
       public double Update( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWMA", "update", RetCode.BadParam);
-         core.VWMA_StepImpl(this, inReal, inVolume);
+         core.VwmaStepImpl(this, inReal, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -552,14 +552,14 @@ public partial class Core
       public double Peek( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWMA", "peek", RetCode.BadParam);
-         VWMA_Stream? scratch = peekScratch;
+         VwmaStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new VWMA_Stream(this);
+            scratch = new VwmaStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.VWMA_StepImpl(scratch, inReal, inVolume);
+         core.VwmaStepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -584,7 +584,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("VWMA", "updateAndFill", RetCode.BadParam);
-            core.VWMA_StepImpl(this, inReal[i], inVolume[i]);
+            core.VwmaStepImpl(this, inReal[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -600,13 +600,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public VWMA_Stream Clone()
+      public VwmaStream Clone()
       {
-         return new VWMA_Stream(this);
+         return new VwmaStream(this);
       }
    }
 
-   internal void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
+   internal void VwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
    {
       double tempPV = 0.0;
       double tempV = 0.0;
@@ -643,7 +643,7 @@ public partial class Core
       }
    }
 
-   private RetCode VWMA_OpenImpl( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode VwmaOpenImpl( VwmaStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -787,11 +787,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal VWMA_Stream VWMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* VwmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal VwmaStream VwmaOpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      VwmaStream sp = new VwmaStream(this);
+      RetCode retCode = VwmaOpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -800,12 +800,12 @@ public partial class Core
       throw StreamFailure("VWMA", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
-   internal VWMA_Stream VWMA_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind VwmaOpen (composition seam). */
+   internal VwmaStream VwmaOpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
-      VWMA_Stream sp = new VWMA_Stream(this);
+      VwmaStream sp = new VwmaStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = VwmaOpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -816,11 +816,11 @@ public partial class Core
 
    /// <summary>Open a live <c>VWMA</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="VWMA_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="VwmaStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>VWMA</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>VWMA_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>VWMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>VwmaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price series, close by convention. The warm-up history, oldest bar
    /// first.</param>
@@ -834,17 +834,17 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public VWMA_Stream VWMA_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod )
+   public VwmaStream VwmaOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("VWMA open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("VWMA", "open", "inVolume", inVolume.Length, inReal.Length);
-      return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
+      return VwmaOpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
 
-   /// <summary><c>VWMA_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>VwmaOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>VWMA</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -855,7 +855,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="VWMA_Stream.OutRange"/>.</para>
+   /// <see cref="VwmaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series, close by convention. The warm-up history, oldest bar
    /// first.</param>
@@ -872,7 +872,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public VWMA_Stream VWMA_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
+   public VwmaStream VwmaOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -883,6 +883,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
       }
-      return VWMA_OpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, out _, out _, outReal);
+      return VwmaOpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

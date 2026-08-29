@@ -11,17 +11,18 @@
 //!
 //! # Pinned decisions
 //!
-//! - **The handle is a `public sealed class <NAME>_Stream` nested in
-//!   `partial class Core`**, with a *sibling* nested
-//!   `public readonly record struct <NAME>_Value` for multi-output functions.
-//!   The `Value` type cannot itself be named `Value`: a nested type and a
-//!   member of the same name is CS0102, and the member name is the one every
-//!   language's documentation references.
+//! - **The handle is a `public sealed class <Name>Stream` nested in
+//!   `partial class Core`** — PascalCase, acronym single-capitalized (issue
+//!   #278; only the batch tier still spells `<NAME>` verbatim) — with a
+//!   *sibling* nested `public readonly record struct <Name>Value` for
+//!   multi-output functions. The `Value` type cannot itself be named `Value`:
+//!   a nested type and a member of the same name is CS0102, and the member
+//!   name is the one every language's documentation references.
 //!
 //! - **Every handle field is `internal`, every constructor `internal`.** A
 //!   *sibling* nested type cannot reach another's `private` members, and
-//!   `MAVP_Stream`'s copy constructor builds `MA_Stream` copies while
-//!   `MA_Stream`'s step calls `SMA_Stream.Update`. One rule beats per-field
+//!   `MavpStream`'s copy constructor builds `MaStream` copies while
+//!   `MaStream`'s step calls `SmaStream.Update`. One rule beats per-field
 //!   analysis, and `internal` is invisible to consumers. Internal constructors
 //!   additionally stop `System.Text.Json` from minting a half-built handle,
 //!   which is the positive act C# needs where Java gets not-serializable free.
@@ -84,7 +85,7 @@ use crate::ir::{CircBuf, DocDef, EnumDef, Expr, FuncDef, OptInput, ParamType, St
 use crate::registry::Registry;
 use crate::streaming::{self, StreamModel, StreamPlan};
 
-use super::common::CANDLE_FNS;
+use super::common::{pascal_words, CANDLE_FNS};
 use super::csharp::{
     cs_series_in, cs_series_out, cs_type_str, emit_opt_param_validation, opt_param_type_str,
     render_csharp_switch_label, render_expr, render_hoisted_blocks, render_statement_ctx,
@@ -120,21 +121,22 @@ fn base_name(func: &FuncDef) -> String {
     func.name.clone()
 }
 
-/// Public handle class name, nested in `Core`: `SMA_Stream`.
+/// Public handle class name, nested in `Core`: `SmaStream` — PascalCase with
+/// the acronym single-capitalized, no length exception (issue #278).
 pub fn stream_class_name(func: &FuncDef) -> String {
-    format!("{}_Stream", base_name(func))
+    format!("{}Stream", pascal_words(&func.name))
 }
 
-/// Multi-output value type name, a *sibling* nested type: `BBANDS_Value`.
+/// Multi-output value type name, a *sibling* nested type: `BbandsValue`.
 ///
 /// C#-only concern: a nested type named `Value` alongside the `Value` member
 /// every other language exposes is CS0102, so the type carries the function
 /// prefix and the member keeps the documented name.
 pub fn value_type_name(func: &FuncDef) -> String {
-    format!("{}_Value", base_name(func))
+    format!("{}Value", pascal_words(&func.name))
 }
 
-/// The `<NAME>_Value` member name for an output: `outSlowK` → `SlowK`,
+/// The `<Name>Value` member name for an output: `outSlowK` → `SlowK`,
 /// `outMACDSignal` → `MACDSignal`, `outMinIdx` → `MinIdx`.
 ///
 /// Unlike Java's `value_field_name` this does *not* lowercase the leading caps
@@ -173,7 +175,7 @@ fn out_cs_param_type(func: &FuncDef, name: &str) -> String {
     cs_series_out(if out_is_int(func, name) { "int" } else { "double" })
 }
 
-/// Whether `Update`/`Peek`/`Value` return the multi-output `<NAME>_Value`.
+/// Whether `Update`/`Peek`/`Value` return the multi-output `<Name>Value`.
 fn has_value_type(func: &FuncDef) -> bool {
     func.outputs.len() > 1
 }
@@ -595,7 +597,7 @@ fn render_predicate(
 ///
 /// `cref` discipline: never `<see cref="Core.SMA"/>` — the batch method is an
 /// overload set and that is CS0419. Only single-signature members
-/// (`SMA_Open`, `SMA_Lookback`, `SMA_Stream`, `Update`, ...) are cref-able;
+/// (`SmaOpen`, `SMA_Lookback`, `SmaStream`, `Update`, ...) are cref-able;
 /// everything else goes in prose as `<c>SMA</c>`.
 struct XmlDoc {
     lines: Vec<String>,
@@ -829,7 +831,7 @@ impl SubMembers {
     }
 }
 
-/// Emit the sibling `<NAME>_Value` record struct and the nested handle class.
+/// Emit the sibling `<Name>Value` record struct and the nested handle class.
 /// `subs` holds the tier-owned members (sub-handle copies); the loop tier passes
 /// [`SubMembers::none`].
 fn emit_handle_class(o: &mut String, func: &FuncDef, fields: &[Field], subs: &SubMembers) -> bool {
@@ -848,7 +850,7 @@ fn emit_handle_class_with_members(
     extra_members: &str,
 ) -> bool {
     let class = stream_class_name(func);
-    let base = base_name(func);
+    let base = pascal_words(&base_name(func));
     let n = func.name.to_uppercase();
 
     // The multi-output value type is a SIBLING of the handle, not a member of
@@ -863,7 +865,7 @@ fn emit_handle_class_with_members(
     ));
     d.open("remarks");
     d.para(&format!(
-        "Open with <see cref=\"Core.{base}_Open\"/>. There is no close and nothing to \
+        "Open with <see cref=\"Core.{base}Open\"/>. There is no close and nothing to \
          dispose — the handle is ordinary managed state, and an unreferenced handle is \
          simply collected."
     ));
@@ -905,7 +907,7 @@ fn emit_handle_class_with_members(
         // `= []` on every array field is mandatory, not tidiness: CS8618
         // (non-nullable field not initialised by every constructor) is an error
         // under this csproj. It lowers to the cached `Array.Empty<T>()` and is
-        // overwritten by `<N>_OpenImpl` before the handle escapes.
+        // overwritten by `<Name>OpenImpl` before the handle escapes.
         let init = if cty.ends_with("[]") { " = []" } else { "" };
         let _ = writeln!(o, "      internal {cty} {name}{init};");
     }
@@ -1129,7 +1131,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
 
 // --- Update ------------------------------------------------------------------
 fn emit_update_method(o: &mut String, func: &FuncDef) {
-    let base = base_name(func);
+    let base = pascal_words(&base_name(func));
     let vt = value_surface_type(func);
     let (sig_bars, fwd_bars) = bar_params(func);
     let inputs = streaming::input_array_names(func);
@@ -1158,7 +1160,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "      public {vt} Update( {sig_bars} )");
     let _ = writeln!(o, "      {{");
     o.push_str(&finite_bar_check(func, "         ", "update"));
-    let _ = writeln!(o, "         core.{base}_StepImpl(this, {fwd_bars});");
+    let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
     // After the step and after the finite-bar reject, so a rejected bar leaves
     // the range where it was. `Peek` runs the same step on a scratch copy and so
     // never reaches this. Saturating: nothing bounds how many bars a live stream
@@ -1174,7 +1176,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
 // --- Peek ----------------------------------------------------------------------
 fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
     let class = stream_class_name(func);
-    let base = base_name(func);
+    let base = pascal_words(&base_name(func));
     let vt = value_surface_type(func);
     let (sig_bars, fwd_bars) = bar_params(func);
     let inputs = streaming::input_array_names(func);
@@ -1230,7 +1232,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
     } else {
         let _ = writeln!(o, "         {class} scratch = new {class}(this);");
     }
-    let _ = writeln!(o, "         core.{base}_StepImpl(scratch, {fwd_bars});");
+    let _ = writeln!(o, "         core.{base}StepImpl(scratch, {fwd_bars});");
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
     let _ = writeln!(o, "      }}");
 }
@@ -1286,10 +1288,11 @@ fn update_and_fill_doc(func: &FuncDef, inputs: &[String]) -> XmlDoc {
 }
 
 fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
-    let base = base_name(func);
+    let raw = base_name(func);
+    let base = pascal_words(&raw);
     let inputs = streaming::input_array_names(func);
 
-    // One emitter for every tier: each owns a `<base>_StepImpl` with the same
+    // One emitter for every tier: each owns a `<base>StepImpl` with the same
     // surface, so the n-bar filler is that step in a loop (issue #246). No
     // `Value` cache to keep in step on the way out, unlike Java: a multi-output
     // `Value` here is a record struct built fresh from the handle's fields.
@@ -1333,7 +1336,7 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     if !checks.is_empty() {
         let _ = writeln!(
             o,
-            "         if( {} ) throw Core.StreamFailure(\"{base}\", \"updateAndFill\", RetCode.BadParam);",
+            "         if( {} ) throw Core.StreamFailure(\"{raw}\", \"updateAndFill\", RetCode.BadParam);",
             checks.join(" || ")
         );
     }
@@ -1346,12 +1349,12 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
             .collect();
         let _ = writeln!(
             o,
-            "            if( {} ) throw Core.StreamFailure(\"{base}\", \"updateAndFill\", RetCode.BadParam);",
+            "            if( {} ) throw Core.StreamFailure(\"{raw}\", \"updateAndFill\", RetCode.BadParam);",
             conds.join(" || ")
         );
     }
     let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
-    let _ = writeln!(o, "            core.{base}_StepImpl(this, {});", idx_bars.join(", "));
+    let _ = writeln!(o, "            core.{base}StepImpl(this, {});", idx_bars.join(", "));
     for out in &func.outputs {
         let name = &out.name;
         let guard = if nullable.contains(name) { format!("if( !{name}.IsEmpty ) ") } else { String::new() };
@@ -1424,7 +1427,7 @@ fn stream_ctx<'a>(
     }
 }
 
-/// `internal void <base>_StepImpl( <Class> sp, double bar... )` — the one
+/// `internal void <base>StepImpl( <Class> sp, double bar... )` — the one
 /// per-bar transition; `Update` runs it on live state, `Peek` on a copy.
 ///
 /// It stays a method on `Core` rather than on the handle because transcribed
@@ -1452,10 +1455,10 @@ fn emit_step(
 /// The step signature line, shared by every tier (dispatch/period-bank steps
 /// hand-roll their bodies but keep the identical surface).
 fn emit_step_sig(o: &mut String, func: &FuncDef) {
-    let base = base_name(func);
+    let base = pascal_words(&base_name(func));
     let class = stream_class_name(func);
     let (sig_bars, _) = bar_params(func);
-    let _ = writeln!(o, "\n   internal void {base}_StepImpl( {class} sp, {sig_bars} )");
+    let _ = writeln!(o, "\n   internal void {base}StepImpl( {class} sp, {sig_bars} )");
     let _ = writeln!(o, "   {{");
 }
 
@@ -1610,7 +1613,7 @@ fn emit_out_meta_seed(o: &mut String) {
 /// Output mode for the open family (mirrors `c_stream` / `java_stream`).
 /// `Core` is the ONE transcription both entry points share: output writes are
 /// subscripted `out[<idx> * outStride]`, so the filling entries pass stride 1
-/// and the caller's arrays while `_OpenInternal` passes stride 0 and a
+/// and the caller's arrays while `OpenInternal` passes stride 0 and a
 /// one-element sink whose slot 0 ends holding the last history value.
 /// `Scalar`/`Fill`/`FillInternal` survive as signature selectors for the two
 /// exempt tiers (`Dispatch`, `PeriodBank`), which hand-roll a body per entry.
@@ -1694,7 +1697,7 @@ fn build_open_body_cs(model: &StreamModel, body: &[Statement]) -> Vec<Statement>
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
-/// The open-body emitter: the merged `private RetCode <base>_OpenImpl(...)`.
+/// The open-body emitter: the merged `private RetCode <base>OpenImpl(...)`.
 #[allow(clippy::too_many_arguments)]
 fn emit_open_body(
     o: &mut String,
@@ -1731,7 +1734,7 @@ fn emit_open_body(
 /// pinning bar 0 is what makes the fill bit-exact); `Core` takes both, plus the
 /// stride.
 fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
-    let base = base_name(func);
+    let base = pascal_words(&base_name(func));
     let class = stream_class_name(func);
     let mut params: Vec<String> = vec![format!("{class} sp")];
     for input in streaming::input_array_names(func) {
@@ -1745,19 +1748,19 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
     }
     let name = match mode {
         // Exempt tiers only: their plain-open body IS their numerics, so it
-        // wears the same `_OpenImpl` name a merged tier's `Core` does. The two
+        // wears the same `OpenImpl` name a merged tier's `Core` does. The two
         // are never emitted for the same function.
-        OutMode::Scalar => format!("{base}_OpenImpl"),
+        OutMode::Scalar => format!("{base}OpenImpl"),
         // The merged worker: both entry points' inputs, plus the stride that
         // selects where the per-bar writes land.
         OutMode::Core => {
             push_out_tail(&mut params, func);
             params.push("int outStride".to_string());
-            format!("{base}_OpenImpl")
+            format!("{base}OpenImpl")
         }
         OutMode::Fill => {
             push_out_tail(&mut params, func);
-            format!("{base}_OpenAndFillImpl")
+            format!("{base}OpenAndFillImpl")
         }
         OutMode::FillInternal => {
             params.insert(
@@ -1765,7 +1768,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 "int startIdx".to_string(),
             );
             push_out_tail(&mut params, func);
-            format!("{base}_OpenAndFillInternalImpl")
+            format!("{base}OpenAndFillInternalImpl")
         }
     };
     let _ = writeln!(o, "\n   private RetCode {name}( {} )", params.join(", "));
@@ -2058,7 +2061,7 @@ fn emit_identity_fast_path(
     let lb_call = format!("{base}_Lookback({})", lb_args.join(", "));
     let _ = writeln!(o, "      if( {cond} ) {{");
     // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
-    // `_Open*Internal` variants are the batch call over that same range. The
+    // `OpenInternal`/`OpenAndFillInternal` variants are the batch call over that same range. The
     // public entry points pass 0, so the clamp is a no-op for them — it is the
     // composition seams that were reporting (and filling) from the raw lookback.
     let _ = writeln!(o, "         int fillLb = {lb_call};");
@@ -2390,7 +2393,7 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
     let _ = writeln!(o, "      throw StreamFailure(\"{n}\", \"{what}\", retCode);");
 }
 
-/// `<base>_OpenAndFillInternal`: `OpenAndFill` anchored at the caller's
+/// `<base>OpenAndFillInternal`: `OpenAndFill` anchored at the caller's
 /// `startIdx` — the composed-open fusion seam (issue #192), so one pass both
 /// warms the sub-handle and fills that sub-call's destination.
 ///
@@ -2403,10 +2406,10 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
 /// and the public frame above answers for the caller-supplied case.
 ///
 /// `merged` false is the Dispatch tier, which renders its own
-/// `_OpenAndFillInternalImpl` because its anchored arm calls different callee
+/// `OpenAndFillInternalImpl` because its anchored arm calls different callee
 /// tiers than its public one and adds an anchor clamp.
 fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: bool) {
-    let base = base_name(func);
+    let base = pascal_words(&base_name(func));
     let class = stream_class_name(func);
     let in_fwd: Vec<String> = streaming::input_array_names(func);
     let outs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
@@ -2425,11 +2428,11 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     }
     let _ = writeln!(
         o,
-        "\n   /* {base}_OpenAndFill anchored at startIdx — the composed-open fusion seam. */"
+        "\n   /* {base}OpenAndFill anchored at startIdx — the composed-open fusion seam. */"
     );
     let _ = writeln!(
         o,
-        "   internal {class} {base}_OpenAndFillInternal( {} )",
+        "   internal {class} {base}OpenAndFillInternal( {} )",
         fi_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
@@ -2445,11 +2448,11 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     fi_args.extend(outs.iter().cloned());
     if merged {
         fi_args.push("1".to_string());
-        let _ = writeln!(o, "      RetCode retCode = {base}_OpenImpl({});", fi_args.join(", "));
+        let _ = writeln!(o, "      RetCode retCode = {base}OpenImpl({});", fi_args.join(", "));
     } else {
         let _ = writeln!(
             o,
-            "      RetCode retCode = {base}_OpenAndFillInternalImpl({});",
+            "      RetCode retCode = {base}OpenAndFillInternalImpl({});",
             fi_args.join(", ")
         );
     }
@@ -2528,7 +2531,7 @@ fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
 /// `<N>_Lookback` does its own default substitution, so the raw parameters the
 /// frame was handed are the right ones to pass.
 ///
-/// **The PUBLIC frame, never `<N>_OpenAndFillInternal`.** That seam takes an
+/// **The PUBLIC frame, never `<Name>OpenAndFillInternal`.** That seam takes an
 /// anchor and writes `historyLen - max(lookback, startIdx)` — fewer — so the
 /// same bound there would reject the composed sub-calls that pass a non-zero
 /// anchor, and would be redundant: those destinations are proved disjoint and
@@ -2568,20 +2571,25 @@ fn public_open_fill_capacity(func: &FuncDef, n: &str, history: &str) -> String {
     s
 }
 
-/// `OpenInternal` (the anchored plain open), the public `<base>_Open`, and the
-/// public `<base>_OpenAndFill`.
+/// `OpenInternal` (the anchored plain open), the public `<base>Open`, and the
+/// public `<base>OpenAndFill`.
 ///
 /// `merged` says whether this function owns a `Core` — one stride-parameterized
-/// `<base>_OpenImpl` every entry point reaches. When it does, the two internal
-/// seams ARE the implementation: `_OpenInternal` synthesizes a one-element sink
-/// per output and calls the numerics at stride 0, and the public `_OpenAndFill`
-/// hoists the aliasing guard and delegates to `_OpenAndFillInternal`, exactly as
-/// `_Open` delegates to `_OpenInternal`. That symmetry is what makes the
+/// `<base>OpenImpl` every entry point reaches. When it does, the two internal
+/// seams ARE the implementation: `OpenInternal` synthesizes a one-element sink
+/// per output and calls the numerics at stride 0, and the public `OpenAndFill`
+/// hoists the aliasing guard and delegates to `OpenAndFillInternal`, exactly as
+/// `Open` delegates to `OpenInternal`. That symmetry is what makes the
 /// anchored fill seam reachable for every function rather than only the sixteen
 /// something composes over. Mirrors `java_stream::emit_open_wrappers`.
 #[allow(clippy::too_many_lines)]
 fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
+    // `base` stays the raw verbatim name: it feeds `_Lookback` references and
+    // `opt_param_desc`, both pointing at the unchanged batch tier (issue #278
+    // is streaming-only). `cbase` is the PascalCase form for this file's own
+    // `_Open`/`_OpenAndFill`/`_OpenInternal`/`_Impl` family.
     let base = base_name(func);
+    let cbase = pascal_words(&base);
     let class = stream_class_name(func);
     let n = func.name.to_uppercase();
     let empty = DocDef::default();
@@ -2613,11 +2621,11 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     // --- OpenInternal: startIdx-anchored composition seam --------------------
     let _ = writeln!(
         o,
-        "\n   /* Internal startIdx-anchored open behind {base}_Open (composition seam). */"
+        "\n   /* Internal startIdx-anchored open behind {cbase}Open (composition seam). */"
     );
     let _ = writeln!(
         o,
-        "   internal {class} {base}_OpenInternal( {}, int startIdx{opt_sig_str} )",
+        "   internal {class} {cbase}OpenInternal( {}, int startIdx{opt_sig_str} )",
         in_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
@@ -2637,7 +2645,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         // Stride 0 lands every per-bar write on slot 0, so after the replay it
         // holds the last history value — what `sp.cur_*` is seeded from.
         args.push("0".to_string());
-        let _ = writeln!(o, "      RetCode retCode = {base}_OpenImpl({});", args.join(", "));
+        let _ = writeln!(o, "      RetCode retCode = {cbase}OpenImpl({});", args.join(", "));
         // The numerics report their range through the pair whatever the stride,
         // so the plain open gets the same numbers a fill would — read back
         // rather than re-derived from the lookback (issue #241).
@@ -2646,7 +2654,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     } else {
         let _ = writeln!(
             o,
-            "      RetCode retCode = {base}_OpenImpl(sp, {}, startIdx{opt_fwd_str});",
+            "      RetCode retCode = {cbase}OpenImpl(sp, {}, startIdx{opt_fwd_str});",
             in_fwd.join(", ")
         );
     }
@@ -2666,7 +2674,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     d.para(&format!(
         "The history must hold at least <c>{base}_Lookback(...) + 1</c> bars \
          (unstable-period aware). Nothing is written to any caller array; use \
-         <c>{base}_OpenAndFill</c> to get the warm-up values as well."
+         <c>{cbase}OpenAndFill</c> to get the warm-up values as well."
     ));
     d.close("remarks");
     for input in &in_fwd {
@@ -2698,7 +2706,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     o.push_str(&d.render(3));
     let _ = writeln!(
         o,
-        "   public {class} {base}_Open( {}{opt_sig_str} )",
+        "   public {class} {cbase}Open( {}{opt_sig_str} )",
         in_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
@@ -2706,7 +2714,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     o.push_str(&history_length_guards(func, &n, "open"));
     let _ = writeln!(
         o,
-        "      return {base}_OpenInternal({}, 0{opt_fwd_str});",
+        "      return {cbase}OpenInternal({}, 0{opt_fwd_str});",
         in_fwd.join(", ")
     );
     let _ = writeln!(o, "   }}");
@@ -2731,7 +2739,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
 
     let mut d = XmlDoc::new();
     d.summary(&format!(
-        "<c>{base}_Open</c> that also fills the output array(s) over the whole history in \
+        "<c>{cbase}Open</c> that also fills the output array(s) over the whole history in \
          the same single pass."
     ));
     d.open("remarks");
@@ -2797,7 +2805,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     o.push_str(&d.render(3));
     let _ = writeln!(
         o,
-        "   public {class} {base}_OpenAndFill( {} )",
+        "   public {class} {cbase}OpenAndFill( {} )",
         fill_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
@@ -2826,12 +2834,12 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         for out in &func.outputs {
             args.push(out.name.clone());
         }
-        let _ = writeln!(o, "      return {base}_OpenAndFillInternal({});", args.join(", "));
+        let _ = writeln!(o, "      return {cbase}OpenAndFillInternal({});", args.join(", "));
     } else {
         let _ = writeln!(o, "      {class} sp = new {class}(this);");
         let _ = writeln!(
             o,
-            "      RetCode retCode = {base}_OpenAndFillImpl(sp, {});",
+            "      RetCode retCode = {cbase}OpenAndFillImpl(sp, {});",
             fill_fwd.join(", ")
         );
         let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
@@ -3035,15 +3043,15 @@ fn emit_dual_mode(
 // nobody re-optimizes on the "virtual calls are slow" intuition.
 // ---------------------------------------------------------------------------
 
-/// `SMA_Stream` for callee `sma` — from the callee's own base name, the same
+/// `SmaStream` for callee `sma` — from the callee's own base name, the same
 /// authority as the callee's generated handle.
 fn callee_stream_class(registry: &Registry, callee: &str) -> String {
-    format!("{}_Stream", registry.name_of(callee))
+    format!("{}Stream", pascal_words(&registry.name_of(callee)))
 }
 
-/// `MAMA_Value` for callee `mama` — the callee's multi-output record struct.
+/// `MamaValue` for callee `mama` — the callee's multi-output record struct.
 fn callee_value_type(registry: &Registry, callee: &str) -> String {
-    format!("{}_Value", registry.name_of(callee))
+    format!("{}Value", pascal_words(&registry.name_of(callee)))
 }
 
 /// `sp.cur_<out>` / `Value` member routing for one forwarded callee slot.
@@ -3310,7 +3318,7 @@ fn emit_dispatch(
             let label = render_csharp_switch_label(&arm.label, enums);
             if arm.supported {
                 let cls = callee_stream_class(registry, &arm.callee);
-                let callee_base = registry.name_of(&arm.callee);
+                let callee_base = pascal_words(&registry.name_of(&arm.callee));
                 let opts: Vec<String> = arm
                     .opt_args
                     .iter()
@@ -3327,7 +3335,7 @@ fn emit_dispatch(
                         };
                         let _ = writeln!(
                             o,
-                            "         {cls} sub = {callee_base}_OpenInternal({bar_args}, startIdx{opts});"
+                            "         {cls} sub = {callee_base}OpenInternal({bar_args}, startIdx{opts});"
                         );
                         // The arm's handle already resolved the range; this mode has
                         // no out-meta pair to read it from instead.
@@ -3359,7 +3367,7 @@ fn emit_dispatch(
                             // so there is no range to copy back.
                             let _ = writeln!(
                                 o,
-                                "         {cls} sub = {callee_base}_OpenAndFillInternal({bar_args}, startIdx, {opts}out outBegIdx, out outNBElement, {fill_outs});"
+                                "         {cls} sub = {callee_base}OpenAndFillInternal({bar_args}, startIdx, {opts}out outBegIdx, out outNBElement, {fill_outs});"
                             );
                             dispatch_store_sub(o, registry, arm, &outputs, "         ");
                             let _ = writeln!(o, "         break;");
@@ -3371,7 +3379,7 @@ fn emit_dispatch(
                         // the out-meta pair, so copy it back out.
                         let _ = writeln!(
                             o,
-                            "         {cls} sub = {callee_base}_OpenAndFill({bar_args}, {opts}{fill_outs});"
+                            "         {cls} sub = {callee_base}OpenAndFill({bar_args}, {opts}{fill_outs});"
                         );
                         let _ = writeln!(o, "         outBegIdx = sub.outRangeBegIdx;");
                         let _ = writeln!(o, "         outNBElement = sub.outRangeCount;");
@@ -3416,7 +3424,10 @@ fn emit_period_bank(
 ) {
     let _ = helpers;
     let callee = plan.callee.as_str();
+    // `callee_base` stays raw for the callee's (unchanged, batch-tier) `_Lookback`;
+    // `callee_cbase` is the PascalCase form for the callee's own stream `_Open*` family.
     let callee_base = registry.name_of(callee);
+    let callee_cbase = pascal_words(&callee_base);
     let subty = callee_stream_class(registry, callee);
     let callee_out0 = registry.callee_outputs(callee)[0].clone();
     let min = plan.min_param.as_str();
@@ -3530,7 +3541,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      {subty}[] bank = new {subty}[nBank];");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "         bank[bankIdx] = {callee_base}_OpenInternal({price}, subStart, {open_opts});");
+    let _ = writeln!(o, "         bank[bankIdx] = {callee_cbase}OpenInternal({price}, subStart, {open_opts});");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int cp = (int){period}[historyLen - 1];");
     let _ = writeln!(o, "      if( cp < {min} ) {{");
@@ -3573,7 +3584,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      double[] seedPrefix = new double[lookbackTotal + 1];");
     let _ = writeln!(o, "      {price}.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "         {subty} sub = {callee_base}_OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
+    let _ = writeln!(o, "         {subty} sub = {callee_cbase}OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
     let _ = writeln!(o, "         bank[bankIdx] = sub;");
     let _ = writeln!(o, "         scratch[bankIdx] = sub.cur_{callee_out0};");
     let _ = writeln!(o, "      }}");
@@ -3977,7 +3988,7 @@ fn build_composed_open_bodies(
     )
 }
 
-/// Composed open body: the merged `<N>_OpenImpl` — scratch `sc_` output arrays plus
+/// Composed open body: the merged `<Name>OpenImpl` — scratch `sc_` output arrays plus
 /// a verbatim transcription of the batch body with sub-streams opened at the
 /// exact consumption points, then capture.
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
@@ -4083,7 +4094,7 @@ fn emit_composed_open(
         let mut t = String::new();
         let callee_key = sub.callee.to_lowercase();
         let cls = callee_stream_class(registry, &callee_key);
-        let callee_base = registry.name_of(&callee_key);
+        let callee_base = pascal_words(&registry.name_of(&callee_key));
         let sc_rewrite = |e: &Expr| -> Expr {
             streaming::rewrite_expr(e, &|x| match x {
                 Expr::Var(v) if outputs.contains(&v) => Expr::Var(format!("sc_{v}")),
@@ -4116,14 +4127,14 @@ fn emit_composed_open(
         // `SubCallStep::is_fusable()`, and that predicate compares DESTINATIONS
         // against sources and against each other — never sources against each
         // other. So sharing one buffer across a callee's inputs is sound only
-        // while no `_OpenImpl` ever writes through an input array. That holds
+        // while no `OpenImpl` ever writes through an input array. That holds
         // for all 172 today. A future body that wrote into an input would break
         // this silently, and no value gate would see it: both arms of the
         // stream-vs-batch compare would read the same corrupted buffer.
         //
         // Sizing note for the same reason: `Array.Copy` throws where Java's
         // `copyOfRange` would zero-pad a short source, and that throw is inside
-        // `_OpenImpl`, so it would escape the RetCode -> `Core.StreamFailure`
+        // `OpenImpl`, so it would escape the RetCode -> `Core.StreamFailure`
         // mapping and reach the caller without the stable "<NAME> open: "
         // prefix. Unreachable as long as every `subLen` is bounded by the
         // buffer it copies from, which is true at all five sites (STOCH x2,
@@ -4196,7 +4207,7 @@ fn emit_composed_open(
             let dst_args: Vec<String> = dsts.iter().map(|e| rend(e)).collect();
             let _ = writeln!(
                 t,
-                "      {cls} sub{si} = {callee_base}_OpenAndFillInternal({}, {anchor}{opt_tail}, {}, {});",
+                "      {cls} sub{si} = {callee_base}OpenAndFillInternal({}, {anchor}{opt_tail}, {}, {});",
                 src_names.join(", "),
                 metas.join(", "),
                 dst_args.join(", ")
@@ -4213,7 +4224,7 @@ fn emit_composed_open(
         } else {
             let _ = writeln!(
                 t,
-                "      {cls} sub{si} = {callee_base}_OpenInternal({}, {anchor}{opt_tail});",
+                "      {cls} sub{si} = {callee_base}OpenInternal({}, {anchor}{opt_tail});",
                 src_names.join(", ")
             );
         }
@@ -4326,7 +4337,7 @@ fn emit_composed(
         let callee_key = sub.callee.to_lowercase();
         let cls = callee_stream_class(registry, &callee_key);
         // `= null!`: the field is a non-nullable reference the constructors do
-        // not set, which is CS8618 (an error here); `<N>_OpenImpl` overwrites it
+        // not set, which is CS8618 (an error here); `<Name>OpenImpl` overwrites it
         // before the handle escapes and every constructor is internal.
         let _ = writeln!(extra_members, "      internal {cls} sub{si} = null!;");
         let _ = writeln!(copy_extra, "         this.sub{si} = new {cls}(other.sub{si});");

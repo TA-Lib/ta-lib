@@ -284,7 +284,7 @@ public partial class Core
    /// <summary>A live <c>OBV</c> stream: one value per closed bar, bit-identical to
    /// <c>OBV</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.OBV_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.ObvOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -297,7 +297,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class OBV_Stream
+   public sealed class ObvStream
    {
       internal Core core;
       internal double prevReal;
@@ -306,12 +306,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal OBV_Stream( Core core ) { this.core = core; }
+      internal ObvStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.OBV</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Obv</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -319,7 +319,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal OBV_Stream( OBV_Stream other )
+      internal ObvStream( ObvStream other )
       {
          this.core = other.core;
          this.prevReal = other.prevReal;
@@ -329,7 +329,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( OBV_Stream other )
+      internal void CopyFrom( ObvStream other )
       {
          this.core = other.core;
          this.prevReal = other.prevReal;
@@ -356,7 +356,7 @@ public partial class Core
       public double Update( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("OBV", "update", RetCode.BadParam);
-         core.OBV_StepImpl(this, inReal, inVolume);
+         core.ObvStepImpl(this, inReal, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -376,8 +376,8 @@ public partial class Core
       public double Peek( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("OBV", "peek", RetCode.BadParam);
-         OBV_Stream scratch = new OBV_Stream(this);
-         core.OBV_StepImpl(scratch, inReal, inVolume);
+         ObvStream scratch = new ObvStream(this);
+         core.ObvStepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -402,7 +402,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("OBV", "updateAndFill", RetCode.BadParam);
-            core.OBV_StepImpl(this, inReal[i], inVolume[i]);
+            core.ObvStepImpl(this, inReal[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -418,13 +418,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public OBV_Stream Clone()
+      public ObvStream Clone()
       {
-         return new OBV_Stream(this);
+         return new ObvStream(this);
       }
    }
 
-   internal void OBV_StepImpl( OBV_Stream sp, double inReal, double inVolume )
+   internal void ObvStepImpl( ObvStream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;
@@ -437,7 +437,7 @@ public partial class Core
       sp.prevReal = tempReal;
    }
 
-   private RetCode OBV_OpenImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ObvOpenImpl( ObvStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -484,11 +484,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal OBV_Stream OBV_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* ObvOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal ObvStream ObvOpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      ObvStream sp = new ObvStream(this);
+      RetCode retCode = ObvOpenImpl(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -497,12 +497,12 @@ public partial class Core
       throw StreamFailure("OBV", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
-   internal OBV_Stream OBV_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
+   /* Internal startIdx-anchored open behind ObvOpen (composition seam). */
+   internal ObvStream ObvOpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
    {
-      OBV_Stream sp = new OBV_Stream(this);
+      ObvStream sp = new ObvStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = ObvOpenImpl(sp, inReal, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -513,11 +513,11 @@ public partial class Core
 
    /// <summary>Open a live <c>OBV</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="OBV_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="ObvStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>OBV</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>OBV_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>OBV_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>ObvOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Price series, typically close. The warm-up history, oldest bar first.</param>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
@@ -528,16 +528,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public OBV_Stream OBV_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume )
+   public ObvStream ObvOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("OBV open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("OBV", "open", "inVolume", inVolume.Length, inReal.Length);
-      return OBV_OpenInternal(inReal, inVolume, 0);
+      return ObvOpenInternal(inReal, inVolume, 0);
    }
 
-   /// <summary><c>OBV_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>ObvOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>OBV</c> produces over the
@@ -549,7 +549,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="OBV_Stream.OutRange"/>.</para>
+   /// <see cref="ObvStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Price series, typically close. The warm-up history, oldest bar first.</param>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
@@ -563,7 +563,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public OBV_Stream OBV_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, Span<double> outReal )
+   public ObvStream ObvOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "OBV openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -574,6 +574,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("OBV", "openAndFill", RetCode.BadParam);
       }
-      return OBV_OpenAndFillInternal(inReal, inVolume, 0, out _, out _, outReal);
+      return ObvOpenAndFillInternal(inReal, inVolume, 0, out _, out _, outReal);
    }
 }

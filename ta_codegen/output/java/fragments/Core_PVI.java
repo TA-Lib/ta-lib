@@ -276,7 +276,7 @@
    /**
     * A live PVI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#PVI} over the same series.
-    * Open with {@link Core#PVI_Open}; there is no close — the handle is
+    * Open with {@link Core#pviOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -287,7 +287,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class PVI_Stream {
+   public static final class PviStream {
       Core core;
       double prevPVI;
       double prevClose;
@@ -296,7 +296,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      PVI_Stream( Core core ) { this.core = core; }
+      PviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -310,7 +310,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      PVI_Stream( PVI_Stream other ) {
+      PviStream( PviStream other ) {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
@@ -320,7 +320,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PVI_Stream other ) {
+      void copyFrom( PviStream other ) {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
@@ -345,7 +345,7 @@
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
-         core.PVI_StepImpl(this, inClose, inVolume);
+         core.pviStepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -372,7 +372,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("PVI updateAndFill: BadParam", RetCode.BadParam);
-            core.PVI_StepImpl(this, inClose[i], inVolume[i]);
+            core.pviStepImpl(this, inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -388,8 +388,8 @@
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
-         PVI_Stream scratch = new PVI_Stream(this);
-         core.PVI_StepImpl(scratch, inClose, inVolume);
+         PviStream scratch = new PviStream(this);
+         core.pviStepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -406,11 +406,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public PVI_Stream copy() {
-         return new PVI_Stream(this);
+      public PviStream copy() {
+         return new PviStream(this);
       }
    }
-   void PVI_StepImpl( PVI_Stream sp, double inClose, double inVolume )
+   void pviStepImpl( PviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -443,7 +443,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode PVI_OpenImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode pviOpenImpl( PviStream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -514,11 +514,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   PVI_Stream PVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* pviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PviStream pviOpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      PviStream sp = new PviStream(this);
+      RetCode retCode = pviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -532,14 +532,14 @@
       }
       throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
-   PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind pviOpen (composition seam). */
+   PviStream pviOpenInternal( double inClose[], double inVolume[], int startIdx )
    {
-      PVI_Stream sp = new PVI_Stream(this);
+      PviStream sp = new PviStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = pviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -566,16 +566,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public PVI_Stream PVI_Open( double inClose[], double inVolume[] )
+   public PviStream pviOpen( double inClose[], double inVolume[] )
    {
       requireArgument("PVI open", "inClose", inClose);
       requireHistory("PVI open", inClose.length);
       requireArgument("PVI open", "inVolume", inVolume);
       requireHistoryLength("PVI open", "inVolume", inVolume.length, inClose.length);
-      return PVI_OpenInternal(inClose, inVolume, 0);
+      return pviOpenInternal(inClose, inVolume, 0);
    }
    /**
-    * {@link Core#PVI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#pviOpen} that also fills the output array(s) bit-identically
     * to {@link Core#PVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -583,9 +583,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link PVI_Stream#outRange()}.
+    * {@link PviStream#outRange()}.
     */
-   public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
+   public PviStream pviOpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
       requireArgument("PVI openAndFill", "inClose", inClose);
       requireHistory("PVI openAndFill", inClose.length);
@@ -598,5 +598,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return PVI_OpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
+      return pviOpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

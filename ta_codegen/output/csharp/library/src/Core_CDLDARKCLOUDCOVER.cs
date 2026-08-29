@@ -390,7 +390,7 @@ public partial class Core
    /// <summary>A live <c>CDLDARKCLOUDCOVER</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLDARKCLOUDCOVER</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLDARKCLOUDCOVER_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdldarkcloudcoverOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -403,7 +403,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLDARKCLOUDCOVER_Stream
+   public sealed class CdldarkcloudcoverStream
    {
       internal Core core;
       internal double optInPenetration;
@@ -423,12 +423,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLDARKCLOUDCOVER_Stream( Core core ) { this.core = core; }
+      internal CdldarkcloudcoverStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLDARKCLOUDCOVER</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdldarkcloudcover</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -437,7 +437,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLDARKCLOUDCOVER_Stream( CDLDARKCLOUDCOVER_Stream other )
+      internal CdldarkcloudcoverStream( CdldarkcloudcoverStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -459,7 +459,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLDARKCLOUDCOVER_Stream other )
+      internal void CopyFrom( CdldarkcloudcoverStream other )
       {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
@@ -502,7 +502,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLDARKCLOUDCOVER", "update", RetCode.BadParam);
-         core.CDLDARKCLOUDCOVER_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdldarkcloudcoverStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -524,8 +524,8 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLDARKCLOUDCOVER", "peek", RetCode.BadParam);
-         CDLDARKCLOUDCOVER_Stream scratch = new CDLDARKCLOUDCOVER_Stream(this);
-         core.CDLDARKCLOUDCOVER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdldarkcloudcoverStream scratch = new CdldarkcloudcoverStream(this);
+         core.CdldarkcloudcoverStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -552,7 +552,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLDARKCLOUDCOVER", "updateAndFill", RetCode.BadParam);
-            core.CDLDARKCLOUDCOVER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdldarkcloudcoverStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -568,13 +568,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLDARKCLOUDCOVER_Stream Clone()
+      public CdldarkcloudcoverStream Clone()
       {
-         return new CDLDARKCLOUDCOVER_Stream(this);
+         return new CdldarkcloudcoverStream(this);
       }
    }
 
-   internal void CDLDARKCLOUDCOVER_StepImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdldarkcloudcoverStepImpl( CdldarkcloudcoverStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -605,7 +605,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLDARKCLOUDCOVER_OpenImpl( CDLDARKCLOUDCOVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdldarkcloudcoverOpenImpl( CdldarkcloudcoverStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -726,11 +726,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLDARKCLOUDCOVER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdldarkcloudcoverOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdldarkcloudcoverStream CdldarkcloudcoverOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
-      RetCode retCode = CDLDARKCLOUDCOVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
+      CdldarkcloudcoverStream sp = new CdldarkcloudcoverStream(this);
+      RetCode retCode = CdldarkcloudcoverOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -739,12 +739,12 @@ public partial class Core
       throw StreamFailure("CDLDARKCLOUDCOVER", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLDARKCLOUDCOVER_Open (composition seam). */
-   internal CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind CdldarkcloudcoverOpen (composition seam). */
+   internal CdldarkcloudcoverStream CdldarkcloudcoverOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
-      CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
+      CdldarkcloudcoverStream sp = new CdldarkcloudcoverStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLDARKCLOUDCOVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdldarkcloudcoverOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -755,12 +755,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLDARKCLOUDCOVER</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLDARKCLOUDCOVER_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="CdldarkcloudcoverStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what <c>CDLDARKCLOUDCOVER</c>
    /// reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLDARKCLOUDCOVER_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLDARKCLOUDCOVER_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdldarkcloudcoverOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -776,7 +776,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
+   public CdldarkcloudcoverStream CdldarkcloudcoverOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLDARKCLOUDCOVER open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLDARKCLOUDCOVER open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -786,10 +786,10 @@ public partial class Core
       RequireHistoryLength("CDLDARKCLOUDCOVER", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLDARKCLOUDCOVER", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLDARKCLOUDCOVER", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return CdldarkcloudcoverOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
-   /// <summary><c>CDLDARKCLOUDCOVER_Open</c> that also fills the output array(s) over the
+   /// <summary><c>CdldarkcloudcoverOpen</c> that also fills the output array(s) over the
    /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLDARKCLOUDCOVER</c>
@@ -803,7 +803,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLDARKCLOUDCOVER_Stream.OutRange"/>.</para>
+   /// <see cref="CdldarkcloudcoverStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -823,7 +823,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
+   public CdldarkcloudcoverStream CdldarkcloudcoverOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLDARKCLOUDCOVER openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLDARKCLOUDCOVER openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -835,6 +835,6 @@ public partial class Core
       RequireHistoryLength("CDLDARKCLOUDCOVER", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLDARKCLOUDCOVER", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLDARKCLOUDCOVER", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLDARKCLOUDCOVER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
+      return CdldarkcloudcoverOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }

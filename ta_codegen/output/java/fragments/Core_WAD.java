@@ -337,7 +337,7 @@
    /**
     * A live WAD stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#WAD} over the same series.
-    * Open with {@link Core#WAD_Open}; there is no close — the handle is
+    * Open with {@link Core#wadOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -348,7 +348,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class WAD_Stream {
+   public static final class WadStream {
       Core core;
       double sum;
       double prevClose;
@@ -356,7 +356,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      WAD_Stream( Core core ) { this.core = core; }
+      WadStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -370,7 +370,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      WAD_Stream( WAD_Stream other ) {
+      WadStream( WadStream other ) {
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
@@ -379,7 +379,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WAD_Stream other ) {
+      void copyFrom( WadStream other ) {
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
@@ -403,7 +403,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
-         core.WAD_StepImpl(this, inHigh, inLow, inClose);
+         core.wadStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -431,7 +431,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("WAD updateAndFill: BadParam", RetCode.BadParam);
-            core.WAD_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.wadStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -447,8 +447,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
-         WAD_Stream scratch = new WAD_Stream(this);
-         core.WAD_StepImpl(scratch, inHigh, inLow, inClose);
+         WadStream scratch = new WadStream(this);
+         core.wadStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -465,11 +465,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public WAD_Stream copy() {
-         return new WAD_Stream(this);
+      public WadStream copy() {
+         return new WadStream(this);
       }
    }
-   void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
+   void wadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
       double trueExtreme = 0.0;
@@ -490,7 +490,7 @@
       sp.cur_outReal = sp.sum;
       sp.prevClose = close;
    }
-   private RetCode WAD_OpenImpl( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode wadOpenImpl( WadStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sum = 0;
       double prevClose = 0;
@@ -582,11 +582,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* WAD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   WAD_Stream WAD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* wadOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WadStream wadOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      WadStream sp = new WadStream(this);
+      RetCode retCode = wadOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -600,14 +600,14 @@
       }
       throw new TaLibArgumentException("WAD openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind WAD_Open (composition seam). */
-   WAD_Stream WAD_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind wadOpen (composition seam). */
+   WadStream wadOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      WAD_Stream sp = new WAD_Stream(this);
+      WadStream sp = new WadStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = wadOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -634,7 +634,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public WAD_Stream WAD_Open( double inHigh[], double inLow[], double inClose[] )
+   public WadStream wadOpen( double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("WAD open", "inHigh", inHigh);
       requireHistory("WAD open", inHigh.length);
@@ -642,10 +642,10 @@
       requireArgument("WAD open", "inClose", inClose);
       requireHistoryLength("WAD open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("WAD open", "inClose", inClose.length, inHigh.length);
-      return WAD_OpenInternal(inHigh, inLow, inClose, 0);
+      return wadOpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#WAD_Open} that also fills the output array(s) bit-identically
+    * {@link Core#wadOpen} that also fills the output array(s) bit-identically
     * to {@link Core#WAD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -653,9 +653,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link WAD_Stream#outRange()}.
+    * {@link WadStream#outRange()}.
     */
-   public WAD_Stream WAD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public WadStream wadOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       requireArgument("WAD openAndFill", "inHigh", inHigh);
       requireHistory("WAD openAndFill", inHigh.length);
@@ -670,5 +670,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return WAD_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+      return wadOpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }

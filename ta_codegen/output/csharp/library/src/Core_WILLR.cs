@@ -592,7 +592,7 @@ public partial class Core
    /// <summary>A live <c>WILLR</c> stream: one value per closed bar, bit-identical to
    /// <c>WILLR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.WILLR_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.WillrOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -605,7 +605,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class WILLR_Stream
+   public sealed class WillrStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -625,12 +625,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal WILLR_Stream( Core core ) { this.core = core; }
+      internal WillrStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.WILLR</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Willr</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -639,7 +639,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal WILLR_Stream( WILLR_Stream other )
+      internal WillrStream( WillrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -663,7 +663,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( WILLR_Stream other )
+      internal void CopyFrom( WillrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -694,7 +694,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static WILLR_Stream? peekScratch;
+      [ThreadStatic] private static WillrStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -714,7 +714,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WILLR", "update", RetCode.BadParam);
-         core.WILLR_StepImpl(this, inHigh, inLow, inClose);
+         core.WillrStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -735,14 +735,14 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WILLR", "peek", RetCode.BadParam);
-         WILLR_Stream? scratch = peekScratch;
+         WillrStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new WILLR_Stream(this);
+            scratch = new WillrStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.WILLR_StepImpl(scratch, inHigh, inLow, inClose);
+         core.WillrStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -768,7 +768,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("WILLR", "updateAndFill", RetCode.BadParam);
-            core.WILLR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.WillrStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -784,13 +784,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public WILLR_Stream Clone()
+      public WillrStream Clone()
       {
-         return new WILLR_Stream(this);
+         return new WillrStream(this);
       }
    }
 
-   internal void WILLR_StepImpl( WILLR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void WillrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -851,7 +851,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode WILLR_OpenImpl( WILLR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode WillrOpenImpl( WillrStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1021,11 +1021,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* WILLR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal WILLR_Stream WILLR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* WillrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal WillrStream WillrOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      WILLR_Stream sp = new WILLR_Stream(this);
-      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      WillrStream sp = new WillrStream(this);
+      RetCode retCode = WillrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1034,12 +1034,12 @@ public partial class Core
       throw StreamFailure("WILLR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind WILLR_Open (composition seam). */
-   internal WILLR_Stream WILLR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind WillrOpen (composition seam). */
+   internal WillrStream WillrOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      WILLR_Stream sp = new WILLR_Stream(this);
+      WillrStream sp = new WillrStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = WillrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1050,11 +1050,11 @@ public partial class Core
 
    /// <summary>Open a live <c>WILLR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="WILLR_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="WillrStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>WILLR</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>WILLR_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>WILLR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>WillrOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1068,7 +1068,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public WILLR_Stream WILLR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public WillrStream WillrOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WILLR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WILLR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1076,10 +1076,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("WILLR open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("WILLR", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("WILLR", "open", "inClose", inClose.Length, inHigh.Length);
-      return WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return WillrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>WILLR_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>WillrOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>WILLR</c> produces over
@@ -1091,7 +1091,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="WILLR_Stream.OutRange"/>.</para>
+   /// <see cref="WillrStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1108,7 +1108,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public WILLR_Stream WILLR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public WillrStream WillrOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WILLR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WILLR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1121,6 +1121,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("WILLR", "openAndFill", RetCode.BadParam);
       }
-      return WILLR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return WillrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -506,7 +506,7 @@ public partial class Core
    /// <summary>A live <c>CMOU</c> stream: one value per closed bar, bit-identical to
    /// <c>CMOU</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CMOU_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.CmouOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -519,7 +519,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CMOU_Stream
+   public sealed class CmouStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -535,12 +535,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CMOU_Stream( Core core ) { this.core = core; }
+      internal CmouStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CMOU</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Cmou</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -548,7 +548,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CMOU_Stream( CMOU_Stream other )
+      internal CmouStream( CmouStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -566,7 +566,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CMOU_Stream other )
+      internal void CopyFrom( CmouStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -602,7 +602,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMOU", "update", RetCode.BadParam);
-         core.CMOU_StepImpl(this, inReal);
+         core.CmouStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -621,8 +621,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMOU", "peek", RetCode.BadParam);
-         CMOU_Stream scratch = new CMOU_Stream(this);
-         core.CMOU_StepImpl(scratch, inReal);
+         CmouStream scratch = new CmouStream(this);
+         core.CmouStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -646,7 +646,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("CMOU", "updateAndFill", RetCode.BadParam);
-            core.CMOU_StepImpl(this, inReal[i]);
+            core.CmouStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -662,13 +662,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CMOU_Stream Clone()
+      public CmouStream Clone()
       {
-         return new CMOU_Stream(this);
+         return new CmouStream(this);
       }
    }
 
-   internal void CMOU_StepImpl( CMOU_Stream sp, double inReal )
+   internal void CmouStepImpl( CmouStream sp, double inReal )
    {
       double sum = 0.0;
       double diff = 0.0;
@@ -725,7 +725,7 @@ public partial class Core
       }
    }
 
-   private RetCode CMOU_OpenImpl( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CmouOpenImpl( CmouStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -905,11 +905,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CMOU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CMOU_Stream CMOU_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* CmouOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CmouStream CmouOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      CMOU_Stream sp = new CMOU_Stream(this);
-      RetCode retCode = CMOU_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      CmouStream sp = new CmouStream(this);
+      RetCode retCode = CmouOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -918,12 +918,12 @@ public partial class Core
       throw StreamFailure("CMOU", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CMOU_Open (composition seam). */
-   internal CMOU_Stream CMOU_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind CmouOpen (composition seam). */
+   internal CmouStream CmouOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      CMOU_Stream sp = new CMOU_Stream(this);
+      CmouStream sp = new CmouStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = CMOU_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = CmouOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -934,11 +934,11 @@ public partial class Core
 
    /// <summary>Open a live <c>CMOU</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CMOU_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="CmouStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>CMOU</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>CMOU_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CMOU_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CmouOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMOU_Lookback"/> for its default and
@@ -950,15 +950,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CMOU_Stream CMOU_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public CmouStream CmouOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMOU open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMOU open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return CMOU_OpenInternal(inReal, 0, optInTimePeriod);
+      return CmouOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>CMOU_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>CmouOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CMOU</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -969,7 +969,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CMOU_Stream.OutRange"/>.</para>
+   /// <see cref="CmouStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMOU_Lookback"/> for its default and
@@ -984,7 +984,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CMOU_Stream CMOU_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public CmouStream CmouOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMOU openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMOU openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -993,6 +993,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("CMOU", "openAndFill", RetCode.BadParam);
       }
-      return CMOU_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return CmouOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -183,7 +183,7 @@
    /**
     * A live SINH stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SINH} over the same series.
-    * Open with {@link Core#SINH_Open}; there is no close — the handle is
+    * Open with {@link Core#sinhOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -194,13 +194,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SINH_Stream {
+   public static final class SinhStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      SINH_Stream( Core core ) { this.core = core; }
+      SinhStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -214,14 +214,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SINH_Stream( SINH_Stream other ) {
+      SinhStream( SinhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SINH_Stream other ) {
+      void copyFrom( SinhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -243,7 +243,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
-         core.SINH_StepImpl(this, inReal);
+         core.sinhStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -269,7 +269,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("SINH updateAndFill: BadParam", RetCode.BadParam);
-            core.SINH_StepImpl(this, inReal[i]);
+            core.sinhStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -285,8 +285,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
-         SINH_Stream scratch = new SINH_Stream(this);
-         core.SINH_StepImpl(scratch, inReal);
+         SinhStream scratch = new SinhStream(this);
+         core.sinhStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -303,15 +303,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SINH_Stream copy() {
-         return new SINH_Stream(this);
+      public SinhStream copy() {
+         return new SinhStream(this);
       }
    }
-   void SINH_StepImpl( SINH_Stream sp, double inReal )
+   void sinhStepImpl( SinhStream sp, double inReal )
    {
       sp.cur_outReal = Math.sinh(inReal);
    }
-   private RetCode SINH_OpenImpl( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode sinhOpenImpl( SinhStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -337,11 +337,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SINH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SINH_Stream SINH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* sinhOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SinhStream sinhOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SINH_Stream sp = new SINH_Stream(this);
-      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      SinhStream sp = new SinhStream(this);
+      RetCode retCode = sinhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -355,14 +355,14 @@
       }
       throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SINH_Open (composition seam). */
-   SINH_Stream SINH_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind sinhOpen (composition seam). */
+   SinhStream sinhOpenInternal( double inReal[], int startIdx )
    {
-      SINH_Stream sp = new SINH_Stream(this);
+      SinhStream sp = new SinhStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = sinhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -389,14 +389,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SINH_Stream SINH_Open( double inReal[] )
+   public SinhStream sinhOpen( double inReal[] )
    {
       requireArgument("SINH open", "inReal", inReal);
       requireHistory("SINH open", inReal.length);
-      return SINH_OpenInternal(inReal, 0);
+      return sinhOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#SINH_Open} that also fills the output array(s) bit-identically
+    * {@link Core#sinhOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SINH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -404,9 +404,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SINH_Stream#outRange()}.
+    * {@link SinhStream#outRange()}.
     */
-   public SINH_Stream SINH_OpenAndFill( double inReal[], double outReal[] )
+   public SinhStream sinhOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("SINH openAndFill", "inReal", inReal);
       requireHistory("SINH openAndFill", inReal.length);
@@ -417,5 +417,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SINH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return sinhOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

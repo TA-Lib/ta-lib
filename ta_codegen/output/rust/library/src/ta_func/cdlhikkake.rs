@@ -324,23 +324,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLHIKKAKE stream: one value per closed bar, bit-identical to [`Core::CDLHIKKAKE`]
-/// over the same series. Open with [`Core::CDLHIKKAKE_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlhikkake_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHIKKAKE_Stream")]
-pub struct CDLHIKKAKE_Stream {
-    state: CDLHIKKAKE_StreamState,
+pub struct CdlhikkakeStream {
+    state: CdlhikkakeStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLHIKKAKE_Stream {
+impl CdlhikkakeStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLHIKKAKE_StreamState::restore_from`.
+    /// allocating new ones. See `CdlhikkakeStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -349,7 +349,7 @@ impl CDLHIKKAKE_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLHIKKAKE_StreamState {
+struct CdlhikkakeStreamState {
     patternResult: i32,
     cd: usize,
     savedHigh: f64,
@@ -361,7 +361,7 @@ struct CDLHIKKAKE_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLHIKKAKE_StreamState {
+impl CdlhikkakeStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -376,14 +376,13 @@ impl CDLHIKKAKE_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLHIKKAKE_step_impl(sp: &mut CDLHIKKAKE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlhikkake_step_impl(sp: &mut CdlhikkakeStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if sp.lag1_inHigh < sp.lag2_inHigh &&
            sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
            (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
@@ -410,11 +409,11 @@ impl Core {
         sp.lag1_inLow = inLow;
     }
 
-    /// The single whole-history transcription behind [`Core::CDLHIKKAKE_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLHIKKAKE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLHIKKAKE_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlhikkake_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlhikkake_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlhikkake_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLHIKKAKE_Stream, RetCode> {
+    ) -> Result<CdlhikkakeStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -523,7 +522,7 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CDLHIKKAKE_StreamState {
+        let state = CdlhikkakeStreamState {
             patternResult,
             cd,
             savedHigh,
@@ -533,17 +532,17 @@ impl Core {
             lag1_inLow: inLow[historyLen - 1],
             lag2_inLow: inLow[historyLen - 2],
         };
-        Ok(CDLHIKKAKE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdlhikkakeStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLHIKKAKE_Open`] (composition seam).
-    pub(crate) fn CDLHIKKAKE_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlhikkake_open`] (composition seam).
+    pub(crate) fn cdlhikkake_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLHIKKAKE_Stream, i32), RetCode> {
+    ) -> Result<(CdlhikkakeStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLHIKKAKE_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlhikkake_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -570,7 +569,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLHIKKAKE_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlhikkake_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -580,11 +579,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLHIKKAKE_Open")]
-    pub fn CDLHIKKAKE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHIKKAKE_Stream, i32), RetCode> {
-        self.CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlhikkake_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlhikkakeStream, i32), RetCode> {
+        self.cdlhikkake_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLHIKKAKE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlhikkake_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLHIKKAKE`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -592,12 +591,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLHIKKAKE_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlhikkake_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLHIKKAKE_OpenAndFill")]
-    pub fn CDLHIKKAKE_OpenAndFill(
+    pub fn cdlhikkake_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLHIKKAKE_Stream, OutRange), RetCode> {
+    ) -> Result<(CdlhikkakeStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -614,23 +613,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLHIKKAKE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlhikkake_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLHIKKAKE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlhikkake_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLHIKKAKE_OpenAndFillInternal(
+    pub(crate) fn cdlhikkake_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLHIKKAKE_Stream, RetCode> {
-        self.CDLHIKKAKE_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdlhikkakeStream, RetCode> {
+        self.cdlhikkake_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLHIKKAKE_Stream {
+impl CdlhikkakeStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -648,7 +647,7 @@ impl CDLHIKKAKE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLHIKKAKE_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlhikkake_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -681,7 +680,7 @@ impl CDLHIKKAKE_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLHIKKAKE_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlhikkake_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -724,7 +723,7 @@ impl CDLHIKKAKE_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLHIKKAKE_Stream>();
+    _assert_auto::<CdlhikkakeStream>();
 };
 
 /***************/

@@ -312,7 +312,7 @@
    /**
     * A live CDLSTICKSANDWICH stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLSTICKSANDWICH} over the same series.
-    * Open with {@link Core#CDLSTICKSANDWICH_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlsticksandwichOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -323,7 +323,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLSTICKSANDWICH_Stream {
+   public static final class CdlsticksandwichStream {
       Core core;
       double EqualPeriodTotal;
       double lag1_inOpen;
@@ -345,7 +345,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLSTICKSANDWICH_Stream( Core core ) { this.core = core; }
+      CdlsticksandwichStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -359,7 +359,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLSTICKSANDWICH_Stream( CDLSTICKSANDWICH_Stream other ) {
+      CdlsticksandwichStream( CdlsticksandwichStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -382,7 +382,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLSTICKSANDWICH_Stream other ) {
+      void copyFrom( CdlsticksandwichStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -424,7 +424,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
-         core.CDLSTICKSANDWICH_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlsticksandwichStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -453,7 +453,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLSTICKSANDWICH updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLSTICKSANDWICH_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlsticksandwichStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -469,8 +469,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
-         CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
-         core.CDLSTICKSANDWICH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlsticksandwichStream scratch = new CdlsticksandwichStream(this);
+         core.cdlsticksandwichStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -487,11 +487,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLSTICKSANDWICH_Stream copy() {
-         return new CDLSTICKSANDWICH_Stream(this);
+      public CdlsticksandwichStream copy() {
+         return new CdlsticksandwichStream(this);
       }
    }
-   void CDLSTICKSANDWICH_StepImpl( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlsticksandwichStepImpl( CdlsticksandwichStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -525,7 +525,7 @@
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLSTICKSANDWICH_OpenImpl( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlsticksandwichOpenImpl( CdlsticksandwichStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -640,11 +640,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLSTICKSANDWICH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlsticksandwichOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlsticksandwichStream cdlsticksandwichOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
-      RetCode retCode = CDLSTICKSANDWICH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlsticksandwichStream sp = new CdlsticksandwichStream(this);
+      RetCode retCode = cdlsticksandwichOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -658,14 +658,14 @@
       }
       throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLSTICKSANDWICH_Open (composition seam). */
-   CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlsticksandwichOpen (composition seam). */
+   CdlsticksandwichStream cdlsticksandwichOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
+      CdlsticksandwichStream sp = new CdlsticksandwichStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSTICKSANDWICH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlsticksandwichOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -692,7 +692,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlsticksandwichStream cdlsticksandwichOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLSTICKSANDWICH open", "inOpen", inOpen);
       requireHistory("CDLSTICKSANDWICH open", inOpen.length);
@@ -702,10 +702,10 @@
       requireHistoryLength("CDLSTICKSANDWICH open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLSTICKSANDWICH open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLSTICKSANDWICH open", "inClose", inClose.length, inOpen.length);
-      return CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlsticksandwichOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLSTICKSANDWICH_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlsticksandwichOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLSTICKSANDWICH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -713,9 +713,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLSTICKSANDWICH_Stream#outRange()}.
+    * {@link CdlsticksandwichStream#outRange()}.
     */
-   public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlsticksandwichStream cdlsticksandwichOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLSTICKSANDWICH openAndFill", "inOpen", inOpen);
       requireHistory("CDLSTICKSANDWICH openAndFill", inOpen.length);
@@ -732,5 +732,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLSTICKSANDWICH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlsticksandwichOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

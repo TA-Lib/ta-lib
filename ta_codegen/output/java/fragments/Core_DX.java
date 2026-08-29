@@ -701,7 +701,7 @@
    /**
     * A live DX stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#DX} over the same series.
-    * Open with {@link Core#DX_Open}; there is no close — the handle is
+    * Open with {@link Core#dxOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -712,7 +712,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class DX_Stream {
+   public static final class DxStream {
       Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -726,7 +726,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      DX_Stream( Core core ) { this.core = core; }
+      DxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -740,7 +740,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      DX_Stream( DX_Stream other ) {
+      DxStream( DxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -755,7 +755,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( DX_Stream other ) {
+      void copyFrom( DxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -785,7 +785,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
-         core.DX_StepImpl(this, inHigh, inLow, inClose);
+         core.dxStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -813,7 +813,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("DX updateAndFill: BadParam", RetCode.BadParam);
-            core.DX_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.dxStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -829,8 +829,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
-         DX_Stream scratch = new DX_Stream(this);
-         core.DX_StepImpl(scratch, inHigh, inLow, inClose);
+         DxStream scratch = new DxStream(this);
+         core.dxStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -847,11 +847,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public DX_Stream copy() {
-         return new DX_Stream(this);
+      public DxStream copy() {
+         return new DxStream(this);
       }
    }
-   void DX_StepImpl( DX_Stream sp, double inHigh, double inLow, double inClose )
+   void dxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;
@@ -907,7 +907,7 @@
       }
       sp.lastOut_outReal = sp.cur_outReal;
    }
-   private RetCode DX_OpenImpl( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode dxOpenImpl( DxStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -1235,11 +1235,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* DX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   DX_Stream DX_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* dxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   DxStream dxOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      DX_Stream sp = new DX_Stream(this);
-      RetCode retCode = DX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      DxStream sp = new DxStream(this);
+      RetCode retCode = dxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1253,14 +1253,14 @@
       }
       throw new TaLibArgumentException("DX openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind DX_Open (composition seam). */
-   DX_Stream DX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind dxOpen (composition seam). */
+   DxStream dxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      DX_Stream sp = new DX_Stream(this);
+      DxStream sp = new DxStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = DX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = dxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1287,7 +1287,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public DX_Stream DX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public DxStream dxOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("DX open", "inHigh", inHigh);
       requireHistory("DX open", inHigh.length);
@@ -1295,10 +1295,10 @@
       requireArgument("DX open", "inClose", inClose);
       requireHistoryLength("DX open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("DX open", "inClose", inClose.length, inHigh.length);
-      return DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return dxOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#DX_Open} that also fills the output array(s) bit-identically
+    * {@link Core#dxOpen} that also fills the output array(s) bit-identically
     * to {@link Core#DX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1306,9 +1306,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link DX_Stream#outRange()}.
+    * {@link DxStream#outRange()}.
     */
-   public DX_Stream DX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public DxStream dxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("DX openAndFill", "inHigh", inHigh);
       requireHistory("DX openAndFill", inHigh.length);
@@ -1323,5 +1323,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return DX_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return dxOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

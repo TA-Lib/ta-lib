@@ -513,23 +513,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live SAR stream: one value per closed bar, bit-identical to [`Core::SAR`]
-/// over the same series. Open with [`Core::SAR_Open`]; dropping the handle
+/// over the same series. Open with [`Core::sar_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SAR_Stream")]
-pub struct SAR_Stream {
-    state: SAR_StreamState,
+pub struct SarStream {
+    state: SarStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl SAR_Stream {
+impl SarStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `SAR_StreamState::restore_from`.
+    /// allocating new ones. See `SarStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -538,7 +538,7 @@ impl SAR_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SAR_StreamState {
+struct SarStreamState {
     optInAcceleration: f64,
     optInMaximum: f64,
     isLong: usize,
@@ -550,7 +550,7 @@ struct SAR_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl SAR_StreamState {
+impl SarStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -565,14 +565,13 @@ impl SAR_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SAR_step_impl(sp: &mut SAR_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn sar_step_impl(sp: &mut SarStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         prevLow = sp.newLow;
@@ -684,11 +683,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::SAR_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::SAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SAR_OpenImpl(
+    /// The single whole-history transcription behind [`Core::sar_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::sar_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn sar_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<SAR_Stream, RetCode> {
+    ) -> Result<SarStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -934,7 +933,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = SAR_StreamState {
+        let state = SarStreamState {
             optInAcceleration,
             optInMaximum,
             isLong,
@@ -944,17 +943,17 @@ impl Core {
             ep,
             sar,
         };
-        Ok(SAR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SarStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::SAR_Open`] (composition seam).
-    pub(crate) fn SAR_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::sar_open`] (composition seam).
+    pub(crate) fn sar_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64,
-    ) -> Result<(SAR_Stream, f64), RetCode> {
+    ) -> Result<(SarStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.SAR_OpenImpl(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.sar_open_impl(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -975,7 +974,7 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.SAR_Open(&high, &low, 0.02, 0.2).expect("enough history");
+    /// let (mut s, _last) = core.sar_open(&high, &low, 0.02, 0.2).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -985,11 +984,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SAR_Open")]
-    pub fn SAR_Open(&self, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64) -> Result<(SAR_Stream, f64), RetCode> {
-        self.SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum)
+    pub fn sar_open(&self, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64) -> Result<(SarStream, f64), RetCode> {
+        self.sar_open_internal(inHigh, inLow, 0, optInAcceleration, optInMaximum)
     }
 
-    /// [`Core::SAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::sar_open`] that also fills the output array(s) bit-identically to
     /// [`Core::SAR`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -997,12 +996,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::SAR_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::sar_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_SAR_OpenAndFill")]
-    pub fn SAR_OpenAndFill(
+    pub fn sar_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInAcceleration: f64, mut optInMaximum: f64, outReal: &mut [f64],
-    ) -> Result<(SAR_Stream, OutRange), RetCode> {
+    ) -> Result<(SarStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1019,23 +1018,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SAR_OpenAndFillInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.sar_open_and_fill_internal(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::SAR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::sar_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn SAR_OpenAndFillInternal(
+    pub(crate) fn sar_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SAR_Stream, RetCode> {
-        self.SAR_OpenImpl(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<SarStream, RetCode> {
+        self.sar_open_impl(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SAR_Stream {
+impl SarStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1053,7 +1052,7 @@ impl SAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::SAR_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::sar_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1086,7 +1085,7 @@ impl SAR_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::SAR_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::sar_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1129,7 +1128,7 @@ impl SAR_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SAR_Stream>();
+    _assert_auto::<SarStream>();
 };
 
 /***************/

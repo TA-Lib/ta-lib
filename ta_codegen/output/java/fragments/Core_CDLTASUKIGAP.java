@@ -324,7 +324,7 @@
    /**
     * A live CDLTASUKIGAP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLTASUKIGAP} over the same series.
-    * Open with {@link Core#CDLTASUKIGAP_Open}; there is no close — the handle is
+    * Open with {@link Core#cdltasukigapOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -335,7 +335,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLTASUKIGAP_Stream {
+   public static final class CdltasukigapStream {
       Core core;
       double NearPeriodTotal;
       double lag1_inOpen;
@@ -355,7 +355,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLTASUKIGAP_Stream( Core core ) { this.core = core; }
+      CdltasukigapStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -369,7 +369,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLTASUKIGAP_Stream( CDLTASUKIGAP_Stream other ) {
+      CdltasukigapStream( CdltasukigapStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -390,7 +390,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLTASUKIGAP_Stream other ) {
+      void copyFrom( CdltasukigapStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -430,7 +430,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTASUKIGAP update: BadParam", RetCode.BadParam);
-         core.CDLTASUKIGAP_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdltasukigapStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -459,7 +459,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLTASUKIGAP updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLTASUKIGAP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdltasukigapStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -475,8 +475,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
-         CDLTASUKIGAP_Stream scratch = new CDLTASUKIGAP_Stream(this);
-         core.CDLTASUKIGAP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdltasukigapStream scratch = new CdltasukigapStream(this);
+         core.cdltasukigapStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -493,11 +493,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLTASUKIGAP_Stream copy() {
-         return new CDLTASUKIGAP_Stream(this);
+      public CdltasukigapStream copy() {
+         return new CdltasukigapStream(this);
       }
    }
-   void CDLTASUKIGAP_StepImpl( CDLTASUKIGAP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdltasukigapStepImpl( CdltasukigapStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -537,7 +537,7 @@
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDLTASUKIGAP_OpenImpl( CDLTASUKIGAP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdltasukigapOpenImpl( CdltasukigapStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -660,11 +660,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLTASUKIGAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdltasukigapOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdltasukigapStream cdltasukigapOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdltasukigapStream sp = new CdltasukigapStream(this);
+      RetCode retCode = cdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -678,14 +678,14 @@
       }
       throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLTASUKIGAP_Open (composition seam). */
-   CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdltasukigapOpen (composition seam). */
+   CdltasukigapStream cdltasukigapOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
+      CdltasukigapStream sp = new CdltasukigapStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -712,7 +712,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLTASUKIGAP_Stream CDLTASUKIGAP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdltasukigapStream cdltasukigapOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLTASUKIGAP open", "inOpen", inOpen);
       requireHistory("CDLTASUKIGAP open", inOpen.length);
@@ -722,10 +722,10 @@
       requireHistoryLength("CDLTASUKIGAP open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLTASUKIGAP open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLTASUKIGAP open", "inClose", inClose.length, inOpen.length);
-      return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdltasukigapOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLTASUKIGAP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdltasukigapOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLTASUKIGAP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -733,9 +733,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLTASUKIGAP_Stream#outRange()}.
+    * {@link CdltasukigapStream#outRange()}.
     */
-   public CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdltasukigapStream cdltasukigapOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLTASUKIGAP openAndFill", "inOpen", inOpen);
       requireHistory("CDLTASUKIGAP openAndFill", inOpen.length);
@@ -752,5 +752,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLTASUKIGAP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdltasukigapOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

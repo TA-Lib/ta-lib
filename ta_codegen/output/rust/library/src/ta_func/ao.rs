@@ -371,23 +371,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live AO stream: one value per closed bar, bit-identical to [`Core::AO`]
-/// over the same series. Open with [`Core::AO_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ao_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AO_Stream")]
-pub struct AO_Stream {
-    state: AO_StreamState,
+pub struct AoStream {
+    state: AoStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl AO_Stream {
+impl AoStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `AO_StreamState::restore_from`.
+    /// allocating new ones. See `AoStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -396,7 +396,7 @@ impl AO_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AO_StreamState {
+struct AoStreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     sumFast: f64,
@@ -410,7 +410,7 @@ struct AO_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl AO_StreamState {
+impl AoStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -427,14 +427,13 @@ impl AO_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AO_step_impl(sp: &mut AO_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn ao_step_impl(sp: &mut AoStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingFastIdx == 0 {
@@ -469,11 +468,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::AO_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::AO_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn AO_OpenImpl(
+    /// The single whole-history transcription behind [`Core::ao_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::ao_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn ao_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<AO_Stream, RetCode> {
+    ) -> Result<AoStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -629,7 +628,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = AO_StreamState {
+        let state = AoStreamState {
             optInFastPeriod,
             optInSlowPeriod,
             sumFast,
@@ -641,17 +640,17 @@ impl Core {
             ringCap_trailingSlowIdx: cap_trailingSlowIdx as usize,
             ring_trailingSlowIdx_derived,
         };
-        Ok(AO_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(AoStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::AO_Open`] (composition seam).
-    pub(crate) fn AO_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ao_open`] (composition seam).
+    pub(crate) fn ao_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32,
-    ) -> Result<(AO_Stream, f64), RetCode> {
+    ) -> Result<(AoStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.AO_OpenImpl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ao_open_impl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -672,7 +671,7 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.AO_Open(&high, &low, 5, 34).expect("enough history");
+    /// let (mut s, _last) = core.ao_open(&high, &low, 5, 34).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -682,11 +681,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_AO_Open")]
-    pub fn AO_Open(&self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32) -> Result<(AO_Stream, f64), RetCode> {
-        self.AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod)
+    pub fn ao_open(&self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32) -> Result<(AoStream, f64), RetCode> {
+        self.ao_open_internal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod)
     }
 
-    /// [`Core::AO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ao_open`] that also fills the output array(s) bit-identically to
     /// [`Core::AO`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -694,12 +693,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::AO_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ao_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_AO_OpenAndFill")]
-    pub fn AO_OpenAndFill(
+    pub fn ao_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],
-    ) -> Result<(AO_Stream, OutRange), RetCode> {
+    ) -> Result<(AoStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -716,31 +715,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.AO_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.ao_open_and_fill_internal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::AO_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ao_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn AO_OpenAndFillInternal(
+    pub(crate) fn ao_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AO_Stream, RetCode> {
-        self.AO_OpenImpl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<AoStream, RetCode> {
+        self.ao_open_impl(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `AO_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `AoStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static AO_PEEK_SCRATCH: std::cell::Cell<Option<Box<AO_Stream>>> =
+    static AO_PEEK_SCRATCH: std::cell::Cell<Option<Box<AoStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AO_Stream {
+impl AoStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -758,7 +757,7 @@ impl AO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::AO_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::ao_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -791,7 +790,7 @@ impl AO_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::AO_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::ao_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -815,11 +814,12 @@ impl AO_Stream {
             return Err(RetCode::BadParam);
         }
         AO_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::ao_step_impl(&mut scratch, inHigh, inLow, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 
@@ -839,7 +839,7 @@ impl AO_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AO_Stream>();
+    _assert_auto::<AoStream>();
 };
 
 /***************/

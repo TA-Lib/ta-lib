@@ -193,7 +193,7 @@
    /**
     * A live ADD stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ADD} over the same series.
-    * Open with {@link Core#ADD_Open}; there is no close — the handle is
+    * Open with {@link Core#addOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -204,13 +204,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ADD_Stream {
+   public static final class AddStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      ADD_Stream( Core core ) { this.core = core; }
+      AddStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -224,14 +224,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ADD_Stream( ADD_Stream other ) {
+      AddStream( AddStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ADD_Stream other ) {
+      void copyFrom( AddStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -253,7 +253,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("ADD update: BadParam", RetCode.BadParam);
-         core.ADD_StepImpl(this, inReal0, inReal1);
+         core.addStepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -280,7 +280,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
                throw new TaLibArgumentException("ADD updateAndFill: BadParam", RetCode.BadParam);
-            core.ADD_StepImpl(this, inReal0[i], inReal1[i]);
+            core.addStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -296,8 +296,8 @@
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
-         ADD_Stream scratch = new ADD_Stream(this);
-         core.ADD_StepImpl(scratch, inReal0, inReal1);
+         AddStream scratch = new AddStream(this);
+         core.addStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -314,15 +314,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ADD_Stream copy() {
-         return new ADD_Stream(this);
+      public AddStream copy() {
+         return new AddStream(this);
       }
    }
-   void ADD_StepImpl( ADD_Stream sp, double inReal0, double inReal1 )
+   void addStepImpl( AddStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 + inReal1;
    }
-   private RetCode ADD_OpenImpl( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode addOpenImpl( AddStream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -351,11 +351,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ADD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ADD_Stream ADD_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* addOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AddStream addOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ADD_Stream sp = new ADD_Stream(this);
-      RetCode retCode = ADD_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+      AddStream sp = new AddStream(this);
+      RetCode retCode = addOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -369,14 +369,14 @@
       }
       throw new TaLibArgumentException("ADD openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ADD_Open (composition seam). */
-   ADD_Stream ADD_OpenInternal( double inReal0[], double inReal1[], int startIdx )
+   /* Internal startIdx-anchored open behind addOpen (composition seam). */
+   AddStream addOpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
-      ADD_Stream sp = new ADD_Stream(this);
+      AddStream sp = new AddStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ADD_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = addOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -403,16 +403,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ADD_Stream ADD_Open( double inReal0[], double inReal1[] )
+   public AddStream addOpen( double inReal0[], double inReal1[] )
    {
       requireArgument("ADD open", "inReal0", inReal0);
       requireHistory("ADD open", inReal0.length);
       requireArgument("ADD open", "inReal1", inReal1);
       requireHistoryLength("ADD open", "inReal1", inReal1.length, inReal0.length);
-      return ADD_OpenInternal(inReal0, inReal1, 0);
+      return addOpenInternal(inReal0, inReal1, 0);
    }
    /**
-    * {@link Core#ADD_Open} that also fills the output array(s) bit-identically
+    * {@link Core#addOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ADD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -420,9 +420,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ADD_Stream#outRange()}.
+    * {@link AddStream#outRange()}.
     */
-   public ADD_Stream ADD_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
+   public AddStream addOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       requireArgument("ADD openAndFill", "inReal0", inReal0);
       requireHistory("ADD openAndFill", inReal0.length);
@@ -435,5 +435,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ADD_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
+      return addOpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

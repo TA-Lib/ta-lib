@@ -463,7 +463,7 @@
    /**
     * A live TSF stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TSF} over the same series.
-    * Open with {@link Core#TSF_Open}; there is no close — the handle is
+    * Open with {@link Core#tsfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -474,7 +474,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TSF_Stream {
+   public static final class TsfStream {
       Core core;
       int optInTimePeriod;
       int lookbackTotal;
@@ -494,7 +494,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      TSF_Stream( Core core ) { this.core = core; }
+      TsfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -508,7 +508,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TSF_Stream( TSF_Stream other ) {
+      TsfStream( TsfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -529,7 +529,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TSF_Stream other ) {
+      void copyFrom( TsfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -569,7 +569,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
-         core.TSF_StepImpl(this, inReal);
+         core.tsfStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -595,7 +595,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("TSF updateAndFill: BadParam", RetCode.BadParam);
-            core.TSF_StepImpl(this, inReal[i]);
+            core.tsfStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -611,8 +611,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
-         TSF_Stream scratch = new TSF_Stream(this);
-         core.TSF_StepImpl(scratch, inReal);
+         TsfStream scratch = new TsfStream(this);
+         core.tsfStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -629,11 +629,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TSF_Stream copy() {
-         return new TSF_Stream(this);
+      public TsfStream copy() {
+         return new TsfStream(this);
       }
    }
-   void TSF_StepImpl( TSF_Stream sp, double inReal )
+   void tsfStepImpl( TsfStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -734,7 +734,7 @@
       sp.cur_outReal = Math.fma(m, (double)sp.optInTimePeriod, b);
       sp.today += 1;
    }
-   private RetCode TSF_OpenImpl( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode tsfOpenImpl( TsfStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -957,11 +957,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* TSF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TSF_Stream TSF_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* tsfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TsfStream tsfOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TSF_Stream sp = new TSF_Stream(this);
-      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      TsfStream sp = new TsfStream(this);
+      RetCode retCode = tsfOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -975,14 +975,14 @@
       }
       throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TSF_Open (composition seam). */
-   TSF_Stream TSF_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind tsfOpen (composition seam). */
+   TsfStream tsfOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      TSF_Stream sp = new TSF_Stream(this);
+      TsfStream sp = new TsfStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = tsfOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1009,14 +1009,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TSF_Stream TSF_Open( double inReal[], int optInTimePeriod )
+   public TsfStream tsfOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("TSF open", "inReal", inReal);
       requireHistory("TSF open", inReal.length);
-      return TSF_OpenInternal(inReal, 0, optInTimePeriod);
+      return tsfOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#TSF_Open} that also fills the output array(s) bit-identically
+    * {@link Core#tsfOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TSF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1024,9 +1024,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TSF_Stream#outRange()}.
+    * {@link TsfStream#outRange()}.
     */
-   public TSF_Stream TSF_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public TsfStream tsfOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("TSF openAndFill", "inReal", inReal);
       requireHistory("TSF openAndFill", inReal.length);
@@ -1037,5 +1037,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TSF_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return tsfOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

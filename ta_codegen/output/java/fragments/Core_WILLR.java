@@ -536,7 +536,7 @@
    /**
     * A live WILLR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#WILLR} over the same series.
-    * Open with {@link Core#WILLR_Open}; there is no close — the handle is
+    * Open with {@link Core#willrOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -547,7 +547,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class WILLR_Stream {
+   public static final class WillrStream {
       Core core;
       int optInTimePeriod;
       double lowest;
@@ -566,7 +566,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      WILLR_Stream( Core core ) { this.core = core; }
+      WillrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -580,7 +580,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      WILLR_Stream( WILLR_Stream other ) {
+      WillrStream( WillrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -600,7 +600,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WILLR_Stream other ) {
+      void copyFrom( WillrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -633,7 +633,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<WILLR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<WillrStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -650,7 +650,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
-         core.WILLR_StepImpl(this, inHigh, inLow, inClose);
+         core.willrStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -678,7 +678,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("WILLR updateAndFill: BadParam", RetCode.BadParam);
-            core.WILLR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.willrStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -696,14 +696,14 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
-         WILLR_Stream scratch = PEEK_SCRATCH.get();
+         WillrStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new WILLR_Stream(this);
+            scratch = new WillrStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.WILLR_StepImpl(scratch, inHigh, inLow, inClose);
+         core.willrStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -720,11 +720,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public WILLR_Stream copy() {
-         return new WILLR_Stream(this);
+      public WillrStream copy() {
+         return new WillrStream(this);
       }
    }
-   void WILLR_StepImpl( WILLR_Stream sp, double inHigh, double inLow, double inClose )
+   void willrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -784,7 +784,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode WILLR_OpenImpl( WILLR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode willrOpenImpl( WillrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -951,11 +951,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* WILLR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   WILLR_Stream WILLR_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* willrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WillrStream willrOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      WILLR_Stream sp = new WILLR_Stream(this);
-      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      WillrStream sp = new WillrStream(this);
+      RetCode retCode = willrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -969,14 +969,14 @@
       }
       throw new TaLibArgumentException("WILLR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind WILLR_Open (composition seam). */
-   WILLR_Stream WILLR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind willrOpen (composition seam). */
+   WillrStream willrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      WILLR_Stream sp = new WILLR_Stream(this);
+      WillrStream sp = new WillrStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = willrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1003,7 +1003,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public WILLR_Stream WILLR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public WillrStream willrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("WILLR open", "inHigh", inHigh);
       requireHistory("WILLR open", inHigh.length);
@@ -1011,10 +1011,10 @@
       requireArgument("WILLR open", "inClose", inClose);
       requireHistoryLength("WILLR open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("WILLR open", "inClose", inClose.length, inHigh.length);
-      return WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return willrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#WILLR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#willrOpen} that also fills the output array(s) bit-identically
     * to {@link Core#WILLR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1022,9 +1022,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link WILLR_Stream#outRange()}.
+    * {@link WillrStream#outRange()}.
     */
-   public WILLR_Stream WILLR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public WillrStream willrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("WILLR openAndFill", "inHigh", inHigh);
       requireHistory("WILLR openAndFill", inHigh.length);
@@ -1039,5 +1039,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return WILLR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return willrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

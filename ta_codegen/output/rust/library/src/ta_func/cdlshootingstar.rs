@@ -483,29 +483,29 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLSHOOTINGSTAR stream: one value per closed bar, bit-identical to [`Core::CDLSHOOTINGSTAR`]
-/// over the same series. Open with [`Core::CDLSHOOTINGSTAR_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlshootingstar_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSHOOTINGSTAR_Stream")]
-pub struct CDLSHOOTINGSTAR_Stream {
+pub struct CdlshootingstarStream {
     /// The `BodyShort` setting this stream was opened with.
     cs_body_short: CandleSetting,
     /// The `ShadowLong` setting this stream was opened with.
     cs_shadow_long: CandleSetting,
     /// The `ShadowVeryShort` setting this stream was opened with.
     cs_shadow_very_short: CandleSetting,
-    state: CDLSHOOTINGSTAR_StreamState,
+    state: CdlshootingstarStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLSHOOTINGSTAR_Stream {
+impl CdlshootingstarStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLSHOOTINGSTAR_StreamState::restore_from`.
+    /// allocating new ones. See `CdlshootingstarStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_short = src.cs_body_short;
         self.cs_shadow_long = src.cs_shadow_long;
@@ -517,7 +517,7 @@ impl CDLSHOOTINGSTAR_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLSHOOTINGSTAR_StreamState {
+struct CdlshootingstarStreamState {
     BodyPeriodTotal: f64,
     ShadowLongPeriodTotal: f64,
     ShadowVeryShortPeriodTotal: f64,
@@ -535,7 +535,7 @@ struct CDLSHOOTINGSTAR_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLSHOOTINGSTAR_StreamState {
+impl CdlshootingstarStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -556,14 +556,13 @@ impl CDLSHOOTINGSTAR_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSHOOTINGSTAR_step_impl(sp: &mut CDLSHOOTINGSTAR_StreamState, cs_body_short: &CandleSetting, cs_shadow_long: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlshootingstar_step_impl(sp: &mut CdlshootingstarStreamState, cs_body_short: &CandleSetting, cs_shadow_long: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
@@ -760,11 +759,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLSHOOTINGSTAR_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLSHOOTINGSTAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLSHOOTINGSTAR_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlshootingstar_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlshootingstar_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlshootingstar_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLSHOOTINGSTAR_Stream, RetCode> {
+    ) -> Result<CdlshootingstarStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1059,7 +1058,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLSHOOTINGSTAR_StreamState {
+        let state = CdlshootingstarStreamState {
             BodyPeriodTotal,
             ShadowLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
@@ -1075,17 +1074,17 @@ impl Core {
             ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLSHOOTINGSTAR_Stream { cs_body_short: self.candle_settings.body_short, cs_shadow_long: self.candle_settings.shadow_long, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdlshootingstarStream { cs_body_short: self.candle_settings.body_short, cs_shadow_long: self.candle_settings.shadow_long, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLSHOOTINGSTAR_Open`] (composition seam).
-    pub(crate) fn CDLSHOOTINGSTAR_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlshootingstar_open`] (composition seam).
+    pub(crate) fn cdlshootingstar_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLSHOOTINGSTAR_Stream, i32), RetCode> {
+    ) -> Result<(CdlshootingstarStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLSHOOTINGSTAR_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlshootingstar_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1112,7 +1111,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLSHOOTINGSTAR_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlshootingstar_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1122,11 +1121,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSHOOTINGSTAR_Open")]
-    pub fn CDLSHOOTINGSTAR_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSHOOTINGSTAR_Stream, i32), RetCode> {
-        self.CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlshootingstar_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlshootingstarStream, i32), RetCode> {
+        self.cdlshootingstar_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLSHOOTINGSTAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlshootingstar_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLSHOOTINGSTAR`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1134,12 +1133,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLSHOOTINGSTAR_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlshootingstar_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLSHOOTINGSTAR_OpenAndFill")]
-    pub fn CDLSHOOTINGSTAR_OpenAndFill(
+    pub fn cdlshootingstar_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLSHOOTINGSTAR_Stream, OutRange), RetCode> {
+    ) -> Result<(CdlshootingstarStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1156,31 +1155,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLSHOOTINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlshootingstar_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLSHOOTINGSTAR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlshootingstar_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLSHOOTINGSTAR_OpenAndFillInternal(
+    pub(crate) fn cdlshootingstar_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLSHOOTINGSTAR_Stream, RetCode> {
-        self.CDLSHOOTINGSTAR_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdlshootingstarStream, RetCode> {
+        self.cdlshootingstar_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLSHOOTINGSTAR_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `CdlshootingstarStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLSHOOTINGSTAR_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLSHOOTINGSTAR_Stream>>> =
+    static CDLSHOOTINGSTAR_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdlshootingstarStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLSHOOTINGSTAR_Stream {
+impl CdlshootingstarStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1198,7 +1197,7 @@ impl CDLSHOOTINGSTAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLSHOOTINGSTAR_step_impl(&mut self.state, &self.cs_body_short, &self.cs_shadow_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlshootingstar_step_impl(&mut self.state, &self.cs_body_short, &self.cs_shadow_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1231,7 +1230,7 @@ impl CDLSHOOTINGSTAR_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLSHOOTINGSTAR_step_impl(&mut self.state, &self.cs_body_short, &self.cs_shadow_long, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlshootingstar_step_impl(&mut self.state, &self.cs_body_short, &self.cs_shadow_long, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1255,11 +1254,12 @@ impl CDLSHOOTINGSTAR_Stream {
             return Err(RetCode::BadParam);
         }
         CDLSHOOTINGSTAR_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outInteger: i32 = 0_i32;
+            Core::cdlshootingstar_step_impl(&mut scratch, &self.cs_body_short, &self.cs_shadow_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
             cell.set(Some(scratch));
-            value
+            Ok(outInteger)
         })
     }
 
@@ -1279,7 +1279,7 @@ impl CDLSHOOTINGSTAR_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLSHOOTINGSTAR_Stream>();
+    _assert_auto::<CdlshootingstarStream>();
 };
 
 /***************/

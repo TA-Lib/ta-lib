@@ -467,7 +467,7 @@ public partial class Core
    /// <summary>A live <c>EFI</c> stream: one value per closed bar, bit-identical to
    /// <c>EFI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.EFI_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.EfiOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -480,7 +480,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class EFI_Stream
+   public sealed class EfiStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -491,12 +491,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal EFI_Stream( Core core ) { this.core = core; }
+      internal EfiStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.EFI</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Efi</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -504,7 +504,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal EFI_Stream( EFI_Stream other )
+      internal EfiStream( EfiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -516,7 +516,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( EFI_Stream other )
+      internal void CopyFrom( EfiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -545,7 +545,7 @@ public partial class Core
       public double Update( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("EFI", "update", RetCode.BadParam);
-         core.EFI_StepImpl(this, inClose, inVolume);
+         core.EfiStepImpl(this, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -565,8 +565,8 @@ public partial class Core
       public double Peek( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("EFI", "peek", RetCode.BadParam);
-         EFI_Stream scratch = new EFI_Stream(this);
-         core.EFI_StepImpl(scratch, inClose, inVolume);
+         EfiStream scratch = new EfiStream(this);
+         core.EfiStepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -591,7 +591,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inClose[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("EFI", "updateAndFill", RetCode.BadParam);
-            core.EFI_StepImpl(this, inClose[i], inVolume[i]);
+            core.EfiStepImpl(this, inClose[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -607,13 +607,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public EFI_Stream Clone()
+      public EfiStream Clone()
       {
-         return new EFI_Stream(this);
+         return new EfiStream(this);
       }
    }
 
-   internal void EFI_StepImpl( EFI_Stream sp, double inClose, double inVolume )
+   internal void EfiStepImpl( EfiStream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;
@@ -629,7 +629,7 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode EfiOpenImpl( EfiStream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -839,11 +839,11 @@ public partial class Core
       }
    }
 
-   /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal EFI_Stream EFI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* EfiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal EfiStream EfiOpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      EfiStream sp = new EfiStream(this);
+      RetCode retCode = EfiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -852,12 +852,12 @@ public partial class Core
       throw StreamFailure("EFI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind EFI_Open (composition seam). */
-   internal EFI_Stream EFI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind EfiOpen (composition seam). */
+   internal EfiStream EfiOpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
-      EFI_Stream sp = new EFI_Stream(this);
+      EfiStream sp = new EfiStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = EfiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -868,11 +868,11 @@ public partial class Core
 
    /// <summary>Open a live <c>EFI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="EFI_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="EfiStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>EFI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>EFI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>EFI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>EfiOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
@@ -885,16 +885,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public EFI_Stream EFI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
+   public EfiStream EfiOpen( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
       if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "EFI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "EFI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("EFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("EFI", "open", "inVolume", inVolume.Length, inClose.Length);
-      return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
+      return EfiOpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
 
-   /// <summary><c>EFI_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>EfiOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>EFI</c> produces over the
@@ -906,7 +906,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="EFI_Stream.OutRange"/>.</para>
+   /// <see cref="EfiStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
@@ -922,7 +922,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public EFI_Stream EFI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
+   public EfiStream EfiOpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
       if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "EFI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "EFI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -933,6 +933,6 @@ public partial class Core
       if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("EFI", "openAndFill", RetCode.BadParam);
       }
-      return EFI_OpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, out _, out _, outReal);
+      return EfiOpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

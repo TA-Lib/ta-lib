@@ -520,7 +520,7 @@ public partial class Core
    /// <summary>A live <c>ATR</c> stream: one value per closed bar, bit-identical to
    /// <c>ATR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.ATR_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.AtrOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -533,7 +533,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class ATR_Stream
+   public sealed class AtrStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -543,12 +543,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal ATR_Stream( Core core ) { this.core = core; }
+      internal AtrStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.ATR</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Atr</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -556,7 +556,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal ATR_Stream( ATR_Stream other )
+      internal AtrStream( AtrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -567,7 +567,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( ATR_Stream other )
+      internal void CopyFrom( AtrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -596,7 +596,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ATR", "update", RetCode.BadParam);
-         core.ATR_StepImpl(this, inHigh, inLow, inClose);
+         core.AtrStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -617,8 +617,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ATR", "peek", RetCode.BadParam);
-         ATR_Stream scratch = new ATR_Stream(this);
-         core.ATR_StepImpl(scratch, inHigh, inLow, inClose);
+         AtrStream scratch = new AtrStream(this);
+         core.AtrStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -644,7 +644,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("ATR", "updateAndFill", RetCode.BadParam);
-            core.ATR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.AtrStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -660,13 +660,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public ATR_Stream Clone()
+      public AtrStream Clone()
       {
-         return new ATR_Stream(this);
+         return new AtrStream(this);
       }
    }
 
-   internal void ATR_StepImpl( ATR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void AtrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;
@@ -695,7 +695,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode ATR_OpenImpl( ATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AtrOpenImpl( AtrStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -871,11 +871,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* ATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ATR_Stream ATR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* AtrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AtrStream AtrOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      ATR_Stream sp = new ATR_Stream(this);
-      RetCode retCode = ATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      AtrStream sp = new AtrStream(this);
+      RetCode retCode = AtrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -884,12 +884,12 @@ public partial class Core
       throw StreamFailure("ATR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind ATR_Open (composition seam). */
-   internal ATR_Stream ATR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind AtrOpen (composition seam). */
+   internal AtrStream AtrOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      ATR_Stream sp = new ATR_Stream(this);
+      AtrStream sp = new AtrStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = ATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = AtrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -900,11 +900,11 @@ public partial class Core
 
    /// <summary>Open a live <c>ATR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="ATR_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="AtrStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>ATR</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>ATR_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>ATR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AtrOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -918,7 +918,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ATR_Stream ATR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public AtrStream AtrOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ATR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ATR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -926,10 +926,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("ATR open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("ATR", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ATR", "open", "inClose", inClose.Length, inHigh.Length);
-      return ATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return AtrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>ATR_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>AtrOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>ATR</c> produces over the
@@ -941,7 +941,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ATR_Stream.OutRange"/>.</para>
+   /// <see cref="AtrStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -958,7 +958,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ATR_Stream ATR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public AtrStream AtrOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ATR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ATR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -971,6 +971,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("ATR", "openAndFill", RetCode.BadParam);
       }
-      return ATR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return AtrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -515,8 +515,8 @@ public partial class Core
    /// <summary>A live <c>LINEARREG_INTERCEPT</c> stream: one value per closed bar,
    /// bit-identical to <c>LINEARREG_INTERCEPT</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.LINEARREG_INTERCEPT_Open"/>. There is no close
-   /// and nothing to dispose — the handle is ordinary managed state, and an
+   /// <para>Open with <see cref="Core.LinearregInterceptOpen"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
@@ -528,7 +528,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class LINEARREG_INTERCEPT_Stream
+   public sealed class LinearregInterceptStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -549,12 +549,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal LINEARREG_INTERCEPT_Stream( Core core ) { this.core = core; }
+      internal LinearregInterceptStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.LINEARREG_INTERCEPT</c> reports over the same bars: the
+      /// <para>It is what <c>Core.LinearregIntercept</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -563,7 +563,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal LINEARREG_INTERCEPT_Stream( LINEARREG_INTERCEPT_Stream other )
+      internal LinearregInterceptStream( LinearregInterceptStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -586,7 +586,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( LINEARREG_INTERCEPT_Stream other )
+      internal void CopyFrom( LinearregInterceptStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -627,7 +627,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_INTERCEPT", "update", RetCode.BadParam);
-         core.LINEARREG_INTERCEPT_StepImpl(this, inReal);
+         core.LinearregInterceptStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -646,8 +646,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_INTERCEPT", "peek", RetCode.BadParam);
-         LINEARREG_INTERCEPT_Stream scratch = new LINEARREG_INTERCEPT_Stream(this);
-         core.LINEARREG_INTERCEPT_StepImpl(scratch, inReal);
+         LinearregInterceptStream scratch = new LinearregInterceptStream(this);
+         core.LinearregInterceptStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -671,7 +671,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("LINEARREG_INTERCEPT", "updateAndFill", RetCode.BadParam);
-            core.LINEARREG_INTERCEPT_StepImpl(this, inReal[i]);
+            core.LinearregInterceptStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -687,13 +687,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public LINEARREG_INTERCEPT_Stream Clone()
+      public LinearregInterceptStream Clone()
       {
-         return new LINEARREG_INTERCEPT_Stream(this);
+         return new LinearregInterceptStream(this);
       }
    }
 
-   internal void LINEARREG_INTERCEPT_StepImpl( LINEARREG_INTERCEPT_Stream sp, double inReal )
+   internal void LinearregInterceptStepImpl( LinearregInterceptStream sp, double inReal )
    {
       double m = 0.0;
       int windowStart = 0;
@@ -793,7 +793,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode LINEARREG_INTERCEPT_OpenImpl( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LinearregInterceptOpenImpl( LinearregInterceptStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1016,11 +1016,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* LINEARREG_INTERCEPT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* LinearregInterceptOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal LinearregInterceptStream LinearregInterceptOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      LinearregInterceptStream sp = new LinearregInterceptStream(this);
+      RetCode retCode = LinearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1029,12 +1029,12 @@ public partial class Core
       throw StreamFailure("LINEARREG_INTERCEPT", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind LINEARREG_INTERCEPT_Open (composition seam). */
-   internal LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind LinearregInterceptOpen (composition seam). */
+   internal LinearregInterceptStream LinearregInterceptOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
+      LinearregInterceptStream sp = new LinearregInterceptStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = LinearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1045,13 +1045,13 @@ public partial class Core
 
    /// <summary>Open a live <c>LINEARREG_INTERCEPT</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="LINEARREG_INTERCEPT_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="LinearregInterceptStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what
    /// <c>LINEARREG_INTERCEPT</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>LINEARREG_INTERCEPT_Lookback(...) +
    /// 1</c> bars (unstable-period aware). Nothing is written to any caller
-   /// array; use <c>LINEARREG_INTERCEPT_OpenAndFill</c> to get the warm-up
-   /// values as well.</para>
+   /// array; use <c>LinearregInterceptOpenAndFill</c> to get the warm-up values
+   /// as well.</para>
    /// </remarks>
    /// <param name="inReal">Input series to regress. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_INTERCEPT_Lookback"/> for
@@ -1064,15 +1064,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public LinearregInterceptStream LinearregInterceptOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG_INTERCEPT open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG_INTERCEPT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return LINEARREG_INTERCEPT_OpenInternal(inReal, 0, optInTimePeriod);
+      return LinearregInterceptOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>LINEARREG_INTERCEPT_Open</c> that also fills the output array(s) over
-   /// the whole history in the same single pass.</summary>
+   /// <summary><c>LinearregInterceptOpen</c> that also fills the output array(s) over the
+   /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>LINEARREG_INTERCEPT</c>
    /// produces over the same series, so no separate batch call is needed for the
@@ -1085,7 +1085,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="LINEARREG_INTERCEPT_Stream.OutRange"/>.</para>
+   /// <see cref="LinearregInterceptStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input series to regress. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_INTERCEPT_Lookback"/> for
@@ -1101,7 +1101,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public LinearregInterceptStream LinearregInterceptOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG_INTERCEPT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG_INTERCEPT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1110,6 +1110,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("LINEARREG_INTERCEPT", "openAndFill", RetCode.BadParam);
       }
-      return LINEARREG_INTERCEPT_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return LinearregInterceptOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

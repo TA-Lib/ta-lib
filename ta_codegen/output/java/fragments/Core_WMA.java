@@ -465,7 +465,7 @@
    /**
     * A live WMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#WMA} over the same series.
-    * Open with {@link Core#WMA_Open}; there is no close — the handle is
+    * Open with {@link Core#wmaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -476,7 +476,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class WMA_Stream {
+   public static final class WmaStream {
       Core core;
       int optInTimePeriod;
       int lookbackWin;
@@ -495,7 +495,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      WMA_Stream( Core core ) { this.core = core; }
+      WmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -509,7 +509,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      WMA_Stream( WMA_Stream other ) {
+      WmaStream( WmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackWin = other.lookbackWin;
@@ -529,7 +529,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WMA_Stream other ) {
+      void copyFrom( WmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackWin = other.lookbackWin;
@@ -558,7 +558,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<WMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<WmaStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -575,7 +575,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
-         core.WMA_StepImpl(this, inReal);
+         core.wmaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -601,7 +601,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("WMA updateAndFill: BadParam", RetCode.BadParam);
-            core.WMA_StepImpl(this, inReal[i]);
+            core.wmaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -619,14 +619,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
-         WMA_Stream scratch = PEEK_SCRATCH.get();
+         WmaStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new WMA_Stream(this);
+            scratch = new WmaStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.WMA_StepImpl(scratch, inReal);
+         core.wmaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -643,11 +643,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public WMA_Stream copy() {
-         return new WMA_Stream(this);
+      public WmaStream copy() {
+         return new WmaStream(this);
       }
    }
-   void WMA_StepImpl( WMA_Stream sp, double inReal )
+   void wmaStepImpl( WmaStream sp, double inReal )
    {
       int j = 0;
       int rw = 0;
@@ -743,7 +743,7 @@
          sp.winPos_j = 0;
       }
    }
-   private RetCode WMA_OpenImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode wmaOpenImpl( WmaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -980,11 +980,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* WMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   WMA_Stream WMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* wmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WmaStream wmaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      WMA_Stream sp = new WMA_Stream(this);
-      RetCode retCode = WMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      WmaStream sp = new WmaStream(this);
+      RetCode retCode = wmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -998,14 +998,14 @@
       }
       throw new TaLibArgumentException("WMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind WMA_Open (composition seam). */
-   WMA_Stream WMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind wmaOpen (composition seam). */
+   WmaStream wmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      WMA_Stream sp = new WMA_Stream(this);
+      WmaStream sp = new WmaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = WMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = wmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1032,14 +1032,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public WMA_Stream WMA_Open( double inReal[], int optInTimePeriod )
+   public WmaStream wmaOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("WMA open", "inReal", inReal);
       requireHistory("WMA open", inReal.length);
-      return WMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return wmaOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#WMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#wmaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#WMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1047,9 +1047,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link WMA_Stream#outRange()}.
+    * {@link WmaStream#outRange()}.
     */
-   public WMA_Stream WMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public WmaStream wmaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("WMA openAndFill", "inReal", inReal);
       requireHistory("WMA openAndFill", inReal.length);
@@ -1060,5 +1060,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return WMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return wmaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -284,7 +284,7 @@
    /**
     * A live IMI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#IMI} over the same series.
-    * Open with {@link Core#IMI_Open}; there is no close — the handle is
+    * Open with {@link Core#imiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -295,7 +295,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class IMI_Stream {
+   public static final class ImiStream {
       Core core;
       int optInTimePeriod;
       int winPos_i;
@@ -306,7 +306,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      IMI_Stream( Core core ) { this.core = core; }
+      ImiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -320,7 +320,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      IMI_Stream( IMI_Stream other ) {
+      ImiStream( ImiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -332,7 +332,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( IMI_Stream other ) {
+      void copyFrom( ImiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -353,7 +353,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<IMI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<ImiStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -370,7 +370,7 @@
       public double update( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("IMI update: BadParam", RetCode.BadParam);
-         core.IMI_StepImpl(this, inOpen, inClose);
+         core.imiStepImpl(this, inOpen, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -397,7 +397,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("IMI updateAndFill: BadParam", RetCode.BadParam);
-            core.IMI_StepImpl(this, inOpen[i], inClose[i]);
+            core.imiStepImpl(this, inOpen[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -415,14 +415,14 @@
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("IMI peek: BadParam", RetCode.BadParam);
-         IMI_Stream scratch = PEEK_SCRATCH.get();
+         ImiStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new IMI_Stream(this);
+            scratch = new ImiStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.IMI_StepImpl(scratch, inOpen, inClose);
+         core.imiStepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -439,11 +439,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public IMI_Stream copy() {
-         return new IMI_Stream(this);
+      public ImiStream copy() {
+         return new ImiStream(this);
       }
    }
-   void IMI_StepImpl( IMI_Stream sp, double inOpen, double inClose )
+   void imiStepImpl( ImiStream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;
@@ -473,7 +473,7 @@
          sp.winPos_i = 0;
       }
    }
-   private RetCode IMI_OpenImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode imiOpenImpl( ImiStream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -549,11 +549,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   IMI_Stream IMI_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* imiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ImiStream imiOpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      ImiStream sp = new ImiStream(this);
+      RetCode retCode = imiOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -567,14 +567,14 @@
       }
       throw new TaLibArgumentException("IMI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind IMI_Open (composition seam). */
-   IMI_Stream IMI_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind imiOpen (composition seam). */
+   ImiStream imiOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      IMI_Stream sp = new IMI_Stream(this);
+      ImiStream sp = new ImiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = imiOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -601,16 +601,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public IMI_Stream IMI_Open( double inOpen[], double inClose[], int optInTimePeriod )
+   public ImiStream imiOpen( double inOpen[], double inClose[], int optInTimePeriod )
    {
       requireArgument("IMI open", "inOpen", inOpen);
       requireHistory("IMI open", inOpen.length);
       requireArgument("IMI open", "inClose", inClose);
       requireHistoryLength("IMI open", "inClose", inClose.length, inOpen.length);
-      return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
+      return imiOpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#IMI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#imiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#IMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -618,9 +618,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link IMI_Stream#outRange()}.
+    * {@link ImiStream#outRange()}.
     */
-   public IMI_Stream IMI_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
+   public ImiStream imiOpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("IMI openAndFill", "inOpen", inOpen);
       requireHistory("IMI openAndFill", inOpen.length);
@@ -633,5 +633,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return IMI_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return imiOpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

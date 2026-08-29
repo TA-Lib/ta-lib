@@ -899,7 +899,7 @@ public partial class Core
    /// <summary>A live <c>SAREXT</c> stream: one value per closed bar, bit-identical to
    /// <c>SAREXT</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.SAREXT_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.SarextOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -912,7 +912,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class SAREXT_Stream
+   public sealed class SarextStream
    {
       internal Core core;
       internal double optInStartValue;
@@ -934,12 +934,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal SAREXT_Stream( Core core ) { this.core = core; }
+      internal SarextStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.SAREXT</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Sarext</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -948,7 +948,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal SAREXT_Stream( SAREXT_Stream other )
+      internal SarextStream( SarextStream other )
       {
          this.core = other.core;
          this.optInStartValue = other.optInStartValue;
@@ -971,7 +971,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SAREXT_Stream other )
+      internal void CopyFrom( SarextStream other )
       {
          this.core = other.core;
          this.optInStartValue = other.optInStartValue;
@@ -1011,7 +1011,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "update", RetCode.BadParam);
-         core.SAREXT_StepImpl(this, inHigh, inLow);
+         core.SarextStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1031,8 +1031,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "peek", RetCode.BadParam);
-         SAREXT_Stream scratch = new SAREXT_Stream(this);
-         core.SAREXT_StepImpl(scratch, inHigh, inLow);
+         SarextStream scratch = new SarextStream(this);
+         core.SarextStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -1057,7 +1057,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("SAREXT", "updateAndFill", RetCode.BadParam);
-            core.SAREXT_StepImpl(this, inHigh[i], inLow[i]);
+            core.SarextStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -1073,13 +1073,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public SAREXT_Stream Clone()
+      public SarextStream Clone()
       {
-         return new SAREXT_Stream(this);
+         return new SarextStream(this);
       }
    }
 
-   internal void SAREXT_StepImpl( SAREXT_Stream sp, double inHigh, double inLow )
+   internal void SarextStepImpl( SarextStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;
@@ -1204,7 +1204,7 @@ public partial class Core
       }
    }
 
-   private RetCode SAREXT_OpenImpl( SAREXT_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SarextOpenImpl( SarextStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1567,11 +1567,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* SAREXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SAREXT_Stream SAREXT_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* SarextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SarextStream SarextOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      SAREXT_Stream sp = new SAREXT_Stream(this);
-      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal, 1);
+      SarextStream sp = new SarextStream(this);
+      RetCode retCode = SarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1580,12 +1580,12 @@ public partial class Core
       throw StreamFailure("SAREXT", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind SAREXT_Open (composition seam). */
-   internal SAREXT_Stream SAREXT_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   /* Internal startIdx-anchored open behind SarextOpen (composition seam). */
+   internal SarextStream SarextOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      SAREXT_Stream sp = new SAREXT_Stream(this);
+      SarextStream sp = new SarextStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = SarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1596,11 +1596,11 @@ public partial class Core
 
    /// <summary>Open a live <c>SAREXT</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="SAREXT_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="SarextStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>SAREXT</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>SAREXT_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>SAREXT_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>SarextOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1627,16 +1627,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SAREXT_Stream SAREXT_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   public SarextStream SarextOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SAREXT open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SAREXT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("SAREXT open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("SAREXT", "open", "inLow", inLow.Length, inHigh.Length);
-      return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+      return SarextOpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
 
-   /// <summary><c>SAREXT_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>SarextOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>SAREXT</c> produces over
@@ -1648,7 +1648,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="SAREXT_Stream.OutRange"/>.</para>
+   /// <see cref="SarextStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1678,7 +1678,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SAREXT_Stream SAREXT_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, Span<double> outReal )
+   public SarextStream SarextOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SAREXT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SAREXT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1689,6 +1689,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("SAREXT", "openAndFill", RetCode.BadParam);
       }
-      return SAREXT_OpenAndFillInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out _, out _, outReal);
+      return SarextOpenAndFillInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out _, out _, outReal);
    }
 }

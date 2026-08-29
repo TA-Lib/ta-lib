@@ -213,23 +213,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MULT stream: one value per closed bar, bit-identical to [`Core::MULT`]
-/// over the same series. Open with [`Core::MULT_Open`]; dropping the handle
+/// over the same series. Open with [`Core::mult_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MULT_Stream")]
-pub struct MULT_Stream {
-    state: MULT_StreamState,
+pub struct MultStream {
+    state: MultStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MULT_Stream {
+impl MultStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MULT_StreamState::restore_from`.
+    /// allocating new ones. See `MultStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -238,33 +238,32 @@ impl MULT_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MULT_StreamState {
+struct MultStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MULT_StreamState {
+impl MultStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MULT_step_impl(sp: &mut MULT_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn mult_step_impl(sp: &mut MultStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 * inReal1;
     }
 
-    /// The single whole-history transcription behind [`Core::MULT_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MULT_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MULT_OpenImpl(
+    /// The single whole-history transcription behind [`Core::mult_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::mult_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn mult_open_impl(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<MULT_Stream, RetCode> {
+    ) -> Result<MultStream, RetCode> {
         if inReal0.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -297,19 +296,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = MULT_StreamState {
+        let state = MultStreamState {
         };
-        Ok(MULT_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MultStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MULT_Open`] (composition seam).
-    pub(crate) fn MULT_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::mult_open`] (composition seam).
+    pub(crate) fn mult_open_internal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(MULT_Stream, f64), RetCode> {
+    ) -> Result<(MultStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MULT_OpenImpl(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.mult_open_impl(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -332,7 +331,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MULT_Open(&data0, &data1).expect("enough history");
+    /// let (mut s, _last) = core.mult_open(&data0, &data1).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 101.3).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -342,11 +341,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MULT_Open")]
-    pub fn MULT_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(MULT_Stream, f64), RetCode> {
-        self.MULT_OpenInternal(inReal0, inReal1, 0)
+    pub fn mult_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(MultStream, f64), RetCode> {
+        self.mult_open_internal(inReal0, inReal1, 0)
     }
 
-    /// [`Core::MULT_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mult_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MULT`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -354,12 +353,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MULT_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::mult_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MULT_OpenAndFill")]
-    pub fn MULT_OpenAndFill(
+    pub fn mult_open_and_fill(
         &self, inReal0: &[f64], inReal1: &[f64], outReal: &mut [f64],
-    ) -> Result<(MULT_Stream, OutRange), RetCode> {
+    ) -> Result<(MultStream, OutRange), RetCode> {
         if inReal0.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -376,23 +375,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MULT_OpenAndFillInternal(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.mult_open_and_fill_internal(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MULT_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::mult_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MULT_OpenAndFillInternal(
+    pub(crate) fn mult_open_and_fill_internal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MULT_Stream, RetCode> {
-        self.MULT_OpenImpl(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<MultStream, RetCode> {
+        self.mult_open_impl(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MULT_Stream {
+impl MultStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -410,7 +409,7 @@ impl MULT_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MULT_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::mult_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -443,7 +442,7 @@ impl MULT_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MULT_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::mult_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -486,7 +485,7 @@ impl MULT_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MULT_Stream>();
+    _assert_auto::<MultStream>();
 };
 
 /***************/

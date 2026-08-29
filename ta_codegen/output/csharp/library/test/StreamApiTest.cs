@@ -135,7 +135,7 @@ public static class StreamApiTest
 
         int lookback = core.SMA_Lookback(period);
         var history = closes[..(lookback + 1)];
-        Core.SMA_Stream s = core.SMA_Open(history, period);
+        Core.SmaStream s = core.SmaOpen(history, period);
 
         // Open seeds the value at the last history bar.
         var batch0 = new double[closes.Length];
@@ -175,7 +175,7 @@ public static class StreamApiTest
         const int period = 10;
         int lookback = core.SMA_Lookback(period);
 
-        Core.SMA_Stream s = core.SMA_Open(closes[..(lookback + 1)], period);
+        Core.SmaStream s = core.SmaOpen(closes[..(lookback + 1)], period);
         double before = s.Value;
 
         double peeked = s.Peek(closes[lookback + 1]);
@@ -200,13 +200,13 @@ public static class StreamApiTest
         const int period = 12;
         int lookback = core.SMA_Lookback(period);
 
-        Core.SMA_Stream a = core.SMA_Open(closes[..(lookback + 1)], period);
+        Core.SmaStream a = core.SmaOpen(closes[..(lookback + 1)], period);
         for (int t = lookback + 1; t < 60; t++)
         {
             a.Update(closes[t]);
         }
 
-        Core.SMA_Stream b = a.Clone();
+        Core.SmaStream b = a.Clone();
         Check(Bits(a.Value) == Bits(b.Value), "a Clone starts at the same value");
 
         // Drive them on DIFFERENT bars. A shallow copy of the ring would let
@@ -224,7 +224,7 @@ public static class StreamApiTest
         Check(diverged > 0, "the two halves genuinely diverged (the fork test is not vacuous)");
 
         // And the original still matches a stream that never forked.
-        Core.SMA_Stream fresh = core.SMA_Open(closes[..(lookback + 1)], period);
+        Core.SmaStream fresh = core.SmaOpen(closes[..(lookback + 1)], period);
         for (int t = lookback + 1; t < closes.Length; t++)
         {
             fresh.Update(closes[t]);
@@ -243,7 +243,7 @@ public static class StreamApiTest
         OutRange br = core.SMA(0, closes.Length - 1, closes, period, batch);
 
         var filled = new double[closes.Length];
-        Core.SMA_Stream s = core.SMA_OpenAndFill(closes, period, filled);
+        Core.SmaStream s = core.SmaOpenAndFill(closes, period, filled);
 
         Check(s.OutRange.BegIdx == br.BegIdx && s.OutRange.Count == br.Count,
               "OutRange equals the batch OutRange");
@@ -262,7 +262,7 @@ public static class StreamApiTest
         // A plain open fills nothing, but it warmed over the same bars — so it
         // reports the same range (issue #241). Nothing a stream can produce is
         // empty any more; a successful open writes at least one value.
-        Core.SMA_Stream plain = core.SMA_Open(closes, period);
+        Core.SmaStream plain = core.SmaOpen(closes, period);
         Check(plain.OutRange.BegIdx == br.BegIdx && plain.OutRange.Count == br.Count,
               "a plain Open reports the range it warmed over");
         Check(Bits(plain.Value) == Bits(s.Value), "both openers agree on the current value");
@@ -284,7 +284,7 @@ public static class StreamApiTest
         {
             var batch = new double[closes.Length];
             OutRange br = core.SMA(0, closes.Length - 1, closes, period, batch);
-            Core.SMA_Stream s = core.SMA_Open(closes[..warm], period);
+            Core.SmaStream s = core.SmaOpen(closes[..warm], period);
             Check(s.OutRange.BegIdx == lb && s.OutRange.Count == warm - lb,
                   $"Open({warm}) reports (lookback, {warm} - lookback)");
             for (int t = warm; t < closes.Length; t++)
@@ -311,25 +311,25 @@ public static class StreamApiTest
         // asserts is the public contract around it.
         try
         {
-            core.MAVP_Open(closes[..10], closes[..10], 1, 30, MAType.SMA);
-            Check(false, "MAVP_Open on a history shorter than the bank's anchor must throw");
+            core.MavpOpen(closes[..10], closes[..10], 1, 30, MAType.SMA);
+            Check(false, "MavpOpen on a history shorter than the bank's anchor must throw");
         }
         catch (InsufficientHistoryException)
         {
-            Check(true, "MAVP_Open rejects an anchor past the history");
+            Check(true, "MavpOpen rejects an anchor past the history");
         }
         // The positive half, so this is not a rejection sweep.
         {
             int mavpLb = core.MAVP_Lookback(1, 30, MAType.SMA);
             var px = closes[..(mavpLb + 3)];
-            Core.MAVP_Stream mv = core.MAVP_Open(px, px, 1, 30, MAType.SMA);
+            Core.MavpStream mv = core.MavpOpen(px, px, 1, 30, MAType.SMA);
             Check(mv.OutRange.BegIdx == mavpLb && mv.OutRange.Count == 3,
-                  "MAVP_Open just past its anchor reports (lookback, 3)");
+                  "MavpOpen just past its anchor reports (lookback, 3)");
         }
 
         // A clone forks: its own updates extend only itself.
-        Core.SMA_Stream a = core.SMA_Open(closes, period);
-        Core.SMA_Stream b = a.Clone();
+        Core.SmaStream a = core.SmaOpen(closes, period);
+        Core.SmaStream b = a.Clone();
         Check(b.OutRange.BegIdx == a.OutRange.BegIdx && b.OutRange.Count == a.OutRange.Count,
               "Clone carries the range verbatim");
         b.Update(closes[^1]);
@@ -346,14 +346,14 @@ public static class StreamApiTest
 
         // Exactly `lookback` bars is one short: no output is defined.
         CheckThrows<InsufficientHistoryException>(
-            () => core.SMA_Open(closes[..lookback], period),
+            () => core.SmaOpen(closes[..lookback], period),
             "history of exactly `lookback` bars throws InsufficientHistoryException");
 
         // ...and one more bar is enough.
         _checks++;
         try
         {
-            core.SMA_Open(closes[..(lookback + 1)], period);
+            core.SmaOpen(closes[..(lookback + 1)], period);
         }
         catch (Exception e)
         {
@@ -364,19 +364,19 @@ public static class StreamApiTest
         // The typed exception is catchable as ArgumentException too, which is
         // what lets a caller treat every open rejection uniformly if it wants.
         CheckThrows<ArgumentException>(
-            () => core.SMA_Open(closes[..lookback], period),
+            () => core.SmaOpen(closes[..lookback], period),
             "InsufficientHistoryException is an ArgumentException");
 
         // A parameter outside its documented range is a plain ArgumentException.
         CheckThrows<ArgumentException>(
-            () => core.SMA_Open(closes, 0),
+            () => core.SmaOpen(closes, 0),
             "an out-of-range period throws ArgumentException");
 
         // The message carries the stable "<NAME> open: " prefix.
         _checks++;
         try
         {
-            core.SMA_Open(closes[..lookback], period);
+            core.SmaOpen(closes[..lookback], period);
             _failures++;
             Console.WriteLine("  FAIL: expected a short-history rejection");
         }
@@ -397,7 +397,7 @@ public static class StreamApiTest
         double[] closes = Closes(120);
 
         CheckThrows<ArgumentException>(
-            () => core.SMA_OpenAndFill(closes, 14, closes),
+            () => core.SmaOpenAndFill(closes, 14, closes),
             "output aliasing the input is rejected");
 
         // A distinct array of the same length is fine — so the rejection above
@@ -405,7 +405,7 @@ public static class StreamApiTest
         _checks++;
         try
         {
-            core.SMA_OpenAndFill(closes, 14, new double[closes.Length]);
+            core.SmaOpenAndFill(closes, 14, new double[closes.Length]);
         }
         catch (Exception e)
         {
@@ -429,20 +429,20 @@ public static class StreamApiTest
         // rule S1 -- the implied startIdx of 0 names no bar. It answers B1's
         // code, because an opener is a batch call over [0, historyLen - 1].
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA_Open(null!, 14),
-            "SMA_Open(null) throws ArgumentOutOfRangeException");
+            () => core.SmaOpen(null!, 14),
+            "SmaOpen(null) throws ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA_Open(Array.Empty<double>(), 14),
-            "SMA_Open(empty) throws ArgumentOutOfRangeException");
+            () => core.SmaOpen(Array.Empty<double>(), 14),
+            "SmaOpen(empty) throws ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA_OpenAndFill(null!, 14, outReal),
-            "SMA_OpenAndFill with a null input throws ArgumentOutOfRangeException");
+            () => core.SmaOpenAndFill(null!, 14, outReal),
+            "SmaOpenAndFill with a null input throws ArgumentOutOfRangeException");
 
         // The type is coarser than the code -- it serves both index rules -- so
         // the code is what pins WHICH one fired.
-        CheckRetCode(() => core.SMA_Open(Array.Empty<double>(), 14),
+        CheckRetCode(() => core.SmaOpen(Array.Empty<double>(), 14),
                      RetCode.OutOfRangeStartIndex,
-                     "SMA_Open(empty) carries OutOfRangeStartIndex");
+                     "SmaOpen(empty) carries OutOfRangeStartIndex");
 
         // It names the offending parameter — the core's own rejection travels
         // through a shared ladder that has no argument to name — and the index
@@ -451,7 +451,7 @@ public static class StreamApiTest
         _checks++;
         try
         {
-            core.SMA_OpenAndFill(null!, 14, null!);
+            core.SmaOpenAndFill(null!, 14, null!);
             _failures++;
             Console.WriteLine("  FAIL: expected an empty-input rejection");
         }
@@ -510,10 +510,10 @@ public static class StreamApiTest
 
         var refMama = new double[produced];
         var refFama = new double[produced];
-        Core.MAMA_Stream both = core.MAMA_OpenAndFill(closes, 0.5, 0.05, refMama, refFama);
+        Core.MamaStream both = core.MamaOpenAndFill(closes, 0.5, 0.05, refMama, refFama);
 
         var soloMama = new double[produced];
-        Core.MAMA_Stream declined = core.MAMA_OpenAndFill(closes, 0.5, 0.05, soloMama, default);
+        Core.MamaStream declined = core.MamaOpenAndFill(closes, 0.5, 0.05, soloMama, default);
 
         _b6a++;
         Check(refMama.AsSpan().SequenceEqual(soloMama),
@@ -532,11 +532,11 @@ public static class StreamApiTest
         _b6a++;
 
         CheckThrows<ArgumentException>(
-            () => core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced - 1], default),
+            () => core.MamaOpenAndFill(closes, 0.5, 0.05, new double[produced - 1], default),
             "an undersized outMAMA is still rejected when outFAMA is declined");
         _b6a++;
         CheckThrows<ArgumentException>(
-            () => core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced],
+            () => core.MamaOpenAndFill(closes, 0.5, 0.05, new double[produced],
                       new double[produced - 1]),
             "a supplied outFAMA is still bounded");
         _b6a++;
@@ -576,13 +576,13 @@ public static class StreamApiTest
         var bars = new double[8];
         for (int i = 0; i < bars.Length; i++) bars[i] = closes[closes.Length - 1] + 1.0 + i * 0.25;
 
-        Core.MAMA_Stream Opened(bool declinedAtOpen) =>
+        Core.MamaStream Opened(bool declinedAtOpen) =>
             declinedAtOpen
-                ? core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced], default)
-                : core.MAMA_OpenAndFill(closes, 0.5, 0.05, new double[produced], new double[produced]);
+                ? core.MamaOpenAndFill(closes, 0.5, 0.05, new double[produced], default)
+                : core.MamaOpenAndFill(closes, 0.5, 0.05, new double[produced], new double[produced]);
 
         // The oracle: supplied at open, supplied here.
-        Core.MAMA_Stream oracle = Opened(false);
+        Core.MamaStream oracle = Opened(false);
         // Canary-filled, not zero-filled: comparing two arrays the fill never
         // wrote would otherwise pass on their shared initial value, which is
         // exactly the break the supplied/supplied leg below is meant to catch.
@@ -598,7 +598,7 @@ public static class StreamApiTest
         {
             string what = declinedAtOpen ? "declined at open" : "supplied at open";
 
-            Core.MAMA_Stream h = Opened(declinedAtOpen);
+            Core.MamaStream h = Opened(declinedAtOpen);
             double[] mama = CanaryFilled(bars.Length);
             h.UpdateAndFill(bars, mama, default);
             _u6a++;
@@ -618,7 +618,7 @@ public static class StreamApiTest
                   == BitConverter.DoubleToInt64Bits(oracleMama),
                 what + ", declined here: the handle's outMAMA");
 
-            Core.MAMA_Stream h2 = Opened(declinedAtOpen);
+            Core.MamaStream h2 = Opened(declinedAtOpen);
             double[] mama2 = CanaryFilled(bars.Length);
             double[] fama2 = CanaryFilled(bars.Length);
             h2.UpdateAndFill(bars, mama2, fama2);
@@ -631,8 +631,8 @@ public static class StreamApiTest
         // "May differ again on the NEXT call" — the sentence the whole rule rests
         // on. One handle, three fills, alternating; each has to agree with an
         // oracle driven the same way with everything supplied.
-        Core.MAMA_Stream alt = Opened(false);
-        Core.MAMA_Stream altRef = Opened(false);
+        Core.MamaStream alt = Opened(false);
+        Core.MamaStream altRef = Opened(false);
         bool[] plan = { true, false, true };
         for (int k = 0; k < plan.Length; k++)
         {
@@ -666,7 +666,7 @@ public static class StreamApiTest
 
         // Declining one output disarms neither the other's bound nor its own
         // where it IS supplied, and a rejected fill commits nothing.
-        Core.MAMA_Stream guarded = Opened(false);
+        Core.MamaStream guarded = Opened(false);
         int before = guarded.OutRange.Count;
         CheckThrows<ArgumentException>(
             () => guarded.UpdateAndFill(bars, new double[bars.Length - 1], default),
@@ -699,14 +699,14 @@ public static class StreamApiTest
         Check(produced < closes.Length, "the produced count is shorter than the history");
 
         var exact = new double[produced];
-        Core.SMA_Stream h = core.SMA_OpenAndFill(closes, 30, exact);
+        Core.SmaStream h = core.SmaOpenAndFill(closes, 30, exact);
         Check(h.OutRange.BegIdx == lookback, "the fill starts at the lookback");
         Check(h.OutRange.Count == produced, "the fill wrote exactly the bound");
 
         CheckThrows<ArgumentException>(
-            () => core.SMA_OpenAndFill(closes, 30, new double[produced - 1]),
+            () => core.SmaOpenAndFill(closes, 30, new double[produced - 1]),
             "one element short of the produced count throws ArgumentException");
-        CheckRetCode(() => core.SMA_OpenAndFill(closes, 30, new double[produced - 1]),
+        CheckRetCode(() => core.SmaOpenAndFill(closes, 30, new double[produced - 1]),
                      RetCode.BadParam,
                      "an undersized fill output carries BadParam");
         _s5++;
@@ -717,7 +717,7 @@ public static class StreamApiTest
         Array.Fill(shortOut, -3e37);
         try
         {
-            core.SMA_OpenAndFill(closes, 30, shortOut);
+            core.SmaOpenAndFill(closes, 30, shortOut);
             Check(false, "expected the undersized fill to be rejected");
         }
         catch (ArgumentException)
@@ -733,7 +733,7 @@ public static class StreamApiTest
         // An oversized output is legal and bit-identical: the bound is a
         // minimum, which is what says the exact case above was not luck.
         var roomy = new double[closes.Length];
-        core.SMA_OpenAndFill(closes, 30, roomy);
+        core.SmaOpenAndFill(closes, 30, roomy);
         bool same = true;
         for (int i = 0; i < produced; i++)
         {
@@ -760,28 +760,28 @@ public static class StreamApiTest
         {
             int lb = core.MA_Lookback(period, MAType.EMA);
             int produced = closes.Length - lb;
-            core.MA_OpenAndFill(closes, period, MAType.EMA, new double[produced]);
+            core.MaOpenAndFill(closes, period, MAType.EMA, new double[produced]);
             CheckThrows<ArgumentException>(
-                () => core.MA_OpenAndFill(closes, period, MAType.EMA, new double[produced - 1]),
+                () => core.MaOpenAndFill(closes, period, MAType.EMA, new double[produced - 1]),
                 "MA one short of the bound");
             _s5++;
         }
 
         int mavpLb = core.MAVP_Lookback(2, 30, MAType.SMA);
         int mavpProduced = closes.Length - mavpLb;
-        core.MAVP_OpenAndFill(closes, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
+        core.MavpOpenAndFill(closes, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
         CheckThrows<ArgumentException>(
-            () => core.MAVP_OpenAndFill(closes, periods, 2, 30, MAType.SMA,
+            () => core.MavpOpenAndFill(closes, periods, 2, 30, MAType.SMA,
                 new double[mavpProduced - 1]),
             "MAVP one short of the bound");
         _s5++;
 
         int bbLb = core.BBANDS_Lookback(20, 2.0, 2.0, MAType.SMA);
         int bbProduced = closes.Length - bbLb;
-        core.BBANDS_OpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
+        core.BbandsOpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
             new double[bbProduced], new double[bbProduced], new double[bbProduced]);
         CheckThrows<ArgumentException>(
-            () => core.BBANDS_OpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
+            () => core.BbandsOpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
                 new double[bbProduced], new double[bbProduced], new double[bbProduced - 1]),
             "each output is bounded separately");
         _s5++;
@@ -789,7 +789,7 @@ public static class StreamApiTest
         // A history too short to produce anything is still S7, whatever the
         // output holds: the bound floors at zero rather than going negative.
         CheckThrows<InsufficientHistoryException>(
-            () => core.SMA_OpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
+            () => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
             "a short history reaches the warm-up check, not the capacity one");
 
         // The floors for this method and the declined-output one live in Run(),
@@ -802,10 +802,10 @@ public static class StreamApiTest
         var core = new Core();
         double[] closes = Closes(200);
 
-        Core.SMA_Stream sentinel = core.SMA_Open(closes, int.MinValue);
-        Core.SMA_Stream explicitly = core.SMA_Open(closes, 30);   // SMA's documented default
+        Core.SmaStream sentinel = core.SmaOpen(closes, int.MinValue);
+        Core.SmaStream explicitly = core.SmaOpen(closes, 30);   // SMA's documented default
         Check(Bits(sentinel.Value) == Bits(explicitly.Value),
-              "SMA_Open(int.MinValue) equals SMA_Open(30) bitwise");
+              "SmaOpen(int.MinValue) equals SmaOpen(30) bitwise");
     }
 
     /// <summary>A handle answers to the Core it was opened on.</summary>
@@ -833,8 +833,8 @@ public static class StreamApiTest
             .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 5.0)
             .Build();
 
-        Core.CDLDOJI_Stream a = plain.CDLDOJI_Open(open, high, low, closes);
-        Core.CDLDOJI_Stream b = tuned.CDLDOJI_Open(open, high, low, closes);
+        Core.CdldojiStream a = plain.CdldojiOpen(open, high, low, closes);
+        Core.CdldojiStream b = tuned.CdldojiOpen(open, high, low, closes);
 
         int differing = 0;
         for (int t = 100; t < closes.Length; t++)
@@ -865,7 +865,7 @@ public static class StreamApiTest
     {
         var core = new Core();
         double[] closes = Closes(4000);
-        Core.SMA_Stream s = core.SMA_Open(closes[..40], 30);
+        Core.SmaStream s = core.SmaOpen(closes[..40], 30);
 
         // Warm up: first-call JIT and any lazy init must not be attributed.
         double sink = 0;
@@ -893,10 +893,10 @@ public static class StreamApiTest
         var core = new Core();
         double[] closes = Closes(200);
 
-        Core.BBANDS_Stream s = core.BBANDS_Open(closes, 20, 2.0, 2.0, MAType.SMA);
-        Core.BBANDS_Value v = s.Value;
+        Core.BbandsStream s = core.BbandsOpen(closes, 20, 2.0, 2.0, MAType.SMA);
+        Core.BbandsValue v = s.Value;
 
-        Check(typeof(Core.BBANDS_Value).IsValueType, "BBANDS_Value is a value type");
+        Check(typeof(Core.BbandsValue).IsValueType, "BbandsValue is a value type");
         Check(v.RealUpperBand >= v.RealMiddleBand && v.RealMiddleBand >= v.RealLowerBand,
               "the bands are ordered upper >= middle >= lower");
 
@@ -905,10 +905,10 @@ public static class StreamApiTest
         Check(Bits(up) == Bits(v.RealUpperBand)
               && Bits(mid) == Bits(v.RealMiddleBand)
               && Bits(low) == Bits(v.RealLowerBand),
-              "BBANDS_Value deconstructs into its components");
+              "BbandsValue deconstructs into its components");
 
         // Value is a read, not a recompute: it must not move without an Update.
-        Core.BBANDS_Value again = s.Value;
+        Core.BbandsValue again = s.Value;
         Check(Bits(again.RealUpperBand) == Bits(v.RealUpperBand), "Value is stable between Updates");
     }
 
@@ -926,23 +926,37 @@ public static class StreamApiTest
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();
 
+        // The catalogue keeps the canonical (batch) name, e.g. "HT_TRENDLINE";
+        // the handle type is PascalCase with the acronym single-capitalized and
+        // no underscore, e.g. "HtTrendlineStream" (issue #278). Re-derive that
+        // spelling from the canonical name rather than hard-coding it, so this
+        // stays a real cross-check rather than a second copy of the mapping.
+        static string ToPascal(string screaming) =>
+            string.Concat(screaming.Split('_')
+                .Select(w => char.ToUpperInvariant(w[0]) + w[1..].ToLowerInvariant()));
+
+        var advertisedAsHandleNames = advertised
+            .Select(ToPascal)
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToArray();
+
         var emitted = typeof(Core).GetNestedTypes(BindingFlags.Public)
-            .Where(t => t.Name.EndsWith("_Stream", StringComparison.Ordinal))
-            .Select(t => t.Name[..^"_Stream".Length])
+            .Where(t => t.Name.EndsWith("Stream", StringComparison.Ordinal))
+            .Select(t => t.Name[..^"Stream".Length])
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();
 
         Check(advertised.Length > 0, "the catalogue advertises at least one streaming function");
-        Check(advertised.SequenceEqual(emitted),
+        Check(advertisedAsHandleNames.SequenceEqual(emitted),
               $"every advertised streaming function has a handle type "
               + $"(advertised {advertised.Length}, emitted {emitted.Length}; "
-              + $"only-advertised: [{string.Join(",", advertised.Except(emitted))}], "
-              + $"only-emitted: [{string.Join(",", emitted.Except(advertised))}])");
+              + $"only-advertised: [{string.Join(",", advertisedAsHandleNames.Except(emitted))}], "
+              + $"only-emitted: [{string.Join(",", emitted.Except(advertisedAsHandleNames))}])");
 
         // Each handle type must be sealed, expose no public constructor, and
         // carry the four members the docs promise.
         foreach (Type t in typeof(Core).GetNestedTypes(BindingFlags.Public)
-                     .Where(t => t.Name.EndsWith("_Stream", StringComparison.Ordinal)))
+                     .Where(t => t.Name.EndsWith("Stream", StringComparison.Ordinal)))
         {
             if (!t.IsSealed || t.GetConstructors(BindingFlags.Public | BindingFlags.Instance).Length != 0)
             {
@@ -1084,14 +1098,14 @@ public static class StreamApiTest
             var o = opens[..warm].ToArray();
             var p = periods[..warm].ToArray();
 
-            var sa = core.SMA_Open(c, 14);
-            var sb = core.SMA_Open(c, 14);
+            var sa = core.SmaOpen(c, 14);
+            var sb = core.SmaOpen(c, 14);
             BarMustReject("SMA.Update", () => sa.Update(v));
             BarMustReject("SMA.Peek", () => sa.Peek(v));
             StateMustHold("SMA", sa.Update(closes[warm]), sb.Update(closes[warm]));
 
-            var da = core.MINUS_DI_Open(h, l, c, 14);
-            var db = core.MINUS_DI_Open(h, l, c, 14);
+            var da = core.MinusDiOpen(h, l, c, 14);
+            var db = core.MinusDiOpen(h, l, c, 14);
             BarMustReject("MINUS_DI.Update(high)", () => da.Update(v, lows[warm], closes[warm]));
             BarMustReject("MINUS_DI.Update(low)", () => da.Update(highs[warm], v, closes[warm]));
             BarMustReject("MINUS_DI.Update(close)", () => da.Update(highs[warm], lows[warm], v));
@@ -1100,8 +1114,8 @@ public static class StreamApiTest
                 da.Update(highs[warm], lows[warm], closes[warm]),
                 db.Update(highs[warm], lows[warm], closes[warm]));
 
-            var ma = core.MA_Open(c, 14, MAType.EMA);
-            var mb = core.MA_Open(c, 14, MAType.EMA);
+            var ma = core.MaOpen(c, 14, MAType.EMA);
+            var mb = core.MaOpen(c, 14, MAType.EMA);
             BarMustReject("MA.Update", () => ma.Update(v));
             BarMustReject("MA.Peek", () => ma.Peek(v));
             StateMustHold("MA", ma.Update(closes[warm]), mb.Update(closes[warm]));
@@ -1109,19 +1123,19 @@ public static class StreamApiTest
             /* Period 1 is the dispatch identity arm: it copies the bar to the
                output and never reaches a sub-stream, so a check delegated to the
                sub would miss it. */
-            var mi = core.MA_Open(c, 1, MAType.SMA);
+            var mi = core.MaOpen(c, 1, MAType.SMA);
             BarMustReject("MA(identity).Update", () => mi.Update(v));
             BarMustReject("MA(identity).Peek", () => mi.Peek(v));
 
-            var va = core.MAVP_Open(c, p, 2, 30, MAType.SMA);
-            var vb = core.MAVP_Open(c, p, 2, 30, MAType.SMA);
+            var va = core.MavpOpen(c, p, 2, 30, MAType.SMA);
+            var vb = core.MavpOpen(c, p, 2, 30, MAType.SMA);
             BarMustReject("MAVP.Update(real)", () => va.Update(v, p[0]));
             BarMustReject("MAVP.Update(period)", () => va.Update(closes[warm], v));
             BarMustReject("MAVP.Peek(period)", () => va.Peek(closes[warm], v));
             StateMustHold("MAVP", va.Update(closes[warm], p[0]), vb.Update(closes[warm], p[0]));
 
-            var ba = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
-            var bb = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
+            var ba = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
+            var bb = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
             BarMustReject("BBANDS.Update", () => ba.Update(v));
             BarMustReject("BBANDS.Peek", () => ba.Peek(v));
             var bav = ba.Update(closes[warm]);
@@ -1129,8 +1143,8 @@ public static class StreamApiTest
             StateMustHold("BBANDS.upper", bav.RealUpperBand, bbv.RealUpperBand);
             StateMustHold("BBANDS.lower", bav.RealLowerBand, bbv.RealLowerBand);
 
-            var ka = core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
-            var kb = core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
+            var ka = core.StochOpen(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
+            var kb = core.StochOpen(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
             BarMustReject("STOCH.Update", () => ka.Update(v, lows[warm], closes[warm]));
             BarMustReject("STOCH.Peek", () => ka.Peek(highs[warm], v, closes[warm]));
             var kav = ka.Update(highs[warm], lows[warm], closes[warm]);
@@ -1138,8 +1152,8 @@ public static class StreamApiTest
             StateMustHold("STOCH.slowK", kav.SlowK, kbv.SlowK);
             StateMustHold("STOCH.slowD", kav.SlowD, kbv.SlowD);
 
-            var ja = core.CDLDOJI_Open(o, h, l, c);
-            var jb = core.CDLDOJI_Open(o, h, l, c);
+            var ja = core.CdldojiOpen(o, h, l, c);
+            var jb = core.CdldojiOpen(o, h, l, c);
             BarMustReject("CDLDOJI.Update(open)",
                 () => ja.Update(v, highs[warm], lows[warm], closes[warm]));
             BarMustReject("CDLDOJI.Peek(close)",
@@ -1156,9 +1170,9 @@ public static class StreamApiTest
            inverted. An infinity is already outside every declared bound. */
         double[] cp = closes[..warm].ToArray();
         OpenMustReject("BBANDS(nbDevUp=NaN)",
-            () => core.BBANDS_Open(cp, 20, double.NaN, 2.0, MAType.SMA));
+            () => core.BbandsOpen(cp, 20, double.NaN, 2.0, MAType.SMA));
         OpenMustReject("BBANDS(nbDevDn=NaN)",
-            () => core.BBANDS_Open(cp, 20, 2.0, double.NaN, MAType.SMA));
+            () => core.BbandsOpen(cp, 20, 2.0, double.NaN, MAType.SMA));
 
         /* Non-vacuity. Literal floors: one derived from the loop above moves with
            it and would let the assertions inside be deleted. */
@@ -1248,8 +1262,8 @@ public static class StreamApiTest
             bars[UfBad] = v;
 
             /* --- the shared step loop --------------------------------------- */
-            var sa = core.SMA_Open(c, 14);
-            var sb = core.SMA_Open(c, 14);
+            var sa = core.SmaOpen(c, 14);
+            var sb = core.SmaOpen(c, 14);
             double[] want = new double[UfBad];
             for (int i = 0; i < UfBad; i++)
             {
@@ -1271,8 +1285,8 @@ public static class StreamApiTest
                 sa.Update(closes[warm + UfN]), sb.Update(closes[warm + UfN]));
 
             /* --- composed, three outputs ------------------------------------ */
-            var ba = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
-            var bb = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
+            var ba = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
+            var bb = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
             var wantB = new (double U, double M, double L)[UfBad];
             for (int i = 0; i < UfBad; i++)
             {
@@ -1310,8 +1324,8 @@ public static class StreamApiTest
             /* --- dispatch, both arms (period 1 is the identity loop) --------- */
             foreach (int period in new[] { 1, 14 })
             {
-                var ma = core.MA_Open(c, period, MAType.SMA);
-                var mb = core.MA_Open(c, period, MAType.SMA);
+                var ma = core.MaOpen(c, period, MAType.SMA);
+                var mb = core.MaOpen(c, period, MAType.SMA);
                 double[] wantM = new double[UfBad];
                 for (int i = 0; i < UfBad; i++)
                 {
@@ -1339,8 +1353,8 @@ public static class StreamApiTest
                 pers[i] = 2.0 + (i % 8);
             }
             pers[UfBad] = v;
-            var va = core.MAVP_Open(c, pp, 2, 30, MAType.SMA);
-            var vb = core.MAVP_Open(c, pp, 2, 30, MAType.SMA);
+            var va = core.MavpOpen(c, pp, 2, 30, MAType.SMA);
+            var vb = core.MavpOpen(c, pp, 2, 30, MAType.SMA);
             double[] wantV = new double[UfBad];
             for (int i = 0; i < UfBad; i++)
             {
@@ -1370,8 +1384,8 @@ public static class StreamApiTest
                 ls[i] = lows[warm + i];
             }
             ls[UfBad] = v;
-            var ja = core.CDLDOJI_Open(o, h, l, c);
-            var jb = core.CDLDOJI_Open(o, h, l, c);
+            var ja = core.CdldojiOpen(o, h, l, c);
+            var jb = core.CdldojiOpen(o, h, l, c);
             int[] wantJ = new int[UfBad];
             for (int i = 0; i < UfBad; i++)
             {
@@ -1399,7 +1413,7 @@ public static class StreamApiTest
            OVERLAPS an input — `Span.Overlaps` sees the partially-shifted case
            Java's reference equality cannot. Plus the zero-bar call, a success
            that changes nothing. */
-        var s2 = core.SMA_Open(c, 14);
+        var s2 = core.SmaOpen(c, 14);
         OutRange before = s2.OutRange;
         double[] tail = new double[UfN];
         for (int i = 0; i < UfN; i++)

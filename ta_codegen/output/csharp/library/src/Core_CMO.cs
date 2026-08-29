@@ -525,7 +525,7 @@ public partial class Core
    /// <summary>A live <c>CMO</c> stream: one value per closed bar, bit-identical to
    /// <c>CMO</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CMO_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.CmoOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -538,7 +538,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CMO_Stream
+   public sealed class CmoStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -549,12 +549,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CMO_Stream( Core core ) { this.core = core; }
+      internal CmoStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CMO</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Cmo</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -562,7 +562,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CMO_Stream( CMO_Stream other )
+      internal CmoStream( CmoStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -574,7 +574,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CMO_Stream other )
+      internal void CopyFrom( CmoStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -602,7 +602,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMO", "update", RetCode.BadParam);
-         core.CMO_StepImpl(this, inReal);
+         core.CmoStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -621,8 +621,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMO", "peek", RetCode.BadParam);
-         CMO_Stream scratch = new CMO_Stream(this);
-         core.CMO_StepImpl(scratch, inReal);
+         CmoStream scratch = new CmoStream(this);
+         core.CmoStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -646,7 +646,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("CMO", "updateAndFill", RetCode.BadParam);
-            core.CMO_StepImpl(this, inReal[i]);
+            core.CmoStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -662,13 +662,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CMO_Stream Clone()
+      public CmoStream Clone()
       {
-         return new CMO_Stream(this);
+         return new CmoStream(this);
       }
    }
 
-   internal void CMO_StepImpl( CMO_Stream sp, double inReal )
+   internal void CmoStepImpl( CmoStream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -696,7 +696,7 @@ public partial class Core
       }
    }
 
-   private RetCode CMO_OpenImpl( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CmoOpenImpl( CmoStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -883,11 +883,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CMO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CMO_Stream CMO_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* CmoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CmoStream CmoOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      CMO_Stream sp = new CMO_Stream(this);
-      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      CmoStream sp = new CmoStream(this);
+      RetCode retCode = CmoOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -896,12 +896,12 @@ public partial class Core
       throw StreamFailure("CMO", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CMO_Open (composition seam). */
-   internal CMO_Stream CMO_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind CmoOpen (composition seam). */
+   internal CmoStream CmoOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      CMO_Stream sp = new CMO_Stream(this);
+      CmoStream sp = new CmoStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = CmoOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -912,11 +912,11 @@ public partial class Core
 
    /// <summary>Open a live <c>CMO</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CMO_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="CmoStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>CMO</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>CMO_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CMO_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CmoOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMO_Lookback"/> for its default and
@@ -928,14 +928,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CMO_Stream CMO_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public CmoStream CmoOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMO open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMO open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return CMO_OpenInternal(inReal, 0, optInTimePeriod);
+      return CmoOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>CMO_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>CmoOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CMO</c> produces over the
@@ -947,7 +947,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CMO_Stream.OutRange"/>.</para>
+   /// <see cref="CmoStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMO_Lookback"/> for its default and
@@ -962,7 +962,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CMO_Stream CMO_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public CmoStream CmoOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMO openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "CMO openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -971,6 +971,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("CMO", "openAndFill", RetCode.BadParam);
       }
-      return CMO_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return CmoOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

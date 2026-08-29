@@ -350,7 +350,7 @@
    /**
     * A live CDLUPSIDEGAP2CROWS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLUPSIDEGAP2CROWS} over the same series.
-    * Open with {@link Core#CDLUPSIDEGAP2CROWS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlupsidegap2crowsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -361,7 +361,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLUPSIDEGAP2CROWS_Stream {
+   public static final class Cdlupsidegap2crowsStream {
       Core core;
       double BodyShortPeriodTotal;
       double BodyLongPeriodTotal;
@@ -389,7 +389,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLUPSIDEGAP2CROWS_Stream( Core core ) { this.core = core; }
+      Cdlupsidegap2crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -403,7 +403,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLUPSIDEGAP2CROWS_Stream( CDLUPSIDEGAP2CROWS_Stream other ) {
+      Cdlupsidegap2crowsStream( Cdlupsidegap2crowsStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -432,7 +432,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLUPSIDEGAP2CROWS_Stream other ) {
+      void copyFrom( Cdlupsidegap2crowsStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -470,7 +470,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLUPSIDEGAP2CROWS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdlupsidegap2crowsStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -487,7 +487,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
-         core.CDLUPSIDEGAP2CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlupsidegap2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -516,7 +516,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLUPSIDEGAP2CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlupsidegap2crowsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -534,14 +534,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
-         CDLUPSIDEGAP2CROWS_Stream scratch = PEEK_SCRATCH.get();
+         Cdlupsidegap2crowsStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLUPSIDEGAP2CROWS_Stream(this);
+            scratch = new Cdlupsidegap2crowsStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLUPSIDEGAP2CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlupsidegap2crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -558,11 +558,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLUPSIDEGAP2CROWS_Stream copy() {
-         return new CDLUPSIDEGAP2CROWS_Stream(this);
+      public Cdlupsidegap2crowsStream copy() {
+         return new Cdlupsidegap2crowsStream(this);
       }
    }
-   void CDLUPSIDEGAP2CROWS_StepImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlupsidegap2crowsStepImpl( Cdlupsidegap2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -614,7 +614,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLUPSIDEGAP2CROWS_OpenImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlupsidegap2crowsOpenImpl( Cdlupsidegap2crowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -762,11 +762,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLUPSIDEGAP2CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlupsidegap2crowsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdlupsidegap2crowsStream cdlupsidegap2crowsOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdlupsidegap2crowsStream sp = new Cdlupsidegap2crowsStream(this);
+      RetCode retCode = cdlupsidegap2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -780,14 +780,14 @@
       }
       throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLUPSIDEGAP2CROWS_Open (composition seam). */
-   CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlupsidegap2crowsOpen (composition seam). */
+   Cdlupsidegap2crowsStream cdlupsidegap2crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
+      Cdlupsidegap2crowsStream sp = new Cdlupsidegap2crowsStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlupsidegap2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -814,7 +814,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdlupsidegap2crowsStream cdlupsidegap2crowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLUPSIDEGAP2CROWS open", "inOpen", inOpen);
       requireHistory("CDLUPSIDEGAP2CROWS open", inOpen.length);
@@ -824,10 +824,10 @@
       requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLUPSIDEGAP2CROWS open", "inClose", inClose.length, inOpen.length);
-      return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlupsidegap2crowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLUPSIDEGAP2CROWS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlupsidegap2crowsOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLUPSIDEGAP2CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -835,9 +835,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLUPSIDEGAP2CROWS_Stream#outRange()}.
+    * {@link Cdlupsidegap2crowsStream#outRange()}.
     */
-   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdlupsidegap2crowsStream cdlupsidegap2crowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLUPSIDEGAP2CROWS openAndFill", "inOpen", inOpen);
       requireHistory("CDLUPSIDEGAP2CROWS openAndFill", inOpen.length);
@@ -854,5 +854,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLUPSIDEGAP2CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlupsidegap2crowsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

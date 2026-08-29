@@ -673,23 +673,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MAMA stream: one value per closed bar, bit-identical to [`Core::MAMA`]
-/// over the same series. Open with [`Core::MAMA_Open`]; dropping the handle
+/// over the same series. Open with [`Core::mama_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAMA_Stream")]
-pub struct MAMA_Stream {
-    state: MAMA_StreamState,
+pub struct MamaStream {
+    state: MamaStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MAMA_Stream {
+impl MamaStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MAMA_StreamState::restore_from`.
+    /// allocating new ones. See `MamaStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -698,7 +698,7 @@ impl MAMA_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MAMA_StreamState {
+struct MamaStreamState {
     optInFastLimit: f64,
     optInSlowLimit: f64,
     period: f64,
@@ -751,7 +751,7 @@ struct MAMA_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MAMA_StreamState {
+impl MamaStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -807,14 +807,13 @@ impl MAMA_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAMA_step_impl(sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
+    fn mama_step_impl(sp: &mut MamaStreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
@@ -1003,11 +1002,11 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// The single whole-history transcription behind [`Core::MAMA_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MAMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MAMA_OpenImpl(
+    /// The single whole-history transcription behind [`Core::mama_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::mama_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn mama_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,
-    ) -> Result<MAMA_Stream, RetCode> {
+    ) -> Result<MamaStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1401,7 +1400,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = MAMA_StreamState {
+        let state = MamaStreamState {
             optInFastLimit,
             optInSlowLimit,
             period,
@@ -1452,18 +1451,18 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(MAMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MamaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MAMA_Open`] (composition seam).
-    pub(crate) fn MAMA_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::mama_open`] (composition seam).
+    pub(crate) fn mama_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64,
-    ) -> Result<(MAMA_Stream, (f64, f64)), RetCode> {
+    ) -> Result<(MamaStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outMAMA = [0.0_f64; 1];
         let mut sink_outFAMA = [0.0_f64; 1];
-        let handle = self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, Some(&mut sink_outFAMA), 0)?;
+        let handle = self.mama_open_impl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, Some(&mut sink_outFAMA), 0)?;
         Ok((handle, (sink_outMAMA[0], sink_outFAMA[0])))
     }
 
@@ -1483,7 +1482,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MAMA_Open(&data, 0.5, 0.05).expect("enough history");
+    /// let (mut s, _last) = core.mama_open(&data, 0.5, 0.05).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1494,11 +1493,11 @@ impl Core {
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_MAMA_Open")]
-    pub fn MAMA_Open(&self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64) -> Result<(MAMA_Stream, (f64, f64)), RetCode> {
-        self.MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit)
+    pub fn mama_open(&self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64) -> Result<(MamaStream, (f64, f64)), RetCode> {
+        self.mama_open_internal(inReal, 0, optInFastLimit, optInSlowLimit)
     }
 
-    /// [`Core::MAMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mama_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MAMA`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1506,12 +1505,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MAMA_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::mama_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MAMA_OpenAndFill")]
-    pub fn MAMA_OpenAndFill(
+    pub fn mama_open_and_fill(
         &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,
-    ) -> Result<(MAMA_Stream, OutRange), RetCode> {
+    ) -> Result<(MamaStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1533,23 +1532,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA)?;
+        let handle = self.mama_open_and_fill_internal(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MAMA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::mama_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MAMA_OpenAndFillInternal(
+    pub(crate) fn mama_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,
-    ) -> Result<MAMA_Stream, RetCode> {
-        self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
+    ) -> Result<MamaStream, RetCode> {
+        self.mama_open_impl(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MAMA_Stream {
+impl MamaStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1568,7 +1567,7 @@ impl MAMA_Stream {
         }
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
-        Core::MAMA_step_impl(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
+        Core::mama_step_impl(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1607,7 +1606,7 @@ impl MAMA_Stream {
                 return Err(RetCode::BadParam);
             }
             let slot_outFAMA = match outFAMA.as_deref_mut() { Some(_s) => &mut _s[i], None => &mut sink_outFAMA };
-            Core::MAMA_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
+            Core::mama_step_impl(&mut self.state, inReal[i], &mut outMAMA[i], slot_outFAMA);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1652,7 +1651,7 @@ impl MAMA_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MAMA_Stream>();
+    _assert_auto::<MamaStream>();
 };
 
 /***************/

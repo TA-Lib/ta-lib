@@ -378,25 +378,25 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLDARKCLOUDCOVER stream: one value per closed bar, bit-identical to [`Core::CDLDARKCLOUDCOVER`]
-/// over the same series. Open with [`Core::CDLDARKCLOUDCOVER_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdldarkcloudcover_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDARKCLOUDCOVER_Stream")]
-pub struct CDLDARKCLOUDCOVER_Stream {
+pub struct CdldarkcloudcoverStream {
     /// The `BodyLong` setting this stream was opened with.
     cs_body_long: CandleSetting,
-    state: CDLDARKCLOUDCOVER_StreamState,
+    state: CdldarkcloudcoverStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLDARKCLOUDCOVER_Stream {
+impl CdldarkcloudcoverStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLDARKCLOUDCOVER_StreamState::restore_from`.
+    /// allocating new ones. See `CdldarkcloudcoverStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_long = src.cs_body_long;
         self.state.restore_from(&src.state);
@@ -406,7 +406,7 @@ impl CDLDARKCLOUDCOVER_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLDARKCLOUDCOVER_StreamState {
+struct CdldarkcloudcoverStreamState {
     optInPenetration: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -420,7 +420,7 @@ struct CDLDARKCLOUDCOVER_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLDARKCLOUDCOVER_StreamState {
+impl CdldarkcloudcoverStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -437,14 +437,13 @@ impl CDLDARKCLOUDCOVER_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLDARKCLOUDCOVER_step_impl(sp: &mut CDLDARKCLOUDCOVER_StreamState, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdldarkcloudcover_step_impl(sp: &mut CdldarkcloudcoverStreamState, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -506,11 +505,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLDARKCLOUDCOVER_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLDARKCLOUDCOVER_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLDARKCLOUDCOVER_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdldarkcloudcover_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdldarkcloudcover_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdldarkcloudcover_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLDARKCLOUDCOVER_Stream, RetCode> {
+    ) -> Result<CdldarkcloudcoverStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -664,7 +663,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLDARKCLOUDCOVER_StreamState {
+        let state = CdldarkcloudcoverStreamState {
             optInPenetration,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -676,17 +675,17 @@ impl Core {
             ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
             ring_BodyLongTrailingIdx_derived,
         };
-        Ok(CDLDARKCLOUDCOVER_Stream { cs_body_long: self.candle_settings.body_long, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdldarkcloudcoverStream { cs_body_long: self.candle_settings.body_long, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLDARKCLOUDCOVER_Open`] (composition seam).
-    pub(crate) fn CDLDARKCLOUDCOVER_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdldarkcloudcover_open`] (composition seam).
+    pub(crate) fn cdldarkcloudcover_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CDLDARKCLOUDCOVER_Stream, i32), RetCode> {
+    ) -> Result<(CdldarkcloudcoverStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLDARKCLOUDCOVER_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdldarkcloudcover_open_impl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -713,7 +712,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLDARKCLOUDCOVER_Open(&open, &high, &low, &close, 0.5).expect("enough history");
+    /// let (mut s, _last) = core.cdldarkcloudcover_open(&open, &high, &low, &close, 0.5).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -723,11 +722,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLDARKCLOUDCOVER_Open")]
-    pub fn CDLDARKCLOUDCOVER_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLDARKCLOUDCOVER_Stream, i32), RetCode> {
-        self.CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn cdldarkcloudcover_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdldarkcloudcoverStream, i32), RetCode> {
+        self.cdldarkcloudcover_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::CDLDARKCLOUDCOVER_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdldarkcloudcover_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLDARKCLOUDCOVER`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -735,12 +734,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLDARKCLOUDCOVER_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdldarkcloudcover_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLDARKCLOUDCOVER_OpenAndFill")]
-    pub fn CDLDARKCLOUDCOVER_OpenAndFill(
+    pub fn cdldarkcloudcover_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outInteger: &mut [i32],
-    ) -> Result<(CDLDARKCLOUDCOVER_Stream, OutRange), RetCode> {
+    ) -> Result<(CdldarkcloudcoverStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -757,23 +756,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLDARKCLOUDCOVER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdldarkcloudcover_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLDARKCLOUDCOVER_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdldarkcloudcover_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLDARKCLOUDCOVER_OpenAndFillInternal(
+    pub(crate) fn cdldarkcloudcover_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLDARKCLOUDCOVER_Stream, RetCode> {
-        self.CDLDARKCLOUDCOVER_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdldarkcloudcoverStream, RetCode> {
+        self.cdldarkcloudcover_open_impl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLDARKCLOUDCOVER_Stream {
+impl CdldarkcloudcoverStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -791,7 +790,7 @@ impl CDLDARKCLOUDCOVER_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLDARKCLOUDCOVER_step_impl(&mut self.state, &self.cs_body_long, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdldarkcloudcover_step_impl(&mut self.state, &self.cs_body_long, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -824,7 +823,7 @@ impl CDLDARKCLOUDCOVER_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLDARKCLOUDCOVER_step_impl(&mut self.state, &self.cs_body_long, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdldarkcloudcover_step_impl(&mut self.state, &self.cs_body_long, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -869,7 +868,7 @@ impl CDLDARKCLOUDCOVER_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLDARKCLOUDCOVER_Stream>();
+    _assert_auto::<CdldarkcloudcoverStream>();
 };
 
 /***************/

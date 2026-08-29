@@ -452,23 +452,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MFI stream: one value per closed bar, bit-identical to [`Core::MFI`]
-/// over the same series. Open with [`Core::MFI_Open`]; dropping the handle
+/// over the same series. Open with [`Core::mfi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MFI_Stream")]
-pub struct MFI_Stream {
-    state: MFI_StreamState,
+pub struct MfiStream {
+    state: MfiStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MFI_Stream {
+impl MfiStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MFI_StreamState::restore_from`.
+    /// allocating new ones. See `MfiStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -477,7 +477,7 @@ impl MFI_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MFI_StreamState {
+struct MfiStreamState {
     optInTimePeriod: i32,
     posSumMF: f64,
     negSumMF: f64,
@@ -491,7 +491,7 @@ struct MFI_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MFI_StreamState {
+impl MfiStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -508,14 +508,13 @@ impl MFI_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MFI_step_impl(sp: &mut MFI_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn mfi_step_impl(sp: &mut MfiStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         let mut tempValue3: f64 = 0.0_f64;
@@ -558,11 +557,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::MFI_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MFI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MFI_OpenImpl(
+    /// The single whole-history transcription behind [`Core::mfi_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::mfi_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn mfi_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<MFI_Stream, RetCode> {
+    ) -> Result<MfiStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -749,7 +748,7 @@ impl Core {
         if cbSize_mflow > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = MFI_StreamState {
+        let state = MfiStreamState {
             optInTimePeriod,
             posSumMF,
             negSumMF,
@@ -761,17 +760,17 @@ impl Core {
             cb_mflow_positive: mflow_positive,
             cb_mflow_negative: mflow_negative,
         };
-        Ok(MFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MFI_Open`] (composition seam).
-    pub(crate) fn MFI_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::mfi_open`] (composition seam).
+    pub(crate) fn mfi_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MFI_Stream, f64), RetCode> {
+    ) -> Result<(MfiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MFI_OpenImpl(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.mfi_open_impl(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -798,7 +797,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MFI_Open(&high, &low, &close, &volume, 14).expect("enough history");
+    /// let (mut s, _last) = core.mfi_open(&high, &low, &close, &volume, 14).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -808,11 +807,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MFI_Open")]
-    pub fn MFI_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(MFI_Stream, f64), RetCode> {
-        self.MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
+    pub fn mfi_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(MfiStream, f64), RetCode> {
+        self.mfi_open_internal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
     }
 
-    /// [`Core::MFI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mfi_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MFI`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -820,12 +819,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MFI_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::mfi_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MFI_OpenAndFill")]
-    pub fn MFI_OpenAndFill(
+    pub fn mfi_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(MFI_Stream, OutRange), RetCode> {
+    ) -> Result<(MfiStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -842,31 +841,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MFI_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.mfi_open_and_fill_internal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MFI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::mfi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MFI_OpenAndFillInternal(
+    pub(crate) fn mfi_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MFI_Stream, RetCode> {
-        self.MFI_OpenImpl(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<MfiStream, RetCode> {
+        self.mfi_open_impl(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MFI_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `MfiStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MFI_PEEK_SCRATCH: std::cell::Cell<Option<Box<MFI_Stream>>> =
+    static MFI_PEEK_SCRATCH: std::cell::Cell<Option<Box<MfiStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MFI_Stream {
+impl MfiStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -884,7 +883,7 @@ impl MFI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MFI_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        Core::mfi_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -917,7 +916,7 @@ impl MFI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MFI_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
+            Core::mfi_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -941,11 +940,12 @@ impl MFI_Stream {
             return Err(RetCode::BadParam);
         }
         MFI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose, inVolume);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outReal: f64 = 0.0_f64;
+            Core::mfi_step_impl(&mut scratch, inHigh, inLow, inClose, inVolume, &mut outReal);
             cell.set(Some(scratch));
-            value
+            Ok(outReal)
         })
     }
 
@@ -965,7 +965,7 @@ impl MFI_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MFI_Stream>();
+    _assert_auto::<MfiStream>();
 };
 
 /***************/

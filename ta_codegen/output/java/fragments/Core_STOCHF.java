@@ -602,7 +602,7 @@
    /**
     * A live STOCHF stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#STOCHF} over the same series.
-    * Open with {@link Core#STOCHF_Open}; there is no close — the handle is
+    * Open with {@link Core#stochfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -613,7 +613,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class STOCHF_Stream {
+   public static final class StochfStream {
       Core core;
       int optInFastK_Period;
       int optInFastD_Period;
@@ -633,11 +633,11 @@
       double cur_outFastK;
       double cur_outFastD;
       Value cachedValue;
-      MA_Stream sub0;
+      MaStream sub0;
       int outRangeBegIdx;
       int outRangeCount;
 
-      STOCHF_Stream( Core core ) { this.core = core; }
+      StochfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -651,7 +651,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      STOCHF_Stream( STOCHF_Stream other ) {
+      StochfStream( StochfStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInFastD_Period = other.optInFastD_Period;
@@ -671,12 +671,12 @@
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
          this.cachedValue = other.cachedValue;
-         this.sub0 = new MA_Stream(other.sub0);
+         this.sub0 = new MaStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( STOCHF_Stream other ) {
+      void copyFrom( StochfStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInFastD_Period = other.optInFastD_Period;
@@ -709,7 +709,7 @@
          this.cur_outFastD = other.cur_outFastD;
          this.cachedValue = other.cachedValue;
          if( this.sub0 == null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
@@ -718,7 +718,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<STOCHF_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<StochfStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -748,7 +748,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
-         core.STOCHF_StepImpl(this, inHigh, inLow, inClose);
+         core.stochfStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
          return this.cachedValue;
@@ -780,7 +780,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                   throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-               core.STOCHF_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
                outFastK[i] = this.cur_outFastK;
                outFastD[i] = this.cur_outFastD;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -803,14 +803,14 @@
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
-         STOCHF_Stream scratch = PEEK_SCRATCH.get();
+         StochfStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new STOCHF_Stream(this);
+            scratch = new StochfStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.STOCHF_StepImpl(scratch, inHigh, inLow, inClose);
+         core.stochfStepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
@@ -827,11 +827,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public STOCHF_Stream copy() {
-         return new STOCHF_Stream(this);
+      public StochfStream copy() {
+         return new StochfStream(this);
       }
    }
-   void STOCHF_StepImpl( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
+   void stochfStepImpl( StochfStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;
@@ -905,7 +905,7 @@
       sp.cur_outFastK = cur_tempBuffer;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHF_OpenImpl( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
+   private RetCode stochfOpenImpl( StochfStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       RetCode retCode;
       double lowest = 0;
@@ -1106,7 +1106,7 @@
        */
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
+      MaStream sub0 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
          /* Something wrong happen? No further data? */
@@ -1166,14 +1166,14 @@
       sp.sub0 = sub0;
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new STOCHF_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
+      sp.cachedValue = new StochfStream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
-   /* STOCHF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   STOCHF_Stream STOCHF_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
+   /* stochfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   StochfStream stochfOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
-      STOCHF_Stream sp = new STOCHF_Stream(this);
-      RetCode retCode = STOCHF_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
+      StochfStream sp = new StochfStream(this);
+      RetCode retCode = stochfOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1187,15 +1187,15 @@
       }
       throw new TaLibArgumentException("STOCHF openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind STOCHF_Open (composition seam). */
-   STOCHF_Stream STOCHF_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   /* Internal startIdx-anchored open behind stochfOpen (composition seam). */
+   StochfStream stochfOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      STOCHF_Stream sp = new STOCHF_Stream(this);
+      StochfStream sp = new StochfStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHF_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
+      RetCode retCode = stochfOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1222,7 +1222,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public STOCHF_Stream STOCHF_Open( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public StochfStream stochfOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       requireArgument("STOCHF open", "inHigh", inHigh);
       requireHistory("STOCHF open", inHigh.length);
@@ -1231,10 +1231,10 @@
       requireArgument("STOCHF open", "inClose", inClose);
       requireHistoryLength("STOCHF open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("STOCHF open", "inClose", inClose.length, inHigh.length);
-      return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      return stochfOpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
-    * {@link Core#STOCHF_Open} that also fills the output array(s) bit-identically
+    * {@link Core#stochfOpen} that also fills the output array(s) bit-identically
     * to {@link Core#STOCHF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1242,9 +1242,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link STOCHF_Stream#outRange()}.
+    * {@link StochfStream#outRange()}.
     */
-   public STOCHF_Stream STOCHF_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
+   public StochfStream stochfOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
       requireArgument("STOCHF openAndFill", "inHigh", inHigh);
       requireHistory("STOCHF openAndFill", inHigh.length);
@@ -1261,5 +1261,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return STOCHF_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      return stochfOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
    }

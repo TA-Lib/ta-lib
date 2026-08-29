@@ -539,23 +539,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live STOCH stream: one value per closed bar, bit-identical to [`Core::STOCH`]
-/// over the same series. Open with [`Core::STOCH_Open`]; dropping the handle
+/// over the same series. Open with [`Core::stoch_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCH_Stream")]
-pub struct STOCH_Stream {
-    state: STOCH_StreamState,
+pub struct StochStream {
+    state: StochStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl STOCH_Stream {
+impl StochStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `STOCH_StreamState::restore_from`.
+    /// allocating new ones. See `StochStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -564,7 +564,7 @@ impl STOCH_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct STOCH_StreamState {
+struct StochStreamState {
     optInFastK_Period: i32,
     optInSlowK_Period: i32,
     optInSlowK_MAType: MAType,
@@ -582,12 +582,12 @@ struct STOCH_StreamState {
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
-    sub0: MA_Stream,
-    sub1: MA_Stream,
+    sub0: MaStream,
+    sub1: MaStream,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl STOCH_StreamState {
+impl StochStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -613,14 +613,13 @@ impl STOCH_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCH_step_impl(sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
+    fn stoch_step_impl(sp: &mut StochStreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outSlowD: f64 = 0.0_f64;
@@ -696,11 +695,11 @@ impl Core {
         Ok(())
     }
 
-    /// The single whole-history transcription behind [`Core::STOCH_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::STOCH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn STOCH_OpenImpl(
+    /// The single whole-history transcription behind [`Core::stoch_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::stoch_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn stoch_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64], outStride: usize,
-    ) -> Result<STOCH_Stream, RetCode> {
+    ) -> Result<StochStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -912,7 +911,7 @@ impl Core {
         // "K-Slow", but often this end up to be shorten to "K".
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
+        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
         let _xr0 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
@@ -927,7 +926,7 @@ impl Core {
         // the already smoothed %K.
         // Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.MA_OpenAndFillInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..])?;
+        let sub1 = self.ma_open_and_fill_internal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..])?;
         retCode = RetCode::Success;
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
@@ -969,7 +968,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = STOCH_StreamState {
+        let state = StochStreamState {
             optInFastK_Period,
             optInSlowK_Period,
             optInSlowK_MAType,
@@ -998,18 +997,18 @@ impl Core {
             let last_sc_outSlowD = sc_outSlowD[*outNBElement - 1];
             outSlowD[0] = last_sc_outSlowD;
         }
-        Ok(STOCH_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(StochStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
-    pub(crate) fn STOCH_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::stoch_open`] (composition seam).
+    pub(crate) fn stoch_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType,
-    ) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
+    ) -> Result<(StochStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outSlowK = [0.0_f64; 1];
         let mut sink_outSlowD = [0.0_f64; 1];
-        let handle = self.STOCH_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSlowK, &mut sink_outSlowD, 0)?;
+        let handle = self.stoch_open_impl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSlowK, &mut sink_outSlowD, 0)?;
         Ok((handle, (sink_outSlowK[0], sink_outSlowD[0])))
     }
 
@@ -1033,7 +1032,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STOCH_Open(&high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA).expect("enough history");
+    /// let (mut s, _last) = core.stoch_open(&high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1044,11 +1043,11 @@ impl Core {
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCH_Open")]
-    pub fn STOCH_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: MAType, optInSlowD_Period: i32, optInSlowD_MAType: MAType) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
-        self.STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
+    pub fn stoch_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: MAType, optInSlowD_Period: i32, optInSlowD_MAType: MAType) -> Result<(StochStream, (f64, f64)), RetCode> {
+        self.stoch_open_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
     }
 
-    /// [`Core::STOCH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stoch_open`] that also fills the output array(s) bit-identically to
     /// [`Core::STOCH`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1056,12 +1055,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::STOCH_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::stoch_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_STOCH_OpenAndFill")]
-    pub fn STOCH_OpenAndFill(
+    pub fn stoch_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outSlowK: &mut [f64], outSlowD: &mut [f64],
-    ) -> Result<(STOCH_Stream, OutRange), RetCode> {
+    ) -> Result<(StochStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1084,31 +1083,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.STOCH_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBegIdx, &mut outNBElement, outSlowK, outSlowD)?;
+        let handle = self.stoch_open_and_fill_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBegIdx, &mut outNBElement, outSlowK, outSlowD)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::STOCH_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::stoch_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn STOCH_OpenAndFillInternal(
+    pub(crate) fn stoch_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64],
-    ) -> Result<STOCH_Stream, RetCode> {
-        self.STOCH_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1)
+    ) -> Result<StochStream, RetCode> {
+        self.stoch_open_impl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `STOCH_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `StochStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static STOCH_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCH_Stream>>> =
+    static STOCH_PEEK_SCRATCH: std::cell::Cell<Option<Box<StochStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl STOCH_Stream {
+impl StochStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1127,7 +1126,7 @@ impl STOCH_Stream {
         }
         let mut outSlowK: f64 = 0.0_f64;
         let mut outSlowD: f64 = 0.0_f64;
-        Core::STOCH_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
+        Core::stoch_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1160,7 +1159,7 @@ impl STOCH_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STOCH_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
+            Core::stoch_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1184,11 +1183,14 @@ impl STOCH_Stream {
             return Err(RetCode::BadParam);
         }
         STOCH_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inHigh, inLow, inClose);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outSlowK: f64 = 0.0_f64;
+            let mut outSlowD: f64 = 0.0_f64;
+            let stepped = Core::stoch_step_impl(&mut scratch, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outSlowK, outSlowD))
         })
     }
 
@@ -1208,7 +1210,7 @@ impl STOCH_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<STOCH_Stream>();
+    _assert_auto::<StochStream>();
 };
 
 /***************/

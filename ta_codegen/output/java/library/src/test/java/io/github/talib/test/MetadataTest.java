@@ -151,6 +151,12 @@ public class MetadataTest {
         check(!Functions.all().isEmpty(), "registry is populated");
         check(Functions.byName("SMA") != null, "byName(SMA)");
         check(Functions.byName("NOSUCHFUNC") == null, "byName of an unknown name is null");
+        // Case-insensitivity is a contract, not an accident (issue #278): once
+        // each backend spells the streaming API in its own idiom, "SMA" is the
+        // only spelling a caller can rely on across all four, so the registry
+        // folds ASCII case (Locale.ROOT) the way C's TA_GetFuncHandle now does too.
+        check(Functions.byName("sma") == Functions.byName("SMA"),
+              "byName is case-insensitive and still reports the canonical instance");
         check(!Functions.groups().isEmpty(), "groups() is populated");
 
         // groups() and the rows are two views of one thing; they cannot drift
@@ -202,13 +208,26 @@ public class MetadataTest {
                   f.name() + ": the name reported back stays canonical");
         }
 
-        check(Functions.byName(null) == null, "byName(null) is null, not a throw");
+        // Caught rather than chained: a regression here throws, and the suite
+        // has to report that as one failed check instead of a stack trace that
+        // stops every probe below from running.
+        boolean nullIsNull;
+        try {
+            nullIsNull = Functions.byName(null) == null;
+        } catch (RuntimeException e) {
+            nullIsNull = false;
+        }
+        check(nullIsNull, "byName(null) answers null, as it did before the fold");
 
         // The fold is ASCII-only and it is only a fold: it must not start
-        // accepting names no function has. 'İ' (U+0130) is the Turkish trap a
-        // locale-aware fold maps onto "sin".
-        check(Functions.byName("S\u0130N") == null, "the fold is ASCII, not locale-aware");
-        check(Functions.byName("s\u0131n") == null, "the fold is ASCII, not locale-aware");
+        // resolving names no function has. These are the spellings a
+        // toUpperCase-based fold widens onto real functions -- Locale.ROOT maps
+        // the dotless 'i' (U+0131) onto 'I' and the long 's' (U+017F) onto 'S',
+        // so "s\u0131n" reaches SIN and "\u017Fma" reaches SMA. U+0130 is the
+        // same trap in the other direction, under a tr_TR default locale.
+        check(Functions.byName("S\u0130N") == null, "U+0130 does not fold onto SIN");
+        check(Functions.byName("s\u0131n") == null, "U+0131 does not fold onto SIN");
+        check(Functions.byName("\u017Fma") == null, "U+017F does not fold onto SMA");
         check(Functions.byName("sma ") == null, "a trailing space is still part of the name");
         check(Functions.byName("ht-dcperiod") == null, "a separator is still part of the name");
         check(Functions.byName("") == null, "the empty name resolves to nothing");

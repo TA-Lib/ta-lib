@@ -585,7 +585,7 @@ public partial class Core
    /// <summary>A live <c>AC</c> stream: one value per closed bar, bit-identical to
    /// <c>AC</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.AC_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.AcOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -598,7 +598,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class AC_Stream
+   public sealed class AcStream
    {
       internal Core core;
       internal int optInFastPeriod;
@@ -621,12 +621,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal AC_Stream( Core core ) { this.core = core; }
+      internal AcStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.AC</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Ac</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -634,7 +634,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal AC_Stream( AC_Stream other )
+      internal AcStream( AcStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -661,7 +661,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AC_Stream other )
+      internal void CopyFrom( AcStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -695,7 +695,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static AC_Stream? peekScratch;
+      [ThreadStatic] private static AcStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -714,7 +714,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AC", "update", RetCode.BadParam);
-         core.AC_StepImpl(this, inHigh, inLow);
+         core.AcStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -734,14 +734,14 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AC", "peek", RetCode.BadParam);
-         AC_Stream? scratch = peekScratch;
+         AcStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new AC_Stream(this);
+            scratch = new AcStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.AC_StepImpl(scratch, inHigh, inLow);
+         core.AcStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -766,7 +766,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("AC", "updateAndFill", RetCode.BadParam);
-            core.AC_StepImpl(this, inHigh[i], inLow[i]);
+            core.AcStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -782,13 +782,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public AC_Stream Clone()
+      public AcStream Clone()
       {
-         return new AC_Stream(this);
+         return new AcStream(this);
       }
    }
 
-   internal void AC_StepImpl( AC_Stream sp, double inHigh, double inLow )
+   internal void AcStepImpl( AcStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double osc = 0.0;
@@ -842,7 +842,7 @@ public partial class Core
       }
    }
 
-   private RetCode AC_OpenImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AcOpenImpl( AcStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1074,11 +1074,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* AC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AC_Stream AC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* AcOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AcStream AcOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1);
+      AcStream sp = new AcStream(this);
+      RetCode retCode = AcOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1087,12 +1087,12 @@ public partial class Core
       throw StreamFailure("AC", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind AC_Open (composition seam). */
-   internal AC_Stream AC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind AcOpen (composition seam). */
+   internal AcStream AcOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      AC_Stream sp = new AC_Stream(this);
+      AcStream sp = new AcStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = AcOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1103,11 +1103,11 @@ public partial class Core
 
    /// <summary>Open a live <c>AC</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="AC_Stream.Value"/> starts at the last history
-   /// bar's value — bit-identical to what <c>AC</c> reports for that bar.</para>
+   /// <para>The handle's <see cref="AcStream.Value"/> starts at the last history bar's
+   /// value — bit-identical to what <c>AC</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>AC_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>AC_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AcOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1124,16 +1124,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public AC_Stream AC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public AcStream AcOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AC open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AC open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("AC", "open", "inLow", inLow.Length, inHigh.Length);
-      return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      return AcOpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
-   /// <summary><c>AC_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>AcOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>AC</c> produces over the
@@ -1145,7 +1145,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="AC_Stream.OutRange"/>.</para>
+   /// <see cref="AcStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1166,7 +1166,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public AC_Stream AC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outReal )
+   public AcStream AcOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AC openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AC openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1177,6 +1177,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("AC", "openAndFill", RetCode.BadParam);
       }
-      return AC_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outReal);
+      return AcOpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outReal);
    }
 }

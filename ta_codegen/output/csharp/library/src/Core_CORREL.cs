@@ -636,7 +636,7 @@ public partial class Core
    /// <summary>A live <c>CORREL</c> stream: one value per closed bar, bit-identical to
    /// <c>CORREL</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CORREL_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.CorrelOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -649,7 +649,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CORREL_Stream
+   public sealed class CorrelStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -675,12 +675,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CORREL_Stream( Core core ) { this.core = core; }
+      internal CorrelStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CORREL</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Correl</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -689,7 +689,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CORREL_Stream( CORREL_Stream other )
+      internal CorrelStream( CorrelStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -718,7 +718,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CORREL_Stream other )
+      internal void CopyFrom( CorrelStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -752,7 +752,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CORREL_Stream? peekScratch;
+      [ThreadStatic] private static CorrelStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -771,7 +771,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("CORREL", "update", RetCode.BadParam);
-         core.CORREL_StepImpl(this, inReal0, inReal1);
+         core.CorrelStepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -791,14 +791,14 @@ public partial class Core
       public double Peek( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("CORREL", "peek", RetCode.BadParam);
-         CORREL_Stream? scratch = peekScratch;
+         CorrelStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CORREL_Stream(this);
+            scratch = new CorrelStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CORREL_StepImpl(scratch, inReal0, inReal1);
+         core.CorrelStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -823,7 +823,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal0[i]) || !double.IsFinite(inReal1[i]) ) throw Core.StreamFailure("CORREL", "updateAndFill", RetCode.BadParam);
-            core.CORREL_StepImpl(this, inReal0[i], inReal1[i]);
+            core.CorrelStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -839,13 +839,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CORREL_Stream Clone()
+      public CorrelStream Clone()
       {
-         return new CORREL_Stream(this);
+         return new CorrelStream(this);
       }
    }
 
-   internal void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
+   internal void CorrelStepImpl( CorrelStream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       double y = 0.0;
@@ -1013,7 +1013,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode CORREL_OpenImpl( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CorrelOpenImpl( CorrelStream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1305,11 +1305,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CORREL_Stream CORREL_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* CorrelOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CorrelStream CorrelOpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      CorrelStream sp = new CorrelStream(this);
+      RetCode retCode = CorrelOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1318,12 +1318,12 @@ public partial class Core
       throw StreamFailure("CORREL", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CORREL_Open (composition seam). */
-   internal CORREL_Stream CORREL_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind CorrelOpen (composition seam). */
+   internal CorrelStream CorrelOpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
    {
-      CORREL_Stream sp = new CORREL_Stream(this);
+      CorrelStream sp = new CorrelStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = CorrelOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1334,11 +1334,11 @@ public partial class Core
 
    /// <summary>Open a live <c>CORREL</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CORREL_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="CorrelStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>CORREL</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>CORREL_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CORREL_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CorrelOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal0">First data series (X) The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second data series (Y) The warm-up history, oldest bar first.</param>
@@ -1351,16 +1351,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CORREL_Stream CORREL_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
+   public CorrelStream CorrelOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("CORREL open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("CORREL", "open", "inReal1", inReal1.Length, inReal0.Length);
-      return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
+      return CorrelOpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
 
-   /// <summary><c>CORREL_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>CorrelOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CORREL</c> produces over
@@ -1372,7 +1372,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CORREL_Stream.OutRange"/>.</para>
+   /// <see cref="CorrelStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal0">First data series (X) The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second data series (Y) The warm-up history, oldest bar first.</param>
@@ -1388,7 +1388,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CORREL_Stream CORREL_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
+   public CorrelStream CorrelOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1399,6 +1399,6 @@ public partial class Core
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          throw StreamFailure("CORREL", "openAndFill", RetCode.BadParam);
       }
-      return CORREL_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, out _, out _, outReal);
+      return CorrelOpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -582,7 +582,7 @@
    /**
     * A live CORREL stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CORREL} over the same series.
-    * Open with {@link Core#CORREL_Open}; there is no close — the handle is
+    * Open with {@link Core#correlOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -593,7 +593,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CORREL_Stream {
+   public static final class CorrelStream {
       Core core;
       int optInTimePeriod;
       double sumXY;
@@ -618,7 +618,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CORREL_Stream( Core core ) { this.core = core; }
+      CorrelStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -632,7 +632,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CORREL_Stream( CORREL_Stream other ) {
+      CorrelStream( CorrelStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumXY = other.sumXY;
@@ -658,7 +658,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CORREL_Stream other ) {
+      void copyFrom( CorrelStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumXY = other.sumXY;
@@ -693,7 +693,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CORREL_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CorrelStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -710,7 +710,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("CORREL update: BadParam", RetCode.BadParam);
-         core.CORREL_StepImpl(this, inReal0, inReal1);
+         core.correlStepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -737,7 +737,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
                throw new TaLibArgumentException("CORREL updateAndFill: BadParam", RetCode.BadParam);
-            core.CORREL_StepImpl(this, inReal0[i], inReal1[i]);
+            core.correlStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -755,14 +755,14 @@
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("CORREL peek: BadParam", RetCode.BadParam);
-         CORREL_Stream scratch = PEEK_SCRATCH.get();
+         CorrelStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CORREL_Stream(this);
+            scratch = new CorrelStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CORREL_StepImpl(scratch, inReal0, inReal1);
+         core.correlStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -779,11 +779,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CORREL_Stream copy() {
-         return new CORREL_Stream(this);
+      public CorrelStream copy() {
+         return new CorrelStream(this);
       }
    }
-   void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
+   void correlStepImpl( CorrelStream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       double y = 0.0;
@@ -950,7 +950,7 @@
       sp.sumY2 -= sp.leavingY;
       sp.today += 1;
    }
-   private RetCode CORREL_OpenImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode correlOpenImpl( CorrelStream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -1239,11 +1239,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CORREL_Stream CORREL_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* correlOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CorrelStream correlOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      CorrelStream sp = new CorrelStream(this);
+      RetCode retCode = correlOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1257,14 +1257,14 @@
       }
       throw new TaLibArgumentException("CORREL openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CORREL_Open (composition seam). */
-   CORREL_Stream CORREL_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind correlOpen (composition seam). */
+   CorrelStream correlOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {
-      CORREL_Stream sp = new CORREL_Stream(this);
+      CorrelStream sp = new CorrelStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = correlOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1291,16 +1291,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CORREL_Stream CORREL_Open( double inReal0[], double inReal1[], int optInTimePeriod )
+   public CorrelStream correlOpen( double inReal0[], double inReal1[], int optInTimePeriod )
    {
       requireArgument("CORREL open", "inReal0", inReal0);
       requireHistory("CORREL open", inReal0.length);
       requireArgument("CORREL open", "inReal1", inReal1);
       requireHistoryLength("CORREL open", "inReal1", inReal1.length, inReal0.length);
-      return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
+      return correlOpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#CORREL_Open} that also fills the output array(s) bit-identically
+    * {@link Core#correlOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CORREL} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1308,9 +1308,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CORREL_Stream#outRange()}.
+    * {@link CorrelStream#outRange()}.
     */
-   public CORREL_Stream CORREL_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
+   public CorrelStream correlOpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("CORREL openAndFill", "inReal0", inReal0);
       requireHistory("CORREL openAndFill", inReal0.length);
@@ -1323,5 +1323,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CORREL_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return correlOpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

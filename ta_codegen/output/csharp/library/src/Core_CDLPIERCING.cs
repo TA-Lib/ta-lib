@@ -372,7 +372,7 @@ public partial class Core
    /// <summary>A live <c>CDLPIERCING</c> stream: one value per closed bar, bit-identical
    /// to <c>CDLPIERCING</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLPIERCING_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdlpiercingOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -385,7 +385,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLPIERCING_Stream
+   public sealed class CdlpiercingStream
    {
       internal Core core;
       internal double[] BodyLongPeriodTotal = [];
@@ -404,12 +404,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLPIERCING_Stream( Core core ) { this.core = core; }
+      internal CdlpiercingStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLPIERCING</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdlpiercing</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -418,7 +418,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLPIERCING_Stream( CDLPIERCING_Stream other )
+      internal CdlpiercingStream( CdlpiercingStream other )
       {
          this.core = other.core;
          this.BodyLongPeriodTotal = new double[other.BodyLongPeriodTotal.Length];
@@ -440,7 +440,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLPIERCING_Stream other )
+      internal void CopyFrom( CdlpiercingStream other )
       {
          this.core = other.core;
          if( this.BodyLongPeriodTotal.Length != other.BodyLongPeriodTotal.Length ) {
@@ -467,7 +467,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLPIERCING_Stream? peekScratch;
+      [ThreadStatic] private static CdlpiercingStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -488,7 +488,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLPIERCING", "update", RetCode.BadParam);
-         core.CDLPIERCING_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlpiercingStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -510,14 +510,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLPIERCING", "peek", RetCode.BadParam);
-         CDLPIERCING_Stream? scratch = peekScratch;
+         CdlpiercingStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLPIERCING_Stream(this);
+            scratch = new CdlpiercingStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLPIERCING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlpiercingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -544,7 +544,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLPIERCING", "updateAndFill", RetCode.BadParam);
-            core.CDLPIERCING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlpiercingStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -560,13 +560,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLPIERCING_Stream Clone()
+      public CdlpiercingStream Clone()
       {
-         return new CDLPIERCING_Stream(this);
+         return new CdlpiercingStream(this);
       }
    }
 
-   internal void CDLPIERCING_StepImpl( CDLPIERCING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlpiercingStepImpl( CdlpiercingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -601,7 +601,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLPIERCING_OpenImpl( CDLPIERCING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlpiercingOpenImpl( CdlpiercingStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -721,11 +721,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLPIERCING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLPIERCING_Stream CDLPIERCING_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlpiercingOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlpiercingStream CdlpiercingOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLPIERCING_Stream sp = new CDLPIERCING_Stream(this);
-      RetCode retCode = CDLPIERCING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlpiercingStream sp = new CdlpiercingStream(this);
+      RetCode retCode = CdlpiercingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -734,12 +734,12 @@ public partial class Core
       throw StreamFailure("CDLPIERCING", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLPIERCING_Open (composition seam). */
-   internal CDLPIERCING_Stream CDLPIERCING_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlpiercingOpen (composition seam). */
+   internal CdlpiercingStream CdlpiercingOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLPIERCING_Stream sp = new CDLPIERCING_Stream(this);
+      CdlpiercingStream sp = new CdlpiercingStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLPIERCING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlpiercingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -750,12 +750,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLPIERCING</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLPIERCING_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdlpiercingStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLPIERCING</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>CDLPIERCING_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLPIERCING_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlpiercingOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -768,7 +768,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLPIERCING_Stream CDLPIERCING_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlpiercingStream CdlpiercingOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLPIERCING open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLPIERCING open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -778,10 +778,10 @@ public partial class Core
       RequireHistoryLength("CDLPIERCING", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLPIERCING", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLPIERCING", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLPIERCING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlpiercingOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLPIERCING_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>CdlpiercingOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLPIERCING</c> produces
@@ -795,7 +795,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLPIERCING_Stream.OutRange"/>.</para>
+   /// <see cref="CdlpiercingStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -812,7 +812,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLPIERCING_Stream CDLPIERCING_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlpiercingStream CdlpiercingOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLPIERCING openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLPIERCING openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -824,6 +824,6 @@ public partial class Core
       RequireHistoryLength("CDLPIERCING", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLPIERCING", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLPIERCING", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLPIERCING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlpiercingOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

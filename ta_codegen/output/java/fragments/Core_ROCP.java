@@ -293,7 +293,7 @@
    /**
     * A live ROCP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ROCP} over the same series.
-    * Open with {@link Core#ROCP_Open}; there is no close — the handle is
+    * Open with {@link Core#rocpOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -304,7 +304,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ROCP_Stream {
+   public static final class RocpStream {
       Core core;
       int optInTimePeriod;
       int ringPos_trailingIdx;
@@ -314,7 +314,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      ROCP_Stream( Core core ) { this.core = core; }
+      RocpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -328,7 +328,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ROCP_Stream( ROCP_Stream other ) {
+      RocpStream( RocpStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -339,7 +339,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ROCP_Stream other ) {
+      void copyFrom( RocpStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -369,7 +369,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCP update: BadParam", RetCode.BadParam);
-         core.ROCP_StepImpl(this, inReal);
+         core.rocpStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -395,7 +395,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("ROCP updateAndFill: BadParam", RetCode.BadParam);
-            core.ROCP_StepImpl(this, inReal[i]);
+            core.rocpStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -411,8 +411,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
-         ROCP_Stream scratch = new ROCP_Stream(this);
-         core.ROCP_StepImpl(scratch, inReal);
+         RocpStream scratch = new RocpStream(this);
+         core.rocpStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -429,11 +429,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ROCP_Stream copy() {
-         return new ROCP_Stream(this);
+      public RocpStream copy() {
+         return new RocpStream(this);
       }
    }
-   void ROCP_StepImpl( ROCP_Stream sp, double inReal )
+   void rocpStepImpl( RocpStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -451,7 +451,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROCP_OpenImpl( ROCP_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode rocpOpenImpl( RocpStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -549,11 +549,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ROCP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ROCP_Stream ROCP_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* rocpOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   RocpStream rocpOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ROCP_Stream sp = new ROCP_Stream(this);
-      RetCode retCode = ROCP_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      RocpStream sp = new RocpStream(this);
+      RetCode retCode = rocpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -567,14 +567,14 @@
       }
       throw new TaLibArgumentException("ROCP openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ROCP_Open (composition seam). */
-   ROCP_Stream ROCP_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind rocpOpen (composition seam). */
+   RocpStream rocpOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      ROCP_Stream sp = new ROCP_Stream(this);
+      RocpStream sp = new RocpStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ROCP_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = rocpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -601,14 +601,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ROCP_Stream ROCP_Open( double inReal[], int optInTimePeriod )
+   public RocpStream rocpOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("ROCP open", "inReal", inReal);
       requireHistory("ROCP open", inReal.length);
-      return ROCP_OpenInternal(inReal, 0, optInTimePeriod);
+      return rocpOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#ROCP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#rocpOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ROCP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -616,9 +616,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ROCP_Stream#outRange()}.
+    * {@link RocpStream#outRange()}.
     */
-   public ROCP_Stream ROCP_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public RocpStream rocpOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("ROCP openAndFill", "inReal", inReal);
       requireHistory("ROCP openAndFill", inReal.length);
@@ -629,5 +629,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ROCP_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return rocpOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -392,7 +392,7 @@ public partial class Core
    /// <summary>A live <c>CDLSHORTLINE</c> stream: one value per closed bar, bit-identical
    /// to <c>CDLSHORTLINE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLSHORTLINE_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdlshortlineOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -405,7 +405,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLSHORTLINE_Stream
+   public sealed class CdlshortlineStream
    {
       internal Core core;
       internal double BodyPeriodTotal;
@@ -426,12 +426,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLSHORTLINE_Stream( Core core ) { this.core = core; }
+      internal CdlshortlineStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLSHORTLINE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdlshortline</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -440,7 +440,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLSHORTLINE_Stream( CDLSHORTLINE_Stream other )
+      internal CdlshortlineStream( CdlshortlineStream other )
       {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
@@ -464,7 +464,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLSHORTLINE_Stream other )
+      internal void CopyFrom( CdlshortlineStream other )
       {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
@@ -493,7 +493,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLSHORTLINE_Stream? peekScratch;
+      [ThreadStatic] private static CdlshortlineStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -514,7 +514,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSHORTLINE", "update", RetCode.BadParam);
-         core.CDLSHORTLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlshortlineStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -536,14 +536,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSHORTLINE", "peek", RetCode.BadParam);
-         CDLSHORTLINE_Stream? scratch = peekScratch;
+         CdlshortlineStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLSHORTLINE_Stream(this);
+            scratch = new CdlshortlineStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLSHORTLINE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlshortlineStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -570,7 +570,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLSHORTLINE", "updateAndFill", RetCode.BadParam);
-            core.CDLSHORTLINE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlshortlineStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -586,13 +586,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLSHORTLINE_Stream Clone()
+      public CdlshortlineStream Clone()
       {
-         return new CDLSHORTLINE_Stream(this);
+         return new CdlshortlineStream(this);
       }
    }
 
-   internal void CDLSHORTLINE_StepImpl( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlshortlineStepImpl( CdlshortlineStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -628,7 +628,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLSHORTLINE_OpenImpl( CDLSHORTLINE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlshortlineOpenImpl( CdlshortlineStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -757,11 +757,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLSHORTLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlshortlineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlshortlineStream CdlshortlineOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
-      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlshortlineStream sp = new CdlshortlineStream(this);
+      RetCode retCode = CdlshortlineOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -770,12 +770,12 @@ public partial class Core
       throw StreamFailure("CDLSHORTLINE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLSHORTLINE_Open (composition seam). */
-   internal CDLSHORTLINE_Stream CDLSHORTLINE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlshortlineOpen (composition seam). */
+   internal CdlshortlineStream CdlshortlineOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
+      CdlshortlineStream sp = new CdlshortlineStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlshortlineOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -786,12 +786,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLSHORTLINE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLSHORTLINE_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdlshortlineStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLSHORTLINE</c> reports
    /// for that bar.</para>
    /// <para>The history must hold at least <c>CDLSHORTLINE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLSHORTLINE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlshortlineOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -804,7 +804,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLSHORTLINE_Stream CDLSHORTLINE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlshortlineStream CdlshortlineOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLSHORTLINE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLSHORTLINE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -814,11 +814,11 @@ public partial class Core
       RequireHistoryLength("CDLSHORTLINE", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLSHORTLINE", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLSHORTLINE", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlshortlineOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLSHORTLINE_Open</c> that also fills the output array(s) over the
-   /// whole history in the same single pass.</summary>
+   /// <summary><c>CdlshortlineOpen</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLSHORTLINE</c> produces
    /// over the same series, so no separate batch call is needed for the warm-up
@@ -831,7 +831,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLSHORTLINE_Stream.OutRange"/>.</para>
+   /// <see cref="CdlshortlineStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -849,7 +849,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlshortlineStream CdlshortlineOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLSHORTLINE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLSHORTLINE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -861,6 +861,6 @@ public partial class Core
       RequireHistoryLength("CDLSHORTLINE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLSHORTLINE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLSHORTLINE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLSHORTLINE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlshortlineOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

@@ -406,9 +406,9 @@ public partial class Core
    /// <summary>A live <c>CDLKICKING</c> stream: one value per closed bar, bit-identical
    /// to <c>CDLKICKING</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLKICKING_Open"/>. There is no close and
-   /// nothing to dispose — the handle is ordinary managed state, and an
-   /// unreferenced handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.CdlkickingOpen"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -419,7 +419,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLKICKING_Stream
+   public sealed class CdlkickingStream
    {
       internal Core core;
       internal double[] ShadowVeryShortPeriodTotal = [];
@@ -446,12 +446,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLKICKING_Stream( Core core ) { this.core = core; }
+      internal CdlkickingStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLKICKING</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdlkicking</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -460,7 +460,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLKICKING_Stream( CDLKICKING_Stream other )
+      internal CdlkickingStream( CdlkickingStream other )
       {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = new double[other.ShadowVeryShortPeriodTotal.Length];
@@ -492,7 +492,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLKICKING_Stream other )
+      internal void CopyFrom( CdlkickingStream other )
       {
          this.core = other.core;
          if( this.ShadowVeryShortPeriodTotal.Length != other.ShadowVeryShortPeriodTotal.Length ) {
@@ -533,7 +533,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLKICKING_Stream? peekScratch;
+      [ThreadStatic] private static CdlkickingStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -554,7 +554,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLKICKING", "update", RetCode.BadParam);
-         core.CDLKICKING_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlkickingStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -576,14 +576,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLKICKING", "peek", RetCode.BadParam);
-         CDLKICKING_Stream? scratch = peekScratch;
+         CdlkickingStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLKICKING_Stream(this);
+            scratch = new CdlkickingStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLKICKING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlkickingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -610,7 +610,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLKICKING", "updateAndFill", RetCode.BadParam);
-            core.CDLKICKING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlkickingStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -626,13 +626,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLKICKING_Stream Clone()
+      public CdlkickingStream Clone()
       {
-         return new CDLKICKING_Stream(this);
+         return new CdlkickingStream(this);
       }
    }
 
-   internal void CDLKICKING_StepImpl( CDLKICKING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlkickingStepImpl( CdlkickingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -677,7 +677,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLKICKING_OpenImpl( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlkickingOpenImpl( CdlkickingStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -830,11 +830,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLKICKING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLKICKING_Stream CDLKICKING_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlkickingOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlkickingStream CdlkickingOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
-      RetCode retCode = CDLKICKING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlkickingStream sp = new CdlkickingStream(this);
+      RetCode retCode = CdlkickingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -843,12 +843,12 @@ public partial class Core
       throw StreamFailure("CDLKICKING", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLKICKING_Open (composition seam). */
-   internal CDLKICKING_Stream CDLKICKING_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlkickingOpen (composition seam). */
+   internal CdlkickingStream CdlkickingOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
+      CdlkickingStream sp = new CdlkickingStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLKICKING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlkickingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -859,12 +859,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLKICKING</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLKICKING_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdlkickingStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLKICKING</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>CDLKICKING_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLKICKING_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlkickingOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -877,7 +877,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLKICKING_Stream CDLKICKING_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlkickingStream CdlkickingOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLKICKING open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLKICKING open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -887,10 +887,10 @@ public partial class Core
       RequireHistoryLength("CDLKICKING", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLKICKING", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLKICKING", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlkickingOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLKICKING_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>CdlkickingOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLKICKING</c> produces
@@ -904,7 +904,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLKICKING_Stream.OutRange"/>.</para>
+   /// <see cref="CdlkickingStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -921,7 +921,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLKICKING_Stream CDLKICKING_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlkickingStream CdlkickingOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLKICKING openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLKICKING openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -933,6 +933,6 @@ public partial class Core
       RequireHistoryLength("CDLKICKING", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLKICKING", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLKICKING", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLKICKING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlkickingOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

@@ -1054,7 +1054,7 @@
    /**
     * A live HT_TRENDMODE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#HT_TRENDMODE} over the same series.
-    * Open with {@link Core#HT_TRENDMODE_Open}; there is no close — the handle is
+    * Open with {@link Core#htTrendmodeOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -1065,7 +1065,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HT_TRENDMODE_Stream {
+   public static final class HtTrendmodeStream {
       Core core;
       double period;
       double periodWMASum;
@@ -1132,7 +1132,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      HT_TRENDMODE_Stream( Core core ) { this.core = core; }
+      HtTrendmodeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -1146,7 +1146,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      HT_TRENDMODE_Stream( HT_TRENDMODE_Stream other ) {
+      HtTrendmodeStream( HtTrendmodeStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1214,7 +1214,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HT_TRENDMODE_Stream other ) {
+      void copyFrom( HtTrendmodeStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1327,7 +1327,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HT_TRENDMODE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<HtTrendmodeStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -1344,7 +1344,7 @@
       public int update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
-         core.HT_TRENDMODE_StepImpl(this, inReal);
+         core.htTrendmodeStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -1370,7 +1370,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("HT_TRENDMODE updateAndFill: BadParam", RetCode.BadParam);
-            core.HT_TRENDMODE_StepImpl(this, inReal[i]);
+            core.htTrendmodeStepImpl(this, inReal[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -1388,14 +1388,14 @@
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
-         HT_TRENDMODE_Stream scratch = PEEK_SCRATCH.get();
+         HtTrendmodeStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new HT_TRENDMODE_Stream(this);
+            scratch = new HtTrendmodeStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_TRENDMODE_StepImpl(scratch, inReal);
+         core.htTrendmodeStepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -1412,11 +1412,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HT_TRENDMODE_Stream copy() {
-         return new HT_TRENDMODE_Stream(this);
+      public HtTrendmodeStream copy() {
+         return new HtTrendmodeStream(this);
       }
    }
-   void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
+   void htTrendmodeStepImpl( HtTrendmodeStream sp, double inReal )
    {
       int i = 0;
       int j = 0;
@@ -1691,7 +1691,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode htTrendmodeOpenImpl( HtTrendmodeStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -2260,11 +2260,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* htTrendmodeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HtTrendmodeStream htTrendmodeOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      HtTrendmodeStream sp = new HtTrendmodeStream(this);
+      RetCode retCode = htTrendmodeOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -2278,14 +2278,14 @@
       }
       throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind HT_TRENDMODE_Open (composition seam). */
-   HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind htTrendmodeOpen (composition seam). */
+   HtTrendmodeStream htTrendmodeOpenInternal( double inReal[], int startIdx )
    {
-      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
+      HtTrendmodeStream sp = new HtTrendmodeStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = htTrendmodeOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -2312,14 +2312,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public HT_TRENDMODE_Stream HT_TRENDMODE_Open( double inReal[] )
+   public HtTrendmodeStream htTrendmodeOpen( double inReal[] )
    {
       requireArgument("HT_TRENDMODE open", "inReal", inReal);
       requireHistory("HT_TRENDMODE open", inReal.length);
-      return HT_TRENDMODE_OpenInternal(inReal, 0);
+      return htTrendmodeOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#HT_TRENDMODE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#htTrendmodeOpen} that also fills the output array(s) bit-identically
     * to {@link Core#HT_TRENDMODE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -2327,9 +2327,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link HT_TRENDMODE_Stream#outRange()}.
+    * {@link HtTrendmodeStream#outRange()}.
     */
-   public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
+   public HtTrendmodeStream htTrendmodeOpenAndFill( double inReal[], int outInteger[] )
    {
       requireArgument("HT_TRENDMODE openAndFill", "inReal", inReal);
       requireHistory("HT_TRENDMODE openAndFill", inReal.length);
@@ -2340,5 +2340,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return HT_TRENDMODE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInteger);
+      return htTrendmodeOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInteger);
    }

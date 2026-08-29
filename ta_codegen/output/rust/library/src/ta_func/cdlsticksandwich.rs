@@ -349,25 +349,25 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLSTICKSANDWICH stream: one value per closed bar, bit-identical to [`Core::CDLSTICKSANDWICH`]
-/// over the same series. Open with [`Core::CDLSTICKSANDWICH_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlsticksandwich_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSTICKSANDWICH_Stream")]
-pub struct CDLSTICKSANDWICH_Stream {
+pub struct CdlsticksandwichStream {
     /// The `Equal` setting this stream was opened with.
     cs_equal: CandleSetting,
-    state: CDLSTICKSANDWICH_StreamState,
+    state: CdlsticksandwichStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLSTICKSANDWICH_Stream {
+impl CdlsticksandwichStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLSTICKSANDWICH_StreamState::restore_from`.
+    /// allocating new ones. See `CdlsticksandwichStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_equal = src.cs_equal;
         self.state.restore_from(&src.state);
@@ -377,7 +377,7 @@ impl CDLSTICKSANDWICH_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLSTICKSANDWICH_StreamState {
+struct CdlsticksandwichStreamState {
     EqualPeriodTotal: f64,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
@@ -394,7 +394,7 @@ struct CDLSTICKSANDWICH_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLSTICKSANDWICH_StreamState {
+impl CdlsticksandwichStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -414,14 +414,13 @@ impl CDLSTICKSANDWICH_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSTICKSANDWICH_step_impl(sp: &mut CDLSTICKSANDWICH_StreamState, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlsticksandwich_step_impl(sp: &mut CdlsticksandwichStreamState, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = cs_equal.range_type as i32;
         #[allow(non_snake_case)]
@@ -487,11 +486,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLSTICKSANDWICH_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLSTICKSANDWICH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLSTICKSANDWICH_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlsticksandwich_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlsticksandwich_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlsticksandwich_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLSTICKSANDWICH_Stream, RetCode> {
+    ) -> Result<CdlsticksandwichStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -639,7 +638,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLSTICKSANDWICH_StreamState {
+        let state = CdlsticksandwichStreamState {
             EqualPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -654,17 +653,17 @@ impl Core {
             ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
             ring_EqualTrailingIdx_derived,
         };
-        Ok(CDLSTICKSANDWICH_Stream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdlsticksandwichStream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLSTICKSANDWICH_Open`] (composition seam).
-    pub(crate) fn CDLSTICKSANDWICH_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlsticksandwich_open`] (composition seam).
+    pub(crate) fn cdlsticksandwich_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLSTICKSANDWICH_Stream, i32), RetCode> {
+    ) -> Result<(CdlsticksandwichStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLSTICKSANDWICH_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlsticksandwich_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -691,7 +690,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLSTICKSANDWICH_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlsticksandwich_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -701,11 +700,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSTICKSANDWICH_Open")]
-    pub fn CDLSTICKSANDWICH_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSTICKSANDWICH_Stream, i32), RetCode> {
-        self.CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlsticksandwich_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlsticksandwichStream, i32), RetCode> {
+        self.cdlsticksandwich_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLSTICKSANDWICH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlsticksandwich_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLSTICKSANDWICH`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -713,12 +712,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLSTICKSANDWICH_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlsticksandwich_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLSTICKSANDWICH_OpenAndFill")]
-    pub fn CDLSTICKSANDWICH_OpenAndFill(
+    pub fn cdlsticksandwich_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLSTICKSANDWICH_Stream, OutRange), RetCode> {
+    ) -> Result<(CdlsticksandwichStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -735,23 +734,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLSTICKSANDWICH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlsticksandwich_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLSTICKSANDWICH_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlsticksandwich_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLSTICKSANDWICH_OpenAndFillInternal(
+    pub(crate) fn cdlsticksandwich_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLSTICKSANDWICH_Stream, RetCode> {
-        self.CDLSTICKSANDWICH_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdlsticksandwichStream, RetCode> {
+        self.cdlsticksandwich_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLSTICKSANDWICH_Stream {
+impl CdlsticksandwichStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -769,7 +768,7 @@ impl CDLSTICKSANDWICH_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLSTICKSANDWICH_step_impl(&mut self.state, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlsticksandwich_step_impl(&mut self.state, &self.cs_equal, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -802,7 +801,7 @@ impl CDLSTICKSANDWICH_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLSTICKSANDWICH_step_impl(&mut self.state, &self.cs_equal, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlsticksandwich_step_impl(&mut self.state, &self.cs_equal, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -847,7 +846,7 @@ impl CDLSTICKSANDWICH_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLSTICKSANDWICH_Stream>();
+    _assert_auto::<CdlsticksandwichStream>();
 };
 
 /***************/

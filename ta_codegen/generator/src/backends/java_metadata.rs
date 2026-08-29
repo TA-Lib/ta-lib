@@ -597,6 +597,7 @@ fn functions_registry(rows: &[FuncRow]) -> String {
         "import java.util.Collections;\n\
          import java.util.LinkedHashMap;\n\
          import java.util.List;\n\
+         import java.util.Locale;\n\
          import java.util.Map;\n\n\
          /**\n\
          \x20* The catalogue of every TA-Lib indicator, for applications that pick a\n\
@@ -627,12 +628,9 @@ fn functions_registry(rows: &[FuncRow]) -> String {
          \x20     return List.copyOf(BY_NAME.values());\n\
          \x20  }\n\n\
          \x20  /**\n\
-         \x20   * One function by name, e.g. {@code \"SMA\"}.\n\
-         \x20   *\n\
-         \x20   * <p>The name is matched under an ASCII case fold, so {@code \"SMA\"},\n\
-         \x20   * {@code \"sma\"} and {@code \"Sma\"} all find the same function. Only the\n\
-         \x20   * match folds: {@link FunctionInfo#name()} still reports the canonical\n\
-         \x20   * upper-case spelling whatever was passed in.\n\
+         \x20   * One function by name, matched case-insensitively, e.g. {@code \"SMA\"},\n\
+         \x20   * {@code \"sma\"} or {@code \"Sma\"}. The metadata itself always reports the\n\
+         \x20   * canonical upper-case spelling regardless of the case looked up.\n\
          \x20   *\n\
          \x20   * @param name the function's name, in any ASCII casing\n\
          \x20   * @return the metadata, or {@code null} if no such function exists\n\
@@ -643,11 +641,13 @@ fn functions_registry(rows: &[FuncRow]) -> String {
          \x20  /**\n\
          \x20   * Upper-cases the ASCII letters of {@code s} and nothing else.\n\
          \x20   *\n\
-         \x20   * <p>Not {@code String.toUpperCase()}, with or without a {@code Locale}:\n\
-         \x20   * in {@code tr_TR} that maps {@code 'i'} to the dotted {@code 'İ'}, so\n\
-         \x20   * {@code byName(\"sin\")} would resolve for most of the world and fail for a\n\
-         \x20   * Turkish user. Function names are invariant ASCII, so the fold that\n\
-         \x20   * matches them is invariant ASCII too.\n\
+         \x20   * <p>Not {@code String.toUpperCase}, with or without a {@code Locale}. The\n\
+         \x20   * platform default has the Turkish-{@code i} bug in the narrowing\n\
+         \x20   * direction; {@link Locale#ROOT} has it in the widening one, mapping the\n\
+         \x20   * dotless {@code '\\u0131'} onto {@code 'I'} and the long {@code 's'}\n\
+         \x20   * ({@code '\\u017F'}) onto {@code 'S'}, so {@code \"s\\u0131n\"} would resolve\n\
+         \x20   * to SIN and {@code \"\\u017Fma\"} to SMA. Function names are invariant ASCII,\n\
+         \x20   * so the fold that matches them is invariant ASCII too.\n\
          \x20   *\n\
          \x20   * <p>Returns {@code s} itself when it holds no lower-case ASCII letter,\n\
          \x20   * which is every call that already passes a canonical name.\n\
@@ -680,13 +680,8 @@ fn functions_registry(rows: &[FuncRow]) -> String {
     }
     s.push_str("      return Collections.unmodifiableMap(m);\n");
     s.push_str("   }\n\n");
-    // Keyed by the folded name so {@code byName} is one lookup rather than a
-    // scan, and derived from the canonical name rather than assuming it is
-    // already upper-case. Two names cannot fold together: `naming::check_name`
-    // rejects a corpus holding two that differ only by case, because they are
-    // the same `input/` directory on a case-insensitive filesystem.
     s.push_str("   private static void put(Map<String, FunctionInfo> m, FunctionInfo f) {\n");
-    s.push_str("      m.put(asciiUpper(f.name()), f);\n");
+    s.push_str("      m.put(f.name(), f);\n");
     s.push_str("   }\n\n");
 
     for row in rows {

@@ -341,7 +341,7 @@ public partial class Core
    /// <summary>A live <c>IMI</c> stream: one value per closed bar, bit-identical to
    /// <c>IMI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.IMI_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.ImiOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -354,7 +354,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class IMI_Stream
+   public sealed class ImiStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -366,12 +366,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal IMI_Stream( Core core ) { this.core = core; }
+      internal ImiStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.IMI</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Imi</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -379,7 +379,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal IMI_Stream( IMI_Stream other )
+      internal ImiStream( ImiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -394,7 +394,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( IMI_Stream other )
+      internal void CopyFrom( ImiStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -414,7 +414,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static IMI_Stream? peekScratch;
+      [ThreadStatic] private static ImiStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -433,7 +433,7 @@ public partial class Core
       public double Update( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("IMI", "update", RetCode.BadParam);
-         core.IMI_StepImpl(this, inOpen, inClose);
+         core.ImiStepImpl(this, inOpen, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -453,14 +453,14 @@ public partial class Core
       public double Peek( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("IMI", "peek", RetCode.BadParam);
-         IMI_Stream? scratch = peekScratch;
+         ImiStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new IMI_Stream(this);
+            scratch = new ImiStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.IMI_StepImpl(scratch, inOpen, inClose);
+         core.ImiStepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -485,7 +485,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("IMI", "updateAndFill", RetCode.BadParam);
-            core.IMI_StepImpl(this, inOpen[i], inClose[i]);
+            core.ImiStepImpl(this, inOpen[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -501,13 +501,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public IMI_Stream Clone()
+      public ImiStream Clone()
       {
-         return new IMI_Stream(this);
+         return new ImiStream(this);
       }
    }
 
-   internal void IMI_StepImpl( IMI_Stream sp, double inOpen, double inClose )
+   internal void ImiStepImpl( ImiStream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;
@@ -538,7 +538,7 @@ public partial class Core
       }
    }
 
-   private RetCode IMI_OpenImpl( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ImiOpenImpl( ImiStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -617,11 +617,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal IMI_Stream IMI_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* ImiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal ImiStream ImiOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      ImiStream sp = new ImiStream(this);
+      RetCode retCode = ImiOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -630,12 +630,12 @@ public partial class Core
       throw StreamFailure("IMI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind IMI_Open (composition seam). */
-   internal IMI_Stream IMI_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind ImiOpen (composition seam). */
+   internal ImiStream ImiOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      IMI_Stream sp = new IMI_Stream(this);
+      ImiStream sp = new ImiStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = ImiOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -646,11 +646,11 @@ public partial class Core
 
    /// <summary>Open a live <c>IMI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="IMI_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="ImiStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>IMI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>IMI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>IMI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>ImiOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
@@ -663,16 +663,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public IMI_Stream IMI_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public ImiStream ImiOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("IMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("IMI", "open", "inClose", inClose.Length, inOpen.Length);
-      return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
+      return ImiOpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>IMI_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>ImiOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>IMI</c> produces over the
@@ -684,7 +684,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="IMI_Stream.OutRange"/>.</para>
+   /// <see cref="ImiStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
@@ -700,7 +700,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public IMI_Stream IMI_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public ImiStream ImiOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -711,6 +711,6 @@ public partial class Core
       if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("IMI", "openAndFill", RetCode.BadParam);
       }
-      return IMI_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return ImiOpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -844,7 +844,7 @@
    /**
     * A live SAREXT stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SAREXT} over the same series.
-    * Open with {@link Core#SAREXT_Open}; there is no close — the handle is
+    * Open with {@link Core#sarextOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -855,7 +855,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SAREXT_Stream {
+   public static final class SarextStream {
       Core core;
       double optInStartValue;
       double optInOffsetOnReverse;
@@ -876,7 +876,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      SAREXT_Stream( Core core ) { this.core = core; }
+      SarextStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -890,7 +890,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SAREXT_Stream( SAREXT_Stream other ) {
+      SarextStream( SarextStream other ) {
          this.core = other.core;
          this.optInStartValue = other.optInStartValue;
          this.optInOffsetOnReverse = other.optInOffsetOnReverse;
@@ -912,7 +912,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SAREXT_Stream other ) {
+      void copyFrom( SarextStream other ) {
          this.core = other.core;
          this.optInStartValue = other.optInStartValue;
          this.optInOffsetOnReverse = other.optInOffsetOnReverse;
@@ -949,7 +949,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
-         core.SAREXT_StepImpl(this, inHigh, inLow);
+         core.sarextStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -976,7 +976,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("SAREXT updateAndFill: BadParam", RetCode.BadParam);
-            core.SAREXT_StepImpl(this, inHigh[i], inLow[i]);
+            core.sarextStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -992,8 +992,8 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
-         SAREXT_Stream scratch = new SAREXT_Stream(this);
-         core.SAREXT_StepImpl(scratch, inHigh, inLow);
+         SarextStream scratch = new SarextStream(this);
+         core.sarextStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -1010,11 +1010,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SAREXT_Stream copy() {
-         return new SAREXT_Stream(this);
+      public SarextStream copy() {
+         return new SarextStream(this);
       }
    }
-   void SAREXT_StepImpl( SAREXT_Stream sp, double inHigh, double inLow )
+   void sarextStepImpl( SarextStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;
@@ -1138,7 +1138,7 @@
          }
       }
    }
-   private RetCode SAREXT_OpenImpl( SAREXT_Stream sp, double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode sarextOpenImpl( SarextStream sp, double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       RetCode retCode;
       int isLong = 0;
@@ -1498,11 +1498,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SAREXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SAREXT_Stream SAREXT_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* sarextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SarextStream sarextOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SAREXT_Stream sp = new SAREXT_Stream(this);
-      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1);
+      SarextStream sp = new SarextStream(this);
+      RetCode retCode = sarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1516,14 +1516,14 @@
       }
       throw new TaLibArgumentException("SAREXT openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SAREXT_Open (composition seam). */
-   SAREXT_Stream SAREXT_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   /* Internal startIdx-anchored open behind sarextOpen (composition seam). */
+   SarextStream sarextOpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      SAREXT_Stream sp = new SAREXT_Stream(this);
+      SarextStream sp = new SarextStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = sarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1550,16 +1550,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SAREXT_Stream SAREXT_Open( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   public SarextStream sarextOpen( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       requireArgument("SAREXT open", "inHigh", inHigh);
       requireHistory("SAREXT open", inHigh.length);
       requireArgument("SAREXT open", "inLow", inLow);
       requireHistoryLength("SAREXT open", "inLow", inLow.length, inHigh.length);
-      return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+      return sarextOpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
    /**
-    * {@link Core#SAREXT_Open} that also fills the output array(s) bit-identically
+    * {@link Core#sarextOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SAREXT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1567,9 +1567,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SAREXT_Stream#outRange()}.
+    * {@link SarextStream#outRange()}.
     */
-   public SAREXT_Stream SAREXT_OpenAndFill( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double outReal[] )
+   public SarextStream sarextOpenAndFill( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double outReal[] )
    {
       requireArgument("SAREXT openAndFill", "inHigh", inHigh);
       requireHistory("SAREXT openAndFill", inHigh.length);
@@ -1582,5 +1582,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SAREXT_OpenAndFillInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      return sarextOpenAndFillInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
    }

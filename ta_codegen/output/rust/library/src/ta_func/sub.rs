@@ -214,23 +214,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live SUB stream: one value per closed bar, bit-identical to [`Core::SUB`]
-/// over the same series. Open with [`Core::SUB_Open`]; dropping the handle
+/// over the same series. Open with [`Core::sub_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SUB_Stream")]
-pub struct SUB_Stream {
-    state: SUB_StreamState,
+pub struct SubStream {
+    state: SubStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl SUB_Stream {
+impl SubStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `SUB_StreamState::restore_from`.
+    /// allocating new ones. See `SubStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -239,33 +239,32 @@ impl SUB_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SUB_StreamState {
+struct SubStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl SUB_StreamState {
+impl SubStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SUB_step_impl(sp: &mut SUB_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn sub_step_impl(sp: &mut SubStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 - inReal1;
     }
 
-    /// The single whole-history transcription behind [`Core::SUB_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::SUB_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SUB_OpenImpl(
+    /// The single whole-history transcription behind [`Core::sub_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::sub_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn sub_open_impl(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<SUB_Stream, RetCode> {
+    ) -> Result<SubStream, RetCode> {
         if inReal0.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -300,19 +299,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = SUB_StreamState {
+        let state = SubStreamState {
         };
-        Ok(SUB_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(SubStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::SUB_Open`] (composition seam).
-    pub(crate) fn SUB_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::sub_open`] (composition seam).
+    pub(crate) fn sub_open_internal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(SUB_Stream, f64), RetCode> {
+    ) -> Result<(SubStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.SUB_OpenImpl(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.sub_open_impl(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -335,7 +334,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.SUB_Open(&data0, &data1).expect("enough history");
+    /// let (mut s, _last) = core.sub_open(&data0, &data1).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 101.3).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -345,11 +344,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SUB_Open")]
-    pub fn SUB_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(SUB_Stream, f64), RetCode> {
-        self.SUB_OpenInternal(inReal0, inReal1, 0)
+    pub fn sub_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(SubStream, f64), RetCode> {
+        self.sub_open_internal(inReal0, inReal1, 0)
     }
 
-    /// [`Core::SUB_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::sub_open`] that also fills the output array(s) bit-identically to
     /// [`Core::SUB`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -357,12 +356,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::SUB_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::sub_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_SUB_OpenAndFill")]
-    pub fn SUB_OpenAndFill(
+    pub fn sub_open_and_fill(
         &self, inReal0: &[f64], inReal1: &[f64], outReal: &mut [f64],
-    ) -> Result<(SUB_Stream, OutRange), RetCode> {
+    ) -> Result<(SubStream, OutRange), RetCode> {
         if inReal0.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -379,23 +378,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SUB_OpenAndFillInternal(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.sub_open_and_fill_internal(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::SUB_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::sub_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn SUB_OpenAndFillInternal(
+    pub(crate) fn sub_open_and_fill_internal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SUB_Stream, RetCode> {
-        self.SUB_OpenImpl(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<SubStream, RetCode> {
+        self.sub_open_impl(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SUB_Stream {
+impl SubStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -413,7 +412,7 @@ impl SUB_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::SUB_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
+        Core::sub_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -446,7 +445,7 @@ impl SUB_Stream {
             if !inReal0[i].is_finite() || !inReal1[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::SUB_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
+            Core::sub_step_impl(&mut self.state, inReal0[i], inReal1[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -489,7 +488,7 @@ impl SUB_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SUB_Stream>();
+    _assert_auto::<SubStream>();
 };
 
 /***************/

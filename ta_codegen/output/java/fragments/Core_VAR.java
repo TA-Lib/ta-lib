@@ -481,7 +481,7 @@
    /**
     * A live VAR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#VAR} over the same series.
-    * Open with {@link Core#VAR_Open}; there is no close — the handle is
+    * Open with {@link Core#varOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -492,7 +492,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class VAR_Stream {
+   public static final class VarStream {
       Core core;
       int optInTimePeriod;
       double optInNbDev;
@@ -512,7 +512,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      VAR_Stream( Core core ) { this.core = core; }
+      VarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -526,7 +526,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      VAR_Stream( VAR_Stream other ) {
+      VarStream( VarStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -547,7 +547,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( VAR_Stream other ) {
+      void copyFrom( VarStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -587,7 +587,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("VAR update: BadParam", RetCode.BadParam);
-         core.VAR_StepImpl(this, inReal);
+         core.varStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -613,7 +613,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("VAR updateAndFill: BadParam", RetCode.BadParam);
-            core.VAR_StepImpl(this, inReal[i]);
+            core.varStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -629,8 +629,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("VAR peek: BadParam", RetCode.BadParam);
-         VAR_Stream scratch = new VAR_Stream(this);
-         core.VAR_StepImpl(scratch, inReal);
+         VarStream scratch = new VarStream(this);
+         core.varStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -647,11 +647,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public VAR_Stream copy() {
-         return new VAR_Stream(this);
+      public VarStream copy() {
+         return new VarStream(this);
       }
    }
-   void VAR_StepImpl( VAR_Stream sp, double inReal )
+   void varStepImpl( VarStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;
@@ -772,7 +772,7 @@
       sp.cur_outReal = variance;
       sp.i += 1;
    }
-   private RetCode VAR_OpenImpl( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode varOpenImpl( VarStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double tempReal = 0;
       double shift = 0;
@@ -990,11 +990,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* VAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   VAR_Stream VAR_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* varOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   VarStream varOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
+      VarStream sp = new VarStream(this);
+      RetCode retCode = varOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1008,14 +1008,14 @@
       }
       throw new TaLibArgumentException("VAR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind VAR_Open (composition seam). */
-   VAR_Stream VAR_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   /* Internal startIdx-anchored open behind varOpen (composition seam). */
+   VarStream varOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
-      VAR_Stream sp = new VAR_Stream(this);
+      VarStream sp = new VarStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = varOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1042,14 +1042,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public VAR_Stream VAR_Open( double inReal[], int optInTimePeriod, double optInNbDev )
+   public VarStream varOpen( double inReal[], int optInTimePeriod, double optInNbDev )
    {
       requireArgument("VAR open", "inReal", inReal);
       requireHistory("VAR open", inReal.length);
-      return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+      return varOpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
-    * {@link Core#VAR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#varOpen} that also fills the output array(s) bit-identically
     * to {@link Core#VAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1057,9 +1057,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link VAR_Stream#outRange()}.
+    * {@link VarStream#outRange()}.
     */
-   public VAR_Stream VAR_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
+   public VarStream varOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
       requireArgument("VAR openAndFill", "inReal", inReal);
       requireHistory("VAR openAndFill", inReal.length);
@@ -1070,5 +1070,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return VAR_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      return varOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
    }

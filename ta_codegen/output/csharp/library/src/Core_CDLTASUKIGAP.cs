@@ -377,7 +377,7 @@ public partial class Core
    /// <summary>A live <c>CDLTASUKIGAP</c> stream: one value per closed bar, bit-identical
    /// to <c>CDLTASUKIGAP</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLTASUKIGAP_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.CdltasukigapOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -390,7 +390,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLTASUKIGAP_Stream
+   public sealed class CdltasukigapStream
    {
       internal Core core;
       internal double NearPeriodTotal;
@@ -411,12 +411,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLTASUKIGAP_Stream( Core core ) { this.core = core; }
+      internal CdltasukigapStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLTASUKIGAP</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdltasukigap</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -425,7 +425,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLTASUKIGAP_Stream( CDLTASUKIGAP_Stream other )
+      internal CdltasukigapStream( CdltasukigapStream other )
       {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
@@ -448,7 +448,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLTASUKIGAP_Stream other )
+      internal void CopyFrom( CdltasukigapStream other )
       {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
@@ -492,7 +492,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTASUKIGAP", "update", RetCode.BadParam);
-         core.CDLTASUKIGAP_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdltasukigapStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -514,8 +514,8 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTASUKIGAP", "peek", RetCode.BadParam);
-         CDLTASUKIGAP_Stream scratch = new CDLTASUKIGAP_Stream(this);
-         core.CDLTASUKIGAP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdltasukigapStream scratch = new CdltasukigapStream(this);
+         core.CdltasukigapStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -542,7 +542,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLTASUKIGAP", "updateAndFill", RetCode.BadParam);
-            core.CDLTASUKIGAP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdltasukigapStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -558,13 +558,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLTASUKIGAP_Stream Clone()
+      public CdltasukigapStream Clone()
       {
-         return new CDLTASUKIGAP_Stream(this);
+         return new CdltasukigapStream(this);
       }
    }
 
-   internal void CDLTASUKIGAP_StepImpl( CDLTASUKIGAP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdltasukigapStepImpl( CdltasukigapStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -605,7 +605,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLTASUKIGAP_OpenImpl( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdltasukigapOpenImpl( CdltasukigapStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -731,11 +731,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLTASUKIGAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdltasukigapOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdltasukigapStream CdltasukigapOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdltasukigapStream sp = new CdltasukigapStream(this);
+      RetCode retCode = CdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -744,12 +744,12 @@ public partial class Core
       throw StreamFailure("CDLTASUKIGAP", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLTASUKIGAP_Open (composition seam). */
-   internal CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdltasukigapOpen (composition seam). */
+   internal CdltasukigapStream CdltasukigapOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
+      CdltasukigapStream sp = new CdltasukigapStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -760,12 +760,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLTASUKIGAP</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLTASUKIGAP_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdltasukigapStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLTASUKIGAP</c> reports
    /// for that bar.</para>
    /// <para>The history must hold at least <c>CDLTASUKIGAP_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLTASUKIGAP_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdltasukigapOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -778,7 +778,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLTASUKIGAP_Stream CDLTASUKIGAP_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdltasukigapStream CdltasukigapOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTASUKIGAP open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTASUKIGAP open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -788,11 +788,11 @@ public partial class Core
       RequireHistoryLength("CDLTASUKIGAP", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLTASUKIGAP", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLTASUKIGAP", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdltasukigapOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLTASUKIGAP_Open</c> that also fills the output array(s) over the
-   /// whole history in the same single pass.</summary>
+   /// <summary><c>CdltasukigapOpen</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLTASUKIGAP</c> produces
    /// over the same series, so no separate batch call is needed for the warm-up
@@ -805,7 +805,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLTASUKIGAP_Stream.OutRange"/>.</para>
+   /// <see cref="CdltasukigapStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -823,7 +823,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdltasukigapStream CdltasukigapOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTASUKIGAP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTASUKIGAP openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -835,6 +835,6 @@ public partial class Core
       RequireHistoryLength("CDLTASUKIGAP", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLTASUKIGAP", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLTASUKIGAP", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLTASUKIGAP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdltasukigapOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

@@ -591,7 +591,7 @@ public partial class Core
    /// <summary>A live <c>NATR</c> stream: one value per closed bar, bit-identical to
    /// <c>NATR</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.NATR_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.NatrOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -604,7 +604,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class NATR_Stream
+   public sealed class NatrStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -614,12 +614,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal NATR_Stream( Core core ) { this.core = core; }
+      internal NatrStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.NATR</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Natr</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -627,7 +627,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal NATR_Stream( NATR_Stream other )
+      internal NatrStream( NatrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -638,7 +638,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( NATR_Stream other )
+      internal void CopyFrom( NatrStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -667,7 +667,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("NATR", "update", RetCode.BadParam);
-         core.NATR_StepImpl(this, inHigh, inLow, inClose);
+         core.NatrStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -688,8 +688,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("NATR", "peek", RetCode.BadParam);
-         NATR_Stream scratch = new NATR_Stream(this);
-         core.NATR_StepImpl(scratch, inHigh, inLow, inClose);
+         NatrStream scratch = new NatrStream(this);
+         core.NatrStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -715,7 +715,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("NATR", "updateAndFill", RetCode.BadParam);
-            core.NATR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.NatrStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -731,13 +731,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public NATR_Stream Clone()
+      public NatrStream Clone()
       {
-         return new NATR_Stream(this);
+         return new NatrStream(this);
       }
    }
 
-   internal void NATR_StepImpl( NATR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void NatrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
    {
       double tempValue = 0.0;
       double val2 = 0.0;
@@ -777,7 +777,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode NATR_OpenImpl( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode NatrOpenImpl( NatrStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1000,11 +1000,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* NATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal NATR_Stream NATR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* NatrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal NatrStream NatrOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      NATR_Stream sp = new NATR_Stream(this);
-      RetCode retCode = NATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      NatrStream sp = new NatrStream(this);
+      RetCode retCode = NatrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1013,12 +1013,12 @@ public partial class Core
       throw StreamFailure("NATR", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind NATR_Open (composition seam). */
-   internal NATR_Stream NATR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind NatrOpen (composition seam). */
+   internal NatrStream NatrOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
-      NATR_Stream sp = new NATR_Stream(this);
+      NatrStream sp = new NatrStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = NATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = NatrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1029,11 +1029,11 @@ public partial class Core
 
    /// <summary>Open a live <c>NATR</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="NATR_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="NatrStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>NATR</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>NATR_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>NATR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>NatrOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1047,7 +1047,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public NATR_Stream NATR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
+   public NatrStream NatrOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "NATR open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "NATR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1055,11 +1055,11 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("NATR open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("NATR", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("NATR", "open", "inClose", inClose.Length, inHigh.Length);
-      return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return NatrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
-   /// <summary><c>NATR_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>NatrOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>NATR</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -1070,7 +1070,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="NATR_Stream.OutRange"/>.</para>
+   /// <see cref="NatrStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1087,7 +1087,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public NATR_Stream NATR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
+   public NatrStream NatrOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "NATR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "NATR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1100,6 +1100,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("NATR", "openAndFill", RetCode.BadParam);
       }
-      return NATR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
+      return NatrOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

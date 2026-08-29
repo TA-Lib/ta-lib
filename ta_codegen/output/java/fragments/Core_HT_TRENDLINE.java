@@ -855,7 +855,7 @@
    /**
     * A live HT_TRENDLINE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#HT_TRENDLINE} over the same series.
-    * Open with {@link Core#HT_TRENDLINE_Open}; there is no close — the handle is
+    * Open with {@link Core#htTrendlineOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -866,7 +866,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HT_TRENDLINE_Stream {
+   public static final class HtTrendlineStream {
       Core core;
       double period;
       double periodWMASum;
@@ -923,7 +923,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      HT_TRENDLINE_Stream( Core core ) { this.core = core; }
+      HtTrendlineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -937,7 +937,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      HT_TRENDLINE_Stream( HT_TRENDLINE_Stream other ) {
+      HtTrendlineStream( HtTrendlineStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -995,7 +995,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HT_TRENDLINE_Stream other ) {
+      void copyFrom( HtTrendlineStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1094,7 +1094,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HT_TRENDLINE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<HtTrendlineStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -1111,7 +1111,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
-         core.HT_TRENDLINE_StepImpl(this, inReal);
+         core.htTrendlineStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -1137,7 +1137,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("HT_TRENDLINE updateAndFill: BadParam", RetCode.BadParam);
-            core.HT_TRENDLINE_StepImpl(this, inReal[i]);
+            core.htTrendlineStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -1155,14 +1155,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
-         HT_TRENDLINE_Stream scratch = PEEK_SCRATCH.get();
+         HtTrendlineStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new HT_TRENDLINE_Stream(this);
+            scratch = new HtTrendlineStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_TRENDLINE_StepImpl(scratch, inReal);
+         core.htTrendlineStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1179,11 +1179,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HT_TRENDLINE_Stream copy() {
-         return new HT_TRENDLINE_Stream(this);
+      public HtTrendlineStream copy() {
+         return new HtTrendlineStream(this);
       }
    }
-   void HT_TRENDLINE_StepImpl( HT_TRENDLINE_Stream sp, double inReal )
+   void htTrendlineStepImpl( HtTrendlineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -1377,7 +1377,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode htTrendlineOpenImpl( HtTrendlineStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1825,11 +1825,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* htTrendlineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HtTrendlineStream htTrendlineOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      HtTrendlineStream sp = new HtTrendlineStream(this);
+      RetCode retCode = htTrendlineOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1843,14 +1843,14 @@
       }
       throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind HT_TRENDLINE_Open (composition seam). */
-   HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind htTrendlineOpen (composition seam). */
+   HtTrendlineStream htTrendlineOpenInternal( double inReal[], int startIdx )
    {
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
+      HtTrendlineStream sp = new HtTrendlineStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = htTrendlineOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1877,14 +1877,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public HT_TRENDLINE_Stream HT_TRENDLINE_Open( double inReal[] )
+   public HtTrendlineStream htTrendlineOpen( double inReal[] )
    {
       requireArgument("HT_TRENDLINE open", "inReal", inReal);
       requireHistory("HT_TRENDLINE open", inReal.length);
-      return HT_TRENDLINE_OpenInternal(inReal, 0);
+      return htTrendlineOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#HT_TRENDLINE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#htTrendlineOpen} that also fills the output array(s) bit-identically
     * to {@link Core#HT_TRENDLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1892,9 +1892,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link HT_TRENDLINE_Stream#outRange()}.
+    * {@link HtTrendlineStream#outRange()}.
     */
-   public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double inReal[], double outReal[] )
+   public HtTrendlineStream htTrendlineOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("HT_TRENDLINE openAndFill", "inReal", inReal);
       requireHistory("HT_TRENDLINE openAndFill", inReal.length);
@@ -1905,5 +1905,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return HT_TRENDLINE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return htTrendlineOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

@@ -206,23 +206,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live TANH stream: one value per closed bar, bit-identical to [`Core::TANH`]
-/// over the same series. Open with [`Core::TANH_Open`]; dropping the handle
+/// over the same series. Open with [`Core::tanh_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TANH_Stream")]
-pub struct TANH_Stream {
-    state: TANH_StreamState,
+pub struct TanhStream {
+    state: TanhStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl TANH_Stream {
+impl TanhStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `TANH_StreamState::restore_from`.
+    /// allocating new ones. See `TanhStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -231,33 +231,32 @@ impl TANH_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TANH_StreamState {
+struct TanhStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl TANH_StreamState {
+impl TanhStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn TANH_step_impl(sp: &mut TANH_StreamState, inReal: f64, outReal: &mut f64) {
+    fn tanh_step_impl(sp: &mut TanhStreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).tanh();
     }
 
-    /// The single whole-history transcription behind [`Core::TANH_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::TANH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TANH_OpenImpl(
+    /// The single whole-history transcription behind [`Core::tanh_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::tanh_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn tanh_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<TANH_Stream, RetCode> {
+    ) -> Result<TanhStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -288,19 +287,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TANH_StreamState {
+        let state = TanhStreamState {
         };
-        Ok(TANH_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(TanhStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TANH_Open`] (composition seam).
-    pub(crate) fn TANH_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::tanh_open`] (composition seam).
+    pub(crate) fn tanh_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(TANH_Stream, f64), RetCode> {
+    ) -> Result<(TanhStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TANH_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.tanh_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -320,7 +319,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.TANH_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.tanh_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(0.42).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -330,11 +329,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TANH_Open")]
-    pub fn TANH_Open(&self, inReal: &[f64], ) -> Result<(TANH_Stream, f64), RetCode> {
-        self.TANH_OpenInternal(inReal, 0)
+    pub fn tanh_open(&self, inReal: &[f64], ) -> Result<(TanhStream, f64), RetCode> {
+        self.tanh_open_internal(inReal, 0)
     }
 
-    /// [`Core::TANH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::tanh_open`] that also fills the output array(s) bit-identically to
     /// [`Core::TANH`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -342,12 +341,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::TANH_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::tanh_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_TANH_OpenAndFill")]
-    pub fn TANH_OpenAndFill(
+    pub fn tanh_open_and_fill(
         &self, inReal: &[f64], outReal: &mut [f64],
-    ) -> Result<(TANH_Stream, OutRange), RetCode> {
+    ) -> Result<(TanhStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -361,23 +360,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TANH_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.tanh_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::TANH_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::tanh_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn TANH_OpenAndFillInternal(
+    pub(crate) fn tanh_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TANH_Stream, RetCode> {
-        self.TANH_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<TanhStream, RetCode> {
+        self.tanh_open_impl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TANH_Stream {
+impl TanhStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -395,7 +394,7 @@ impl TANH_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::TANH_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::tanh_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -428,7 +427,7 @@ impl TANH_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::TANH_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::tanh_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -471,7 +470,7 @@ impl TANH_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TANH_Stream>();
+    _assert_auto::<TanhStream>();
 };
 
 /***************/

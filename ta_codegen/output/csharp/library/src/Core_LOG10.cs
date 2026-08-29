@@ -247,7 +247,7 @@ public partial class Core
    /// <summary>A live <c>LOG10</c> stream: one value per closed bar, bit-identical to
    /// <c>LOG10</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.LOG10_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.Log10Open"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -260,19 +260,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class LOG10_Stream
+   public sealed class Log10Stream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal LOG10_Stream( Core core ) { this.core = core; }
+      internal Log10Stream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.LOG10</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Log10</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -281,7 +281,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal LOG10_Stream( LOG10_Stream other )
+      internal Log10Stream( Log10Stream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -289,7 +289,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( LOG10_Stream other )
+      internal void CopyFrom( Log10Stream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -313,7 +313,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LOG10", "update", RetCode.BadParam);
-         core.LOG10_StepImpl(this, inReal);
+         core.Log10StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -332,8 +332,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LOG10", "peek", RetCode.BadParam);
-         LOG10_Stream scratch = new LOG10_Stream(this);
-         core.LOG10_StepImpl(scratch, inReal);
+         Log10Stream scratch = new Log10Stream(this);
+         core.Log10StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -357,7 +357,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("LOG10", "updateAndFill", RetCode.BadParam);
-            core.LOG10_StepImpl(this, inReal[i]);
+            core.Log10StepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -373,18 +373,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public LOG10_Stream Clone()
+      public Log10Stream Clone()
       {
-         return new LOG10_Stream(this);
+         return new Log10Stream(this);
       }
    }
 
-   internal void LOG10_StepImpl( LOG10_Stream sp, double inReal )
+   internal void Log10StepImpl( Log10Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Log10(inReal);
    }
 
-   private RetCode LOG10_OpenImpl( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode Log10OpenImpl( Log10Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -413,11 +413,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal LOG10_Stream LOG10_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* Log10OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Log10Stream Log10OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      Log10Stream sp = new Log10Stream(this);
+      RetCode retCode = Log10OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -426,12 +426,12 @@ public partial class Core
       throw StreamFailure("LOG10", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind LOG10_Open (composition seam). */
-   internal LOG10_Stream LOG10_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind Log10Open (composition seam). */
+   internal Log10Stream Log10OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      LOG10_Stream sp = new LOG10_Stream(this);
+      Log10Stream sp = new Log10Stream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = Log10OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -442,11 +442,11 @@ public partial class Core
 
    /// <summary>Open a live <c>LOG10</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="LOG10_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="Log10Stream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>LOG10</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>LOG10_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>LOG10_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Log10OpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input values. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -456,14 +456,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public LOG10_Stream LOG10_Open( ReadOnlySpan<double> inReal )
+   public Log10Stream Log10Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LOG10 open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LOG10 open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return LOG10_OpenInternal(inReal, 0);
+      return Log10OpenInternal(inReal, 0);
    }
 
-   /// <summary><c>LOG10_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>Log10Open</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>LOG10</c> produces over
@@ -475,7 +475,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="LOG10_Stream.OutRange"/>.</para>
+   /// <see cref="Log10Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input values. The warm-up history, oldest bar first.</param>
    /// <param name="outReal">Base-10 logarithm of each input. Must hold at least <c>historyLen -
@@ -488,7 +488,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public LOG10_Stream LOG10_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
+   public Log10Stream Log10OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LOG10 openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LOG10 openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -497,6 +497,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("LOG10", "openAndFill", RetCode.BadParam);
       }
-      return LOG10_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
+      return Log10OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

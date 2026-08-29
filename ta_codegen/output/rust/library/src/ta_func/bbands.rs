@@ -635,23 +635,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live BBANDS stream: one value per closed bar, bit-identical to [`Core::BBANDS`]
-/// over the same series. Open with [`Core::BBANDS_Open`]; dropping the handle
+/// over the same series. Open with [`Core::bbands_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BBANDS_Stream")]
-pub struct BBANDS_Stream {
-    state: BBANDS_StreamState,
+pub struct BbandsStream {
+    state: BbandsStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl BBANDS_Stream {
+impl BbandsStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `BBANDS_StreamState::restore_from`.
+    /// allocating new ones. See `BbandsStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -660,17 +660,17 @@ impl BBANDS_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct BBANDS_StreamState {
+struct BbandsStreamState {
     optInTimePeriod: i32,
     optInNbDevUp: f64,
     optInNbDevDn: f64,
     optInMAType: MAType,
-    sub0: MA_Stream,
-    sub1: STDDEV_Stream,
+    sub0: MaStream,
+    sub1: StddevStream,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl BBANDS_StreamState {
+impl BbandsStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -683,14 +683,13 @@ impl BBANDS_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BBANDS_step_impl(sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
+    fn bbands_step_impl(sp: &mut BbandsStreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut cur_tempBuffer1: f64 = 0.0_f64;
@@ -718,11 +717,11 @@ impl Core {
         Ok(())
     }
 
-    /// The single whole-history transcription behind [`Core::BBANDS_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::BBANDS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn BBANDS_OpenImpl(
+    /// The single whole-history transcription behind [`Core::bbands_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::bbands_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn bbands_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
-    ) -> Result<BBANDS_Stream, RetCode> {
+    ) -> Result<BbandsStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -805,7 +804,7 @@ impl Core {
         // Calculate the middle band moving average.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..])?;
+        let sub0 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..])?;
         retCode = RetCode::Success;
         if ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
@@ -816,7 +815,7 @@ impl Core {
         // Calculate the Standard Deviation into tempBuffer2.
         // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.STDDEV_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..])?;
+        let sub1 = self.stddev_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..])?;
         retCode = RetCode::Success;
         // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
         // begIdx than the moving average did - as with TA_MAType_MAMA (constant
@@ -863,7 +862,7 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = BBANDS_StreamState {
+        let state = BbandsStreamState {
             optInTimePeriod,
             optInNbDevUp,
             optInNbDevDn,
@@ -883,19 +882,19 @@ impl Core {
             let last_sc_outRealLowerBand = sc_outRealLowerBand[*outNBElement - 1];
             outRealLowerBand[0] = last_sc_outRealLowerBand;
         }
-        Ok(BBANDS_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BbandsStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::BBANDS_Open`] (composition seam).
-    pub(crate) fn BBANDS_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::bbands_open`] (composition seam).
+    pub(crate) fn bbands_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType,
-    ) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
+    ) -> Result<(BbandsStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outRealUpperBand = [0.0_f64; 1];
         let mut sink_outRealMiddleBand = [0.0_f64; 1];
         let mut sink_outRealLowerBand = [0.0_f64; 1];
-        let handle = self.BBANDS_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
+        let handle = self.bbands_open_impl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
         Ok((handle, (sink_outRealUpperBand[0], sink_outRealMiddleBand[0], sink_outRealLowerBand[0])))
     }
 
@@ -915,7 +914,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.BBANDS_Open(&data, 20, 2.0, 2.0, MAType::SMA).expect("enough history");
+    /// let (mut s, _last) = core.bbands_open(&data, 20, 2.0, 2.0, MAType::SMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -927,11 +926,11 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_BBANDS_Open")]
-    pub fn BBANDS_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
-        self.BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)
+    pub fn bbands_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType) -> Result<(BbandsStream, (f64, f64, f64)), RetCode> {
+        self.bbands_open_internal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)
     }
 
-    /// [`Core::BBANDS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::bbands_open`] that also fills the output array(s) bit-identically to
     /// [`Core::BBANDS`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -939,12 +938,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::BBANDS_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::bbands_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_BBANDS_OpenAndFill")]
-    pub fn BBANDS_OpenAndFill(
+    pub fn bbands_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
-    ) -> Result<(BBANDS_Stream, OutRange), RetCode> {
+    ) -> Result<(BbandsStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -973,31 +972,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.BBANDS_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)?;
+        let handle = self.bbands_open_and_fill_internal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::BBANDS_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::bbands_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn BBANDS_OpenAndFillInternal(
+    pub(crate) fn bbands_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
-    ) -> Result<BBANDS_Stream, RetCode> {
-        self.BBANDS_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
+    ) -> Result<BbandsStream, RetCode> {
+        self.bbands_open_impl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `BBANDS_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `BbandsStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BBANDS_Stream>>> =
+    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BbandsStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl BBANDS_Stream {
+impl BbandsStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1017,7 +1016,7 @@ impl BBANDS_Stream {
         let mut outRealUpperBand: f64 = 0.0_f64;
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
-        Core::BBANDS_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
+        Core::bbands_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1050,7 +1049,7 @@ impl BBANDS_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::BBANDS_step_impl(&mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
+            Core::bbands_step_impl(&mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1074,11 +1073,15 @@ impl BBANDS_Stream {
             return Err(RetCode::BadParam);
         }
         BBANDS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outRealUpperBand: f64 = 0.0_f64;
+            let mut outRealMiddleBand: f64 = 0.0_f64;
+            let mut outRealLowerBand: f64 = 0.0_f64;
+            let stepped = Core::bbands_step_impl(&mut scratch, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
         })
     }
 
@@ -1098,7 +1101,7 @@ impl BBANDS_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<BBANDS_Stream>();
+    _assert_auto::<BbandsStream>();
 };
 
 /***************/

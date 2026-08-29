@@ -384,7 +384,7 @@ public partial class Core
    /// <summary>A live <c>CDL3LINESTRIKE</c> stream: one value per closed bar,
    /// bit-identical to <c>CDL3LINESTRIKE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDL3LINESTRIKE_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.Cdl3linestrikeOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -397,7 +397,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDL3LINESTRIKE_Stream
+   public sealed class Cdl3linestrikeStream
    {
       internal Core core;
       internal double[] NearPeriodTotal = [];
@@ -424,12 +424,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDL3LINESTRIKE_Stream( Core core ) { this.core = core; }
+      internal Cdl3linestrikeStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDL3LINESTRIKE</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdl3linestrike</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -438,7 +438,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDL3LINESTRIKE_Stream( CDL3LINESTRIKE_Stream other )
+      internal Cdl3linestrikeStream( Cdl3linestrikeStream other )
       {
          this.core = other.core;
          this.NearPeriodTotal = new double[other.NearPeriodTotal.Length];
@@ -468,7 +468,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDL3LINESTRIKE_Stream other )
+      internal void CopyFrom( Cdl3linestrikeStream other )
       {
          this.core = other.core;
          if( this.NearPeriodTotal.Length != other.NearPeriodTotal.Length ) {
@@ -503,7 +503,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDL3LINESTRIKE_Stream? peekScratch;
+      [ThreadStatic] private static Cdl3linestrikeStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -524,7 +524,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3LINESTRIKE", "update", RetCode.BadParam);
-         core.CDL3LINESTRIKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.Cdl3linestrikeStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -546,14 +546,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3LINESTRIKE", "peek", RetCode.BadParam);
-         CDL3LINESTRIKE_Stream? scratch = peekScratch;
+         Cdl3linestrikeStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDL3LINESTRIKE_Stream(this);
+            scratch = new Cdl3linestrikeStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDL3LINESTRIKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.Cdl3linestrikeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -580,7 +580,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDL3LINESTRIKE", "updateAndFill", RetCode.BadParam);
-            core.CDL3LINESTRIKE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.Cdl3linestrikeStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -596,13 +596,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDL3LINESTRIKE_Stream Clone()
+      public Cdl3linestrikeStream Clone()
       {
-         return new CDL3LINESTRIKE_Stream(this);
+         return new Cdl3linestrikeStream(this);
       }
    }
 
-   internal void CDL3LINESTRIKE_StepImpl( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void Cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Near_rangeType = sp.cs_Near_rangeType;
@@ -646,7 +646,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDL3LINESTRIKE_OpenImpl( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode Cdl3linestrikeOpenImpl( Cdl3linestrikeStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -776,11 +776,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDL3LINESTRIKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* Cdl3linestrikeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Cdl3linestrikeStream Cdl3linestrikeOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
-      RetCode retCode = CDL3LINESTRIKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      Cdl3linestrikeStream sp = new Cdl3linestrikeStream(this);
+      RetCode retCode = Cdl3linestrikeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -789,12 +789,12 @@ public partial class Core
       throw StreamFailure("CDL3LINESTRIKE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDL3LINESTRIKE_Open (composition seam). */
-   internal CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind Cdl3linestrikeOpen (composition seam). */
+   internal Cdl3linestrikeStream Cdl3linestrikeOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
+      Cdl3linestrikeStream sp = new Cdl3linestrikeStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3LINESTRIKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdl3linestrikeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -805,12 +805,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDL3LINESTRIKE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDL3LINESTRIKE_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="Cdl3linestrikeStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDL3LINESTRIKE</c> reports
    /// for that bar.</para>
    /// <para>The history must hold at least <c>CDL3LINESTRIKE_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDL3LINESTRIKE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Cdl3linestrikeOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -823,7 +823,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public Cdl3linestrikeStream Cdl3linestrikeOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3LINESTRIKE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3LINESTRIKE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -833,10 +833,10 @@ public partial class Core
       RequireHistoryLength("CDL3LINESTRIKE", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDL3LINESTRIKE", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3LINESTRIKE", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return Cdl3linestrikeOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDL3LINESTRIKE_Open</c> that also fills the output array(s) over the
+   /// <summary><c>Cdl3linestrikeOpen</c> that also fills the output array(s) over the
    /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDL3LINESTRIKE</c>
@@ -850,7 +850,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDL3LINESTRIKE_Stream.OutRange"/>.</para>
+   /// <see cref="Cdl3linestrikeStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -868,7 +868,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public Cdl3linestrikeStream Cdl3linestrikeOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3LINESTRIKE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3LINESTRIKE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -880,6 +880,6 @@ public partial class Core
       RequireHistoryLength("CDL3LINESTRIKE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3LINESTRIKE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDL3LINESTRIKE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDL3LINESTRIKE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return Cdl3linestrikeOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

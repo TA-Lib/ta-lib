@@ -266,7 +266,7 @@ public partial class Core
    /// <summary>A live <c>WCLPRICE</c> stream: one value per closed bar, bit-identical to
    /// <c>WCLPRICE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.WCLPRICE_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.WclpriceOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -279,19 +279,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class WCLPRICE_Stream
+   public sealed class WclpriceStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal WCLPRICE_Stream( Core core ) { this.core = core; }
+      internal WclpriceStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.WCLPRICE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Wclprice</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -300,7 +300,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal WCLPRICE_Stream( WCLPRICE_Stream other )
+      internal WclpriceStream( WclpriceStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -308,7 +308,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( WCLPRICE_Stream other )
+      internal void CopyFrom( WclpriceStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -334,7 +334,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WCLPRICE", "update", RetCode.BadParam);
-         core.WCLPRICE_StepImpl(this, inHigh, inLow, inClose);
+         core.WclpriceStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -355,8 +355,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WCLPRICE", "peek", RetCode.BadParam);
-         WCLPRICE_Stream scratch = new WCLPRICE_Stream(this);
-         core.WCLPRICE_StepImpl(scratch, inHigh, inLow, inClose);
+         WclpriceStream scratch = new WclpriceStream(this);
+         core.WclpriceStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -382,7 +382,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("WCLPRICE", "updateAndFill", RetCode.BadParam);
-            core.WCLPRICE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.WclpriceStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -398,18 +398,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public WCLPRICE_Stream Clone()
+      public WclpriceStream Clone()
       {
-         return new WCLPRICE_Stream(this);
+         return new WclpriceStream(this);
       }
    }
 
-   internal void WCLPRICE_StepImpl( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   internal void WclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.FusedMultiplyAdd(inClose, 2.0, inHigh + inLow)) / 4.0;
    }
 
-   private RetCode WCLPRICE_OpenImpl( WCLPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode WclpriceOpenImpl( WclpriceStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -443,11 +443,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* WCLPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* WclpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal WclpriceStream WclpriceOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
-      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      WclpriceStream sp = new WclpriceStream(this);
+      RetCode retCode = WclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -456,12 +456,12 @@ public partial class Core
       throw StreamFailure("WCLPRICE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind WCLPRICE_Open (composition seam). */
-   internal WCLPRICE_Stream WCLPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind WclpriceOpen (composition seam). */
+   internal WclpriceStream WclpriceOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
+      WclpriceStream sp = new WclpriceStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = WclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -472,12 +472,11 @@ public partial class Core
 
    /// <summary>Open a live <c>WCLPRICE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="WCLPRICE_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>WCLPRICE</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="WclpriceStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>WCLPRICE</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>WCLPRICE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>WCLPRICE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>WclpriceOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -489,7 +488,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public WCLPRICE_Stream WCLPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public WclpriceStream WclpriceOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WCLPRICE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WCLPRICE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -497,10 +496,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("WCLPRICE open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("WCLPRICE", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("WCLPRICE", "open", "inClose", inClose.Length, inHigh.Length);
-      return WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0);
+      return WclpriceOpenInternal(inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>WCLPRICE_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>WclpriceOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>WCLPRICE</c> produces over
@@ -512,7 +511,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="WCLPRICE_Stream.OutRange"/>.</para>
+   /// <see cref="WclpriceStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -527,7 +526,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public WCLPRICE_Stream WCLPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
+   public WclpriceStream WclpriceOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WCLPRICE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "WCLPRICE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -540,6 +539,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          throw StreamFailure("WCLPRICE", "openAndFill", RetCode.BadParam);
       }
-      return WCLPRICE_OpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
+      return WclpriceOpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

@@ -351,7 +351,7 @@
    /**
     * A live CDLDRAGONFLYDOJI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLDRAGONFLYDOJI} over the same series.
-    * Open with {@link Core#CDLDRAGONFLYDOJI_Open}; there is no close — the handle is
+    * Open with {@link Core#cdldragonflydojiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -362,7 +362,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLDRAGONFLYDOJI_Stream {
+   public static final class CdldragonflydojiStream {
       Core core;
       double BodyDojiPeriodTotal;
       double ShadowVeryShortPeriodTotal;
@@ -382,7 +382,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLDRAGONFLYDOJI_Stream( Core core ) { this.core = core; }
+      CdldragonflydojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -396,7 +396,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLDRAGONFLYDOJI_Stream( CDLDRAGONFLYDOJI_Stream other ) {
+      CdldragonflydojiStream( CdldragonflydojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -417,7 +417,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLDRAGONFLYDOJI_Stream other ) {
+      void copyFrom( CdldragonflydojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -447,7 +447,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLDRAGONFLYDOJI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdldragonflydojiStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -464,7 +464,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDRAGONFLYDOJI update: BadParam", RetCode.BadParam);
-         core.CDLDRAGONFLYDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdldragonflydojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -493,7 +493,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLDRAGONFLYDOJI updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLDRAGONFLYDOJI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdldragonflydojiStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -511,14 +511,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDRAGONFLYDOJI peek: BadParam", RetCode.BadParam);
-         CDLDRAGONFLYDOJI_Stream scratch = PEEK_SCRATCH.get();
+         CdldragonflydojiStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLDRAGONFLYDOJI_Stream(this);
+            scratch = new CdldragonflydojiStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLDRAGONFLYDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdldragonflydojiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -535,11 +535,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLDRAGONFLYDOJI_Stream copy() {
-         return new CDLDRAGONFLYDOJI_Stream(this);
+      public CdldragonflydojiStream copy() {
+         return new CdldragonflydojiStream(this);
       }
    }
-   void CDLDRAGONFLYDOJI_StepImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdldragonflydojiStepImpl( CdldragonflydojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -574,7 +574,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLDRAGONFLYDOJI_OpenImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdldragonflydojiOpenImpl( CdldragonflydojiStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -702,11 +702,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLDRAGONFLYDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdldragonflydojiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdldragonflydojiStream cdldragonflydojiOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLDRAGONFLYDOJI_Stream sp = new CDLDRAGONFLYDOJI_Stream(this);
-      RetCode retCode = CDLDRAGONFLYDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdldragonflydojiStream sp = new CdldragonflydojiStream(this);
+      RetCode retCode = cdldragonflydojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -720,14 +720,14 @@
       }
       throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLDRAGONFLYDOJI_Open (composition seam). */
-   CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdldragonflydojiOpen (composition seam). */
+   CdldragonflydojiStream cdldragonflydojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLDRAGONFLYDOJI_Stream sp = new CDLDRAGONFLYDOJI_Stream(this);
+      CdldragonflydojiStream sp = new CdldragonflydojiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLDRAGONFLYDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdldragonflydojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -754,7 +754,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdldragonflydojiStream cdldragonflydojiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLDRAGONFLYDOJI open", "inOpen", inOpen);
       requireHistory("CDLDRAGONFLYDOJI open", inOpen.length);
@@ -764,10 +764,10 @@
       requireHistoryLength("CDLDRAGONFLYDOJI open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLDRAGONFLYDOJI open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLDRAGONFLYDOJI open", "inClose", inClose.length, inOpen.length);
-      return CDLDRAGONFLYDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdldragonflydojiOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLDRAGONFLYDOJI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdldragonflydojiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLDRAGONFLYDOJI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -775,9 +775,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLDRAGONFLYDOJI_Stream#outRange()}.
+    * {@link CdldragonflydojiStream#outRange()}.
     */
-   public CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdldragonflydojiStream cdldragonflydojiOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLDRAGONFLYDOJI openAndFill", "inOpen", inOpen);
       requireHistory("CDLDRAGONFLYDOJI openAndFill", inOpen.length);
@@ -794,5 +794,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLDRAGONFLYDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdldragonflydojiOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

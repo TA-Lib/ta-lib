@@ -795,18 +795,18 @@ public static class BatchApiTest
         // Streaming's one recoverable condition, which is why it has a code.
         int lookback = core.SMA_Lookback(30);
         CheckCode(RetCode.InsufficientHistory,
-            () => core.SMA_Open(new double[lookback], 30), "a short history carries InsufficientHistory");
+            () => core.SmaOpen(new double[lookback], 30), "a short history carries InsufficientHistory");
         CheckThrows<InsufficientHistoryException>(
-            () => core.SMA_Open(new double[lookback], 30), "a short history is still typed");
+            () => core.SmaOpen(new double[lookback], 30), "a short history is still typed");
 
         // ...and the REST of the streaming tier, which is a separate reject
         // ladder from the batch one. Totality is a property of every failure the
         // library raises, not of the tier someone happened to convert first.
         CheckCode(RetCode.OutOfRangeStartIndex,
-            () => core.SMA_Open(ReadOnlySpan<double>.Empty, 30),
+            () => core.SmaOpen(ReadOnlySpan<double>.Empty, 30),
             "an empty history carries OutOfRangeStartIndex");
         CheckCode(RetCode.BadParam,
-            () => core.SMA_Open(input, 0),
+            () => core.SmaOpen(input, 0),
             "an out-of-range period on a stream open carries BadParam");
 
         // The numbers the cross-language harness compares. Hardcoded, because

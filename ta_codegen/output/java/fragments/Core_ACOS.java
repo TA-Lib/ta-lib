@@ -193,7 +193,7 @@
    /**
     * A live ACOS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ACOS} over the same series.
-    * Open with {@link Core#ACOS_Open}; there is no close — the handle is
+    * Open with {@link Core#acosOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -204,13 +204,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ACOS_Stream {
+   public static final class AcosStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      ACOS_Stream( Core core ) { this.core = core; }
+      AcosStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -224,14 +224,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ACOS_Stream( ACOS_Stream other ) {
+      AcosStream( AcosStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ACOS_Stream other ) {
+      void copyFrom( AcosStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -253,7 +253,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ACOS update: BadParam", RetCode.BadParam);
-         core.ACOS_StepImpl(this, inReal);
+         core.acosStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -279,7 +279,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("ACOS updateAndFill: BadParam", RetCode.BadParam);
-            core.ACOS_StepImpl(this, inReal[i]);
+            core.acosStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -295,8 +295,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
-         ACOS_Stream scratch = new ACOS_Stream(this);
-         core.ACOS_StepImpl(scratch, inReal);
+         AcosStream scratch = new AcosStream(this);
+         core.acosStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -313,15 +313,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ACOS_Stream copy() {
-         return new ACOS_Stream(this);
+      public AcosStream copy() {
+         return new AcosStream(this);
       }
    }
-   void ACOS_StepImpl( ACOS_Stream sp, double inReal )
+   void acosStepImpl( AcosStream sp, double inReal )
    {
       sp.cur_outReal = Math.acos(inReal);
    }
-   private RetCode ACOS_OpenImpl( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode acosOpenImpl( AcosStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -347,11 +347,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ACOS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ACOS_Stream ACOS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* acosOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AcosStream acosOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      AcosStream sp = new AcosStream(this);
+      RetCode retCode = acosOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -365,14 +365,14 @@
       }
       throw new TaLibArgumentException("ACOS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ACOS_Open (composition seam). */
-   ACOS_Stream ACOS_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind acosOpen (composition seam). */
+   AcosStream acosOpenInternal( double inReal[], int startIdx )
    {
-      ACOS_Stream sp = new ACOS_Stream(this);
+      AcosStream sp = new AcosStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = acosOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -399,14 +399,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ACOS_Stream ACOS_Open( double inReal[] )
+   public AcosStream acosOpen( double inReal[] )
    {
       requireArgument("ACOS open", "inReal", inReal);
       requireHistory("ACOS open", inReal.length);
-      return ACOS_OpenInternal(inReal, 0);
+      return acosOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#ACOS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#acosOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ACOS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -414,9 +414,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ACOS_Stream#outRange()}.
+    * {@link AcosStream#outRange()}.
     */
-   public ACOS_Stream ACOS_OpenAndFill( double inReal[], double outReal[] )
+   public AcosStream acosOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("ACOS openAndFill", "inReal", inReal);
       requireHistory("ACOS openAndFill", inReal.length);
@@ -427,5 +427,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ACOS_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return acosOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

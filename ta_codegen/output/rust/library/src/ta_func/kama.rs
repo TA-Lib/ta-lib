@@ -481,23 +481,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live KAMA stream: one value per closed bar, bit-identical to [`Core::KAMA`]
-/// over the same series. Open with [`Core::KAMA_Open`]; dropping the handle
+/// over the same series. Open with [`Core::kama_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_KAMA_Stream")]
-pub struct KAMA_Stream {
-    state: KAMA_StreamState,
+pub struct KamaStream {
+    state: KamaStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl KAMA_Stream {
+impl KamaStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `KAMA_StreamState::restore_from`.
+    /// allocating new ones. See `KamaStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -506,7 +506,7 @@ impl KAMA_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct KAMA_StreamState {
+struct KamaStreamState {
     optInTimePeriod: i32,
     constMax: f64,
     constDiff: f64,
@@ -521,7 +521,7 @@ struct KAMA_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl KAMA_StreamState {
+impl KamaStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -539,14 +539,13 @@ impl KAMA_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn KAMA_step_impl(sp: &mut KAMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn kama_step_impl(sp: &mut KamaStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
@@ -603,11 +602,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::KAMA_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::KAMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn KAMA_OpenImpl(
+    /// The single whole-history transcription behind [`Core::kama_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::kama_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn kama_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<KAMA_Stream, RetCode> {
+    ) -> Result<KamaStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -635,7 +634,7 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let state = KAMA_StreamState {
+            let state = KamaStreamState {
                 optInTimePeriod: optInTimePeriod,
                 constMax: 0.0_f64,
                 constDiff: 0.0_f64,
@@ -659,7 +658,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(KAMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(KamaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut constMax: f64 = 0.0_f64;
         let mut constDiff: f64 = 0.0_f64;
@@ -847,7 +846,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = KAMA_StreamState {
+        let state = KamaStreamState {
             optInTimePeriod,
             constMax,
             constDiff,
@@ -860,17 +859,17 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(KAMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(KamaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::KAMA_Open`] (composition seam).
-    pub(crate) fn KAMA_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::kama_open`] (composition seam).
+    pub(crate) fn kama_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(KAMA_Stream, f64), RetCode> {
+    ) -> Result<(KamaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.KAMA_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.kama_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -890,7 +889,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.KAMA_Open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.kama_open(&data, 30).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -900,11 +899,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_KAMA_Open")]
-    pub fn KAMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KAMA_Stream, f64), RetCode> {
-        self.KAMA_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn kama_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KamaStream, f64), RetCode> {
+        self.kama_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::KAMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::kama_open`] that also fills the output array(s) bit-identically to
     /// [`Core::KAMA`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -912,12 +911,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::KAMA_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::kama_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_KAMA_OpenAndFill")]
-    pub fn KAMA_OpenAndFill(
+    pub fn kama_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(KAMA_Stream, OutRange), RetCode> {
+    ) -> Result<(KamaStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -931,23 +930,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.KAMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.kama_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::KAMA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::kama_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn KAMA_OpenAndFillInternal(
+    pub(crate) fn kama_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<KAMA_Stream, RetCode> {
-        self.KAMA_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<KamaStream, RetCode> {
+        self.kama_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl KAMA_Stream {
+impl KamaStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -965,7 +964,7 @@ impl KAMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::KAMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::kama_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -998,7 +997,7 @@ impl KAMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::KAMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::kama_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1043,7 +1042,7 @@ impl KAMA_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<KAMA_Stream>();
+    _assert_auto::<KamaStream>();
 };
 
 /***************/

@@ -366,23 +366,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live STOCHRSI stream: one value per closed bar, bit-identical to [`Core::STOCHRSI`]
-/// over the same series. Open with [`Core::STOCHRSI_Open`]; dropping the handle
+/// over the same series. Open with [`Core::stochrsi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCHRSI_Stream")]
-pub struct STOCHRSI_Stream {
-    state: STOCHRSI_StreamState,
+pub struct StochrsiStream {
+    state: StochrsiStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl STOCHRSI_Stream {
+impl StochrsiStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `STOCHRSI_StreamState::restore_from`.
+    /// allocating new ones. See `StochrsiStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -391,17 +391,17 @@ impl STOCHRSI_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct STOCHRSI_StreamState {
+struct StochrsiStreamState {
     optInTimePeriod: i32,
     optInFastK_Period: i32,
     optInFastD_Period: i32,
     optInFastD_MAType: MAType,
-    sub0: RSI_Stream,
-    sub1: STOCHF_Stream,
+    sub0: RsiStream,
+    sub1: StochfStream,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl STOCHRSI_StreamState {
+impl StochrsiStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -414,14 +414,13 @@ impl STOCHRSI_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCHRSI_step_impl(sp: &mut STOCHRSI_StreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
+    fn stochrsi_step_impl(sp: &mut StochrsiStreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
         let mut cur_tempRSIBuffer: f64 = 0.0_f64;
         let mut cur_outFastK: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
@@ -438,11 +437,11 @@ impl Core {
         Ok(())
     }
 
-    /// The single whole-history transcription behind [`Core::STOCHRSI_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::STOCHRSI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn STOCHRSI_OpenImpl(
+    /// The single whole-history transcription behind [`Core::stochrsi_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::stochrsi_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn stochrsi_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64], outStride: usize,
-    ) -> Result<STOCHRSI_Stream, RetCode> {
+    ) -> Result<StochrsiStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -535,7 +534,7 @@ impl Core {
         tempRSIBuffer = vec![0.0_f64; (tempArraySize * 1) as usize];
         // Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.RSI_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..])?;
+        let sub0 = self.rsi_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..])?;
         retCode = RetCode::Success;
         if outNbElement1 == 0 {
             (*outBegIdx) = 0;
@@ -544,7 +543,7 @@ impl Core {
         }
         // Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.STOCHF_OpenAndFillInternal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..])?;
+        let sub1 = self.stochf_open_and_fill_internal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..])?;
         retCode = RetCode::Success;
         if ((*outNBElement) as usize) == 0 {
             (*outBegIdx) = 0;
@@ -556,7 +555,7 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = STOCHRSI_StreamState {
+        let state = StochrsiStreamState {
             optInTimePeriod,
             optInFastK_Period,
             optInFastD_Period,
@@ -572,18 +571,18 @@ impl Core {
             let last_sc_outFastD = sc_outFastD[*outNBElement - 1];
             outFastD[0] = last_sc_outFastD;
         }
-        Ok(STOCHRSI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(StochrsiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::STOCHRSI_Open`] (composition seam).
-    pub(crate) fn STOCHRSI_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::stochrsi_open`] (composition seam).
+    pub(crate) fn stochrsi_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType,
-    ) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
+    ) -> Result<(StochrsiStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outFastK = [0.0_f64; 1];
         let mut sink_outFastD = [0.0_f64; 1];
-        let handle = self.STOCHRSI_OpenImpl(inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outFastK, &mut sink_outFastD, 0)?;
+        let handle = self.stochrsi_open_impl(inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outFastK, &mut sink_outFastD, 0)?;
         Ok((handle, (sink_outFastK[0], sink_outFastD[0])))
     }
 
@@ -603,7 +602,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STOCHRSI_Open(&data, 14, 5, 3, MAType::SMA).expect("enough history");
+    /// let (mut s, _last) = core.stochrsi_open(&data, 14, 5, 3, MAType::SMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -614,11 +613,11 @@ impl Core {
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCHRSI_Open")]
-    pub fn STOCHRSI_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
-        self.STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+    pub fn stochrsi_open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(StochrsiStream, (f64, f64)), RetCode> {
+        self.stochrsi_open_internal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
-    /// [`Core::STOCHRSI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stochrsi_open`] that also fills the output array(s) bit-identically to
     /// [`Core::STOCHRSI`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -626,12 +625,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::STOCHRSI_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::stochrsi_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_STOCHRSI_OpenAndFill")]
-    pub fn STOCHRSI_OpenAndFill(
+    pub fn stochrsi_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
-    ) -> Result<(STOCHRSI_Stream, OutRange), RetCode> {
+    ) -> Result<(StochrsiStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -651,31 +650,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.STOCHRSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD)?;
+        let handle = self.stochrsi_open_and_fill_internal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::STOCHRSI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::stochrsi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn STOCHRSI_OpenAndFillInternal(
+    pub(crate) fn stochrsi_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
-    ) -> Result<STOCHRSI_Stream, RetCode> {
-        self.STOCHRSI_OpenImpl(inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
+    ) -> Result<StochrsiStream, RetCode> {
+        self.stochrsi_open_impl(inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `STOCHRSI_StreamState::restore_from`).
+    /// `peek`'s reusable scratch state (see `StochrsiStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static STOCHRSI_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCHRSI_Stream>>> =
+    static STOCHRSI_PEEK_SCRATCH: std::cell::Cell<Option<Box<StochrsiStreamState>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl STOCHRSI_Stream {
+impl StochrsiStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -694,7 +693,7 @@ impl STOCHRSI_Stream {
         }
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        Core::STOCHRSI_step_impl(&mut self.state, inReal, &mut outFastK, &mut outFastD)?;
+        Core::stochrsi_step_impl(&mut self.state, inReal, &mut outFastK, &mut outFastD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -727,7 +726,7 @@ impl STOCHRSI_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STOCHRSI_step_impl(&mut self.state, inReal[i], &mut outFastK[i], &mut outFastD[i])?;
+            Core::stochrsi_step_impl(&mut self.state, inReal[i], &mut outFastK[i], &mut outFastD[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -751,11 +750,14 @@ impl STOCHRSI_Stream {
             return Err(RetCode::BadParam);
         }
         STOCHRSI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inReal);
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
+            scratch.restore_from(&self.state);
+            let mut outFastK: f64 = 0.0_f64;
+            let mut outFastD: f64 = 0.0_f64;
+            let stepped = Core::stochrsi_step_impl(&mut scratch, inReal, &mut outFastK, &mut outFastD);
             cell.set(Some(scratch));
-            value
+            stepped?;
+            Ok((outFastK, outFastD))
         })
     }
 
@@ -775,7 +777,7 @@ impl STOCHRSI_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<STOCHRSI_Stream>();
+    _assert_auto::<StochrsiStream>();
 };
 
 /***************/

@@ -300,7 +300,7 @@
    /**
     * A live CDLSPINNINGTOP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLSPINNINGTOP} over the same series.
-    * Open with {@link Core#CDLSPINNINGTOP_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlspinningtopOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -311,7 +311,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLSPINNINGTOP_Stream {
+   public static final class CdlspinningtopStream {
       Core core;
       double BodyPeriodTotal;
       int ringPos_BodyTrailingIdx;
@@ -324,7 +324,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLSPINNINGTOP_Stream( Core core ) { this.core = core; }
+      CdlspinningtopStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -338,7 +338,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLSPINNINGTOP_Stream( CDLSPINNINGTOP_Stream other ) {
+      CdlspinningtopStream( CdlspinningtopStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
@@ -352,7 +352,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLSPINNINGTOP_Stream other ) {
+      void copyFrom( CdlspinningtopStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
@@ -385,7 +385,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
-         core.CDLSPINNINGTOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlspinningtopStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -414,7 +414,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLSPINNINGTOP updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLSPINNINGTOP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlspinningtopStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -430,8 +430,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
-         CDLSPINNINGTOP_Stream scratch = new CDLSPINNINGTOP_Stream(this);
-         core.CDLSPINNINGTOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlspinningtopStream scratch = new CdlspinningtopStream(this);
+         core.cdlspinningtopStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -448,11 +448,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLSPINNINGTOP_Stream copy() {
-         return new CDLSPINNINGTOP_Stream(this);
+      public CdlspinningtopStream copy() {
+         return new CdlspinningtopStream(this);
       }
    }
-   void CDLSPINNINGTOP_StepImpl( CDLSPINNINGTOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlspinningtopStepImpl( CdlspinningtopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -475,7 +475,7 @@
          sp.ringPos_BodyTrailingIdx = 0;
       }
    }
-   private RetCode CDLSPINNINGTOP_OpenImpl( CDLSPINNINGTOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlspinningtopOpenImpl( CdlspinningtopStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -571,11 +571,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLSPINNINGTOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlspinningtopOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlspinningtopStream cdlspinningtopOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
-      RetCode retCode = CDLSPINNINGTOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlspinningtopStream sp = new CdlspinningtopStream(this);
+      RetCode retCode = cdlspinningtopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -589,14 +589,14 @@
       }
       throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLSPINNINGTOP_Open (composition seam). */
-   CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlspinningtopOpen (composition seam). */
+   CdlspinningtopStream cdlspinningtopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
+      CdlspinningtopStream sp = new CdlspinningtopStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSPINNINGTOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlspinningtopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,7 +623,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlspinningtopStream cdlspinningtopOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLSPINNINGTOP open", "inOpen", inOpen);
       requireHistory("CDLSPINNINGTOP open", inOpen.length);
@@ -633,10 +633,10 @@
       requireHistoryLength("CDLSPINNINGTOP open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLSPINNINGTOP open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLSPINNINGTOP open", "inClose", inClose.length, inOpen.length);
-      return CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlspinningtopOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLSPINNINGTOP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlspinningtopOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLSPINNINGTOP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -644,9 +644,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLSPINNINGTOP_Stream#outRange()}.
+    * {@link CdlspinningtopStream#outRange()}.
     */
-   public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlspinningtopStream cdlspinningtopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLSPINNINGTOP openAndFill", "inOpen", inOpen);
       requireHistory("CDLSPINNINGTOP openAndFill", inOpen.length);
@@ -663,5 +663,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLSPINNINGTOP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlspinningtopOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

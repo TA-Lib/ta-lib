@@ -314,43 +314,21 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
    return TA_SUCCESS;
 }
 
-/* Fold one character to lower case, ASCII and nothing else.
- *
- * Not <ctype.h>'s tolower: that one is locale-aware, and the locale a caller
- * happens to be in is not part of this library's contract. In tr_TR, 'I'
- * lower-cases to the dotless 'i' (U+0131), which is not the 'i' any function
- * name is spelled with -- so "SIN" would resolve for most of the world and
- * fail for a Turkish user, at run time, with no diagnostic. Function names
- * are invariant ASCII, so the fold that matches them is invariant ASCII too.
- *
- * It also takes an unsigned char by value: tolower(c) on a plain `char` that
- * is negative is undefined behaviour.
- */
-static unsigned char TA_AsciiToLower( unsigned char c )
+static int TA_StrCmpNoCase( const char *a, const char *b )
 {
-   if( (c >= 'A') && (c <= 'Z') )
-      return (unsigned char)(c + ('a' - 'A'));
-   return c;
-}
+   char ca, cb;
 
-/* strcmp( a, b ) == 0, under the ASCII fold above.
- *
- * Returns 1 when the two names are the same name, 0 otherwise.
- */
-static int TA_AsciiEqualNoCase( const char *a, const char *b )
-{
-   const unsigned char *ua = (const unsigned char *)a;
-   const unsigned char *ub = (const unsigned char *)b;
-
-   while( TA_AsciiToLower( *ua ) == TA_AsciiToLower( *ub ) )
+   while( *a && *b )
    {
-      if( *ua == '\0' )
-         return 1;
-      ua++;
-      ub++;
+      ca = (*a >= 'A' && *a <= 'Z') ? (char)(*a - 'A' + 'a') : *a;
+      cb = (*b >= 'A' && *b <= 'Z') ? (char)(*b - 'A' + 'a') : *b;
+      if( ca != cb )
+         return (unsigned char)ca - (unsigned char)cb;
+      a++;
+      b++;
    }
 
-   return 0;
+   return (unsigned char)*a - (unsigned char)*b;
 }
 
 TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
@@ -375,7 +353,7 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
       return TA_BAD_PARAM;
    }
 
-   tmp = (char)TA_AsciiToLower( (unsigned char)firstChar );
+   tmp = (firstChar >= 'A' && firstChar <= 'Z') ? (char)(firstChar - 'A' + 'a') : firstChar;
 
    if( (tmp < 'a') || (tmp > 'z') )
    {
@@ -401,11 +379,7 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
       if( !funcInfo )
          return TA_INTERNAL_ERROR(4);
 
-      /* The match folds case; the name reported back does not.
-       * funcInfo->name stays the canonical "SMA" whatever spelling got us
-       * here, so enumeration, error text and reverse lookup are unaffected.
-       */
-      if( TA_AsciiEqualNoCase( funcInfo->name, name ) )
+      if( TA_StrCmpNoCase( funcInfo->name, name ) == 0 )
       {
          *handle = (TA_FuncHandle *)funcDef;
          return TA_SUCCESS;

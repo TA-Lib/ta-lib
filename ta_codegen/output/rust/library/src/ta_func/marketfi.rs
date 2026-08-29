@@ -267,23 +267,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MARKETFI stream: one value per closed bar, bit-identical to [`Core::MARKETFI`]
-/// over the same series. Open with [`Core::MARKETFI_Open`]; dropping the handle
+/// over the same series. Open with [`Core::marketfi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MARKETFI_Stream")]
-pub struct MARKETFI_Stream {
-    state: MARKETFI_StreamState,
+pub struct MarketfiStream {
+    state: MarketfiStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MARKETFI_Stream {
+impl MarketfiStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MARKETFI_StreamState::restore_from`.
+    /// allocating new ones. See `MarketfiStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -292,25 +292,24 @@ impl MARKETFI_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MARKETFI_StreamState {
+struct MarketfiStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MARKETFI_StreamState {
+impl MarketfiStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MARKETFI_step_impl(sp: &mut MARKETFI_StreamState, inHigh: f64, inLow: f64, inVolume: f64, outReal: &mut f64) {
+    fn marketfi_step_impl(sp: &mut MarketfiStreamState, inHigh: f64, inLow: f64, inVolume: f64, outReal: &mut f64) {
         // A zero-volume bar would divide by zero. Neither reference guards
         // it -- they emit +/-Inf, or NaN when the range is zero too -- but
         // issue #112 settled that a successful call never emits NaN or Inf,
@@ -327,11 +326,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::MARKETFI_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MARKETFI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MARKETFI_OpenImpl(
+    /// The single whole-history transcription behind [`Core::marketfi_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::marketfi_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn marketfi_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<MARKETFI_Stream, RetCode> {
+    ) -> Result<MarketfiStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -388,19 +387,19 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = MARKETFI_StreamState {
+        let state = MarketfiStreamState {
         };
-        Ok(MARKETFI_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MarketfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MARKETFI_Open`] (composition seam).
-    pub(crate) fn MARKETFI_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::marketfi_open`] (composition seam).
+    pub(crate) fn marketfi_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(MARKETFI_Stream, f64), RetCode> {
+    ) -> Result<(MarketfiStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MARKETFI_OpenImpl(inHigh, inLow, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.marketfi_open_impl(inHigh, inLow, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -424,7 +423,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MARKETFI_Open(&high, &low, &volume).expect("enough history");
+    /// let (mut s, _last) = core.marketfi_open(&high, &low, &volume).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 12_345.0).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -434,11 +433,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MARKETFI_Open")]
-    pub fn MARKETFI_Open(&self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], ) -> Result<(MARKETFI_Stream, f64), RetCode> {
-        self.MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0)
+    pub fn marketfi_open(&self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], ) -> Result<(MarketfiStream, f64), RetCode> {
+        self.marketfi_open_internal(inHigh, inLow, inVolume, 0)
     }
 
-    /// [`Core::MARKETFI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::marketfi_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MARKETFI`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -446,12 +445,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MARKETFI_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::marketfi_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MARKETFI_OpenAndFill")]
-    pub fn MARKETFI_OpenAndFill(
+    pub fn marketfi_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], outReal: &mut [f64],
-    ) -> Result<(MARKETFI_Stream, OutRange), RetCode> {
+    ) -> Result<(MarketfiStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -468,23 +467,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.marketfi_open_and_fill_internal(inHigh, inLow, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MARKETFI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::marketfi_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MARKETFI_OpenAndFillInternal(
+    pub(crate) fn marketfi_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MARKETFI_Stream, RetCode> {
-        self.MARKETFI_OpenImpl(inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<MarketfiStream, RetCode> {
+        self.marketfi_open_impl(inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MARKETFI_Stream {
+impl MarketfiStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -502,7 +501,7 @@ impl MARKETFI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MARKETFI_step_impl(&mut self.state, inHigh, inLow, inVolume, &mut outReal);
+        Core::marketfi_step_impl(&mut self.state, inHigh, inLow, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -535,7 +534,7 @@ impl MARKETFI_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inVolume[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MARKETFI_step_impl(&mut self.state, inHigh[i], inLow[i], inVolume[i], &mut outReal[i]);
+            Core::marketfi_step_impl(&mut self.state, inHigh[i], inLow[i], inVolume[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -578,7 +577,7 @@ impl MARKETFI_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MARKETFI_Stream>();
+    _assert_auto::<MarketfiStream>();
 };
 
 /***************/

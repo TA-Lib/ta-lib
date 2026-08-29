@@ -292,7 +292,7 @@
    /**
     * A live TRANGE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TRANGE} over the same series.
-    * Open with {@link Core#TRANGE_Open}; there is no close — the handle is
+    * Open with {@link Core#trangeOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -303,14 +303,14 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TRANGE_Stream {
+   public static final class TrangeStream {
       Core core;
       double lag1_inClose;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      TRANGE_Stream( Core core ) { this.core = core; }
+      TrangeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -324,7 +324,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TRANGE_Stream( TRANGE_Stream other ) {
+      TrangeStream( TrangeStream other ) {
          this.core = other.core;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
@@ -332,7 +332,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TRANGE_Stream other ) {
+      void copyFrom( TrangeStream other ) {
          this.core = other.core;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
@@ -355,7 +355,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
-         core.TRANGE_StepImpl(this, inHigh, inLow, inClose);
+         core.trangeStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -383,7 +383,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("TRANGE updateAndFill: BadParam", RetCode.BadParam);
-            core.TRANGE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.trangeStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -399,8 +399,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
-         TRANGE_Stream scratch = new TRANGE_Stream(this);
-         core.TRANGE_StepImpl(scratch, inHigh, inLow, inClose);
+         TrangeStream scratch = new TrangeStream(this);
+         core.trangeStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -417,11 +417,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TRANGE_Stream copy() {
-         return new TRANGE_Stream(this);
+      public TrangeStream copy() {
+         return new TrangeStream(this);
       }
    }
-   void TRANGE_StepImpl( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
+   void trangeStepImpl( TrangeStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;
@@ -446,7 +446,7 @@
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
    }
-   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode trangeOpenImpl( TrangeStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -524,11 +524,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* TRANGE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TRANGE_Stream TRANGE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* trangeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TrangeStream trangeOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      TrangeStream sp = new TrangeStream(this);
+      RetCode retCode = trangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -542,14 +542,14 @@
       }
       throw new TaLibArgumentException("TRANGE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TRANGE_Open (composition seam). */
-   TRANGE_Stream TRANGE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind trangeOpen (composition seam). */
+   TrangeStream trangeOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      TRANGE_Stream sp = new TRANGE_Stream(this);
+      TrangeStream sp = new TrangeStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = trangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -576,7 +576,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TRANGE_Stream TRANGE_Open( double inHigh[], double inLow[], double inClose[] )
+   public TrangeStream trangeOpen( double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("TRANGE open", "inHigh", inHigh);
       requireHistory("TRANGE open", inHigh.length);
@@ -584,10 +584,10 @@
       requireArgument("TRANGE open", "inClose", inClose);
       requireHistoryLength("TRANGE open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("TRANGE open", "inClose", inClose.length, inHigh.length);
-      return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
+      return trangeOpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#TRANGE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#trangeOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TRANGE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -595,9 +595,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TRANGE_Stream#outRange()}.
+    * {@link TrangeStream#outRange()}.
     */
-   public TRANGE_Stream TRANGE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public TrangeStream trangeOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       requireArgument("TRANGE openAndFill", "inHigh", inHigh);
       requireHistory("TRANGE openAndFill", inHigh.length);
@@ -612,5 +612,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TRANGE_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+      return trangeOpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }

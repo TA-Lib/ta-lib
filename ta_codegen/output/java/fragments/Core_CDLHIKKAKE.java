@@ -355,7 +355,7 @@
    /**
     * A live CDLHIKKAKE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLHIKKAKE} over the same series.
-    * Open with {@link Core#CDLHIKKAKE_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlhikkakeOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -366,7 +366,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLHIKKAKE_Stream {
+   public static final class CdlhikkakeStream {
       Core core;
       int patternResult;
       int cd;
@@ -380,7 +380,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLHIKKAKE_Stream( Core core ) { this.core = core; }
+      CdlhikkakeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -394,7 +394,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLHIKKAKE_Stream( CDLHIKKAKE_Stream other ) {
+      CdlhikkakeStream( CdlhikkakeStream other ) {
          this.core = other.core;
          this.patternResult = other.patternResult;
          this.cd = other.cd;
@@ -409,7 +409,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLHIKKAKE_Stream other ) {
+      void copyFrom( CdlhikkakeStream other ) {
          this.core = other.core;
          this.patternResult = other.patternResult;
          this.cd = other.cd;
@@ -439,7 +439,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
-         core.CDLHIKKAKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlhikkakeStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -468,7 +468,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLHIKKAKE updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLHIKKAKE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlhikkakeStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -484,8 +484,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
-         CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
-         core.CDLHIKKAKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlhikkakeStream scratch = new CdlhikkakeStream(this);
+         core.cdlhikkakeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -502,11 +502,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLHIKKAKE_Stream copy() {
-         return new CDLHIKKAKE_Stream(this);
+      public CdlhikkakeStream copy() {
+         return new CdlhikkakeStream(this);
       }
    }
-   void CDLHIKKAKE_StepImpl( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlhikkakeStepImpl( CdlhikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -533,7 +533,7 @@
       sp.lag2_inLow = sp.lag1_inLow;
       sp.lag1_inLow = inLow;
    }
-   private RetCode CDLHIKKAKE_OpenImpl( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlhikkakeOpenImpl( CdlhikkakeStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -653,11 +653,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLHIKKAKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlhikkakeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlhikkakeStream cdlhikkakeOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
-      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlhikkakeStream sp = new CdlhikkakeStream(this);
+      RetCode retCode = cdlhikkakeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -671,14 +671,14 @@
       }
       throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLHIKKAKE_Open (composition seam). */
-   CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlhikkakeOpen (composition seam). */
+   CdlhikkakeStream cdlhikkakeOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      CdlhikkakeStream sp = new CdlhikkakeStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlhikkakeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -705,7 +705,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLHIKKAKE_Stream CDLHIKKAKE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlhikkakeStream cdlhikkakeOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLHIKKAKE open", "inOpen", inOpen);
       requireHistory("CDLHIKKAKE open", inOpen.length);
@@ -715,10 +715,10 @@
       requireHistoryLength("CDLHIKKAKE open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHIKKAKE open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHIKKAKE open", "inClose", inClose.length, inOpen.length);
-      return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlhikkakeOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLHIKKAKE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlhikkakeOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLHIKKAKE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -726,9 +726,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLHIKKAKE_Stream#outRange()}.
+    * {@link CdlhikkakeStream#outRange()}.
     */
-   public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlhikkakeStream cdlhikkakeOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLHIKKAKE openAndFill", "inOpen", inOpen);
       requireHistory("CDLHIKKAKE openAndFill", inOpen.length);
@@ -745,5 +745,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLHIKKAKE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlhikkakeOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

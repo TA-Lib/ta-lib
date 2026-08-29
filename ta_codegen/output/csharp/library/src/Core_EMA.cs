@@ -398,7 +398,7 @@ public partial class Core
    /// <summary>A live <c>EMA</c> stream: one value per closed bar, bit-identical to
    /// <c>EMA</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.EMA_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.EmaOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -411,7 +411,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class EMA_Stream
+   public sealed class EmaStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -421,12 +421,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal EMA_Stream( Core core ) { this.core = core; }
+      internal EmaStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.EMA</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Ema</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -434,7 +434,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal EMA_Stream( EMA_Stream other )
+      internal EmaStream( EmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -445,7 +445,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( EMA_Stream other )
+      internal void CopyFrom( EmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -472,7 +472,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("EMA", "update", RetCode.BadParam);
-         core.EMA_StepImpl(this, inReal);
+         core.EmaStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -491,8 +491,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("EMA", "peek", RetCode.BadParam);
-         EMA_Stream scratch = new EMA_Stream(this);
-         core.EMA_StepImpl(scratch, inReal);
+         EmaStream scratch = new EmaStream(this);
+         core.EmaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -516,7 +516,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("EMA", "updateAndFill", RetCode.BadParam);
-            core.EMA_StepImpl(this, inReal[i]);
+            core.EmaStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -532,13 +532,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public EMA_Stream Clone()
+      public EmaStream Clone()
       {
-         return new EMA_Stream(this);
+         return new EmaStream(this);
       }
    }
 
-   internal void EMA_StepImpl( EMA_Stream sp, double inReal )
+   internal void EmaStepImpl( EmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -548,7 +548,7 @@ public partial class Core
       sp.cur_outReal = sp.prevMA;
    }
 
-   private RetCode EMA_OpenImpl( EMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode EmaOpenImpl( EmaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -662,11 +662,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* EMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal EMA_Stream EMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* EmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal EmaStream EmaOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      EMA_Stream sp = new EMA_Stream(this);
-      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      EmaStream sp = new EmaStream(this);
+      RetCode retCode = EmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -675,12 +675,12 @@ public partial class Core
       throw StreamFailure("EMA", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind EMA_Open (composition seam). */
-   internal EMA_Stream EMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind EmaOpen (composition seam). */
+   internal EmaStream EmaOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      EMA_Stream sp = new EMA_Stream(this);
+      EmaStream sp = new EmaStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = EmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -691,11 +691,11 @@ public partial class Core
 
    /// <summary>Open a live <c>EMA</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="EMA_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="EmaStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>EMA</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>EMA_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>EMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>EmaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">price/data series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="EMA_Lookback"/> for its default and
@@ -707,14 +707,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public EMA_Stream EMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public EmaStream EmaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "EMA open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "EMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return EMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return EmaOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>EMA_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>EmaOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>EMA</c> produces over the
@@ -726,7 +726,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="EMA_Stream.OutRange"/>.</para>
+   /// <see cref="EmaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">price/data series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="EMA_Lookback"/> for its default and
@@ -741,7 +741,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public EMA_Stream EMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public EmaStream EmaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "EMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "EMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -750,6 +750,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("EMA", "openAndFill", RetCode.BadParam);
       }
-      return EMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return EmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

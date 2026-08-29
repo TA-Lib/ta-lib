@@ -213,23 +213,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live ACOS stream: one value per closed bar, bit-identical to [`Core::ACOS`]
-/// over the same series. Open with [`Core::ACOS_Open`]; dropping the handle
+/// over the same series. Open with [`Core::acos_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ACOS_Stream")]
-pub struct ACOS_Stream {
-    state: ACOS_StreamState,
+pub struct AcosStream {
+    state: AcosStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl ACOS_Stream {
+impl AcosStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `ACOS_StreamState::restore_from`.
+    /// allocating new ones. See `AcosStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -238,33 +238,32 @@ impl ACOS_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct ACOS_StreamState {
+struct AcosStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl ACOS_StreamState {
+impl AcosStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ACOS_step_impl(sp: &mut ACOS_StreamState, inReal: f64, outReal: &mut f64) {
+    fn acos_step_impl(sp: &mut AcosStreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).acos();
     }
 
-    /// The single whole-history transcription behind [`Core::ACOS_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::ACOS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ACOS_OpenImpl(
+    /// The single whole-history transcription behind [`Core::acos_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::acos_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn acos_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<ACOS_Stream, RetCode> {
+    ) -> Result<AcosStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -295,19 +294,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = ACOS_StreamState {
+        let state = AcosStreamState {
         };
-        Ok(ACOS_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(AcosStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ACOS_Open`] (composition seam).
-    pub(crate) fn ACOS_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::acos_open`] (composition seam).
+    pub(crate) fn acos_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(ACOS_Stream, f64), RetCode> {
+    ) -> Result<(AcosStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ACOS_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.acos_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -327,7 +326,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ACOS_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.acos_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(0.42).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -337,11 +336,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ACOS_Open")]
-    pub fn ACOS_Open(&self, inReal: &[f64], ) -> Result<(ACOS_Stream, f64), RetCode> {
-        self.ACOS_OpenInternal(inReal, 0)
+    pub fn acos_open(&self, inReal: &[f64], ) -> Result<(AcosStream, f64), RetCode> {
+        self.acos_open_internal(inReal, 0)
     }
 
-    /// [`Core::ACOS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::acos_open`] that also fills the output array(s) bit-identically to
     /// [`Core::ACOS`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -349,12 +348,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::ACOS_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::acos_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_ACOS_OpenAndFill")]
-    pub fn ACOS_OpenAndFill(
+    pub fn acos_open_and_fill(
         &self, inReal: &[f64], outReal: &mut [f64],
-    ) -> Result<(ACOS_Stream, OutRange), RetCode> {
+    ) -> Result<(AcosStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -368,23 +367,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ACOS_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.acos_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::ACOS_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::acos_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn ACOS_OpenAndFillInternal(
+    pub(crate) fn acos_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ACOS_Stream, RetCode> {
-        self.ACOS_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<AcosStream, RetCode> {
+        self.acos_open_impl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl ACOS_Stream {
+impl AcosStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -402,7 +401,7 @@ impl ACOS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::ACOS_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::acos_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -435,7 +434,7 @@ impl ACOS_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::ACOS_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::acos_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -478,7 +477,7 @@ impl ACOS_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<ACOS_Stream>();
+    _assert_auto::<AcosStream>();
 };
 
 /***************/

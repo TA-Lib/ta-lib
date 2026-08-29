@@ -545,7 +545,7 @@ public partial class Core
    /// <summary>A live <c>MA</c> stream: one value per closed bar, bit-identical to
    /// <c>MA</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MA_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.MaOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -558,7 +558,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MA_Stream
+   public sealed class MaStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -569,12 +569,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MA_Stream( Core core ) { this.core = core; }
+      internal MaStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MA</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Ma</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -582,7 +582,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MA_Stream( MA_Stream other )
+      internal MaStream( MaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -594,34 +594,34 @@ public partial class Core
             switch( this.optInMAType )
             {
             case MAType.SMA:
-               this.sub = new SMA_Stream((SMA_Stream) other.sub!);
+               this.sub = new SmaStream((SmaStream) other.sub!);
                break;
             case MAType.EMA:
-               this.sub = new EMA_Stream((EMA_Stream) other.sub!);
+               this.sub = new EmaStream((EmaStream) other.sub!);
                break;
             case MAType.WMA:
-               this.sub = new WMA_Stream((WMA_Stream) other.sub!);
+               this.sub = new WmaStream((WmaStream) other.sub!);
                break;
             case MAType.DEMA:
-               this.sub = new DEMA_Stream((DEMA_Stream) other.sub!);
+               this.sub = new DemaStream((DemaStream) other.sub!);
                break;
             case MAType.TEMA:
-               this.sub = new TEMA_Stream((TEMA_Stream) other.sub!);
+               this.sub = new TemaStream((TemaStream) other.sub!);
                break;
             case MAType.TRIMA:
-               this.sub = new TRIMA_Stream((TRIMA_Stream) other.sub!);
+               this.sub = new TrimaStream((TrimaStream) other.sub!);
                break;
             case MAType.KAMA:
-               this.sub = new KAMA_Stream((KAMA_Stream) other.sub!);
+               this.sub = new KamaStream((KamaStream) other.sub!);
                break;
             case MAType.MAMA:
-               this.sub = new MAMA_Stream((MAMA_Stream) other.sub!);
+               this.sub = new MamaStream((MamaStream) other.sub!);
                break;
             case MAType.T3:
-               this.sub = new T3_Stream((T3_Stream) other.sub!);
+               this.sub = new T3Stream((T3Stream) other.sub!);
                break;
             case MAType.HMA:
-               this.sub = new HMA_Stream((HMA_Stream) other.sub!);
+               this.sub = new HmaStream((HmaStream) other.sub!);
                break;
             default:
                throw new InvalidOperationException("unreachable: open rejects arms without a sub-stream");
@@ -631,7 +631,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MA_Stream other )
+      internal void CopyFrom( MaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -643,73 +643,73 @@ public partial class Core
             switch( this.optInMAType )
             {
             case MAType.SMA:
-               if( this.sub is SMA_Stream ) {
-                  ((SMA_Stream) this.sub!).CopyFrom((SMA_Stream) other.sub!);
+               if( this.sub is SmaStream ) {
+                  ((SmaStream) this.sub!).CopyFrom((SmaStream) other.sub!);
                } else {
-                  this.sub = new SMA_Stream((SMA_Stream) other.sub!);
+                  this.sub = new SmaStream((SmaStream) other.sub!);
                }
                break;
             case MAType.EMA:
-               if( this.sub is EMA_Stream ) {
-                  ((EMA_Stream) this.sub!).CopyFrom((EMA_Stream) other.sub!);
+               if( this.sub is EmaStream ) {
+                  ((EmaStream) this.sub!).CopyFrom((EmaStream) other.sub!);
                } else {
-                  this.sub = new EMA_Stream((EMA_Stream) other.sub!);
+                  this.sub = new EmaStream((EmaStream) other.sub!);
                }
                break;
             case MAType.WMA:
-               if( this.sub is WMA_Stream ) {
-                  ((WMA_Stream) this.sub!).CopyFrom((WMA_Stream) other.sub!);
+               if( this.sub is WmaStream ) {
+                  ((WmaStream) this.sub!).CopyFrom((WmaStream) other.sub!);
                } else {
-                  this.sub = new WMA_Stream((WMA_Stream) other.sub!);
+                  this.sub = new WmaStream((WmaStream) other.sub!);
                }
                break;
             case MAType.DEMA:
-               if( this.sub is DEMA_Stream ) {
-                  ((DEMA_Stream) this.sub!).CopyFrom((DEMA_Stream) other.sub!);
+               if( this.sub is DemaStream ) {
+                  ((DemaStream) this.sub!).CopyFrom((DemaStream) other.sub!);
                } else {
-                  this.sub = new DEMA_Stream((DEMA_Stream) other.sub!);
+                  this.sub = new DemaStream((DemaStream) other.sub!);
                }
                break;
             case MAType.TEMA:
-               if( this.sub is TEMA_Stream ) {
-                  ((TEMA_Stream) this.sub!).CopyFrom((TEMA_Stream) other.sub!);
+               if( this.sub is TemaStream ) {
+                  ((TemaStream) this.sub!).CopyFrom((TemaStream) other.sub!);
                } else {
-                  this.sub = new TEMA_Stream((TEMA_Stream) other.sub!);
+                  this.sub = new TemaStream((TemaStream) other.sub!);
                }
                break;
             case MAType.TRIMA:
-               if( this.sub is TRIMA_Stream ) {
-                  ((TRIMA_Stream) this.sub!).CopyFrom((TRIMA_Stream) other.sub!);
+               if( this.sub is TrimaStream ) {
+                  ((TrimaStream) this.sub!).CopyFrom((TrimaStream) other.sub!);
                } else {
-                  this.sub = new TRIMA_Stream((TRIMA_Stream) other.sub!);
+                  this.sub = new TrimaStream((TrimaStream) other.sub!);
                }
                break;
             case MAType.KAMA:
-               if( this.sub is KAMA_Stream ) {
-                  ((KAMA_Stream) this.sub!).CopyFrom((KAMA_Stream) other.sub!);
+               if( this.sub is KamaStream ) {
+                  ((KamaStream) this.sub!).CopyFrom((KamaStream) other.sub!);
                } else {
-                  this.sub = new KAMA_Stream((KAMA_Stream) other.sub!);
+                  this.sub = new KamaStream((KamaStream) other.sub!);
                }
                break;
             case MAType.MAMA:
-               if( this.sub is MAMA_Stream ) {
-                  ((MAMA_Stream) this.sub!).CopyFrom((MAMA_Stream) other.sub!);
+               if( this.sub is MamaStream ) {
+                  ((MamaStream) this.sub!).CopyFrom((MamaStream) other.sub!);
                } else {
-                  this.sub = new MAMA_Stream((MAMA_Stream) other.sub!);
+                  this.sub = new MamaStream((MamaStream) other.sub!);
                }
                break;
             case MAType.T3:
-               if( this.sub is T3_Stream ) {
-                  ((T3_Stream) this.sub!).CopyFrom((T3_Stream) other.sub!);
+               if( this.sub is T3Stream ) {
+                  ((T3Stream) this.sub!).CopyFrom((T3Stream) other.sub!);
                } else {
-                  this.sub = new T3_Stream((T3_Stream) other.sub!);
+                  this.sub = new T3Stream((T3Stream) other.sub!);
                }
                break;
             case MAType.HMA:
-               if( this.sub is HMA_Stream ) {
-                  ((HMA_Stream) this.sub!).CopyFrom((HMA_Stream) other.sub!);
+               if( this.sub is HmaStream ) {
+                  ((HmaStream) this.sub!).CopyFrom((HmaStream) other.sub!);
                } else {
-                  this.sub = new HMA_Stream((HMA_Stream) other.sub!);
+                  this.sub = new HmaStream((HmaStream) other.sub!);
                }
                break;
             default:
@@ -721,7 +721,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MA_Stream? peekScratch;
+      [ThreadStatic] private static MaStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -739,7 +739,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MA", "update", RetCode.BadParam);
-         core.MA_StepImpl(this, inReal);
+         core.MaStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -758,14 +758,14 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MA", "peek", RetCode.BadParam);
-         MA_Stream? scratch = peekScratch;
+         MaStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new MA_Stream(this);
+            scratch = new MaStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.MA_StepImpl(scratch, inReal);
+         core.MaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -789,7 +789,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MA", "updateAndFill", RetCode.BadParam);
-            core.MA_StepImpl(this, inReal[i]);
+            core.MaStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -805,13 +805,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MA_Stream Clone()
+      public MaStream Clone()
       {
-         return new MA_Stream(this);
+         return new MaStream(this);
       }
    }
 
-   internal void MA_StepImpl( MA_Stream sp, double inReal )
+   internal void MaStepImpl( MaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;
@@ -820,44 +820,44 @@ public partial class Core
       switch( sp.optInMAType )
       {
       case MAType.SMA: {
-         sp.cur_outReal = ((SMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((SmaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.EMA: {
-         sp.cur_outReal = ((EMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((EmaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.WMA: {
-         sp.cur_outReal = ((WMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((WmaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.DEMA: {
-         sp.cur_outReal = ((DEMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((DemaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.TEMA: {
-         sp.cur_outReal = ((TEMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((TemaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.TRIMA: {
-         sp.cur_outReal = ((TRIMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((TrimaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.KAMA: {
-         sp.cur_outReal = ((KAMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((KamaStream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.MAMA: {
-         MAMA_Value subValue = ((MAMA_Stream) sp.sub!).Update(inReal);
+         MamaValue subValue = ((MamaStream) sp.sub!).Update(inReal);
          sp.cur_outReal = subValue.MAMA;
          break;
       }
       case MAType.T3: {
-         sp.cur_outReal = ((T3_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((T3Stream) sp.sub!).Update(inReal);
          break;
       }
       case MAType.HMA: {
-         sp.cur_outReal = ((HMA_Stream) sp.sub!).Update(inReal);
+         sp.cur_outReal = ((HmaStream) sp.sub!).Update(inReal);
          break;
       }
       default:
@@ -865,7 +865,7 @@ public partial class Core
       }
    }
 
-   private RetCode MA_OpenImpl( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
+   private RetCode MaOpenImpl( MaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 ) {
@@ -907,7 +907,7 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA: {
-         SMA_Stream sub = SMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         SmaStream sub = SmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -915,7 +915,7 @@ public partial class Core
          break;
       }
       case MAType.EMA: {
-         EMA_Stream sub = EMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         EmaStream sub = EmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -923,7 +923,7 @@ public partial class Core
          break;
       }
       case MAType.WMA: {
-         WMA_Stream sub = WMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         WmaStream sub = WmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -931,7 +931,7 @@ public partial class Core
          break;
       }
       case MAType.DEMA: {
-         DEMA_Stream sub = DEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         DemaStream sub = DemaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -939,7 +939,7 @@ public partial class Core
          break;
       }
       case MAType.TEMA: {
-         TEMA_Stream sub = TEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         TemaStream sub = TemaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -947,7 +947,7 @@ public partial class Core
          break;
       }
       case MAType.TRIMA: {
-         TRIMA_Stream sub = TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         TrimaStream sub = TrimaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -955,7 +955,7 @@ public partial class Core
          break;
       }
       case MAType.KAMA: {
-         KAMA_Stream sub = KAMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         KamaStream sub = KamaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -963,7 +963,7 @@ public partial class Core
          break;
       }
       case MAType.MAMA: {
-         MAMA_Stream sub = MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05);
+         MamaStream sub = MamaOpenInternal(inReal, startIdx, 0.5, 0.05);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -971,7 +971,7 @@ public partial class Core
          break;
       }
       case MAType.T3: {
-         T3_Stream sub = T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7);
+         T3Stream sub = T3OpenInternal(inReal, startIdx, optInTimePeriod, 0.7);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -979,7 +979,7 @@ public partial class Core
          break;
       }
       case MAType.HMA: {
-         HMA_Stream sub = HMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         HmaStream sub = HmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -994,7 +994,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MA_OpenAndFillImpl( MA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MaOpenAndFillImpl( MaStream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1040,7 +1040,7 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA: {
-         SMA_Stream sub = SMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         SmaStream sub = SmaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1048,7 +1048,7 @@ public partial class Core
          break;
       }
       case MAType.EMA: {
-         EMA_Stream sub = EMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         EmaStream sub = EmaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1056,7 +1056,7 @@ public partial class Core
          break;
       }
       case MAType.WMA: {
-         WMA_Stream sub = WMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         WmaStream sub = WmaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1064,7 +1064,7 @@ public partial class Core
          break;
       }
       case MAType.DEMA: {
-         DEMA_Stream sub = DEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         DemaStream sub = DemaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1072,7 +1072,7 @@ public partial class Core
          break;
       }
       case MAType.TEMA: {
-         TEMA_Stream sub = TEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         TemaStream sub = TemaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1080,7 +1080,7 @@ public partial class Core
          break;
       }
       case MAType.TRIMA: {
-         TRIMA_Stream sub = TRIMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         TrimaStream sub = TrimaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1088,7 +1088,7 @@ public partial class Core
          break;
       }
       case MAType.KAMA: {
-         KAMA_Stream sub = KAMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         KamaStream sub = KamaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1096,7 +1096,7 @@ public partial class Core
          break;
       }
       case MAType.MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, default);
+         MamaStream sub = MamaOpenAndFill(inReal, 0.5, 0.05, outReal, default);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1104,7 +1104,7 @@ public partial class Core
          break;
       }
       case MAType.T3: {
-         T3_Stream sub = T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outReal);
+         T3Stream sub = T3OpenAndFill(inReal, optInTimePeriod, 0.7, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1112,7 +1112,7 @@ public partial class Core
          break;
       }
       case MAType.HMA: {
-         HMA_Stream sub = HMA_OpenAndFill(inReal, optInTimePeriod, outReal);
+         HmaStream sub = HmaOpenAndFill(inReal, optInTimePeriod, outReal);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1127,7 +1127,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MA_OpenAndFillInternalImpl( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MaOpenAndFillInternalImpl( MaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1174,61 +1174,61 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA: {
-         SMA_Stream sub = SMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         SmaStream sub = SmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.EMA: {
-         EMA_Stream sub = EMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         EmaStream sub = EmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.WMA: {
-         WMA_Stream sub = WMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         WmaStream sub = WmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.DEMA: {
-         DEMA_Stream sub = DEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         DemaStream sub = DemaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.TEMA: {
-         TEMA_Stream sub = TEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         TemaStream sub = TemaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.TRIMA: {
-         TRIMA_Stream sub = TRIMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         TrimaStream sub = TrimaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.KAMA: {
-         KAMA_Stream sub = KAMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         KamaStream sub = KamaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.MAMA: {
-         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, default);
+         MamaStream sub = MamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, default);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
       }
       case MAType.T3: {
-         T3_Stream sub = T3_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         T3Stream sub = T3OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.HMA: {
-         HMA_Stream sub = HMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         HmaStream sub = HmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1241,11 +1241,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* Internal startIdx-anchored open behind MA_Open (composition seam). */
-   internal MA_Stream MA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind MaOpen (composition seam). */
+   internal MaStream MaOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
-      MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
+      MaStream sp = new MaStream(this);
+      RetCode retCode = MaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1254,11 +1254,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MA</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MA_Stream.Value"/> starts at the last history
-   /// bar's value — bit-identical to what <c>MA</c> reports for that bar.</para>
+   /// <para>The handle's <see cref="MaStream.Value"/> starts at the last history bar's
+   /// value — bit-identical to what <c>MA</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MA_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Series to average. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MA_Lookback"/> for its default and
@@ -1272,14 +1272,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MA_Stream MA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
+   public MaStream MaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
+      return MaOpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
 
-   /// <summary><c>MA_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>MaOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MA</c> produces over the
@@ -1291,7 +1291,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MA_Stream.OutRange"/>.</para>
+   /// <see cref="MaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Series to average. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MA_Lookback"/> for its default and
@@ -1308,14 +1308,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MA_Stream MA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
+   public MaStream MaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MA", "openAndFill", inReal.Length, MA_Lookback(optInTimePeriod, optInMAType));
       RequireFillLength("MA", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      MaStream sp = new MaStream(this);
+      RetCode retCode = MaOpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1324,11 +1324,11 @@ public partial class Core
       throw StreamFailure("MA", "openAndFill", retCode);
    }
 
-   /* MA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MA_Stream MA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* MaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MaStream MaOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      MaStream sp = new MaStream(this);
+      RetCode retCode = MaOpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {

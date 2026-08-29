@@ -220,7 +220,7 @@
    /**
     * A live AVGPRICE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AVGPRICE} over the same series.
-    * Open with {@link Core#AVGPRICE_Open}; there is no close — the handle is
+    * Open with {@link Core#avgpriceOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -231,13 +231,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AVGPRICE_Stream {
+   public static final class AvgpriceStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      AVGPRICE_Stream( Core core ) { this.core = core; }
+      AvgpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -251,14 +251,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AVGPRICE_Stream( AVGPRICE_Stream other ) {
+      AvgpriceStream( AvgpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AVGPRICE_Stream other ) {
+      void copyFrom( AvgpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -280,7 +280,7 @@
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
-         core.AVGPRICE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.avgpriceStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -309,7 +309,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("AVGPRICE updateAndFill: BadParam", RetCode.BadParam);
-            core.AVGPRICE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.avgpriceStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -325,8 +325,8 @@
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
-         AVGPRICE_Stream scratch = new AVGPRICE_Stream(this);
-         core.AVGPRICE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         AvgpriceStream scratch = new AvgpriceStream(this);
+         core.avgpriceStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -343,15 +343,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AVGPRICE_Stream copy() {
-         return new AVGPRICE_Stream(this);
+      public AvgpriceStream copy() {
+         return new AvgpriceStream(this);
       }
    }
-   void AVGPRICE_StepImpl( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void avgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }
-   private RetCode AVGPRICE_OpenImpl( AVGPRICE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode avgpriceOpenImpl( AvgpriceStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -382,11 +382,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* AVGPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AVGPRICE_Stream AVGPRICE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* avgpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AvgpriceStream avgpriceOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
-      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      AvgpriceStream sp = new AvgpriceStream(this);
+      RetCode retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -400,14 +400,14 @@
       }
       throw new TaLibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AVGPRICE_Open (composition seam). */
-   AVGPRICE_Stream AVGPRICE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind avgpriceOpen (composition seam). */
+   AvgpriceStream avgpriceOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
+      AvgpriceStream sp = new AvgpriceStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -434,7 +434,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AVGPRICE_Stream AVGPRICE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public AvgpriceStream avgpriceOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("AVGPRICE open", "inOpen", inOpen);
       requireHistory("AVGPRICE open", inOpen.length);
@@ -444,10 +444,10 @@
       requireHistoryLength("AVGPRICE open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("AVGPRICE open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("AVGPRICE open", "inClose", inClose.length, inOpen.length);
-      return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return avgpriceOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#AVGPRICE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#avgpriceOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AVGPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -455,9 +455,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AVGPRICE_Stream#outRange()}.
+    * {@link AvgpriceStream#outRange()}.
     */
-   public AVGPRICE_Stream AVGPRICE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public AvgpriceStream avgpriceOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
       requireArgument("AVGPRICE openAndFill", "inOpen", inOpen);
       requireHistory("AVGPRICE openAndFill", inOpen.length);
@@ -474,5 +474,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AVGPRICE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
+      return avgpriceOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }

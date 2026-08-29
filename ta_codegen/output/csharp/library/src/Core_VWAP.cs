@@ -428,7 +428,7 @@ public partial class Core
    /// <summary>A live <c>VWAP</c> stream: one value per closed bar, bit-identical to
    /// <c>VWAP</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.VWAP_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.VwapOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -441,7 +441,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class VWAP_Stream
+   public sealed class VwapStream
    {
       internal Core core;
       internal double sumPV;
@@ -451,12 +451,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal VWAP_Stream( Core core ) { this.core = core; }
+      internal VwapStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.VWAP</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Vwap</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -464,7 +464,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal VWAP_Stream( VWAP_Stream other )
+      internal VwapStream( VwapStream other )
       {
          this.core = other.core;
          this.sumPV = other.sumPV;
@@ -475,7 +475,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( VWAP_Stream other )
+      internal void CopyFrom( VwapStream other )
       {
          this.core = other.core;
          this.sumPV = other.sumPV;
@@ -505,7 +505,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWAP", "update", RetCode.BadParam);
-         core.VWAP_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.VwapStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -527,8 +527,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWAP", "peek", RetCode.BadParam);
-         VWAP_Stream scratch = new VWAP_Stream(this);
-         core.VWAP_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         VwapStream scratch = new VwapStream(this);
+         core.VwapStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -555,7 +555,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("VWAP", "updateAndFill", RetCode.BadParam);
-            core.VWAP_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.VwapStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -571,13 +571,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public VWAP_Stream Clone()
+      public VwapStream Clone()
       {
-         return new VWAP_Stream(this);
+         return new VwapStream(this);
       }
    }
 
-   internal void VWAP_StepImpl( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void VwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;
@@ -669,7 +669,7 @@ public partial class Core
       sp.cur_outReal = sp.vwap;
    }
 
-   private RetCode VWAP_OpenImpl( VWAP_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode VwapOpenImpl( VwapStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -810,11 +810,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* VWAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal VWAP_Stream VWAP_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* VwapOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal VwapStream VwapOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      VWAP_Stream sp = new VWAP_Stream(this);
-      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      VwapStream sp = new VwapStream(this);
+      RetCode retCode = VwapOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -823,12 +823,12 @@ public partial class Core
       throw StreamFailure("VWAP", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind VWAP_Open (composition seam). */
-   internal VWAP_Stream VWAP_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
+   /* Internal startIdx-anchored open behind VwapOpen (composition seam). */
+   internal VwapStream VwapOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
-      VWAP_Stream sp = new VWAP_Stream(this);
+      VwapStream sp = new VwapStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = VwapOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -839,11 +839,11 @@ public partial class Core
 
    /// <summary>Open a live <c>VWAP</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="VWAP_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="VwapStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>VWAP</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>VWAP_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>VWAP_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>VwapOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -856,7 +856,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public VWAP_Stream VWAP_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
+   public VwapStream VwapOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "VWAP open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "VWAP open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -866,11 +866,11 @@ public partial class Core
       RequireHistoryLength("VWAP", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("VWAP", "open", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("VWAP", "open", "inVolume", inVolume.Length, inHigh.Length);
-      return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
+      return VwapOpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
 
-   /// <summary><c>VWAP_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>VwapOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>VWAP</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -881,7 +881,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="VWAP_Stream.OutRange"/>.</para>
+   /// <see cref="VwapStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -897,7 +897,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public VWAP_Stream VWAP_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
+   public VwapStream VwapOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "VWAP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "VWAP openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -912,6 +912,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("VWAP", "openAndFill", RetCode.BadParam);
       }
-      return VWAP_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, out _, out _, outReal);
+      return VwapOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, out _, out _, outReal);
    }
 }

@@ -409,7 +409,7 @@
    /**
     * A live DEMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#DEMA} over the same series.
-    * Open with {@link Core#DEMA_Open}; there is no close — the handle is
+    * Open with {@link Core#demaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -420,7 +420,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class DEMA_Stream {
+   public static final class DemaStream {
       Core core;
       int optInTimePeriod;
       double prevEMA1;
@@ -430,7 +430,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      DEMA_Stream( Core core ) { this.core = core; }
+      DemaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -444,7 +444,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      DEMA_Stream( DEMA_Stream other ) {
+      DemaStream( DemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -455,7 +455,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( DEMA_Stream other ) {
+      void copyFrom( DemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -481,7 +481,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
-         core.DEMA_StepImpl(this, inReal);
+         core.demaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -507,7 +507,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("DEMA updateAndFill: BadParam", RetCode.BadParam);
-            core.DEMA_StepImpl(this, inReal[i]);
+            core.demaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -523,8 +523,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
-         DEMA_Stream scratch = new DEMA_Stream(this);
-         core.DEMA_StepImpl(scratch, inReal);
+         DemaStream scratch = new DemaStream(this);
+         core.demaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -541,11 +541,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public DEMA_Stream copy() {
-         return new DEMA_Stream(this);
+      public DemaStream copy() {
+         return new DemaStream(this);
       }
    }
-   void DEMA_StepImpl( DEMA_Stream sp, double inReal )
+   void demaStepImpl( DemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -555,7 +555,7 @@
       sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
       sp.cur_outReal = 2.0 * sp.prevEMA1 - sp.prevEMA2;
    }
-   private RetCode DEMA_OpenImpl( DEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode demaOpenImpl( DemaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -719,11 +719,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* DEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   DEMA_Stream DEMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* demaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   DemaStream demaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      DEMA_Stream sp = new DEMA_Stream(this);
-      RetCode retCode = DEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      DemaStream sp = new DemaStream(this);
+      RetCode retCode = demaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -737,14 +737,14 @@
       }
       throw new TaLibArgumentException("DEMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind DEMA_Open (composition seam). */
-   DEMA_Stream DEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind demaOpen (composition seam). */
+   DemaStream demaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      DEMA_Stream sp = new DEMA_Stream(this);
+      DemaStream sp = new DemaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = DEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = demaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -771,14 +771,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public DEMA_Stream DEMA_Open( double inReal[], int optInTimePeriod )
+   public DemaStream demaOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("DEMA open", "inReal", inReal);
       requireHistory("DEMA open", inReal.length);
-      return DEMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return demaOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#DEMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#demaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#DEMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -786,9 +786,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link DEMA_Stream#outRange()}.
+    * {@link DemaStream#outRange()}.
     */
-   public DEMA_Stream DEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public DemaStream demaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("DEMA openAndFill", "inReal", inReal);
       requireHistory("DEMA openAndFill", inReal.length);
@@ -799,5 +799,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return DEMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return demaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
