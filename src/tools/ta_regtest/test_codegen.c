@@ -203,6 +203,27 @@ static long g_startSweepWithOutput[NUM_LANGUAGES];
  * ref_diverges_on_partial_range). Printed, so the carve-out cannot quietly grow
  * to swallow the axis. */
 static long g_startSweepSkipped98 = 0;
+
+/* ---- zero-produced-count comparisons ----
+ * Calls where C answered TA_SUCCESS with outNBElement == 0 and the server's own
+ * count was compared against it. Per LANGUAGE, for the reason the two counter
+ * blocks above give: one server dropping out of the check is invisible in a
+ * total the others keep non-zero.
+ *
+ * These are the calls the sibling counters deliberately do NOT count as
+ * coverage — no output element is diffed, so as evidence about VALUES they are
+ * vacuous. That is a statement about values, and it was read as a statement
+ * about the whole response: the count comparison was skipped along with them.
+ * It is cheap and it is not vacuous, because the two sides can disagree.
+ *
+ * What is still NOT compared at a zero count is outBegIdx. C's early returns
+ * write 0 into it, but that is the C library's habit rather than a documented
+ * contract, and the four backends were never held to it; asserting it here
+ * would be a new cross-backend requirement rather than the closing of a hole,
+ * so it stays a separate question. Named rather than left implicit — an
+ * unstated omission here is what this counter exists to prevent. */
+static long g_zeroCountCompared[NUM_LANGUAGES];
+
 /* ---- Return-code census (#236 step 4) ----
  * The retCode of every value-comparison call and every index-range case,
  * counted per LANGUAGE and per code. NOT every code on the wire: the unstable
@@ -1169,9 +1190,42 @@ static void compare_codegen_output_generic(
     if( p->lastRetCode != TA_SUCCESS )
         return;
 
-    /* If C produced no output, skip comparison */
-    if( p->lastNbElement == 0 )
+    /* Compare outNBElement.
+     *
+     * BEFORE the zero-output return below, not after it. The produced count is
+     * a claim the server makes whatever its value, and at C's zero it was the
+     * one claim nothing checked: the early return skipped this compare along
+     * with the value diff, so a server answering "success, 3 elements" where C
+     * answered "success, 0" read as agreement. The other direction — C
+     * produces, the server does not — always failed here, so the leg was
+     * one-sided rather than absent, which is why a green run said nothing
+     * about it.
+     *
+     * That is not a corner of the corpus. Every range short of the lookback
+     * lands here, which is most of what the startIdx axis sends (its own
+     * counters split `compared` from `withOutput` for exactly this reason),
+     * and a produced count is precisely what an off-by-one in a backend's
+     * lookback arithmetic gets wrong at the boundary where output begins. */
+    int cg_nbElement = json_get_int(p->responseBuf, "outNBElement");
+    if( p->lastNbElement != cg_nbElement )
+    {
+        printf("CODEGEN MISMATCH [TA_%s]: outNBElement C=%d codegen=%d\n",
+               p->funcInfo->name, (int)p->lastNbElement, cg_nbElement);
+        p->codegenError = TA_CODEGEN_NBELEMENT_MISMATCH;
         return;
+    }
+
+    /* Both sides produced nothing: the counts agreed just above, and there is
+     * no element to diff. outBegIdx is deliberately NOT compared here — see
+     * the counter's comment at the top of this file for what that leaves open
+     * and why it is a separate question. Counted per language and per output
+     * so the check above cannot go quiet unnoticed. */
+    if( p->lastNbElement == 0 )
+    {
+        if( p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES )
+            g_zeroCountCompared[p->langIndex]++;
+        return;
+    }
 
     /* Compare outBegIdx */
     int cg_begIdx = json_get_int(p->responseBuf, "outBegIdx");
@@ -1180,16 +1234,6 @@ static void compare_codegen_output_generic(
         printf("CODEGEN MISMATCH [TA_%s]: outBegIdx C=%d codegen=%d\n",
                p->funcInfo->name, (int)p->lastBegIdx, cg_begIdx);
         p->codegenError = TA_CODEGEN_BEGIDX_MISMATCH;
-        return;
-    }
-
-    /* Compare outNBElement */
-    int cg_nbElement = json_get_int(p->responseBuf, "outNBElement");
-    if( p->lastNbElement != cg_nbElement )
-    {
-        printf("CODEGEN MISMATCH [TA_%s]: outNBElement C=%d codegen=%d\n",
-               p->funcInfo->name, (int)p->lastNbElement, cg_nbElement);
-        p->codegenError = TA_CODEGEN_NBELEMENT_MISMATCH;
         return;
     }
 
@@ -9418,6 +9462,30 @@ ErrorNumber test_codegen(const TA_History *history,
                 startSweepTotal += g_startSweepWithOutput[li];
                 valuesCompared  += g_codegenCompared[li];
             }
+            /* Non-vacuity for the zero-produced-count compare, DIFFERENTIALLY
+             * rather than against a literal floor. Whether a run reaches a
+             * zero-count call at all is a property of the corpus — a
+             * --function= filter naming only lookback-0 functions legitimately
+             * never does — so the assertion is that no language sits at zero
+             * while another, on the same corpus, is answering them. That is
+             * the shape the counter is for: one server dropping out of a check
+             * every other server is taking. */
+            {
+                long zeroSeen = 0;
+                for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+                    zeroSeen += g_zeroCountCompared[li];
+                if( zeroSeen > 0 )
+                    for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+                        if( g_codegenCompared[li] > 0 && g_zeroCountCompared[li] == 0 )
+                        {
+                            printf("\nCODEGEN FAILED: no produced-count-of-zero "
+                                   "comparison reached %s, on a run where the other "
+                                   "server(s) took %ld of them — the same corpus "
+                                   "reached them and not it\n",
+                                   ALL_LANGUAGES[li].display, zeroSeen);
+                            return TA_CODEGEN_OUTPUT_MISMATCH;
+                        }
+            }
             if( valuesCompared > 0 && startSweepTotal == 0 )
             {
                 printf("\nCODEGEN FAILED: the startIdx-axis sweep compared "
@@ -9554,6 +9622,28 @@ ErrorNumber test_codegen(const TA_History *history,
                     printf(", %ld withheld (TRIX/NATR partial range — the frozen "
                            "reference predates issue #98)", g_startSweepSkipped98);
                 printf("\n");
+            }
+
+            /* Printed per language, not as a total: the differential floor
+             * above tests one language against the others, so the numbers it
+             * reads have to be visible. Printed even where the value legs found
+             * plenty, because a produced count of zero is the one answer the
+             * value legs cannot examine. */
+            {
+                long zeroTotal = 0;
+                for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+                    zeroTotal += g_zeroCountCompared[li];
+                if( zeroTotal > 0 )
+                {
+                    printf("  produced count at zero:");
+                    for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+                        if( g_codegenCompared[li] > 0 || g_zeroCountCompared[li] > 0 )
+                            printf(" %s=%ld", ALL_LANGUAGES[li].display,
+                                   g_zeroCountCompared[li]);
+                    printf("  (comparison(s), one per output, where C produced nothing "
+                           "and the server's own count was checked against it; no "
+                           "output element is diffed there)\n");
+                }
             }
         }
 
