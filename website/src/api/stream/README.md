@@ -21,6 +21,8 @@ Every TA function gets these calls:
 
 Two more calls, `OpenAndFill` and `UpdateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
+Additional read-only [utility functions](#utility-calls) are available.
+
 ## Example (SMA)
 
 ```c
@@ -94,6 +96,21 @@ double gap[64], out[64];         /* one output array per output */
 TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
 ```
 
+## Utility Calls
+
+| Call | When | Does |
+|------|------|------|
+| `TA_StreamOutRange` | any time | the bars the stream has a value for — the batch range over the same bars |
+
+Unlike the calls above, `TA_StreamOutRange` takes any `TA_<NAME>_Stream *` — one accessor, not one per function:
+
+```c
+int begIdx, nbElement;
+TA_StreamOutRange( s, &begIdx, &nbElement );
+```
+
+A stream opened over `historyLen` bars starts at `(lookback, historyLen - lookback)`; each accepted `Update` adds one bar, and `Peek` leaves it unchanged — so after a stream has been fed `nbBar` bars, by any mix of `Open` and `Update`, this reports what the batch call over `(0, nbBar-1)` would. The count saturates at `TA_MAX_INDEX`.
+
 ## Error model
 
 | Call | Returns |
@@ -102,6 +119,7 @@ TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
 | `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf. The stream is left untouched on an error. |
 | `TA_<NAME>_UpdateAndFill` | `TA_BAD_PARAM` on NULL arguments, a negative `barCount`, or an output aliasing an input or another output — none of which commits anything. An invalid bar (NaN or ±Inf) also returns `TA_BAD_PARAM`, but commits the valid bars before it. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
+| `TA_StreamOutRange` | `TA_BAD_PARAM` on a NULL argument |
 
 ## Discovering streamable functions
 

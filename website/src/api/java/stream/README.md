@@ -17,11 +17,10 @@ Each streamable function adds two factory methods on `Core` and a handful of met
 | `core.<name>Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
-| `stream.value()` | any time | the most recently committed value |
-| `stream.copy()` | any time | an independent copy of the stream |
-| `stream.outRange()` | any time | the bars this stream has a value for — the batch range over the same bars |
 
 Two more calls, `openAndFill` and `updateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
+
+Additional read-only [utility functions](#utility-calls) are available.
 
 There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
@@ -93,7 +92,7 @@ OutRange r = s.outRange();                      // the bars it has a value for
 double v = s.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned handle as `outRange()` rather than through out-parameters. That accessor is on every stream, not just a filled one: it holds the bars the handle has a value for, which is what the batch call over the same bars reports — `(lookback, historyLen - lookback)` at open, one more per `update`, unchanged by `peek`. The output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned handle as `outRange()` rather than through out-parameters — see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
 
 **`updateAndFill`**
 
@@ -103,8 +102,8 @@ double[] out = new double[gap.length];
 s.updateAndFill(gap, out);          // out[i] is the SMA at gap[i]
 ```
 
-`s.outRange()` reports the bars
-the stream has a value for, before and after.
+`updateAndFill` has no second return value for the range it wrote — call
+`outRange()` afterward (see [Utility Calls](#utility-calls)).
 
 It throws `IllegalArgumentException` before committing anything if the input
 arrays differ in length, an output is shorter than the bar count, or an output
@@ -113,6 +112,25 @@ nothing. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`,
 exactly as `update` does, but commits the valid bars **before** it — their
 values are already written, and the range tells you how many.
 
+## Utility Calls
+
+| Call | When | Does |
+|------|------|------|
+| `stream.value()` | any time | the most recently committed value |
+| `stream.copy()` | any time | an independent copy of the stream |
+| `stream.outRange()` | any time | the bars this stream has a value for — the batch range over the same bars |
+
+`value()` re-reads the last committed value without recomputing. `copy()` returns an independent stream that can be updated separately from the original — see [Rules](#rules) for when concurrent reads of these are safe.
+
+`outRange()` holds the bars the stream has a value for: `(lookback, historyLen - lookback)` at `open`, one more per accepted `update`, unchanged by `peek`.
+
+```java
+Core.SmaStream s = core.smaOpen(history, 30);
+double v = s.value();          // the value at the last history bar
+Core.SmaStream snapshot = s.copy();
+OutRange r = s.outRange();     // the bars s has a value for
+```
+
 ## Error model
 
 | Call | Behaviour |
@@ -120,7 +138,7 @@ values are already written, and the range tells you how many.
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
 | `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. The handle is left untouched on an error. Nothing else throws after a successful `open` (see the note below for the one composed-indicator corner). |
 | `updateAndFill` | Ragged inputs, an output shorter than the bar count, or an output that is also an input or another output throw `IllegalArgumentException` — none of which commits anything. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`, but commits the valid bars before it. |
-| `value` / `copy` | Never throw. |
+| `value` / `copy` / `outRange` | Never throw. |
 
 ## Discovering streamable functions
 

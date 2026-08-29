@@ -17,11 +17,10 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 | `core.<Name>Open(history, params)` | once | validate params, consume warm-up history, return a **handle** |
 | `handle.Update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `handle.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
-| `handle.Value` | any time | the most recently committed value |
-| `handle.Clone()` | any time | an independent deep copy of the handle |
-| `handle.OutRange` | any time | the bars this handle has a value for — the batch range over the same bars |
 
 Two more calls, `OpenAndFill` and `UpdateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
+
+Additional read-only [utility functions](#utility-calls) are available.
 
 There is **no `Dispose`**: a handle owns only managed state — its arrays, its sub-handles and a `Core` reference — so an unreferenced handle is simply collected. The handle types deliberately do not implement `IDisposable`.
 
@@ -104,8 +103,8 @@ double[] outReal = new double[gap.Length];
 s.UpdateAndFill(gap, outReal);      // outReal[i] is the SMA at gap[i]
 ```
 
-`s.OutRange` reports the bars
-the handle has a value for, before and after.
+`UpdateAndFill` has no second return value for the range it wrote — read
+`OutRange` afterward (see [Utility Calls](#utility-calls)).
 
 It throws `ArgumentException` before committing anything if the input spans
 differ in length, an output is shorter than the bar count, or an output
@@ -114,9 +113,28 @@ overlaps an input or another output. An empty call does nothing. An invalid bar
 commits the valid bars **before** it — their values are already written, and the
 range tells you how many.
 
+## Utility Calls
+
+| Call | When | Does |
+|------|------|------|
+| `handle.Value` | any time | the most recently committed value |
+| `handle.Clone()` | any time | an independent deep copy of the handle |
+| `handle.OutRange` | any time | the bars this handle has a value for — the batch range over the same bars |
+
+`Value` re-reads the last committed value without recomputing. `Clone()` returns an independent deep copy that can be updated separately from the original.
+
+`OutRange` holds the bars the handle has a value for: `(lookback, historyLen - lookback)` at `Open`, one more per accepted `Update`, unchanged by `Peek`.
+
+```csharp
+Core.SmaStream s = core.SmaOpen(history, 30);
+double v = s.Value;            // the value at the last history bar
+Core.SmaStream snapshot = s.Clone();
+OutRange r = s.OutRange;       // the bars s has a value for
+```
+
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits anything. The handle is left untouched on an error. `Value` and `Clone()` never throw.
+`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits anything. The handle is left untouched on an error. `Value`, `Clone()` and `OutRange` never throw.
 
 | Condition | Exception |
 |---|---|
