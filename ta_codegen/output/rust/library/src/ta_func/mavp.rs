@@ -531,23 +531,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MAVP stream: one value per closed bar, bit-identical to [`Core::MAVP`]
-/// over the same series. Open with [`Core::MAVP_Open`]; dropping the handle
+/// over the same series. Open with [`Core::mavp_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAVP_Stream")]
-pub struct MAVP_Stream {
-    state: MAVP_StreamState,
+pub struct MavpStream {
+    state: MavpStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MAVP_Stream {
+impl MavpStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MAVP_StreamState::restore_from`.
+    /// allocating new ones. See `MavpStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -556,16 +556,16 @@ impl MAVP_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MAVP_StreamState {
+struct MavpStreamState {
     optInMinPeriod: i32,
     optInMaxPeriod: i32,
     optInMAType: MAType,
     // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-    bank: Vec<MA_Stream>,
+    bank: Vec<MaStream>,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MAVP_StreamState {
+impl MavpStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -582,14 +582,13 @@ impl MAVP_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAVP_step_impl(sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn mavp_step_impl(sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cp: i32 = inPeriods as i32;
         if cp < sp.optInMinPeriod {
             cp = sp.optInMinPeriod;
@@ -606,10 +605,10 @@ impl Core {
         Ok(())
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MAVP_Open`] (composition seam).
-    pub(crate) fn MAVP_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::mavp_open`] (composition seam).
+    pub(crate) fn mavp_open_internal(
         &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType,
-    ) -> Result<(MAVP_Stream, f64), RetCode> {
+    ) -> Result<(MavpStream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -649,10 +648,10 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
-        let mut bank: Vec<MA_Stream> = Vec::with_capacity(nBank);
+        let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
         for bankIdx in 0..nBank {
-            let (sub, subValue) = self.MA_OpenInternal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let (sub, subValue) = self.ma_open_internal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
             bank.push(sub);
             scratch.push(subValue);
         }
@@ -663,8 +662,8 @@ impl Core {
             cp = optInMaxPeriod;
         }
         let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
-        let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MAVP_Stream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        Ok((MavpStream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
     }
 
     /// Open a live MAVP stream over the warm-up history; returns the handle and
@@ -684,7 +683,7 @@ impl Core {
     /// let periods: Vec<f64> = (0..252).map(|i| 5.0 + (i % 10) as f64).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MAVP_Open(&data, &periods, 2, 30, MAType::SMA).expect("enough history");
+    /// let (mut s, _last) = core.mavp_open(&data, &periods, 2, 30, MAType::SMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 14.0).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -694,11 +693,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MAVP_Open")]
-    pub fn MAVP_Open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType) -> Result<(MAVP_Stream, f64), RetCode> {
-        self.MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
+    pub fn mavp_open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType) -> Result<(MavpStream, f64), RetCode> {
+        self.mavp_open_internal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
     }
 
-    /// [`Core::MAVP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::mavp_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MAVP`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -706,12 +705,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MAVP_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::mavp_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MAVP_OpenAndFill")]
-    pub fn MAVP_OpenAndFill(
+    pub fn mavp_open_and_fill(
         &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
-    ) -> Result<(MAVP_Stream, OutRange), RetCode> {
+    ) -> Result<(MavpStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -750,10 +749,10 @@ impl Core {
         }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
         // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.
-        let mut bank: Vec<MA_Stream> = Vec::with_capacity(nBank);
+        let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
         for bankIdx in 0..nBank {
-            let (sub, subValue) = self.MA_OpenInternal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let (sub, subValue) = self.ma_open_internal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
             bank.push(sub);
             scratch.push(subValue);
         }
@@ -779,23 +778,23 @@ impl Core {
             outReal[t - lookbackTotal] = scratch[(cp - optInMinPeriod) as usize];
             t += 1;
         }
-        let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MAVP_Stream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        Ok((MavpStream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `MAVP_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `MavpStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MAVP_Stream>>> =
+    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MavpStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MAVP_Stream {
+impl MavpStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -813,7 +812,7 @@ impl MAVP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MAVP_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
+        Core::mavp_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -846,7 +845,7 @@ impl MAVP_Stream {
             if !inReal[i].is_finite() || !inPeriods[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MAVP_step_impl(&mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
+            Core::mavp_step_impl(&mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -894,7 +893,7 @@ impl MAVP_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MAVP_Stream>();
+    _assert_auto::<MavpStream>();
 };
 
 /***************/

@@ -213,23 +213,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live LN stream: one value per closed bar, bit-identical to [`Core::LN`]
-/// over the same series. Open with [`Core::LN_Open`]; dropping the handle
+/// over the same series. Open with [`Core::ln_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LN_Stream")]
-pub struct LN_Stream {
-    state: LN_StreamState,
+pub struct LnStream {
+    state: LnStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl LN_Stream {
+impl LnStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `LN_StreamState::restore_from`.
+    /// allocating new ones. See `LnStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -238,33 +238,32 @@ impl LN_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct LN_StreamState {
+struct LnStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl LN_StreamState {
+impl LnStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LN_step_impl(sp: &mut LN_StreamState, inReal: f64, outReal: &mut f64) {
+    fn ln_step_impl(sp: &mut LnStreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).ln();
     }
 
-    /// The single whole-history transcription behind [`Core::LN_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::LN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LN_OpenImpl(
+    /// The single whole-history transcription behind [`Core::ln_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::ln_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn ln_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<LN_Stream, RetCode> {
+    ) -> Result<LnStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -295,19 +294,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = LN_StreamState {
+        let state = LnStreamState {
         };
-        Ok(LN_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(LnStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::LN_Open`] (composition seam).
-    pub(crate) fn LN_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::ln_open`] (composition seam).
+    pub(crate) fn ln_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(LN_Stream, f64), RetCode> {
+    ) -> Result<(LnStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LN_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ln_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -327,7 +326,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.LN_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.ln_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -337,11 +336,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_LN_Open")]
-    pub fn LN_Open(&self, inReal: &[f64], ) -> Result<(LN_Stream, f64), RetCode> {
-        self.LN_OpenInternal(inReal, 0)
+    pub fn ln_open(&self, inReal: &[f64], ) -> Result<(LnStream, f64), RetCode> {
+        self.ln_open_internal(inReal, 0)
     }
 
-    /// [`Core::LN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ln_open`] that also fills the output array(s) bit-identically to
     /// [`Core::LN`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -349,12 +348,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::LN_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::ln_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_LN_OpenAndFill")]
-    pub fn LN_OpenAndFill(
+    pub fn ln_open_and_fill(
         &self, inReal: &[f64], outReal: &mut [f64],
-    ) -> Result<(LN_Stream, OutRange), RetCode> {
+    ) -> Result<(LnStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -368,23 +367,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LN_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.ln_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::LN_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::ln_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn LN_OpenAndFillInternal(
+    pub(crate) fn ln_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<LN_Stream, RetCode> {
-        self.LN_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<LnStream, RetCode> {
+        self.ln_open_impl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl LN_Stream {
+impl LnStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -402,7 +401,7 @@ impl LN_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::LN_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::ln_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -435,7 +434,7 @@ impl LN_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::LN_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::ln_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -478,7 +477,7 @@ impl LN_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<LN_Stream>();
+    _assert_auto::<LnStream>();
 };
 
 /***************/

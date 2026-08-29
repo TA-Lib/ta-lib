@@ -415,7 +415,7 @@
    /**
     * A live CDLMORNINGDOJISTAR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLMORNINGDOJISTAR} over the same series.
-    * Open with {@link Core#CDLMORNINGDOJISTAR_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlmorningdojistarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -426,7 +426,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLMORNINGDOJISTAR_Stream {
+   public static final class CdlmorningdojistarStream {
       Core core;
       double optInPenetration;
       double BodyDojiPeriodTotal;
@@ -462,7 +462,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLMORNINGDOJISTAR_Stream( Core core ) { this.core = core; }
+      CdlmorningdojistarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -476,7 +476,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLMORNINGDOJISTAR_Stream( CDLMORNINGDOJISTAR_Stream other ) {
+      CdlmorningdojistarStream( CdlmorningdojistarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -513,7 +513,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLMORNINGDOJISTAR_Stream other ) {
+      void copyFrom( CdlmorningdojistarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -563,7 +563,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLMORNINGDOJISTAR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlmorningdojistarStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -580,7 +580,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMORNINGDOJISTAR update: BadParam", RetCode.BadParam);
-         core.CDLMORNINGDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlmorningdojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -609,7 +609,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLMORNINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLMORNINGDOJISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlmorningdojistarStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -627,14 +627,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMORNINGDOJISTAR peek: BadParam", RetCode.BadParam);
-         CDLMORNINGDOJISTAR_Stream scratch = PEEK_SCRATCH.get();
+         CdlmorningdojistarStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLMORNINGDOJISTAR_Stream(this);
+            scratch = new CdlmorningdojistarStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLMORNINGDOJISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlmorningdojistarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -651,11 +651,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLMORNINGDOJISTAR_Stream copy() {
-         return new CDLMORNINGDOJISTAR_Stream(this);
+      public CdlmorningdojistarStream copy() {
+         return new CdlmorningdojistarStream(this);
       }
    }
-   void CDLMORNINGDOJISTAR_StepImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlmorningdojistarStepImpl( CdlmorningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -717,7 +717,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMORNINGDOJISTAR_OpenImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlmorningdojistarOpenImpl( CdlmorningdojistarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -900,11 +900,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLMORNINGDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlmorningdojistarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlmorningdojistarStream cdlmorningdojistarOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLMORNINGDOJISTAR_Stream sp = new CDLMORNINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLMORNINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+      CdlmorningdojistarStream sp = new CdlmorningdojistarStream(this);
+      RetCode retCode = cdlmorningdojistarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -918,14 +918,14 @@
       }
       throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLMORNINGDOJISTAR_Open (composition seam). */
-   CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind cdlmorningdojistarOpen (composition seam). */
+   CdlmorningdojistarStream cdlmorningdojistarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
-      CDLMORNINGDOJISTAR_Stream sp = new CDLMORNINGDOJISTAR_Stream(this);
+      CdlmorningdojistarStream sp = new CdlmorningdojistarStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMORNINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlmorningdojistarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -952,7 +952,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
+   public CdlmorningdojistarStream cdlmorningdojistarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
       requireArgument("CDLMORNINGDOJISTAR open", "inOpen", inOpen);
       requireHistory("CDLMORNINGDOJISTAR open", inOpen.length);
@@ -962,10 +962,10 @@
       requireHistoryLength("CDLMORNINGDOJISTAR open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMORNINGDOJISTAR open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMORNINGDOJISTAR open", "inClose", inClose.length, inOpen.length);
-      return CDLMORNINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return cdlmorningdojistarOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
-    * {@link Core#CDLMORNINGDOJISTAR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlmorningdojistarOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLMORNINGDOJISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -973,9 +973,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLMORNINGDOJISTAR_Stream#outRange()}.
+    * {@link CdlmorningdojistarStream#outRange()}.
     */
-   public CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
+   public CdlmorningdojistarStream cdlmorningdojistarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inOpen", inOpen);
       requireHistory("CDLMORNINGDOJISTAR openAndFill", inOpen.length);
@@ -992,5 +992,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLMORNINGDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return cdlmorningdojistarOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }

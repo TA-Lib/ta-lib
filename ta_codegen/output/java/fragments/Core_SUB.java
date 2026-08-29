@@ -194,7 +194,7 @@
    /**
     * A live SUB stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SUB} over the same series.
-    * Open with {@link Core#SUB_Open}; there is no close — the handle is
+    * Open with {@link Core#subOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -205,13 +205,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SUB_Stream {
+   public static final class SubStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      SUB_Stream( Core core ) { this.core = core; }
+      SubStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -225,14 +225,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SUB_Stream( SUB_Stream other ) {
+      SubStream( SubStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SUB_Stream other ) {
+      void copyFrom( SubStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -254,7 +254,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("SUB update: BadParam", RetCode.BadParam);
-         core.SUB_StepImpl(this, inReal0, inReal1);
+         core.subStepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -281,7 +281,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
                throw new TaLibArgumentException("SUB updateAndFill: BadParam", RetCode.BadParam);
-            core.SUB_StepImpl(this, inReal0[i], inReal1[i]);
+            core.subStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -297,8 +297,8 @@
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
-         SUB_Stream scratch = new SUB_Stream(this);
-         core.SUB_StepImpl(scratch, inReal0, inReal1);
+         SubStream scratch = new SubStream(this);
+         core.subStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -315,15 +315,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SUB_Stream copy() {
-         return new SUB_Stream(this);
+      public SubStream copy() {
+         return new SubStream(this);
       }
    }
-   void SUB_StepImpl( SUB_Stream sp, double inReal0, double inReal1 )
+   void subStepImpl( SubStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 - inReal1;
    }
-   private RetCode SUB_OpenImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode subOpenImpl( SubStream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -353,11 +353,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SUB_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SUB_Stream SUB_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* subOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SubStream subOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+      SubStream sp = new SubStream(this);
+      RetCode retCode = subOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -371,14 +371,14 @@
       }
       throw new TaLibArgumentException("SUB openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SUB_Open (composition seam). */
-   SUB_Stream SUB_OpenInternal( double inReal0[], double inReal1[], int startIdx )
+   /* Internal startIdx-anchored open behind subOpen (composition seam). */
+   SubStream subOpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
-      SUB_Stream sp = new SUB_Stream(this);
+      SubStream sp = new SubStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = subOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -405,16 +405,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SUB_Stream SUB_Open( double inReal0[], double inReal1[] )
+   public SubStream subOpen( double inReal0[], double inReal1[] )
    {
       requireArgument("SUB open", "inReal0", inReal0);
       requireHistory("SUB open", inReal0.length);
       requireArgument("SUB open", "inReal1", inReal1);
       requireHistoryLength("SUB open", "inReal1", inReal1.length, inReal0.length);
-      return SUB_OpenInternal(inReal0, inReal1, 0);
+      return subOpenInternal(inReal0, inReal1, 0);
    }
    /**
-    * {@link Core#SUB_Open} that also fills the output array(s) bit-identically
+    * {@link Core#subOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SUB} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -422,9 +422,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SUB_Stream#outRange()}.
+    * {@link SubStream#outRange()}.
     */
-   public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
+   public SubStream subOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
       requireArgument("SUB openAndFill", "inReal0", inReal0);
       requireHistory("SUB openAndFill", inReal0.length);
@@ -437,5 +437,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SUB_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
+      return subOpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

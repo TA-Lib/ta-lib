@@ -333,25 +333,25 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLDOJI stream: one value per closed bar, bit-identical to [`Core::CDLDOJI`]
-/// over the same series. Open with [`Core::CDLDOJI_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdldoji_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDOJI_Stream")]
-pub struct CDLDOJI_Stream {
+pub struct CdldojiStream {
     /// The `BodyDoji` setting this stream was opened with.
     cs_body_doji: CandleSetting,
-    state: CDLDOJI_StreamState,
+    state: CdldojiStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLDOJI_Stream {
+impl CdldojiStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLDOJI_StreamState::restore_from`.
+    /// allocating new ones. See `CdldojiStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_doji = src.cs_body_doji;
         self.state.restore_from(&src.state);
@@ -361,7 +361,7 @@ impl CDLDOJI_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLDOJI_StreamState {
+struct CdldojiStreamState {
     BodyDojiPeriodTotal: f64,
     ringPos_BodyDojiTrailingIdx: usize,
     ringCap_BodyDojiTrailingIdx: usize,
@@ -369,7 +369,7 @@ struct CDLDOJI_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLDOJI_StreamState {
+impl CdldojiStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -380,14 +380,13 @@ impl CDLDOJI_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLDOJI_step_impl(sp: &mut CDLDOJI_StreamState, cs_body_doji: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdldoji_step_impl(sp: &mut CdldojiStreamState, cs_body_doji: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
@@ -457,11 +456,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLDOJI_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLDOJI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLDOJI_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdldoji_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdldoji_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdldoji_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLDOJI_Stream, RetCode> {
+    ) -> Result<CdldojiStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -599,23 +598,23 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLDOJI_StreamState {
+        let state = CdldojiStreamState {
             BodyDojiPeriodTotal,
             ringPos_BodyDojiTrailingIdx: 0_usize,
             ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
             ring_BodyDojiTrailingIdx_derived,
         };
-        Ok(CDLDOJI_Stream { cs_body_doji: self.candle_settings.body_doji, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdldojiStream { cs_body_doji: self.candle_settings.body_doji, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLDOJI_Open`] (composition seam).
-    pub(crate) fn CDLDOJI_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdldoji_open`] (composition seam).
+    pub(crate) fn cdldoji_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLDOJI_Stream, i32), RetCode> {
+    ) -> Result<(CdldojiStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLDOJI_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdldoji_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -642,7 +641,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLDOJI_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdldoji_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -652,11 +651,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLDOJI_Open")]
-    pub fn CDLDOJI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLDOJI_Stream, i32), RetCode> {
-        self.CDLDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdldoji_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdldojiStream, i32), RetCode> {
+        self.cdldoji_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLDOJI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdldoji_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLDOJI`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -664,12 +663,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLDOJI_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdldoji_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLDOJI_OpenAndFill")]
-    pub fn CDLDOJI_OpenAndFill(
+    pub fn cdldoji_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLDOJI_Stream, OutRange), RetCode> {
+    ) -> Result<(CdldojiStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -686,23 +685,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdldoji_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLDOJI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdldoji_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLDOJI_OpenAndFillInternal(
+    pub(crate) fn cdldoji_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLDOJI_Stream, RetCode> {
-        self.CDLDOJI_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdldojiStream, RetCode> {
+        self.cdldoji_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLDOJI_Stream {
+impl CdldojiStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -720,7 +719,7 @@ impl CDLDOJI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLDOJI_step_impl(&mut self.state, &self.cs_body_doji, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdldoji_step_impl(&mut self.state, &self.cs_body_doji, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -753,7 +752,7 @@ impl CDLDOJI_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLDOJI_step_impl(&mut self.state, &self.cs_body_doji, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdldoji_step_impl(&mut self.state, &self.cs_body_doji, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -798,7 +797,7 @@ impl CDLDOJI_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLDOJI_Stream>();
+    _assert_auto::<CdldojiStream>();
 };
 
 /***************/

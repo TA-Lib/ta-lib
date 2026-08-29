@@ -452,7 +452,7 @@ public partial class Core
    /// <summary>A live <c>CDLHAMMER</c> stream: one value per closed bar, bit-identical to
    /// <c>CDLHAMMER</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLHAMMER_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.CdlhammerOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -465,7 +465,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLHAMMER_Stream
+   public sealed class CdlhammerStream
    {
       internal Core core;
       internal double BodyPeriodTotal;
@@ -504,12 +504,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLHAMMER_Stream( Core core ) { this.core = core; }
+      internal CdlhammerStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLHAMMER</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdlhammer</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -518,7 +518,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLHAMMER_Stream( CDLHAMMER_Stream other )
+      internal CdlhammerStream( CdlhammerStream other )
       {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
@@ -562,7 +562,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLHAMMER_Stream other )
+      internal void CopyFrom( CdlhammerStream other )
       {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
@@ -615,7 +615,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLHAMMER_Stream? peekScratch;
+      [ThreadStatic] private static CdlhammerStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -636,7 +636,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHAMMER", "update", RetCode.BadParam);
-         core.CDLHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -658,14 +658,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHAMMER", "peek", RetCode.BadParam);
-         CDLHAMMER_Stream? scratch = peekScratch;
+         CdlhammerStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLHAMMER_Stream(this);
+            scratch = new CdlhammerStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLHAMMER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.CdlhammerStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -692,7 +692,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLHAMMER", "updateAndFill", RetCode.BadParam);
-            core.CDLHAMMER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlhammerStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -708,13 +708,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLHAMMER_Stream Clone()
+      public CdlhammerStream Clone()
       {
-         return new CDLHAMMER_Stream(this);
+         return new CdlhammerStream(this);
       }
    }
 
-   internal void CDLHAMMER_StepImpl( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlhammerStepImpl( CdlhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -782,7 +782,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLHAMMER_OpenImpl( CDLHAMMER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlhammerOpenImpl( CdlhammerStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -982,11 +982,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLHAMMER_Stream CDLHAMMER_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlhammerOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlhammerStream CdlhammerOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
-      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlhammerStream sp = new CdlhammerStream(this);
+      RetCode retCode = CdlhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -995,12 +995,12 @@ public partial class Core
       throw StreamFailure("CDLHAMMER", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLHAMMER_Open (composition seam). */
-   internal CDLHAMMER_Stream CDLHAMMER_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlhammerOpen (composition seam). */
+   internal CdlhammerStream CdlhammerOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
+      CdlhammerStream sp = new CdlhammerStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1011,12 +1011,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLHAMMER</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLHAMMER_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdlhammerStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLHAMMER</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>CDLHAMMER_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLHAMMER_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlhammerOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1029,7 +1029,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLHAMMER_Stream CDLHAMMER_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlhammerStream CdlhammerOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1039,10 +1039,10 @@ public partial class Core
       RequireHistoryLength("CDLHAMMER", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLHAMMER", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHAMMER", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlhammerOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLHAMMER_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>CdlhammerOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLHAMMER</c> produces
@@ -1055,7 +1055,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLHAMMER_Stream.OutRange"/>.</para>
+   /// <see cref="CdlhammerStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -1072,7 +1072,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLHAMMER_Stream CDLHAMMER_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlhammerStream CdlhammerOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1084,6 +1084,6 @@ public partial class Core
       RequireHistoryLength("CDLHAMMER", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHAMMER", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLHAMMER", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLHAMMER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlhammerOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

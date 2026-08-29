@@ -393,7 +393,7 @@
    /**
     * A live AROON stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AROON} over the same series.
-    * Open with {@link Core#AROON_Open}; there is no close — the handle is
+    * Open with {@link Core#aroonOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -404,7 +404,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AROON_Stream {
+   public static final class AroonStream {
       Core core;
       int optInTimePeriod;
       double lowest;
@@ -424,7 +424,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      AROON_Stream( Core core ) { this.core = core; }
+      AroonStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -438,7 +438,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AROON_Stream( AROON_Stream other ) {
+      AroonStream( AroonStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -459,7 +459,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AROON_Stream other ) {
+      void copyFrom( AroonStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -489,7 +489,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AROON_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<AroonStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -519,7 +519,7 @@
       public Value update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
-         core.AROON_StepImpl(this, inHigh, inLow);
+         core.aroonStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
          return this.cachedValue;
@@ -550,7 +550,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                   throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-               core.AROON_StepImpl(this, inHigh[i], inLow[i]);
+               core.aroonStepImpl(this, inHigh[i], inLow[i]);
                outAroonDown[i] = this.cur_outAroonDown;
                outAroonUp[i] = this.cur_outAroonUp;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -573,14 +573,14 @@
       public Value peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
-         AROON_Stream scratch = PEEK_SCRATCH.get();
+         AroonStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new AROON_Stream(this);
+            scratch = new AroonStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.AROON_StepImpl(scratch, inHigh, inLow);
+         core.aroonStepImpl(scratch, inHigh, inLow);
          return new Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
       }
 
@@ -597,11 +597,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AROON_Stream copy() {
-         return new AROON_Stream(this);
+      public AroonStream copy() {
+         return new AroonStream(this);
       }
    }
-   void AROON_StepImpl( AROON_Stream sp, double inHigh, double inLow )
+   void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -656,7 +656,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode AROON_OpenImpl( AROON_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
+   private RetCode aroonOpenImpl( AroonStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -797,14 +797,14 @@
       sp.x_inLow = capX_inLow;
       sp.cur_outAroonDown = outAroonDown[(outNBElement.value - 1) * outStride];
       sp.cur_outAroonUp = outAroonUp[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new AROON_Stream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
+      sp.cachedValue = new AroonStream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
       return RetCode.Success;
    }
-   /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AROON_Stream AROON_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
+   /* aroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AroonStream aroonOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
    {
-      AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1);
+      AroonStream sp = new AroonStream(this);
+      RetCode retCode = aroonOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -818,15 +818,15 @@
       }
       throw new TaLibArgumentException("AROON openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AROON_Open (composition seam). */
-   AROON_Stream AROON_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind aroonOpen (composition seam). */
+   AroonStream aroonOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
-      AROON_Stream sp = new AROON_Stream(this);
+      AroonStream sp = new AroonStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outAroonDown = new double[1];
       double[] sink_outAroonUp = new double[1];
-      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
+      RetCode retCode = aroonOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -853,16 +853,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AROON_Stream AROON_Open( double inHigh[], double inLow[], int optInTimePeriod )
+   public AroonStream aroonOpen( double inHigh[], double inLow[], int optInTimePeriod )
    {
       requireArgument("AROON open", "inHigh", inHigh);
       requireHistory("AROON open", inHigh.length);
       requireArgument("AROON open", "inLow", inLow);
       requireHistoryLength("AROON open", "inLow", inLow.length, inHigh.length);
-      return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return aroonOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#AROON_Open} that also fills the output array(s) bit-identically
+    * {@link Core#aroonOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AROON} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -870,9 +870,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AROON_Stream#outRange()}.
+    * {@link AroonStream#outRange()}.
     */
-   public AROON_Stream AROON_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
+   public AroonStream aroonOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
    {
       requireArgument("AROON openAndFill", "inHigh", inHigh);
       requireHistory("AROON openAndFill", inHigh.length);
@@ -886,5 +886,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AROON_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      return aroonOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
    }

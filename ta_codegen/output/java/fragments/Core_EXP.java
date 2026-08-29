@@ -183,7 +183,7 @@
    /**
     * A live EXP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#EXP} over the same series.
-    * Open with {@link Core#EXP_Open}; there is no close — the handle is
+    * Open with {@link Core#expOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -194,13 +194,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class EXP_Stream {
+   public static final class ExpStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      EXP_Stream( Core core ) { this.core = core; }
+      ExpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -214,14 +214,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      EXP_Stream( EXP_Stream other ) {
+      ExpStream( ExpStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( EXP_Stream other ) {
+      void copyFrom( ExpStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -243,7 +243,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EXP update: BadParam", RetCode.BadParam);
-         core.EXP_StepImpl(this, inReal);
+         core.expStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -269,7 +269,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("EXP updateAndFill: BadParam", RetCode.BadParam);
-            core.EXP_StepImpl(this, inReal[i]);
+            core.expStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -285,8 +285,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
-         EXP_Stream scratch = new EXP_Stream(this);
-         core.EXP_StepImpl(scratch, inReal);
+         ExpStream scratch = new ExpStream(this);
+         core.expStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -303,15 +303,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public EXP_Stream copy() {
-         return new EXP_Stream(this);
+      public ExpStream copy() {
+         return new ExpStream(this);
       }
    }
-   void EXP_StepImpl( EXP_Stream sp, double inReal )
+   void expStepImpl( ExpStream sp, double inReal )
    {
       sp.cur_outReal = Math.exp(inReal);
    }
-   private RetCode EXP_OpenImpl( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode expOpenImpl( ExpStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -337,11 +337,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* EXP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   EXP_Stream EXP_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* expOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ExpStream expOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      ExpStream sp = new ExpStream(this);
+      RetCode retCode = expOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -355,14 +355,14 @@
       }
       throw new TaLibArgumentException("EXP openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind EXP_Open (composition seam). */
-   EXP_Stream EXP_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind expOpen (composition seam). */
+   ExpStream expOpenInternal( double inReal[], int startIdx )
    {
-      EXP_Stream sp = new EXP_Stream(this);
+      ExpStream sp = new ExpStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = expOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -389,14 +389,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public EXP_Stream EXP_Open( double inReal[] )
+   public ExpStream expOpen( double inReal[] )
    {
       requireArgument("EXP open", "inReal", inReal);
       requireHistory("EXP open", inReal.length);
-      return EXP_OpenInternal(inReal, 0);
+      return expOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#EXP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#expOpen} that also fills the output array(s) bit-identically
     * to {@link Core#EXP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -404,9 +404,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link EXP_Stream#outRange()}.
+    * {@link ExpStream#outRange()}.
     */
-   public EXP_Stream EXP_OpenAndFill( double inReal[], double outReal[] )
+   public ExpStream expOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("EXP openAndFill", "inReal", inReal);
       requireHistory("EXP openAndFill", inReal.length);
@@ -417,5 +417,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return EXP_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return expOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

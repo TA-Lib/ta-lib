@@ -298,7 +298,7 @@
    /**
     * A live ROCR100 stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ROCR100} over the same series.
-    * Open with {@link Core#ROCR100_Open}; there is no close — the handle is
+    * Open with {@link Core#rocr100Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -309,7 +309,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ROCR100_Stream {
+   public static final class Rocr100Stream {
       Core core;
       int optInTimePeriod;
       int ringPos_trailingIdx;
@@ -319,7 +319,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      ROCR100_Stream( Core core ) { this.core = core; }
+      Rocr100Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -333,7 +333,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ROCR100_Stream( ROCR100_Stream other ) {
+      Rocr100Stream( Rocr100Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -344,7 +344,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ROCR100_Stream other ) {
+      void copyFrom( Rocr100Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -374,7 +374,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
-         core.ROCR100_StepImpl(this, inReal);
+         core.rocr100StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -400,7 +400,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("ROCR100 updateAndFill: BadParam", RetCode.BadParam);
-            core.ROCR100_StepImpl(this, inReal[i]);
+            core.rocr100StepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -416,8 +416,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
-         ROCR100_Stream scratch = new ROCR100_Stream(this);
-         core.ROCR100_StepImpl(scratch, inReal);
+         Rocr100Stream scratch = new Rocr100Stream(this);
+         core.rocr100StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -434,11 +434,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ROCR100_Stream copy() {
-         return new ROCR100_Stream(this);
+      public Rocr100Stream copy() {
+         return new Rocr100Stream(this);
       }
    }
-   void ROCR100_StepImpl( ROCR100_Stream sp, double inReal )
+   void rocr100StepImpl( Rocr100Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -456,7 +456,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROCR100_OpenImpl( ROCR100_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode rocr100OpenImpl( Rocr100Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -554,11 +554,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ROCR100_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ROCR100_Stream ROCR100_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* rocr100OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Rocr100Stream rocr100OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ROCR100_Stream sp = new ROCR100_Stream(this);
-      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      Rocr100Stream sp = new Rocr100Stream(this);
+      RetCode retCode = rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -572,14 +572,14 @@
       }
       throw new TaLibArgumentException("ROCR100 openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ROCR100_Open (composition seam). */
-   ROCR100_Stream ROCR100_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind rocr100Open (composition seam). */
+   Rocr100Stream rocr100OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      ROCR100_Stream sp = new ROCR100_Stream(this);
+      Rocr100Stream sp = new Rocr100Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -606,14 +606,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ROCR100_Stream ROCR100_Open( double inReal[], int optInTimePeriod )
+   public Rocr100Stream rocr100Open( double inReal[], int optInTimePeriod )
    {
       requireArgument("ROCR100 open", "inReal", inReal);
       requireHistory("ROCR100 open", inReal.length);
-      return ROCR100_OpenInternal(inReal, 0, optInTimePeriod);
+      return rocr100OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#ROCR100_Open} that also fills the output array(s) bit-identically
+    * {@link Core#rocr100Open} that also fills the output array(s) bit-identically
     * to {@link Core#ROCR100} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -621,9 +621,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ROCR100_Stream#outRange()}.
+    * {@link Rocr100Stream#outRange()}.
     */
-   public ROCR100_Stream ROCR100_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public Rocr100Stream rocr100OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("ROCR100 openAndFill", "inReal", inReal);
       requireHistory("ROCR100 openAndFill", inReal.length);
@@ -634,5 +634,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ROCR100_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return rocr100OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

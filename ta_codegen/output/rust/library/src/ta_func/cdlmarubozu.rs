@@ -409,27 +409,27 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLMARUBOZU stream: one value per closed bar, bit-identical to [`Core::CDLMARUBOZU`]
-/// over the same series. Open with [`Core::CDLMARUBOZU_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlmarubozu_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLMARUBOZU_Stream")]
-pub struct CDLMARUBOZU_Stream {
+pub struct CdlmarubozuStream {
     /// The `BodyLong` setting this stream was opened with.
     cs_body_long: CandleSetting,
     /// The `ShadowVeryShort` setting this stream was opened with.
     cs_shadow_very_short: CandleSetting,
-    state: CDLMARUBOZU_StreamState,
+    state: CdlmarubozuStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLMARUBOZU_Stream {
+impl CdlmarubozuStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLMARUBOZU_StreamState::restore_from`.
+    /// allocating new ones. See `CdlmarubozuStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_long = src.cs_body_long;
         self.cs_shadow_very_short = src.cs_shadow_very_short;
@@ -440,7 +440,7 @@ impl CDLMARUBOZU_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLMARUBOZU_StreamState {
+struct CdlmarubozuStreamState {
     BodyLongPeriodTotal: f64,
     ShadowVeryShortPeriodTotal: f64,
     ringPos_BodyLongTrailingIdx: usize,
@@ -452,7 +452,7 @@ struct CDLMARUBOZU_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLMARUBOZU_StreamState {
+impl CdlmarubozuStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -467,14 +467,13 @@ impl CDLMARUBOZU_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLMARUBOZU_step_impl(sp: &mut CDLMARUBOZU_StreamState, cs_body_long: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlmarubozu_step_impl(sp: &mut CdlmarubozuStreamState, cs_body_long: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -604,11 +603,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLMARUBOZU_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLMARUBOZU_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLMARUBOZU_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlmarubozu_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlmarubozu_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlmarubozu_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLMARUBOZU_Stream, RetCode> {
+    ) -> Result<CdlmarubozuStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -820,7 +819,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLMARUBOZU_StreamState {
+        let state = CdlmarubozuStreamState {
             BodyLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
             ringPos_BodyLongTrailingIdx: 0_usize,
@@ -830,17 +829,17 @@ impl Core {
             ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLMARUBOZU_Stream { cs_body_long: self.candle_settings.body_long, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdlmarubozuStream { cs_body_long: self.candle_settings.body_long, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLMARUBOZU_Open`] (composition seam).
-    pub(crate) fn CDLMARUBOZU_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlmarubozu_open`] (composition seam).
+    pub(crate) fn cdlmarubozu_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLMARUBOZU_Stream, i32), RetCode> {
+    ) -> Result<(CdlmarubozuStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLMARUBOZU_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlmarubozu_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -867,7 +866,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLMARUBOZU_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlmarubozu_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -877,11 +876,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLMARUBOZU_Open")]
-    pub fn CDLMARUBOZU_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLMARUBOZU_Stream, i32), RetCode> {
-        self.CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlmarubozu_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlmarubozuStream, i32), RetCode> {
+        self.cdlmarubozu_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLMARUBOZU_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlmarubozu_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLMARUBOZU`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -889,12 +888,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLMARUBOZU_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlmarubozu_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLMARUBOZU_OpenAndFill")]
-    pub fn CDLMARUBOZU_OpenAndFill(
+    pub fn cdlmarubozu_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLMARUBOZU_Stream, OutRange), RetCode> {
+    ) -> Result<(CdlmarubozuStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -911,31 +910,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLMARUBOZU_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlmarubozu_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLMARUBOZU_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlmarubozu_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLMARUBOZU_OpenAndFillInternal(
+    pub(crate) fn cdlmarubozu_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLMARUBOZU_Stream, RetCode> {
-        self.CDLMARUBOZU_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdlmarubozuStream, RetCode> {
+        self.cdlmarubozu_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLMARUBOZU_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `CdlmarubozuStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLMARUBOZU_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLMARUBOZU_Stream>>> =
+    static CDLMARUBOZU_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdlmarubozuStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLMARUBOZU_Stream {
+impl CdlmarubozuStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -953,7 +952,7 @@ impl CDLMARUBOZU_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLMARUBOZU_step_impl(&mut self.state, &self.cs_body_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlmarubozu_step_impl(&mut self.state, &self.cs_body_long, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -986,7 +985,7 @@ impl CDLMARUBOZU_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLMARUBOZU_step_impl(&mut self.state, &self.cs_body_long, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlmarubozu_step_impl(&mut self.state, &self.cs_body_long, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1034,7 +1033,7 @@ impl CDLMARUBOZU_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLMARUBOZU_Stream>();
+    _assert_auto::<CdlmarubozuStream>();
 };
 
 /***************/

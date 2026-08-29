@@ -296,7 +296,7 @@ is concrete-`f64` only.
 
 Cross-indicator calls target the **public** wrapper, as in C, Java and C# (#267).
 `?` is unavailable — the caller is `<N>_Impl`, which returns a bare `RetCode`, or
-a `Result`-returning `<N>_OpenImpl` at three of the sites —
+a `Result`-returning `<n>_open_impl` at three of the sites —
 so `render_cross_indicator_call` drops the two out-meta arguments, binds the
 returned range to a `_xrN` local with a `match`, assigns both out-params from it,
 and then sets `retCode = RetCode::Success`. The `if( retCode != SUCCESS )` that

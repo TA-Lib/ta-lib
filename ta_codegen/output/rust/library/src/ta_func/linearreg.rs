@@ -427,23 +427,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live LINEARREG stream: one value per closed bar, bit-identical to [`Core::LINEARREG`]
-/// over the same series. Open with [`Core::LINEARREG_Open`]; dropping the handle
+/// over the same series. Open with [`Core::linearreg_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LINEARREG_Stream")]
-pub struct LINEARREG_Stream {
-    state: LINEARREG_StreamState,
+pub struct LinearregStream {
+    state: LinearregStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl LINEARREG_Stream {
+impl LinearregStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `LINEARREG_StreamState::restore_from`.
+    /// allocating new ones. See `LinearregStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -452,7 +452,7 @@ impl LINEARREG_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct LINEARREG_StreamState {
+struct LinearregStreamState {
     optInTimePeriod: i32,
     lookbackTotal: usize,
     trailingIdx: i32,
@@ -470,7 +470,7 @@ struct LINEARREG_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl LINEARREG_StreamState {
+impl LinearregStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -491,14 +491,13 @@ impl LINEARREG_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LINEARREG_step_impl(sp: &mut LINEARREG_StreamState, inReal: f64, outReal: &mut f64) {
+    fn linearreg_step_impl(sp: &mut LinearregStreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut b: f64 = 0.0_f64;
         let mut windowStart: usize = 0_usize;
@@ -601,11 +600,11 @@ impl Core {
         sp.today += 1;
     }
 
-    /// The single whole-history transcription behind [`Core::LINEARREG_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::LINEARREG_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LINEARREG_OpenImpl(
+    /// The single whole-history transcription behind [`Core::linearreg_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::linearreg_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn linearreg_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<LINEARREG_Stream, RetCode> {
+    ) -> Result<LinearregStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -817,7 +816,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = LINEARREG_StreamState {
+        let state = LinearregStreamState {
             optInTimePeriod,
             lookbackTotal,
             trailingIdx: (trailingIdx) as i32,
@@ -833,17 +832,17 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(LINEARREG_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(LinearregStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::LINEARREG_Open`] (composition seam).
-    pub(crate) fn LINEARREG_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::linearreg_open`] (composition seam).
+    pub(crate) fn linearreg_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(LINEARREG_Stream, f64), RetCode> {
+    ) -> Result<(LinearregStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LINEARREG_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.linearreg_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -863,7 +862,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.LINEARREG_Open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.linearreg_open(&data, 14).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -873,11 +872,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_LINEARREG_Open")]
-    pub fn LINEARREG_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LINEARREG_Stream, f64), RetCode> {
-        self.LINEARREG_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn linearreg_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LinearregStream, f64), RetCode> {
+        self.linearreg_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::LINEARREG_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::linearreg_open`] that also fills the output array(s) bit-identically to
     /// [`Core::LINEARREG`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -885,12 +884,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::LINEARREG_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::linearreg_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_LINEARREG_OpenAndFill")]
-    pub fn LINEARREG_OpenAndFill(
+    pub fn linearreg_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(LINEARREG_Stream, OutRange), RetCode> {
+    ) -> Result<(LinearregStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -904,23 +903,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LINEARREG_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.linearreg_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::LINEARREG_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::linearreg_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn LINEARREG_OpenAndFillInternal(
+    pub(crate) fn linearreg_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<LINEARREG_Stream, RetCode> {
-        self.LINEARREG_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<LinearregStream, RetCode> {
+        self.linearreg_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl LINEARREG_Stream {
+impl LinearregStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -938,7 +937,7 @@ impl LINEARREG_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::LINEARREG_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::linearreg_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -971,7 +970,7 @@ impl LINEARREG_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::LINEARREG_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::linearreg_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1016,7 +1015,7 @@ impl LINEARREG_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<LINEARREG_Stream>();
+    _assert_auto::<LinearregStream>();
 };
 
 /***************/

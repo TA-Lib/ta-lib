@@ -268,7 +268,7 @@
    /**
     * A live AVGDEV stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AVGDEV} over the same series.
-    * Open with {@link Core#AVGDEV_Open}; there is no close — the handle is
+    * Open with {@link Core#avgdevOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -279,7 +279,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AVGDEV_Stream {
+   public static final class AvgdevStream {
       Core core;
       int optInTimePeriod;
       int winPos_i;
@@ -289,7 +289,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      AVGDEV_Stream( Core core ) { this.core = core; }
+      AvgdevStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -303,7 +303,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AVGDEV_Stream( AVGDEV_Stream other ) {
+      AvgdevStream( AvgdevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -314,7 +314,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AVGDEV_Stream other ) {
+      void copyFrom( AvgdevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -344,7 +344,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
-         core.AVGDEV_StepImpl(this, inReal);
+         core.avgdevStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -370,7 +370,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("AVGDEV updateAndFill: BadParam", RetCode.BadParam);
-            core.AVGDEV_StepImpl(this, inReal[i]);
+            core.avgdevStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -386,8 +386,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
-         AVGDEV_Stream scratch = new AVGDEV_Stream(this);
-         core.AVGDEV_StepImpl(scratch, inReal);
+         AvgdevStream scratch = new AvgdevStream(this);
+         core.avgdevStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -404,11 +404,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AVGDEV_Stream copy() {
-         return new AVGDEV_Stream(this);
+      public AvgdevStream copy() {
+         return new AvgdevStream(this);
       }
    }
-   void AVGDEV_StepImpl( AVGDEV_Stream sp, double inReal )
+   void avgdevStepImpl( AvgdevStream sp, double inReal )
    {
       double todaySum = 0.0;
       double todayDev = 0.0;
@@ -428,7 +428,7 @@
          sp.winPos_i = 0;
       }
    }
-   private RetCode AVGDEV_OpenImpl( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode avgdevOpenImpl( AvgdevStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -496,11 +496,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AVGDEV_Stream AVGDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* avgdevOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AvgdevStream avgdevOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      AvgdevStream sp = new AvgdevStream(this);
+      RetCode retCode = avgdevOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -514,14 +514,14 @@
       }
       throw new TaLibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AVGDEV_Open (composition seam). */
-   AVGDEV_Stream AVGDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind avgdevOpen (composition seam). */
+   AvgdevStream avgdevOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      AVGDEV_Stream sp = new AVGDEV_Stream(this);
+      AvgdevStream sp = new AvgdevStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = avgdevOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -548,14 +548,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AVGDEV_Stream AVGDEV_Open( double inReal[], int optInTimePeriod )
+   public AvgdevStream avgdevOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("AVGDEV open", "inReal", inReal);
       requireHistory("AVGDEV open", inReal.length);
-      return AVGDEV_OpenInternal(inReal, 0, optInTimePeriod);
+      return avgdevOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#AVGDEV_Open} that also fills the output array(s) bit-identically
+    * {@link Core#avgdevOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AVGDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -563,9 +563,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AVGDEV_Stream#outRange()}.
+    * {@link AvgdevStream#outRange()}.
     */
-   public AVGDEV_Stream AVGDEV_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public AvgdevStream avgdevOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("AVGDEV openAndFill", "inReal", inReal);
       requireHistory("AVGDEV openAndFill", inReal.length);
@@ -576,5 +576,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AVGDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return avgdevOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

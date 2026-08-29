@@ -910,7 +910,7 @@
    /**
     * A live HT_DCPHASE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#HT_DCPHASE} over the same series.
-    * Open with {@link Core#HT_DCPHASE_Open}; there is no close — the handle is
+    * Open with {@link Core#htDcphaseOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -921,7 +921,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HT_DCPHASE_Stream {
+   public static final class HtDcphaseStream {
       Core core;
       double period;
       double periodWMASum;
@@ -978,7 +978,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      HT_DCPHASE_Stream( Core core ) { this.core = core; }
+      HtDcphaseStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -992,7 +992,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      HT_DCPHASE_Stream( HT_DCPHASE_Stream other ) {
+      HtDcphaseStream( HtDcphaseStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1050,7 +1050,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HT_DCPHASE_Stream other ) {
+      void copyFrom( HtDcphaseStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1149,7 +1149,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HT_DCPHASE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<HtDcphaseStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -1166,7 +1166,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
-         core.HT_DCPHASE_StepImpl(this, inReal);
+         core.htDcphaseStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -1192,7 +1192,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("HT_DCPHASE updateAndFill: BadParam", RetCode.BadParam);
-            core.HT_DCPHASE_StepImpl(this, inReal[i]);
+            core.htDcphaseStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -1210,14 +1210,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
-         HT_DCPHASE_Stream scratch = PEEK_SCRATCH.get();
+         HtDcphaseStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new HT_DCPHASE_Stream(this);
+            scratch = new HtDcphaseStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_DCPHASE_StepImpl(scratch, inReal);
+         core.htDcphaseStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1234,11 +1234,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HT_DCPHASE_Stream copy() {
-         return new HT_DCPHASE_Stream(this);
+      public HtDcphaseStream copy() {
+         return new HtDcphaseStream(this);
       }
    }
-   void HT_DCPHASE_StepImpl( HT_DCPHASE_Stream sp, double inReal )
+   void htDcphaseStepImpl( HtDcphaseStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -1449,7 +1449,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode htDcphaseOpenImpl( HtDcphaseStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1923,11 +1923,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* htDcphaseOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HtDcphaseStream htDcphaseOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      HtDcphaseStream sp = new HtDcphaseStream(this);
+      RetCode retCode = htDcphaseOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1941,14 +1941,14 @@
       }
       throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind HT_DCPHASE_Open (composition seam). */
-   HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind htDcphaseOpen (composition seam). */
+   HtDcphaseStream htDcphaseOpenInternal( double inReal[], int startIdx )
    {
-      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
+      HtDcphaseStream sp = new HtDcphaseStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = htDcphaseOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1975,14 +1975,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public HT_DCPHASE_Stream HT_DCPHASE_Open( double inReal[] )
+   public HtDcphaseStream htDcphaseOpen( double inReal[] )
    {
       requireArgument("HT_DCPHASE open", "inReal", inReal);
       requireHistory("HT_DCPHASE open", inReal.length);
-      return HT_DCPHASE_OpenInternal(inReal, 0);
+      return htDcphaseOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#HT_DCPHASE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#htDcphaseOpen} that also fills the output array(s) bit-identically
     * to {@link Core#HT_DCPHASE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1990,9 +1990,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link HT_DCPHASE_Stream#outRange()}.
+    * {@link HtDcphaseStream#outRange()}.
     */
-   public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( double inReal[], double outReal[] )
+   public HtDcphaseStream htDcphaseOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("HT_DCPHASE openAndFill", "inReal", inReal);
       requireHistory("HT_DCPHASE openAndFill", inReal.length);
@@ -2003,5 +2003,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return HT_DCPHASE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return htDcphaseOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

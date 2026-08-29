@@ -264,7 +264,7 @@
    /**
     * A live MARKETFI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MARKETFI} over the same series.
-    * Open with {@link Core#MARKETFI_Open}; there is no close — the handle is
+    * Open with {@link Core#marketfiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -275,13 +275,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MARKETFI_Stream {
+   public static final class MarketfiStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      MARKETFI_Stream( Core core ) { this.core = core; }
+      MarketfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -295,14 +295,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MARKETFI_Stream( MARKETFI_Stream other ) {
+      MarketfiStream( MarketfiStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MARKETFI_Stream other ) {
+      void copyFrom( MarketfiStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -324,7 +324,7 @@
       public double update( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
-         core.MARKETFI_StepImpl(this, inHigh, inLow, inVolume);
+         core.marketfiStepImpl(this, inHigh, inLow, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -352,7 +352,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("MARKETFI updateAndFill: BadParam", RetCode.BadParam);
-            core.MARKETFI_StepImpl(this, inHigh[i], inLow[i], inVolume[i]);
+            core.marketfiStepImpl(this, inHigh[i], inLow[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -368,8 +368,8 @@
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
-         MARKETFI_Stream scratch = new MARKETFI_Stream(this);
-         core.MARKETFI_StepImpl(scratch, inHigh, inLow, inVolume);
+         MarketfiStream scratch = new MarketfiStream(this);
+         core.marketfiStepImpl(scratch, inHigh, inLow, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -386,11 +386,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MARKETFI_Stream copy() {
-         return new MARKETFI_Stream(this);
+      public MarketfiStream copy() {
+         return new MarketfiStream(this);
       }
    }
-   void MARKETFI_StepImpl( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+   void marketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but
@@ -408,7 +408,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode marketfiOpenImpl( MarketfiStream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -466,11 +466,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MARKETFI_Stream MARKETFI_OpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* marketfiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MarketfiStream marketfiOpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      MarketfiStream sp = new MarketfiStream(this);
+      RetCode retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -484,14 +484,14 @@
       }
       throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MARKETFI_Open (composition seam). */
-   MARKETFI_Stream MARKETFI_OpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind marketfiOpen (composition seam). */
+   MarketfiStream marketfiOpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
    {
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      MarketfiStream sp = new MarketfiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -518,7 +518,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MARKETFI_Stream MARKETFI_Open( double inHigh[], double inLow[], double inVolume[] )
+   public MarketfiStream marketfiOpen( double inHigh[], double inLow[], double inVolume[] )
    {
       requireArgument("MARKETFI open", "inHigh", inHigh);
       requireHistory("MARKETFI open", inHigh.length);
@@ -526,10 +526,10 @@
       requireArgument("MARKETFI open", "inVolume", inVolume);
       requireHistoryLength("MARKETFI open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("MARKETFI open", "inVolume", inVolume.length, inHigh.length);
-      return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
+      return marketfiOpenInternal(inHigh, inLow, inVolume, 0);
    }
    /**
-    * {@link Core#MARKETFI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#marketfiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MARKETFI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -537,9 +537,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MARKETFI_Stream#outRange()}.
+    * {@link MarketfiStream#outRange()}.
     */
-   public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
+   public MarketfiStream marketfiOpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
    {
       requireArgument("MARKETFI openAndFill", "inHigh", inHigh);
       requireHistory("MARKETFI openAndFill", inHigh.length);
@@ -554,5 +554,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal);
+      return marketfiOpenAndFillInternal(inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

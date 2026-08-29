@@ -270,7 +270,7 @@
    /**
     * A live AD stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#AD} over the same series.
-    * Open with {@link Core#AD_Open}; there is no close — the handle is
+    * Open with {@link Core#adOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -281,14 +281,14 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AD_Stream {
+   public static final class AdStream {
       Core core;
       double ad;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      AD_Stream( Core core ) { this.core = core; }
+      AdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -302,7 +302,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      AD_Stream( AD_Stream other ) {
+      AdStream( AdStream other ) {
          this.core = other.core;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
@@ -310,7 +310,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AD_Stream other ) {
+      void copyFrom( AdStream other ) {
          this.core = other.core;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
@@ -333,7 +333,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
-         core.AD_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.adStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -362,7 +362,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("AD updateAndFill: BadParam", RetCode.BadParam);
-            core.AD_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.adStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -378,8 +378,8 @@
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
-         AD_Stream scratch = new AD_Stream(this);
-         core.AD_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         AdStream scratch = new AdStream(this);
+         core.adStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -396,11 +396,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AD_Stream copy() {
-         return new AD_Stream(this);
+      public AdStream copy() {
+         return new AdStream(this);
       }
    }
-   void AD_StepImpl( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void adStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -415,7 +415,7 @@
       }
       sp.cur_outReal = sp.ad;
    }
-   private RetCode AD_OpenImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode adOpenImpl( AdStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -479,11 +479,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   AD_Stream AD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* adOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AdStream adOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      AdStream sp = new AdStream(this);
+      RetCode retCode = adOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -497,14 +497,14 @@
       }
       throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind AD_Open (composition seam). */
-   AD_Stream AD_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind adOpen (composition seam). */
+   AdStream adOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
-      AD_Stream sp = new AD_Stream(this);
+      AdStream sp = new AdStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = adOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -531,7 +531,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public AD_Stream AD_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
+   public AdStream adOpen( double inHigh[], double inLow[], double inClose[], double inVolume[] )
    {
       requireArgument("AD open", "inHigh", inHigh);
       requireHistory("AD open", inHigh.length);
@@ -541,10 +541,10 @@
       requireHistoryLength("AD open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("AD open", "inClose", inClose.length, inHigh.length);
       requireHistoryLength("AD open", "inVolume", inVolume.length, inHigh.length);
-      return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
+      return adOpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
-    * {@link Core#AD_Open} that also fills the output array(s) bit-identically
+    * {@link Core#adOpen} that also fills the output array(s) bit-identically
     * to {@link Core#AD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -552,9 +552,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link AD_Stream#outRange()}.
+    * {@link AdStream#outRange()}.
     */
-   public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
+   public AdStream adOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
       requireArgument("AD openAndFill", "inHigh", inHigh);
       requireHistory("AD openAndFill", inHigh.length);
@@ -571,5 +571,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return AD_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
+      return adOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

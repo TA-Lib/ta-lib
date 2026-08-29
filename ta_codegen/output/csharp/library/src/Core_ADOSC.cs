@@ -510,7 +510,7 @@ public partial class Core
    /// <summary>A live <c>ADOSC</c> stream: one value per closed bar, bit-identical to
    /// <c>ADOSC</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.ADOSC_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.AdoscOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -523,7 +523,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class ADOSC_Stream
+   public sealed class AdoscStream
    {
       internal Core core;
       internal int optInFastPeriod;
@@ -539,12 +539,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal ADOSC_Stream( Core core ) { this.core = core; }
+      internal AdoscStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.ADOSC</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Adosc</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -553,7 +553,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal ADOSC_Stream( ADOSC_Stream other )
+      internal AdoscStream( AdoscStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -570,7 +570,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( ADOSC_Stream other )
+      internal void CopyFrom( AdoscStream other )
       {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -606,7 +606,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("ADOSC", "update", RetCode.BadParam);
-         core.ADOSC_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.AdoscStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -628,8 +628,8 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("ADOSC", "peek", RetCode.BadParam);
-         ADOSC_Stream scratch = new ADOSC_Stream(this);
-         core.ADOSC_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         AdoscStream scratch = new AdoscStream(this);
+         core.AdoscStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -656,7 +656,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("ADOSC", "updateAndFill", RetCode.BadParam);
-            core.ADOSC_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.AdoscStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -672,13 +672,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public ADOSC_Stream Clone()
+      public AdoscStream Clone()
       {
-         return new ADOSC_Stream(this);
+         return new AdoscStream(this);
       }
    }
 
-   internal void ADOSC_StepImpl( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void AdoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -696,7 +696,7 @@ public partial class Core
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
 
-   private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AdoscOpenImpl( AdoscStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -854,11 +854,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ADOSC_Stream ADOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* AdoscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AdoscStream AdoscOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
+      AdoscStream sp = new AdoscStream(this);
+      RetCode retCode = AdoscOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -867,12 +867,12 @@ public partial class Core
       throw StreamFailure("ADOSC", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
-   internal ADOSC_Stream ADOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   /* Internal startIdx-anchored open behind AdoscOpen (composition seam). */
+   internal AdoscStream AdoscOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
-      ADOSC_Stream sp = new ADOSC_Stream(this);
+      AdoscStream sp = new AdoscStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = AdoscOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -883,11 +883,11 @@ public partial class Core
 
    /// <summary>Open a live <c>ADOSC</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="ADOSC_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="AdoscStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>ADOSC</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>ADOSC_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>ADOSC_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AdoscOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -904,7 +904,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ADOSC_Stream ADOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod )
+   public AdoscStream AdoscOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADOSC open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADOSC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -914,10 +914,10 @@ public partial class Core
       RequireHistoryLength("ADOSC", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ADOSC", "open", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("ADOSC", "open", "inVolume", inVolume.Length, inHigh.Length);
-      return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
+      return AdoscOpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
 
-   /// <summary><c>ADOSC_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>AdoscOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>ADOSC</c> produces over
@@ -929,7 +929,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ADOSC_Stream.OutRange"/>.</para>
+   /// <see cref="AdoscStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -949,7 +949,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public ADOSC_Stream ADOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, Span<double> outReal )
+   public AdoscStream AdoscOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADOSC openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADOSC openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -964,6 +964,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
       }
-      return ADOSC_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out _, out _, outReal);
+      return AdoscOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out _, out _, outReal);
    }
 }

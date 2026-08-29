@@ -348,7 +348,7 @@
    /**
     * A live CDL3INSIDE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDL3INSIDE} over the same series.
-    * Open with {@link Core#CDL3INSIDE_Open}; there is no close — the handle is
+    * Open with {@link Core#cdl3insideOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -359,7 +359,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDL3INSIDE_Stream {
+   public static final class Cdl3insideStream {
       Core core;
       double BodyShortPeriodTotal;
       double BodyLongPeriodTotal;
@@ -387,7 +387,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDL3INSIDE_Stream( Core core ) { this.core = core; }
+      Cdl3insideStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -401,7 +401,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDL3INSIDE_Stream( CDL3INSIDE_Stream other ) {
+      Cdl3insideStream( Cdl3insideStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -430,7 +430,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDL3INSIDE_Stream other ) {
+      void copyFrom( Cdl3insideStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -468,7 +468,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDL3INSIDE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdl3insideStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -485,7 +485,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3INSIDE update: BadParam", RetCode.BadParam);
-         core.CDL3INSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdl3insideStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -514,7 +514,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDL3INSIDE updateAndFill: BadParam", RetCode.BadParam);
-            core.CDL3INSIDE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdl3insideStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -532,14 +532,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3INSIDE peek: BadParam", RetCode.BadParam);
-         CDL3INSIDE_Stream scratch = PEEK_SCRATCH.get();
+         Cdl3insideStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDL3INSIDE_Stream(this);
+            scratch = new Cdl3insideStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDL3INSIDE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdl3insideStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -556,11 +556,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDL3INSIDE_Stream copy() {
-         return new CDL3INSIDE_Stream(this);
+      public Cdl3insideStream copy() {
+         return new Cdl3insideStream(this);
       }
    }
-   void CDL3INSIDE_StepImpl( CDL3INSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdl3insideStepImpl( Cdl3insideStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -608,7 +608,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3INSIDE_OpenImpl( CDL3INSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdl3insideOpenImpl( Cdl3insideStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -750,11 +750,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDL3INSIDE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDL3INSIDE_Stream CDL3INSIDE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdl3insideOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdl3insideStream cdl3insideOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDL3INSIDE_Stream sp = new CDL3INSIDE_Stream(this);
-      RetCode retCode = CDL3INSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdl3insideStream sp = new Cdl3insideStream(this);
+      RetCode retCode = cdl3insideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -768,14 +768,14 @@
       }
       throw new TaLibArgumentException("CDL3INSIDE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDL3INSIDE_Open (composition seam). */
-   CDL3INSIDE_Stream CDL3INSIDE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdl3insideOpen (composition seam). */
+   Cdl3insideStream cdl3insideOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDL3INSIDE_Stream sp = new CDL3INSIDE_Stream(this);
+      Cdl3insideStream sp = new Cdl3insideStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3INSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdl3insideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -802,7 +802,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDL3INSIDE_Stream CDL3INSIDE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdl3insideStream cdl3insideOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDL3INSIDE open", "inOpen", inOpen);
       requireHistory("CDL3INSIDE open", inOpen.length);
@@ -812,10 +812,10 @@
       requireHistoryLength("CDL3INSIDE open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDL3INSIDE open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDL3INSIDE open", "inClose", inClose.length, inOpen.length);
-      return CDL3INSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdl3insideOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDL3INSIDE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdl3insideOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDL3INSIDE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -823,9 +823,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDL3INSIDE_Stream#outRange()}.
+    * {@link Cdl3insideStream#outRange()}.
     */
-   public CDL3INSIDE_Stream CDL3INSIDE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdl3insideStream cdl3insideOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDL3INSIDE openAndFill", "inOpen", inOpen);
       requireHistory("CDL3INSIDE openAndFill", inOpen.length);
@@ -842,5 +842,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDL3INSIDE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdl3insideOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

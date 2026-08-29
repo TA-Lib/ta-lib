@@ -348,7 +348,7 @@ public partial class Core
    /// <summary>A live <c>SMA</c> stream: one value per closed bar, bit-identical to
    /// <c>SMA</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.SMA_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.SmaOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -361,7 +361,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class SMA_Stream
+   public sealed class SmaStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -373,12 +373,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal SMA_Stream( Core core ) { this.core = core; }
+      internal SmaStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.SMA</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Sma</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -386,7 +386,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal SMA_Stream( SMA_Stream other )
+      internal SmaStream( SmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -400,7 +400,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SMA_Stream other )
+      internal void CopyFrom( SmaStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -432,7 +432,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SMA", "update", RetCode.BadParam);
-         core.SMA_StepImpl(this, inReal);
+         core.SmaStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -451,8 +451,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SMA", "peek", RetCode.BadParam);
-         SMA_Stream scratch = new SMA_Stream(this);
-         core.SMA_StepImpl(scratch, inReal);
+         SmaStream scratch = new SmaStream(this);
+         core.SmaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -476,7 +476,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("SMA", "updateAndFill", RetCode.BadParam);
-            core.SMA_StepImpl(this, inReal[i]);
+            core.SmaStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -492,13 +492,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public SMA_Stream Clone()
+      public SmaStream Clone()
       {
-         return new SMA_Stream(this);
+         return new SmaStream(this);
       }
    }
 
-   internal void SMA_StepImpl( SMA_Stream sp, double inReal )
+   internal void SmaStepImpl( SmaStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -515,7 +515,7 @@ public partial class Core
       }
    }
 
-   private RetCode SMA_OpenImpl( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SmaOpenImpl( SmaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -604,11 +604,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* SMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SMA_Stream SMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* SmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SmaStream SmaOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      SmaStream sp = new SmaStream(this);
+      RetCode retCode = SmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -617,12 +617,12 @@ public partial class Core
       throw StreamFailure("SMA", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind SMA_Open (composition seam). */
-   internal SMA_Stream SMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind SmaOpen (composition seam). */
+   internal SmaStream SmaOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      SMA_Stream sp = new SMA_Stream(this);
+      SmaStream sp = new SmaStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = SmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -633,11 +633,11 @@ public partial class Core
 
    /// <summary>Open a live <c>SMA</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="SMA_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="SmaStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>SMA</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>SMA_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>SMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>SmaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series to average. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="SMA_Lookback"/> for its default and
@@ -649,14 +649,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SMA_Stream SMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public SmaStream SmaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SMA open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return SMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return SmaOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>SMA_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>SmaOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>SMA</c> produces over the
@@ -668,7 +668,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="SMA_Stream.OutRange"/>.</para>
+   /// <see cref="SmaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series to average. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="SMA_Lookback"/> for its default and
@@ -683,7 +683,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SMA_Stream SMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public SmaStream SmaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -692,6 +692,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("SMA", "openAndFill", RetCode.BadParam);
       }
-      return SMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return SmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

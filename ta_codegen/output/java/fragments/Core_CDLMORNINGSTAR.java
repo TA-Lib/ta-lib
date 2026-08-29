@@ -391,7 +391,7 @@
    /**
     * A live CDLMORNINGSTAR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLMORNINGSTAR} over the same series.
-    * Open with {@link Core#CDLMORNINGSTAR_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlmorningstarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -402,7 +402,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLMORNINGSTAR_Stream {
+   public static final class CdlmorningstarStream {
       Core core;
       double optInPenetration;
       double BodyShortPeriodTotal;
@@ -433,7 +433,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLMORNINGSTAR_Stream( Core core ) { this.core = core; }
+      CdlmorningstarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -447,7 +447,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLMORNINGSTAR_Stream( CDLMORNINGSTAR_Stream other ) {
+      CdlmorningstarStream( CdlmorningstarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -479,7 +479,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLMORNINGSTAR_Stream other ) {
+      void copyFrom( CdlmorningstarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -520,7 +520,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLMORNINGSTAR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlmorningstarStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -537,7 +537,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
-         core.CDLMORNINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlmorningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -566,7 +566,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLMORNINGSTAR updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLMORNINGSTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlmorningstarStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -584,14 +584,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
-         CDLMORNINGSTAR_Stream scratch = PEEK_SCRATCH.get();
+         CdlmorningstarStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLMORNINGSTAR_Stream(this);
+            scratch = new CdlmorningstarStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLMORNINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlmorningstarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -608,11 +608,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLMORNINGSTAR_Stream copy() {
-         return new CDLMORNINGSTAR_Stream(this);
+      public CdlmorningstarStream copy() {
+         return new CdlmorningstarStream(this);
       }
    }
-   void CDLMORNINGSTAR_StepImpl( CDLMORNINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlmorningstarStepImpl( CdlmorningstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -660,7 +660,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMORNINGSTAR_OpenImpl( CDLMORNINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlmorningstarOpenImpl( CdlmorningstarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -820,11 +820,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLMORNINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlmorningstarOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlmorningstarStream cdlmorningstarOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
-      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+      CdlmorningstarStream sp = new CdlmorningstarStream(this);
+      RetCode retCode = cdlmorningstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -838,14 +838,14 @@
       }
       throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLMORNINGSTAR_Open (composition seam). */
-   CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind cdlmorningstarOpen (composition seam). */
+   CdlmorningstarStream cdlmorningstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
-      CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
+      CdlmorningstarStream sp = new CdlmorningstarStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlmorningstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -872,7 +872,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLMORNINGSTAR_Stream CDLMORNINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
+   public CdlmorningstarStream cdlmorningstarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
       requireArgument("CDLMORNINGSTAR open", "inOpen", inOpen);
       requireHistory("CDLMORNINGSTAR open", inOpen.length);
@@ -882,10 +882,10 @@
       requireHistoryLength("CDLMORNINGSTAR open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMORNINGSTAR open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMORNINGSTAR open", "inClose", inClose.length, inOpen.length);
-      return CDLMORNINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return cdlmorningstarOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
-    * {@link Core#CDLMORNINGSTAR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlmorningstarOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLMORNINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -893,9 +893,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLMORNINGSTAR_Stream#outRange()}.
+    * {@link CdlmorningstarStream#outRange()}.
     */
-   public CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
+   public CdlmorningstarStream cdlmorningstarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
       requireArgument("CDLMORNINGSTAR openAndFill", "inOpen", inOpen);
       requireHistory("CDLMORNINGSTAR openAndFill", inOpen.length);
@@ -912,5 +912,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLMORNINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return cdlmorningstarOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }

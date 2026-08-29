@@ -282,7 +282,7 @@
    /**
     * A live MOM stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MOM} over the same series.
-    * Open with {@link Core#MOM_Open}; there is no close — the handle is
+    * Open with {@link Core#momOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -293,7 +293,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MOM_Stream {
+   public static final class MomStream {
       Core core;
       int optInTimePeriod;
       int ringPos_trailingIdx;
@@ -303,7 +303,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MOM_Stream( Core core ) { this.core = core; }
+      MomStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -317,7 +317,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MOM_Stream( MOM_Stream other ) {
+      MomStream( MomStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -328,7 +328,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MOM_Stream other ) {
+      void copyFrom( MomStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -358,7 +358,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
-         core.MOM_StepImpl(this, inReal);
+         core.momStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -384,7 +384,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("MOM updateAndFill: BadParam", RetCode.BadParam);
-            core.MOM_StepImpl(this, inReal[i]);
+            core.momStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -400,8 +400,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
-         MOM_Stream scratch = new MOM_Stream(this);
-         core.MOM_StepImpl(scratch, inReal);
+         MomStream scratch = new MomStream(this);
+         core.momStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -418,11 +418,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MOM_Stream copy() {
-         return new MOM_Stream(this);
+      public MomStream copy() {
+         return new MomStream(this);
       }
    }
-   void MOM_StepImpl( MOM_Stream sp, double inReal )
+   void momStepImpl( MomStream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
@@ -434,7 +434,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode MOM_OpenImpl( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode momOpenImpl( MomStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -528,11 +528,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MOM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MOM_Stream MOM_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* momOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MomStream momOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MOM_Stream sp = new MOM_Stream(this);
-      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      MomStream sp = new MomStream(this);
+      RetCode retCode = momOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -546,14 +546,14 @@
       }
       throw new TaLibArgumentException("MOM openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MOM_Open (composition seam). */
-   MOM_Stream MOM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind momOpen (composition seam). */
+   MomStream momOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MOM_Stream sp = new MOM_Stream(this);
+      MomStream sp = new MomStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = momOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -580,14 +580,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MOM_Stream MOM_Open( double inReal[], int optInTimePeriod )
+   public MomStream momOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("MOM open", "inReal", inReal);
       requireHistory("MOM open", inReal.length);
-      return MOM_OpenInternal(inReal, 0, optInTimePeriod);
+      return momOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MOM_Open} that also fills the output array(s) bit-identically
+    * {@link Core#momOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MOM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -595,9 +595,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MOM_Stream#outRange()}.
+    * {@link MomStream#outRange()}.
     */
-   public MOM_Stream MOM_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public MomStream momOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("MOM openAndFill", "inReal", inReal);
       requireHistory("MOM openAndFill", inReal.length);
@@ -608,5 +608,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MOM_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return momOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

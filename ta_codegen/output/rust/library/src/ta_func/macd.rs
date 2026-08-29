@@ -518,23 +518,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MACD stream: one value per closed bar, bit-identical to [`Core::MACD`]
-/// over the same series. Open with [`Core::MACD_Open`]; dropping the handle
+/// over the same series. Open with [`Core::macd_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MACD_Stream")]
-pub struct MACD_Stream {
-    state: MACD_StreamState,
+pub struct MacdStream {
+    state: MacdStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MACD_Stream {
+impl MacdStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MACD_StreamState::restore_from`.
+    /// allocating new ones. See `MacdStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -543,7 +543,7 @@ impl MACD_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MACD_StreamState {
+struct MacdStreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     optInSignalPeriod: i32,
@@ -556,7 +556,7 @@ struct MACD_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MACD_StreamState {
+impl MacdStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -572,14 +572,13 @@ impl MACD_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACD_step_impl(sp: &mut MACD_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
+    fn macd_step_impl(sp: &mut MacdStreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
@@ -596,11 +595,11 @@ impl Core {
         (*outMACDHist) = macdValue - sp.prevSignal;
     }
 
-    /// The single whole-history transcription behind [`Core::MACD_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MACD_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MACD_OpenImpl(
+    /// The single whole-history transcription behind [`Core::macd_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::macd_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn macd_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
-    ) -> Result<MACD_Stream, RetCode> {
+    ) -> Result<MacdStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -809,7 +808,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = MACD_StreamState {
+        let state = MacdStreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInSignalPeriod,
@@ -820,19 +819,19 @@ impl Core {
             fastK,
             signalK,
         };
-        Ok(MACD_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MacdStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MACD_Open`] (composition seam).
-    pub(crate) fn MACD_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::macd_open`] (composition seam).
+    pub(crate) fn macd_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
-    ) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
+    ) -> Result<(MacdStream, (f64, f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outMACD = [0.0_f64; 1];
         let mut sink_outMACDSignal = [0.0_f64; 1];
         let mut sink_outMACDHist = [0.0_f64; 1];
-        let handle = self.MACD_OpenImpl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
+        let handle = self.macd_open_impl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
         Ok((handle, (sink_outMACD[0], sink_outMACDSignal[0], sink_outMACDHist[0])))
     }
 
@@ -852,7 +851,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MACD_Open(&data, 12, 26, 9).expect("enough history");
+    /// let (mut s, _last) = core.macd_open(&data, 12, 26, 9).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -864,11 +863,11 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_MACD_Open")]
-    pub fn MACD_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
-        self.MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
+    pub fn macd_open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MacdStream, (f64, f64, f64)), RetCode> {
+        self.macd_open_internal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
     }
 
-    /// [`Core::MACD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::macd_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MACD`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -876,12 +875,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MACD_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::macd_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MACD_OpenAndFill")]
-    pub fn MACD_OpenAndFill(
+    pub fn macd_open_and_fill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
-    ) -> Result<(MACD_Stream, OutRange), RetCode> {
+    ) -> Result<(MacdStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -910,23 +909,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MACD_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist)?;
+        let handle = self.macd_open_and_fill_internal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MACD_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::macd_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MACD_OpenAndFillInternal(
+    pub(crate) fn macd_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
-    ) -> Result<MACD_Stream, RetCode> {
-        self.MACD_OpenImpl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+    ) -> Result<MacdStream, RetCode> {
+        self.macd_open_impl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MACD_Stream {
+impl MacdStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -946,7 +945,7 @@ impl MACD_Stream {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        Core::MACD_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
+        Core::macd_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -979,7 +978,7 @@ impl MACD_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MACD_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i]);
+            Core::macd_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1022,7 +1021,7 @@ impl MACD_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MACD_Stream>();
+    _assert_auto::<MacdStream>();
 };
 
 /***************/

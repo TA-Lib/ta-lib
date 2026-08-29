@@ -412,23 +412,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live VAR stream: one value per closed bar, bit-identical to [`Core::VAR`]
-/// over the same series. Open with [`Core::VAR_Open`]; dropping the handle
+/// over the same series. Open with [`Core::var_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_VAR_Stream")]
-pub struct VAR_Stream {
-    state: VAR_StreamState,
+pub struct VarStream {
+    state: VarStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl VAR_Stream {
+impl VarStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `VAR_StreamState::restore_from`.
+    /// allocating new ones. See `VarStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -437,7 +437,7 @@ impl VAR_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct VAR_StreamState {
+struct VarStreamState {
     optInTimePeriod: i32,
     optInNbDev: f64,
     shift: f64,
@@ -455,7 +455,7 @@ struct VAR_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl VAR_StreamState {
+impl VarStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -476,14 +476,13 @@ impl VAR_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn VAR_step_impl(sp: &mut VAR_StreamState, inReal: f64, outReal: &mut f64) {
+    fn var_step_impl(sp: &mut VarStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut meanValue1: f64 = 0.0_f64;
         let mut variance: f64 = 0.0_f64;
@@ -607,11 +606,11 @@ impl Core {
         sp.i += 1;
     }
 
-    /// The single whole-history transcription behind [`Core::VAR_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::VAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn VAR_OpenImpl(
+    /// The single whole-history transcription behind [`Core::var_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::var_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn var_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<VAR_Stream, RetCode> {
+    ) -> Result<VarStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -819,7 +818,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = VAR_StreamState {
+        let state = VarStreamState {
             optInTimePeriod,
             optInNbDev,
             shift,
@@ -835,17 +834,17 @@ impl Core {
             xMask: (physX - 1) as i32,
             x_inReal,
         };
-        Ok(VAR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(VarStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::VAR_Open`] (composition seam).
-    pub(crate) fn VAR_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::var_open`] (composition seam).
+    pub(crate) fn var_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
-    ) -> Result<(VAR_Stream, f64), RetCode> {
+    ) -> Result<(VarStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.VAR_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.var_open_impl(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -865,7 +864,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.VAR_Open(&data, 5, 1.0).expect("enough history");
+    /// let (mut s, _last) = core.var_open(&data, 5, 1.0).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -875,11 +874,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_VAR_Open")]
-    pub fn VAR_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(VAR_Stream, f64), RetCode> {
-        self.VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev)
+    pub fn var_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(VarStream, f64), RetCode> {
+        self.var_open_internal(inReal, 0, optInTimePeriod, optInNbDev)
     }
 
-    /// [`Core::VAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::var_open`] that also fills the output array(s) bit-identically to
     /// [`Core::VAR`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -887,12 +886,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::VAR_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::var_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_VAR_OpenAndFill")]
-    pub fn VAR_OpenAndFill(
+    pub fn var_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outReal: &mut [f64],
-    ) -> Result<(VAR_Stream, OutRange), RetCode> {
+    ) -> Result<(VarStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -906,23 +905,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.VAR_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.var_open_and_fill_internal(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::VAR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::var_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn VAR_OpenAndFillInternal(
+    pub(crate) fn var_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<VAR_Stream, RetCode> {
-        self.VAR_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<VarStream, RetCode> {
+        self.var_open_impl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl VAR_Stream {
+impl VarStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -940,7 +939,7 @@ impl VAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::VAR_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::var_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -973,7 +972,7 @@ impl VAR_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::VAR_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::var_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1018,7 +1017,7 @@ impl VAR_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<VAR_Stream>();
+    _assert_auto::<VarStream>();
 };
 
 /***************/

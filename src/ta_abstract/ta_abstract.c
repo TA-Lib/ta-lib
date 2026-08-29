@@ -37,7 +37,6 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 #include "ta_common.h"
 #include "ta_memory.h"
 #include "ta_abstract.h"
@@ -315,6 +314,23 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
    return TA_SUCCESS;
 }
 
+static int TA_StrCmpNoCase( const char *a, const char *b )
+{
+   char ca, cb;
+
+   while( *a && *b )
+   {
+      ca = (*a >= 'A' && *a <= 'Z') ? (char)(*a - 'A' + 'a') : *a;
+      cb = (*b >= 'A' && *b <= 'Z') ? (char)(*b - 'A' + 'a') : *b;
+      if( ca != cb )
+         return (unsigned char)ca - (unsigned char)cb;
+      a++;
+      b++;
+   }
+
+   return (unsigned char)*a - (unsigned char)*b;
+}
+
 TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
 {
    char firstChar, tmp;
@@ -337,7 +353,7 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
       return TA_BAD_PARAM;
    }
 
-   tmp = (char)tolower( firstChar );
+   tmp = (firstChar >= 'A' && firstChar <= 'Z') ? (char)(firstChar - 'A' + 'a') : firstChar;
 
    if( (tmp < 'a') || (tmp > 'z') )
    {
@@ -363,7 +379,7 @@ TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )
       if( !funcInfo )
          return TA_INTERNAL_ERROR(4);
 
-      if( strcmp( funcInfo->name, name ) == 0 )
+      if( TA_StrCmpNoCase( funcInfo->name, name ) == 0 )
       {
          *handle = (TA_FuncHandle *)funcDef;
          return TA_SUCCESS;

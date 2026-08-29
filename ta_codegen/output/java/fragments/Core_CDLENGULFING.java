@@ -291,7 +291,7 @@
    /**
     * A live CDLENGULFING stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLENGULFING} over the same series.
-    * Open with {@link Core#CDLENGULFING_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlengulfingOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -302,7 +302,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLENGULFING_Stream {
+   public static final class CdlengulfingStream {
       Core core;
       double lag1_inOpen;
       double lag1_inClose;
@@ -310,7 +310,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLENGULFING_Stream( Core core ) { this.core = core; }
+      CdlengulfingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -324,7 +324,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLENGULFING_Stream( CDLENGULFING_Stream other ) {
+      CdlengulfingStream( CdlengulfingStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inClose = other.lag1_inClose;
@@ -333,7 +333,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLENGULFING_Stream other ) {
+      void copyFrom( CdlengulfingStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inClose = other.lag1_inClose;
@@ -357,7 +357,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
-         core.CDLENGULFING_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlengulfingStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -386,7 +386,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLENGULFING updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLENGULFING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlengulfingStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -402,8 +402,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
-         CDLENGULFING_Stream scratch = new CDLENGULFING_Stream(this);
-         core.CDLENGULFING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlengulfingStream scratch = new CdlengulfingStream(this);
+         core.cdlengulfingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -420,11 +420,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLENGULFING_Stream copy() {
-         return new CDLENGULFING_Stream(this);
+      public CdlengulfingStream copy() {
+         return new CdlengulfingStream(this);
       }
    }
-   void CDLENGULFING_StepImpl( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlengulfingStepImpl( CdlengulfingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
          /* white engulfs black */
@@ -440,7 +440,7 @@
       sp.lag1_inOpen = inOpen;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDLENGULFING_OpenImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlengulfingOpenImpl( CdlengulfingStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -515,11 +515,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLENGULFING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLENGULFING_Stream CDLENGULFING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlengulfingOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlengulfingStream cdlengulfingOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
-      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlengulfingStream sp = new CdlengulfingStream(this);
+      RetCode retCode = cdlengulfingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -533,14 +533,14 @@
       }
       throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLENGULFING_Open (composition seam). */
-   CDLENGULFING_Stream CDLENGULFING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlengulfingOpen (composition seam). */
+   CdlengulfingStream cdlengulfingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
+      CdlengulfingStream sp = new CdlengulfingStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlengulfingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -567,7 +567,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLENGULFING_Stream CDLENGULFING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlengulfingStream cdlengulfingOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLENGULFING open", "inOpen", inOpen);
       requireHistory("CDLENGULFING open", inOpen.length);
@@ -577,10 +577,10 @@
       requireHistoryLength("CDLENGULFING open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLENGULFING open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLENGULFING open", "inClose", inClose.length, inOpen.length);
-      return CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlengulfingOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLENGULFING_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlengulfingOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLENGULFING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -588,9 +588,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLENGULFING_Stream#outRange()}.
+    * {@link CdlengulfingStream#outRange()}.
     */
-   public CDLENGULFING_Stream CDLENGULFING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlengulfingStream cdlengulfingOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLENGULFING openAndFill", "inOpen", inOpen);
       requireHistory("CDLENGULFING openAndFill", inOpen.length);
@@ -607,5 +607,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLENGULFING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlengulfingOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

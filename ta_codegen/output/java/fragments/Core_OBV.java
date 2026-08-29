@@ -220,7 +220,7 @@
    /**
     * A live OBV stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#OBV} over the same series.
-    * Open with {@link Core#OBV_Open}; there is no close — the handle is
+    * Open with {@link Core#obvOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -231,7 +231,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class OBV_Stream {
+   public static final class ObvStream {
       Core core;
       double prevReal;
       double prevOBV;
@@ -239,7 +239,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      OBV_Stream( Core core ) { this.core = core; }
+      ObvStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -253,7 +253,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      OBV_Stream( OBV_Stream other ) {
+      ObvStream( ObvStream other ) {
          this.core = other.core;
          this.prevReal = other.prevReal;
          this.prevOBV = other.prevOBV;
@@ -262,7 +262,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( OBV_Stream other ) {
+      void copyFrom( ObvStream other ) {
          this.core = other.core;
          this.prevReal = other.prevReal;
          this.prevOBV = other.prevOBV;
@@ -286,7 +286,7 @@
       public double update( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
-         core.OBV_StepImpl(this, inReal, inVolume);
+         core.obvStepImpl(this, inReal, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -313,7 +313,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("OBV updateAndFill: BadParam", RetCode.BadParam);
-            core.OBV_StepImpl(this, inReal[i], inVolume[i]);
+            core.obvStepImpl(this, inReal[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -329,8 +329,8 @@
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
-         OBV_Stream scratch = new OBV_Stream(this);
-         core.OBV_StepImpl(scratch, inReal, inVolume);
+         ObvStream scratch = new ObvStream(this);
+         core.obvStepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -347,11 +347,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public OBV_Stream copy() {
-         return new OBV_Stream(this);
+      public ObvStream copy() {
+         return new ObvStream(this);
       }
    }
-   void OBV_StepImpl( OBV_Stream sp, double inReal, double inVolume )
+   void obvStepImpl( ObvStream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;
@@ -363,7 +363,7 @@
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
-   private RetCode OBV_OpenImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode obvOpenImpl( ObvStream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -407,11 +407,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   OBV_Stream OBV_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* obvOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ObvStream obvOpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      ObvStream sp = new ObvStream(this);
+      RetCode retCode = obvOpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -425,14 +425,14 @@
       }
       throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
-   OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind obvOpen (composition seam). */
+   ObvStream obvOpenInternal( double inReal[], double inVolume[], int startIdx )
    {
-      OBV_Stream sp = new OBV_Stream(this);
+      ObvStream sp = new ObvStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = obvOpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -459,16 +459,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public OBV_Stream OBV_Open( double inReal[], double inVolume[] )
+   public ObvStream obvOpen( double inReal[], double inVolume[] )
    {
       requireArgument("OBV open", "inReal", inReal);
       requireHistory("OBV open", inReal.length);
       requireArgument("OBV open", "inVolume", inVolume);
       requireHistoryLength("OBV open", "inVolume", inVolume.length, inReal.length);
-      return OBV_OpenInternal(inReal, inVolume, 0);
+      return obvOpenInternal(inReal, inVolume, 0);
    }
    /**
-    * {@link Core#OBV_Open} that also fills the output array(s) bit-identically
+    * {@link Core#obvOpen} that also fills the output array(s) bit-identically
     * to {@link Core#OBV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -476,9 +476,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link OBV_Stream#outRange()}.
+    * {@link ObvStream#outRange()}.
     */
-   public OBV_Stream OBV_OpenAndFill( double inReal[], double inVolume[], double outReal[] )
+   public ObvStream obvOpenAndFill( double inReal[], double inVolume[], double outReal[] )
    {
       requireArgument("OBV openAndFill", "inReal", inReal);
       requireHistory("OBV openAndFill", inReal.length);
@@ -491,5 +491,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return OBV_OpenAndFillInternal(inReal, inVolume, 0, outBegIdx, outNBElement, outReal);
+      return obvOpenAndFillInternal(inReal, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

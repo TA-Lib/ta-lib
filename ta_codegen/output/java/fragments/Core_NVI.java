@@ -276,7 +276,7 @@
    /**
     * A live NVI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#NVI} over the same series.
-    * Open with {@link Core#NVI_Open}; there is no close — the handle is
+    * Open with {@link Core#nviOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -287,7 +287,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class NVI_Stream {
+   public static final class NviStream {
       Core core;
       double prevNVI;
       double prevClose;
@@ -296,7 +296,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      NVI_Stream( Core core ) { this.core = core; }
+      NviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -310,7 +310,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      NVI_Stream( NVI_Stream other ) {
+      NviStream( NviStream other ) {
          this.core = other.core;
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
@@ -320,7 +320,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( NVI_Stream other ) {
+      void copyFrom( NviStream other ) {
          this.core = other.core;
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
@@ -345,7 +345,7 @@
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
-         core.NVI_StepImpl(this, inClose, inVolume);
+         core.nviStepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -372,7 +372,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("NVI updateAndFill: BadParam", RetCode.BadParam);
-            core.NVI_StepImpl(this, inClose[i], inVolume[i]);
+            core.nviStepImpl(this, inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -388,8 +388,8 @@
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
-         NVI_Stream scratch = new NVI_Stream(this);
-         core.NVI_StepImpl(scratch, inClose, inVolume);
+         NviStream scratch = new NviStream(this);
+         core.nviStepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -406,11 +406,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public NVI_Stream copy() {
-         return new NVI_Stream(this);
+      public NviStream copy() {
+         return new NviStream(this);
       }
    }
-   void NVI_StepImpl( NVI_Stream sp, double inClose, double inVolume )
+   void nviStepImpl( NviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -443,7 +443,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode NVI_OpenImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode nviOpenImpl( NviStream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -514,11 +514,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* NVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   NVI_Stream NVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* nviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   NviStream nviOpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      NviStream sp = new NviStream(this);
+      RetCode retCode = nviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -532,14 +532,14 @@
       }
       throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind NVI_Open (composition seam). */
-   NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind nviOpen (composition seam). */
+   NviStream nviOpenInternal( double inClose[], double inVolume[], int startIdx )
    {
-      NVI_Stream sp = new NVI_Stream(this);
+      NviStream sp = new NviStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = nviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -566,16 +566,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public NVI_Stream NVI_Open( double inClose[], double inVolume[] )
+   public NviStream nviOpen( double inClose[], double inVolume[] )
    {
       requireArgument("NVI open", "inClose", inClose);
       requireHistory("NVI open", inClose.length);
       requireArgument("NVI open", "inVolume", inVolume);
       requireHistoryLength("NVI open", "inVolume", inVolume.length, inClose.length);
-      return NVI_OpenInternal(inClose, inVolume, 0);
+      return nviOpenInternal(inClose, inVolume, 0);
    }
    /**
-    * {@link Core#NVI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#nviOpen} that also fills the output array(s) bit-identically
     * to {@link Core#NVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -583,9 +583,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link NVI_Stream#outRange()}.
+    * {@link NviStream#outRange()}.
     */
-   public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
+   public NviStream nviOpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
       requireArgument("NVI openAndFill", "inClose", inClose);
       requireHistory("NVI openAndFill", inClose.length);
@@ -598,5 +598,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return NVI_OpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
+      return nviOpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

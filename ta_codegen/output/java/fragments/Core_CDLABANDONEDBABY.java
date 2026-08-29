@@ -409,7 +409,7 @@
    /**
     * A live CDLABANDONEDBABY stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLABANDONEDBABY} over the same series.
-    * Open with {@link Core#CDLABANDONEDBABY_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlabandonedbabyOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -420,7 +420,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLABANDONEDBABY_Stream {
+   public static final class CdlabandonedbabyStream {
       Core core;
       double optInPenetration;
       double BodyDojiPeriodTotal;
@@ -456,7 +456,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLABANDONEDBABY_Stream( Core core ) { this.core = core; }
+      CdlabandonedbabyStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -470,7 +470,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLABANDONEDBABY_Stream( CDLABANDONEDBABY_Stream other ) {
+      CdlabandonedbabyStream( CdlabandonedbabyStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -507,7 +507,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLABANDONEDBABY_Stream other ) {
+      void copyFrom( CdlabandonedbabyStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -557,7 +557,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLABANDONEDBABY_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlabandonedbabyStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -574,7 +574,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
-         core.CDLABANDONEDBABY_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlabandonedbabyStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -603,7 +603,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLABANDONEDBABY updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLABANDONEDBABY_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlabandonedbabyStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -621,14 +621,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
-         CDLABANDONEDBABY_Stream scratch = PEEK_SCRATCH.get();
+         CdlabandonedbabyStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLABANDONEDBABY_Stream(this);
+            scratch = new CdlabandonedbabyStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLABANDONEDBABY_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlabandonedbabyStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -645,11 +645,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLABANDONEDBABY_Stream copy() {
-         return new CDLABANDONEDBABY_Stream(this);
+      public CdlabandonedbabyStream copy() {
+         return new CdlabandonedbabyStream(this);
       }
    }
-   void CDLABANDONEDBABY_StepImpl( CDLABANDONEDBABY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlabandonedbabyStepImpl( CdlabandonedbabyStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -708,7 +708,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLABANDONEDBABY_OpenImpl( CDLABANDONEDBABY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlabandonedbabyOpenImpl( CdlabandonedbabyStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -890,11 +890,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLABANDONEDBABY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlabandonedbabyOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlabandonedbabyStream cdlabandonedbabyOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+      CdlabandonedbabyStream sp = new CdlabandonedbabyStream(this);
+      RetCode retCode = cdlabandonedbabyOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -908,14 +908,14 @@
       }
       throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLABANDONEDBABY_Open (composition seam). */
-   CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind cdlabandonedbabyOpen (composition seam). */
+   CdlabandonedbabyStream cdlabandonedbabyOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
-      CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
+      CdlabandonedbabyStream sp = new CdlabandonedbabyStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlabandonedbabyOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -942,7 +942,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
+   public CdlabandonedbabyStream cdlabandonedbabyOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
       requireArgument("CDLABANDONEDBABY open", "inOpen", inOpen);
       requireHistory("CDLABANDONEDBABY open", inOpen.length);
@@ -952,10 +952,10 @@
       requireHistoryLength("CDLABANDONEDBABY open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLABANDONEDBABY open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLABANDONEDBABY open", "inClose", inClose.length, inOpen.length);
-      return CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return cdlabandonedbabyOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
-    * {@link Core#CDLABANDONEDBABY_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlabandonedbabyOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLABANDONEDBABY} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -963,9 +963,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLABANDONEDBABY_Stream#outRange()}.
+    * {@link CdlabandonedbabyStream#outRange()}.
     */
-   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
+   public CdlabandonedbabyStream cdlabandonedbabyOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
       requireArgument("CDLABANDONEDBABY openAndFill", "inOpen", inOpen);
       requireHistory("CDLABANDONEDBABY openAndFill", inOpen.length);
@@ -982,5 +982,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLABANDONEDBABY_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
+      return cdlabandonedbabyOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }

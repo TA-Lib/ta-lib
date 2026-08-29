@@ -328,7 +328,7 @@ public partial class Core
    /// <summary>A live <c>CDL3OUTSIDE</c> stream: one value per closed bar, bit-identical
    /// to <c>CDL3OUTSIDE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDL3OUTSIDE_Open"/>. There is no close and
+   /// <para>Open with <see cref="Core.Cdl3outsideOpen"/>. There is no close and
    /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -341,7 +341,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDL3OUTSIDE_Stream
+   public sealed class Cdl3outsideStream
    {
       internal Core core;
       internal double lag1_inOpen;
@@ -352,12 +352,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDL3OUTSIDE_Stream( Core core ) { this.core = core; }
+      internal Cdl3outsideStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDL3OUTSIDE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdl3outside</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -366,7 +366,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDL3OUTSIDE_Stream( CDL3OUTSIDE_Stream other )
+      internal Cdl3outsideStream( Cdl3outsideStream other )
       {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -378,7 +378,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDL3OUTSIDE_Stream other )
+      internal void CopyFrom( Cdl3outsideStream other )
       {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -409,7 +409,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3OUTSIDE", "update", RetCode.BadParam);
-         core.CDL3OUTSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.Cdl3outsideStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -431,8 +431,8 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3OUTSIDE", "peek", RetCode.BadParam);
-         CDL3OUTSIDE_Stream scratch = new CDL3OUTSIDE_Stream(this);
-         core.CDL3OUTSIDE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         Cdl3outsideStream scratch = new Cdl3outsideStream(this);
+         core.Cdl3outsideStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -459,7 +459,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDL3OUTSIDE", "updateAndFill", RetCode.BadParam);
-            core.CDL3OUTSIDE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.Cdl3outsideStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -475,13 +475,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDL3OUTSIDE_Stream Clone()
+      public Cdl3outsideStream Clone()
       {
-         return new CDL3OUTSIDE_Stream(this);
+         return new Cdl3outsideStream(this);
       }
    }
 
-   internal void CDL3OUTSIDE_StepImpl( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void Cdl3outsideStepImpl( Cdl3outsideStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
          /* white engulfs black */
@@ -498,7 +498,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode CDL3OUTSIDE_OpenImpl( CDL3OUTSIDE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode Cdl3outsideOpenImpl( Cdl3outsideStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -574,11 +574,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDL3OUTSIDE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* Cdl3outsideOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Cdl3outsideStream Cdl3outsideOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
-      RetCode retCode = CDL3OUTSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      Cdl3outsideStream sp = new Cdl3outsideStream(this);
+      RetCode retCode = Cdl3outsideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -587,12 +587,12 @@ public partial class Core
       throw StreamFailure("CDL3OUTSIDE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDL3OUTSIDE_Open (composition seam). */
-   internal CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind Cdl3outsideOpen (composition seam). */
+   internal Cdl3outsideStream Cdl3outsideOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
+      Cdl3outsideStream sp = new Cdl3outsideStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3OUTSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdl3outsideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -603,12 +603,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDL3OUTSIDE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDL3OUTSIDE_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="Cdl3outsideStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDL3OUTSIDE</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>CDL3OUTSIDE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDL3OUTSIDE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Cdl3outsideOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -621,7 +621,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDL3OUTSIDE_Stream CDL3OUTSIDE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public Cdl3outsideStream Cdl3outsideOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3OUTSIDE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3OUTSIDE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -631,10 +631,10 @@ public partial class Core
       RequireHistoryLength("CDL3OUTSIDE", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDL3OUTSIDE", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3OUTSIDE", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return Cdl3outsideOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDL3OUTSIDE_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>Cdl3outsideOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDL3OUTSIDE</c> produces
@@ -648,7 +648,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDL3OUTSIDE_Stream.OutRange"/>.</para>
+   /// <see cref="Cdl3outsideStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -666,7 +666,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public Cdl3outsideStream Cdl3outsideOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3OUTSIDE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3OUTSIDE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -678,6 +678,6 @@ public partial class Core
       RequireHistoryLength("CDL3OUTSIDE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3OUTSIDE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDL3OUTSIDE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDL3OUTSIDE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return Cdl3outsideOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

@@ -36,23 +36,23 @@ fn an_empty_history_is_an_index_fault() {
     let empty: [f64; 0] = [];
     let mut out = [0.0_f64; 8];
 
-    assert_eq!(core.SMA_Open(&empty, 30).err(), Some(RetCode::OutOfRangeStartIndex));
+    assert_eq!(core.sma_open(&empty, 30).err(), Some(RetCode::OutOfRangeStartIndex));
     assert_eq!(
-        core.SMA_OpenAndFill(&empty, 30, &mut out).err(),
+        core.sma_open_and_fill(&empty, 30, &mut out).err(),
         Some(RetCode::OutOfRangeStartIndex)
     );
     // A candlestick reaches it through four legs, and the dispatch tier and the
     // period bank hand-roll their own prologue.
     assert_eq!(
-        core.CDLDOJI_Open(&empty, &empty, &empty, &empty).err(),
+        core.cdldoji_open(&empty, &empty, &empty, &empty).err(),
         Some(RetCode::OutOfRangeStartIndex)
     );
     assert_eq!(
-        core.MA_Open(&empty, 30, MAType::EMA).err(),
+        core.ma_open(&empty, 30, MAType::EMA).err(),
         Some(RetCode::OutOfRangeStartIndex)
     );
     assert_eq!(
-        core.MAVP_Open(&empty, &empty, 2, 30, MAType::SMA).err(),
+        core.mavp_open(&empty, &empty, 2, 30, MAType::SMA).err(),
         Some(RetCode::OutOfRangeStartIndex)
     );
 }
@@ -66,25 +66,25 @@ fn the_other_rejections_keep_their_own_codes() {
 
     // A one-bar history is inside the index domain: that is S7's business.
     assert_eq!(
-        core.SMA_Open(&data[..1], 30).err(),
+        core.sma_open(&data[..1], 30).err(),
         Some(RetCode::InsufficientHistory)
     );
     // A parameter outside its range is still the catch-all.
-    assert_eq!(core.SMA_Open(&data, 0).err(), Some(RetCode::BadParam));
+    assert_eq!(core.sma_open(&data, 0).err(), Some(RetCode::BadParam));
     // So is a second input of a different length — `historyLen` is the FIRST
     // input's, so a later one disagreeing is an argument fault, not an empty
     // history. This is the half the emptiness check used to be fused with.
     assert_eq!(
-        core.STOCH_Open(&data, &data[..100], &data, 5, 3, MAType::SMA, 3, MAType::SMA).err(),
+        core.stoch_open(&data, &data[..100], &data, 5, 3, MAType::SMA, 3, MAType::SMA).err(),
         Some(RetCode::BadParam)
     );
     // ...including when the disagreeing one is the empty slice.
     assert_eq!(
-        core.STOCH_Open(&data, &[], &data, 5, 3, MAType::SMA, 3, MAType::SMA).err(),
+        core.stoch_open(&data, &[], &data, 5, 3, MAType::SMA, 3, MAType::SMA).err(),
         Some(RetCode::BadParam)
     );
     // And a full history still opens.
-    assert!(core.SMA_Open(&data, 30).is_ok());
+    assert!(core.sma_open(&data, 30).is_ok());
 }
 
 /// Rule S5, from both sides. The bound is `historyLen - lookback` — the count
@@ -103,13 +103,13 @@ fn the_fill_output_bound_from_both_sides() {
     assert!(produced < data.len(), "the produced count is shorter than the history");
 
     let mut exact = vec![0.0_f64; produced];
-    let (_h, range) = core.SMA_OpenAndFill(&data, 30, &mut exact).expect("an exactly-sized output");
+    let (_h, range) = core.sma_open_and_fill(&data, 30, &mut exact).expect("an exactly-sized output");
     assert_eq!(range.beg_idx, lb);
     assert_eq!(range.count, produced, "the fill wrote exactly the bound");
 
     let mut short = vec![0.0_f64; produced - 1];
     assert_eq!(
-        core.SMA_OpenAndFill(&data, 30, &mut short).err(),
+        core.sma_open_and_fill(&data, 30, &mut short).err(),
         Some(RetCode::BadParam),
         "one element short of the produced count is rejected"
     );
@@ -120,7 +120,7 @@ fn the_fill_output_bound_from_both_sides() {
     let mut short2 = vec![0.0_f64; produced - 1];
     assert!(
         !panics(|| {
-            let _ = core.SMA_OpenAndFill(&data, 30, &mut short2);
+            let _ = core.sma_open_and_fill(&data, 30, &mut short2);
         }),
         "the public frame answers before the bounds assert"
     );
@@ -129,7 +129,7 @@ fn the_fill_output_bound_from_both_sides() {
     // An oversized output is legal and produces the identical values: the bound
     // is a minimum, and this is what says the exact case above was not luck.
     let mut roomy = vec![0.0_f64; data.len()];
-    let (_h2, r2) = core.SMA_OpenAndFill(&data, 30, &mut roomy).expect("an oversized output");
+    let (_h2, r2) = core.sma_open_and_fill(&data, 30, &mut roomy).expect("an oversized output");
     assert_eq!(r2.count, produced);
     assert!(
         exact.iter().zip(roomy.iter()).all(|(a, b)| a.to_bits() == b.to_bits()),
@@ -151,10 +151,10 @@ fn the_fill_output_bound_holds_on_every_tier() {
         let lb = core.MA_Lookback(period, ma).expect("a valid period");
         let produced = data.len() - lb;
         let mut exact = vec![0.0_f64; produced];
-        assert!(core.MA_OpenAndFill(&data, period, ma, &mut exact).is_ok(), "MA exact");
+        assert!(core.ma_open_and_fill(&data, period, ma, &mut exact).is_ok(), "MA exact");
         let mut short = vec![0.0_f64; produced - 1];
         assert_eq!(
-            core.MA_OpenAndFill(&data, period, ma, &mut short).err(),
+            core.ma_open_and_fill(&data, period, ma, &mut short).err(),
             Some(RetCode::BadParam),
             "MA one short"
         );
@@ -164,10 +164,10 @@ fn the_fill_output_bound_holds_on_every_tier() {
     let lb = core.MAVP_Lookback(2, 30, MAType::SMA).expect("a valid window");
     let produced = data.len() - lb;
     let mut exact = vec![0.0_f64; produced];
-    assert!(core.MAVP_OpenAndFill(&data, &periods, 2, 30, MAType::SMA, &mut exact).is_ok());
+    assert!(core.mavp_open_and_fill(&data, &periods, 2, 30, MAType::SMA, &mut exact).is_ok());
     let mut short = vec![0.0_f64; produced - 1];
     assert_eq!(
-        core.MAVP_OpenAndFill(&data, &periods, 2, 30, MAType::SMA, &mut short).err(),
+        core.mavp_open_and_fill(&data, &periods, 2, 30, MAType::SMA, &mut short).err(),
         Some(RetCode::BadParam)
     );
 
@@ -176,10 +176,10 @@ fn the_fill_output_bound_holds_on_every_tier() {
     let lb = core.BBANDS_Lookback(20, 2.0, 2.0, MAType::SMA).expect("valid");
     let produced = data.len() - lb;
     let (mut a, mut b, mut c) = (vec![0.0; produced], vec![0.0; produced], vec![0.0; produced]);
-    assert!(core.BBANDS_OpenAndFill(&data, 20, 2.0, 2.0, MAType::SMA, &mut a, &mut b, &mut c).is_ok());
+    assert!(core.bbands_open_and_fill(&data, 20, 2.0, 2.0, MAType::SMA, &mut a, &mut b, &mut c).is_ok());
     let (mut a2, mut b2, mut c2) = (vec![0.0; produced], vec![0.0; produced], vec![0.0; produced - 1]);
     assert_eq!(
-        core.BBANDS_OpenAndFill(&data, 20, 2.0, 2.0, MAType::SMA, &mut a2, &mut b2, &mut c2).err(),
+        core.bbands_open_and_fill(&data, 20, 2.0, 2.0, MAType::SMA, &mut a2, &mut b2, &mut c2).err(),
         Some(RetCode::BadParam),
         "each output is bounded separately"
     );
@@ -195,7 +195,7 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     let lb = core.SMA_Lookback(30).expect("valid");
     let mut nothing: [f64; 0] = [];
     assert_eq!(
-        core.SMA_OpenAndFill(&data[..lb], 30, &mut nothing).err(),
+        core.sma_open_and_fill(&data[..lb], 30, &mut nothing).err(),
         Some(RetCode::InsufficientHistory),
         "a history one short of lookback + 1 is S7, whatever the output holds"
     );
@@ -221,12 +221,12 @@ fn a_declined_fill_output_is_still_computed() {
     let mut ref_mama = vec![0.0_f64; produced];
     let mut ref_fama = vec![0.0_f64; produced];
     let (mut both, both_range) = core
-        .MAMA_OpenAndFill(&data, 0.5, 0.05, &mut ref_mama, Some(&mut ref_fama))
+        .mama_open_and_fill(&data, 0.5, 0.05, &mut ref_mama, Some(&mut ref_fama))
         .expect("a fully supplied open");
 
     let mut solo_mama = vec![0.0_f64; produced];
     let (mut declined, declined_range) = core
-        .MAMA_OpenAndFill(&data, 0.5, 0.05, &mut solo_mama, None)
+        .mama_open_and_fill(&data, 0.5, 0.05, &mut solo_mama, None)
         .expect("declining outFAMA is not a rejection");
 
     assert_eq!(ref_mama, solo_mama, "declining outFAMA leaves outMAMA bit-identical");
@@ -247,14 +247,14 @@ fn a_declined_fill_output_is_still_computed() {
 
     let mut short_mama = vec![0.0_f64; produced - 1];
     assert_eq!(
-        core.MAMA_OpenAndFill(&data, 0.5, 0.05, &mut short_mama, None).err(),
+        core.mama_open_and_fill(&data, 0.5, 0.05, &mut short_mama, None).err(),
         Some(RetCode::BadParam),
         "an undersized outMAMA is still rejected when outFAMA is declined"
     );
     let mut full_mama = vec![0.0_f64; produced];
     let mut short_fama = vec![0.0_f64; produced - 1];
     assert_eq!(
-        core.MAMA_OpenAndFill(&data, 0.5, 0.05, &mut full_mama, Some(&mut short_fama)).err(),
+        core.mama_open_and_fill(&data, 0.5, 0.05, &mut full_mama, Some(&mut short_fama)).err(),
         Some(RetCode::BadParam),
         "a supplied outFAMA is still bounded"
     );
@@ -300,9 +300,9 @@ fn a_declined_output_at_update_and_fill_is_a_property_of_the_call() {
         let mut mama = vec![0.0_f64; produced];
         let mut fama = vec![0.0_f64; produced];
         let (h, _) = if declined_at_open {
-            core.MAMA_OpenAndFill(&data, 0.5, 0.05, &mut mama, None)
+            core.mama_open_and_fill(&data, 0.5, 0.05, &mut mama, None)
         } else {
-            core.MAMA_OpenAndFill(&data, 0.5, 0.05, &mut mama, Some(&mut fama))
+            core.mama_open_and_fill(&data, 0.5, 0.05, &mut mama, Some(&mut fama))
         }
         .expect("a valid open");
         h

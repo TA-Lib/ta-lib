@@ -352,7 +352,7 @@
    /**
     * A live CDLINNECK stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLINNECK} over the same series.
-    * Open with {@link Core#CDLINNECK_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlinneckOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -363,7 +363,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLINNECK_Stream {
+   public static final class CdlinneckStream {
       Core core;
       double EqualPeriodTotal;
       double BodyLongPeriodTotal;
@@ -389,7 +389,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLINNECK_Stream( Core core ) { this.core = core; }
+      CdlinneckStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -403,7 +403,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLINNECK_Stream( CDLINNECK_Stream other ) {
+      CdlinneckStream( CdlinneckStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -430,7 +430,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLINNECK_Stream other ) {
+      void copyFrom( CdlinneckStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -466,7 +466,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLINNECK_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlinneckStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -483,7 +483,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLINNECK update: BadParam", RetCode.BadParam);
-         core.CDLINNECK_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlinneckStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -512,7 +512,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLINNECK updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLINNECK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlinneckStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -530,14 +530,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLINNECK peek: BadParam", RetCode.BadParam);
-         CDLINNECK_Stream scratch = PEEK_SCRATCH.get();
+         CdlinneckStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLINNECK_Stream(this);
+            scratch = new CdlinneckStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLINNECK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlinneckStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -554,11 +554,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLINNECK_Stream copy() {
-         return new CDLINNECK_Stream(this);
+      public CdlinneckStream copy() {
+         return new CdlinneckStream(this);
       }
    }
-   void CDLINNECK_StepImpl( CDLINNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlinneckStepImpl( CdlinneckStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -597,7 +597,7 @@
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLINNECK_OpenImpl( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlinneckOpenImpl( CdlinneckStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -739,11 +739,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLINNECK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLINNECK_Stream CDLINNECK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlinneckOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlinneckStream cdlinneckOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
-      RetCode retCode = CDLINNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlinneckStream sp = new CdlinneckStream(this);
+      RetCode retCode = cdlinneckOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -757,14 +757,14 @@
       }
       throw new TaLibArgumentException("CDLINNECK openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLINNECK_Open (composition seam). */
-   CDLINNECK_Stream CDLINNECK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlinneckOpen (composition seam). */
+   CdlinneckStream cdlinneckOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
+      CdlinneckStream sp = new CdlinneckStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLINNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlinneckOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -791,7 +791,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLINNECK_Stream CDLINNECK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlinneckStream cdlinneckOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLINNECK open", "inOpen", inOpen);
       requireHistory("CDLINNECK open", inOpen.length);
@@ -801,10 +801,10 @@
       requireHistoryLength("CDLINNECK open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLINNECK open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLINNECK open", "inClose", inClose.length, inOpen.length);
-      return CDLINNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlinneckOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLINNECK_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlinneckOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLINNECK} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -812,9 +812,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLINNECK_Stream#outRange()}.
+    * {@link CdlinneckStream#outRange()}.
     */
-   public CDLINNECK_Stream CDLINNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlinneckStream cdlinneckOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLINNECK openAndFill", "inOpen", inOpen);
       requireHistory("CDLINNECK openAndFill", inOpen.length);
@@ -831,5 +831,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLINNECK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlinneckOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

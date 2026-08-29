@@ -2,12 +2,12 @@
 //!
 //! For every YAML-declared streamable function this appends a
 //! `/**** Streaming API *****/` section to the generated per-function Rust
-//! file: an opaque `#[derive(Clone)]` handle (`<NAME>_Stream { core, state }`),
+//! file: an opaque `#[derive(Clone)]` handle (`<Name>Stream { core, state }`),
 //! a private state struct mirroring the C stream struct field-for-field, a
-//! `<NAME>_step_impl` transition method on `Core` (so batch rendering
+//! `<name>_step_impl` transition method on `Core` (so batch rendering
 //! conventions — `self.candle_settings`, `self.compatibility`, lookback calls —
-//! work verbatim), a `pub(crate) <NAME>_OpenInternal(.., startIdx, ..)`
-//! composition seam, the public `<NAME>_Open` / `<NAME>_OpenAndFill`
+//! work verbatim), a `pub(crate) <name>_open_internal(.., startIdx, ..)`
+//! composition seam, the public `<name>_open` / `<name>_open_and_fill`
 //! constructors, and `update`/`peek` on the handle.
 //!
 //! Bit-exactness argument (same as C): `open` transcribes the ENTIRE batch
@@ -37,6 +37,7 @@ use crate::ir::{CircBuf, EnumDef, Expr, FuncDef, ParamType, Statement, VarType};
 use crate::registry::Registry;
 use crate::streaming::{self, StreamModel, StreamPlan};
 
+use super::common;
 use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME_SERIES};
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
@@ -58,15 +59,16 @@ pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> boo
     // Every StreamPlan tier now emits a Rust stream; a plan failure would have
     // failed `generate`'s analyzability gate long before this predicate runs.
     // Resolve `PRAGMA TA_ALT` here rather than at the caller: this predicate
-    // decides the crate's `pub use <N>_Stream` list, and a caller that forgot
+    // decides the crate's `pub use <Name>Stream` list, and a caller that forgot
     // would silently drop a function from the public API.
     streaming::validate_streamable(&func.resolved_for(crate::ir::Lang::Rust), lookup).is_ok()
 }
 
-/// Public handle type name: the function name verbatim + `_Stream`, mirroring
-/// C's `TA_MINUS_DI_Stream` minus the prefix.
+/// Public handle type name: the function name, PascalCase with the acronym
+/// single-capitalized, plus `Stream` (`MINUS_DI` -> `MinusDiStream`), mirroring
+/// C's `TA_MINUS_DI_Stream` minus the prefix and the underscores.
 pub fn stream_type_name(func: &FuncDef) -> String {
-    format!("{}_Stream", func.name)
+    format!("{}Stream", common::pascal_words(&func.name))
 }
 
 
@@ -92,14 +94,15 @@ fn distinct_output_pairs(func: &FuncDef) -> Vec<(String, String)> {
 }
 
 fn state_type_name(func: &FuncDef) -> String {
-    format!("{}_StreamState", func.name)
+    format!("{}StreamState", common::pascal_words(&func.name))
 }
 
-/// The base an indicator's stream entry points are spelled from — the function
-/// name verbatim, so `SMA` yields `SMA_Open`/`SMA_Update`/`SMA_Peek`, mirroring
-/// C's `TA_SMA_Open` minus the namespace prefix.
+/// The base an indicator's stream entry points are spelled from — `snake_case`,
+/// so `SMA` yields `sma_open`/`update`/`peek`, mirroring C's `TA_SMA_Open` minus
+/// the namespace prefix and the casing. `update`/`peek` carry no prefix at all
+/// (they're inherent methods on the handle type, not free functions on `Core`).
 fn snake(func: &FuncDef) -> String {
-    func.name.clone()
+    common::snake_words(&func.name)
 }
 
 fn out_is_int(func: &FuncDef, name: &str) -> bool {
@@ -512,7 +515,7 @@ pub fn generate(
 }
 
 /// The lint preamble shared by every tier's generated `impl Core` block.
-const IMPL_ALLOW: &str = "#[allow(non_snake_case)]\n#[allow(unused_variables)]\n#[allow(dead_code)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\n#[allow(unused_parens)]\n";
+const IMPL_ALLOW: &str = "#[allow(unused_variables)]\n#[allow(dead_code)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\n#[allow(unused_parens)]\n";
 
 #[allow(clippy::too_many_arguments)]
 fn emit_loop(
@@ -541,7 +544,7 @@ fn emit_loop(
 }
 
 
-/// `OpenInternal`: the scalar wrapper onto `<N>_OpenImpl`. One 1-element array per
+/// `open_internal`: the scalar wrapper onto `<n>_open_impl`. One 1-element array per
 /// output stands in for the caller's slice; at stride 0 every per-bar write
 /// lands on slot 0, so after the replay it holds the last history value.
 fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef, model: &StreamModel) {
@@ -581,7 +584,7 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
     }
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_OpenImpl({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
+        "        let handle = self.{sn}_open_impl({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
         sinks.join(", ")
     );
     let vals: Vec<String> = outputs.iter().map(|o2| format!("sink_{o2}[0]")).collect();
@@ -601,7 +604,7 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
 /// run yet here, and a short history must reach it rather than be answered as a
 /// capacity fault.
 ///
-/// **The PUBLIC frame, never `<N>_OpenAndFillInternal`.** That seam takes an
+/// **The PUBLIC frame, never `<n>_open_and_fill_internal`.** That seam takes an
 /// anchor and writes `historyLen - max(lookback, startIdx)` — fewer — so the
 /// same bound there would reject the composed sub-calls that pass a non-zero
 /// `startIdx`, and would be redundant anyway: `SubCallStep::is_fusable` already
@@ -618,7 +621,7 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
 /// and this is that rule over `[0, historyLen - 1]` — where the history's own
 /// length IS the range, so the inputs must agree with it rather than merely
 /// reach it.
-fn open_fill_capacity_guards(func: &FuncDef, sn: &str, with_pair: bool) -> String {
+fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
@@ -633,7 +636,7 @@ fn open_fill_capacity_guards(func: &FuncDef, sn: &str, with_pair: bool) -> Strin
             "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
         );
     }
-    let _ = writeln!(s, "        let _guardLb = self.{sn}_Lookback({})?;", lb_args.join(", "));
+    let _ = writeln!(s, "        let _guardLb = self.{}_Lookback({})?;", func.name, lb_args.join(", "));
     if with_pair && inputs.len() > 1 {
         let disagree: Vec<String> =
             inputs[1..].iter().map(|extra| format!("{extra}.len() != {first}.len()")).collect();
@@ -660,7 +663,7 @@ fn open_fill_capacity_guards(func: &FuncDef, sn: &str, with_pair: bool) -> Strin
     s
 }
 
-/// `OpenAndFill`: the fill wrapper onto `<N>_OpenImpl`. It owns the argument
+/// `open_and_fill`: the fill wrapper onto `<n>_open_impl`. It owns the argument
 /// contract for the only path that writes caller-owned slices: the output
 /// capacity (S5) and the output mutual-distinctness guard (#108, S6). In-place
 /// is forbidden not because the fill would compute the wrong answer, but because
@@ -673,7 +676,7 @@ fn emit_open_and_fill_wrapper(
     let sn = snake(func);
     emit_open_sig(o, func, OutMode::Fill);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-    o.push_str(&open_fill_capacity_guards(func, &sn, true));
+    o.push_str(&open_fill_capacity_guards(func, true));
     for (a, b) in distinct_output_pairs(func) {
         let _ = writeln!(o, "{}", distinct_pair_guard(func, &a, &b));
     }
@@ -685,21 +688,21 @@ fn emit_open_and_fill_wrapper(
     for opt in &opt_names {
         let _ = write!(args, ", {opt}");
     }
-    // `<N>_OpenImpl` is the seam both entry points share and still reports through
+    // `<n>_open_impl` is the seam both entry points share and still reports through
     // out-parameters, so the pair lands in locals here and is folded into the
     // returned `OutRange` — the same shape the batch wrapper has (#179 C15).
     let _ = writeln!(
         o,
         "        let mut outBegIdx: usize = 0;\n        let mut outNBElement: usize = 0;"
     );
-    // Straight to the anchored seam at 0, not to `_OpenImpl`, so the seam has a
+    // Straight to the anchored seam at 0, not to `_open_impl`, so the seam has a
     // caller for every function instead of only the sixteen something composes
     // over. Rust needs no aliasing guard between the two frames -- `&[f64]` and
     // `&mut [f64]` cannot overlap -- so they differ only in the anchor, and
     // `args` already carries it as the literal 0 the numerics take.
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_OpenAndFillInternal({args}, &mut outBegIdx, &mut outNBElement, {})?;",
+        "        let handle = self.{sn}_open_and_fill_internal({args}, &mut outBegIdx, &mut outNBElement, {})?;",
         outs.join(", ")
     );
     let _ = writeln!(
@@ -709,7 +712,7 @@ fn emit_open_and_fill_wrapper(
     let _ = writeln!(o, "    }}\n");
 }
 
-/// `OpenAndFillInternal` for every tier that owns an `<N>_OpenImpl`: the same single
+/// `open_and_fill_internal` for every tier that owns an `<n>_open_impl`: the same single
 /// pass as `OpenAndFill`, at the caller's `startIdx`. See [`OutMode::FillInternal`]
 /// for why it carries no distinctness guard.
 fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
@@ -725,7 +728,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "        self.{sn}_OpenImpl({args}, outBegIdx, outNBElement, {}, 1)",
+        "        self.{sn}_open_impl({args}, outBegIdx, outNBElement, {}, 1)",
         outs.join(", ")
     );
     let _ = writeln!(o, "    }}\n");
@@ -861,8 +864,8 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{sn}`]\n\
-         /// over the same series. Open with [`Core::{sn}_Open`]; dropping the handle\n\
+        "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{n}`]\n\
+         /// over the same series. Open with [`Core::{sn}_open`]; dropping the handle\n\
          /// closes the stream. Cloning it forks an independent stream.\n\
          ///\n\
          /// [`Self::out_range`] reports the bars it has produced a value for.\n\
@@ -893,7 +896,7 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
 /// it calls the allocator. The ring/window buffers, the sub-handles and the
 /// dispatch sub-enum do; every scalar, index and enum parameter does not.
 fn field_owns_heap(rty: &str) -> bool {
-    rty.starts_with("Vec<") || rty.ends_with("_Stream") || rty.ends_with("_Sub")
+    rty.starts_with("Vec<") || rty.ends_with("Stream") || rty.ends_with("Sub")
 }
 
 /// What a state costs to copy, counted by kind — the input to the choice
@@ -1017,7 +1020,7 @@ fn emit_state_restore(
     let mut body = String::new();
     for (name, rty, _) in fields {
         if let Some(inner) = rty.strip_prefix("Vec<").and_then(|t| t.strip_suffix('>')) {
-            if inner.ends_with("_Stream") {
+            if inner.ends_with("Stream") {
                 shape.banks += 1;
             } else {
                 shape.buffers += 1;
@@ -1026,7 +1029,7 @@ fn emit_state_restore(
             shape.subs += 1;
         }
         if let Some(inner) = rty.strip_prefix("Vec<").and_then(|t| t.strip_suffix('>')) {
-            if inner.ends_with("_Stream") {
+            if inner.ends_with("Stream") {
                 // A bank of sub-handles: same length in practice (the scratch
                 // serves one handle at a time), so restore in place and only
                 // rebuild the Vec when a differently-shaped handle peeks.
@@ -1464,8 +1467,8 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
-/// The open-family emitter: `pub(crate) <NAME>_OpenInternal` (Scalar) or
-/// `pub <NAME>_OpenAndFill` (Fill). `body` is the transcribed batch region
+/// The open-family emitter: `pub(crate) <name>_open_internal` (Scalar) or
+/// `pub <name>_open_and_fill` (Fill). `body` is the transcribed batch region
 /// (loop tier: `model.body`; dual-mode: `prologue ++ arm body ++
 /// epilogue`).
 #[allow(clippy::too_many_arguments)]
@@ -1520,11 +1523,11 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         OutMode::Scalar => {
             let _ = writeln!(
                 o,
-                "    /// Internal startIdx-anchored open behind [`Core::{sn}_Open`] (composition seam)."
+                "    /// Internal startIdx-anchored open behind [`Core::{sn}_open`] (composition seam)."
             );
             let _ = writeln!(
                 o,
-                "    pub(crate) fn {sn}_OpenInternal(\n        &self, {sig_inputs}startIdx: usize{sig_opts},\n    ) -> Result<({handle}, {vt}), RetCode> {{"
+                "    pub(crate) fn {sn}_open_internal(\n        &self, {sig_inputs}startIdx: usize{sig_opts},\n    ) -> Result<({handle}, {vt}), RetCode> {{"
             );
         }
         // The merged worker: the union of both entry points' inputs. `startIdx`
@@ -1534,11 +1537,11 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// The single whole-history transcription behind [`Core::{sn}_OpenInternal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_OpenAndFill`] (stride 1, caller slices)."
+                "    /// The single whole-history transcription behind [`Core::{sn}_open_internal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_open_and_fill`] (stride 1, caller slices)."
             );
             let _ = writeln!(
                 o,
-                "    pub(crate) fn {sn}_OpenImpl(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
+                "    pub(crate) fn {sn}_open_impl(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
         // Batch parameter order: inputs, optional params, then one slice per
@@ -1551,7 +1554,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_Open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —\n    /// or when two of them are the same slice. Everything [`Core::{sn}_Open`] rejects\n    /// is rejected here too."
+                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{n}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —\n    /// or when two of them are the same slice. Everything [`Core::{sn}_open`] rejects\n    /// is rejected here too."
             );
             let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_OpenAndFill\")]");
             let opts_head = sig_opts.trim_start_matches(", ");
@@ -1562,7 +1565,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             };
             let _ = writeln!(
                 o,
-                "    pub fn {sn}_OpenAndFill(\n        &self, {sig_inputs}{opts_head}{},\n    ) -> Result<({handle}, OutRange), RetCode> {{",
+                "    pub fn {sn}_open_and_fill(\n        &self, {sig_inputs}{opts_head}{},\n    ) -> Result<({handle}, OutRange), RetCode> {{",
                 outs.trim_start_matches(", ")
             );
         }
@@ -1574,11 +1577,11 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_OpenAndFill`] anchored at `startIdx` — the composed-open\n    /// fusion seam (issue #192), not a public entry point."
+                "    /// [`Core::{sn}_open_and_fill`] anchored at `startIdx` — the composed-open\n    /// fusion seam (issue #192), not a public entry point."
             );
             let _ = writeln!(
                 o,
-                "    pub(crate) fn {sn}_OpenAndFillInternal(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
+                "    pub(crate) fn {sn}_open_and_fill_internal(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
     }
@@ -1687,7 +1690,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         // This IS the public frame for the two exempt tiers, so it owns the
         // output capacity (S5) as well — the merged tiers get theirs from
         // `emit_open_and_fill_wrapper`, which is their public frame.
-        o.push_str(&open_fill_capacity_guards(func, &snake(func), false));
+        o.push_str(&open_fill_capacity_guards(func, false));
         // Output mutual-distinctness (#108) — same guard the batch emits. FILL
         // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
         for (a, b) in distinct_output_pairs(func) {
@@ -1809,7 +1812,7 @@ fn emit_open_region(
 
     // Scoped to the open body: a declined output's store is wrapped in
     // `if let Some(..) = ..as_deref_mut()`, rule B6a read on this tier. The step
-    // body keeps the empty set — a `<N>_StepImpl` writes `&mut f64` scalars, and
+    // body keeps the empty set — a `<n>_step_impl` writes `&mut f64` scalars, and
     // nothing there is declinable.
     let mut open_ctx = typing.ctx.clone();
     open_ctx.nullable_outputs = super::common::nullable_output_names(func);
@@ -1924,7 +1927,6 @@ fn emit_identity_fast_path(
     let handle = stream_type_name(func);
     let cs_ctor = cs_ctor_fields(func);
     let state = state_type_name(func);
-    let sn = snake(func);
     let opt_real_params: Vec<String> = func
         .optional_inputs
         .iter()
@@ -1933,10 +1935,10 @@ fn emit_identity_fast_path(
         .collect();
     let cond = render_expr(&idp.condition, &typing.ctx, &opt_real_params, registry, helpers);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let lb_call = format!("self.{sn}_Lookback({})?", lb_args.join(", "));
+    let lb_call = format!("self.{}_Lookback({})?", func.name, lb_args.join(", "));
     let _ = writeln!(o, "        if {cond} {{");
     // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
-    // `_Open*Internal` variants are the batch call over that same range. The
+    // `_open*_internal` variants are the batch call over that same range. The
     // public entry points pass 0, so the clamp is a no-op for them — it is the
     // composition seams that were reporting (and filling) from the raw lookback.
     let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
@@ -2289,23 +2291,23 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef, enums: &HashMap<String, Enu
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Open\")]");
     let _ = writeln!(
         o,
-        "    pub fn {sn}_Open(&self, {sig_inputs}{}) -> Result<({handle}, {vt}), RetCode> {{",
+        "    pub fn {sn}_open(&self, {sig_inputs}{}) -> Result<({handle}, {vt}), RetCode> {{",
         sig_opts.trim_start_matches(", ")
     );
     let _ = writeln!(
         o,
-        "        self.{sn}_OpenInternal({fwd_inputs}0{fwd_opts})"
+        "        self.{sn}_open_internal({fwd_inputs}0{fwd_opts})"
     );
     let _ = writeln!(o, "    }}\n");
 }
 
-/// Rustdoc for `<NAME>_Open`, including the peek==update doctest witness.
+/// Rustdoc for `<name>_open`, including the peek==update doctest witness.
 fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
     let sn = snake(func);
     let mut d = String::new();
     let _ = writeln!(
         d,
-        "    /// Open a live {n} stream over the warm-up history; returns the handle and\n    /// the value at the last history bar — bit-identical to [`Core::{sn}`] at that bar.",
+        "    /// Open a live {n} stream over the warm-up history; returns the handle and\n    /// the value at the last history bar — bit-identical to [`Core::{n}`] at that bar.",
         n = func.name.to_uppercase()
     );
     let _ = writeln!(
@@ -2362,7 +2364,7 @@ fn stream_doctest(
     lines.push(String::new());
     lines.push("let core = Core::new();".to_string());
     lines.push(format!(
-        "let (mut s, _last) = core.{sn}_Open({}).expect(\"enough history\");",
+        "let (mut s, _last) = core.{sn}_open({}).expect(\"enough history\");",
         args.join(", ")
     ));
     // The range the handle reports, before and after one committed bar. Fields
@@ -2718,7 +2720,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
         "    /// The bars this stream has produced a value for, in the input series'\n\
          \x20   /// coordinates: `[beg_idx, beg_idx + count)`.\n\
          \x20   ///\n\
-         \x20   /// It is what [`Core::{sn}`] reports over the same bars: the opener sets it\n\
+         \x20   /// It is what [`Core::{n}`] reports over the same bars: the opener sets it\n\
          \x20   /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one\n\
          \x20   /// to the count, `peek` leaves it alone, and a clone carries it verbatim.\n\
          \x20   /// A plain `Open` hands back only the last value, a subset of this range,\n\
@@ -2991,20 +2993,19 @@ fn emit_dual_open(
 // Dispatch tier (MA): a tagged enum over the callees' PUBLIC streams.
 // ---------------------------------------------------------------------------
 
-/// `SMA_Stream` for callee `sma` — the callee's own handle type, spelled from
-/// its verbatim name.
+/// `SmaStream` for callee `SMA` — the callee's own handle type.
 fn callee_stream_type(callee: &str) -> String {
-    format!("{}_Stream", callee.to_uppercase())
+    format!("{}Stream", common::pascal_words(callee))
 }
 
 /// `MaSub` — the module-private sub-stream enum of a dispatch handle.
 fn sub_enum_name(func: &FuncDef) -> String {
-    format!("{}_Sub", func.name)
+    format!("{}Sub", common::pascal_words(&func.name))
 }
 
 /// `Sma` — the enum variant name for a supported arm's callee.
 fn callee_variant(callee: &str) -> String {
-    callee.to_uppercase()
+    common::pascal_words(callee)
 }
 
 /// A minimal render context for dispatch/period-bank expressions (identity
@@ -3068,7 +3069,6 @@ fn emit_dispatch(
     counter: &Cell<usize>,
 ) {
     let _ = counter;
-    let sn = snake(func);
     let handle = stream_type_name(func);
     let cs_ctor = cs_ctor_fields(func);
     let state = state_type_name(func);
@@ -3084,7 +3084,7 @@ fn emit_dispatch(
         .collect::<Vec<_>>()
         .join(", ");
     let lb_args = params_join.clone();
-    let lb_call = format!("self.{sn}_Lookback({lb_args})?");
+    let lb_call = format!("self.{}_Lookback({lb_args})?", func.name);
 
     // --- structs + sub enum -------------------------------------------------
     emit_handle_struct(o, func);
@@ -3309,8 +3309,8 @@ fn emit_dispatch(
                         let _ = writeln!(o, "            {case} => {{");
                         let _ = writeln!(
                             o,
-                            "                let (sub, subValue) = self.{}_OpenInternal({bar_args}, startIdx{opts})?;",
-                            arm.callee.to_uppercase()
+                            "                let (sub, subValue) = self.{}_open_internal({bar_args}, startIdx{opts})?;",
+                            common::snake_words(&arm.callee)
                         );
                         // Select the forwarded callee slot(s) in dispatch output order
                         // (a multi-output callee's open value is a tuple; Discard slots
@@ -3374,15 +3374,15 @@ fn emit_dispatch(
                         if mode == OutMode::FillInternal {
                             let _ = writeln!(
                                 o,
-                                "                self.{}_OpenAndFillInternal({bar_args}, startIdx, {opts}outBegIdx, outNBElement, {fill_outs})?,",
-                                arm.callee.to_uppercase()
+                                "                self.{}_open_and_fill_internal({bar_args}, startIdx, {opts}outBegIdx, outNBElement, {fill_outs})?,",
+                                common::snake_words(&arm.callee)
                             );
                             let _ = writeln!(o, "            ),");
                         } else {
                             let _ = writeln!(
                                 o,
-                                "                let (sub, fillRange) = self.{}_OpenAndFill({bar_args}, {opts}{fill_outs})?;",
-                                arm.callee.to_uppercase()
+                                "                let (sub, fillRange) = self.{}_open_and_fill({bar_args}, {opts}{fill_outs})?;",
+                                common::snake_words(&arm.callee)
                             );
                             let _ = writeln!(
                                 o,
@@ -3451,6 +3451,7 @@ fn emit_period_bank(
     let state = state_type_name(func);
     let callee = plan.callee.to_uppercase();
     let callee = callee.as_str();
+    let callee_sn = common::snake_words(callee);
     let subty = callee_stream_type(callee);
     let min = plan.min_param.as_str();
     let max = plan.max_param.as_str();
@@ -3547,7 +3548,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        for bankIdx in 0..nBank {{");
     let _ = writeln!(
         o,
-        "            let (sub, subValue) = self.{callee}_OpenInternal({price}, subStart, {open_opts})?;"
+        "            let (sub, subValue) = self.{callee_sn}_open_internal({price}, subStart, {open_opts})?;"
     );
     let _ = writeln!(o, "            bank.push(sub);");
     let _ = writeln!(o, "            scratch.push(subValue);");
@@ -3586,7 +3587,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        for bankIdx in 0..nBank {{");
     let _ = writeln!(
         o,
-        "            let (sub, subValue) = self.{callee}_OpenInternal(&{price}[..lookbackTotal + 1], lookbackTotal, {open_opts})?;"
+        "            let (sub, subValue) = self.{callee_sn}_open_internal(&{price}[..lookbackTotal + 1], lookbackTotal, {open_opts})?;"
     );
     let _ = writeln!(o, "            bank.push(sub);");
     let _ = writeln!(o, "            scratch.push(subValue);");
@@ -4124,7 +4125,7 @@ fn emit_composed_open(
     let mut replaced: HashSet<usize> = HashSet::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let mut t = String::new();
-        let callee = sub.callee.to_uppercase();
+        let callee = common::snake_words(&sub.callee);
         let anchor = render_anchor(&sub.s_arg, &typing.ctx, &opt_real_params, registry, helpers);
         let e_arg = render_expr(
             &streaming::rewrite_expr(&sub.e_arg, &|e| match e {
@@ -4187,7 +4188,7 @@ fn emit_composed_open(
             let dst_args: Vec<String> = dsts.iter().map(|e| arg(e, true)).collect();
             let _ = writeln!(
                 t,
-                "        let sub{si} = self.{callee}_OpenAndFillInternal({}, {anchor}{opt_tail}, {}, {})?;",
+                "        let sub{si} = self.{callee}_open_and_fill_internal({}, {anchor}{opt_tail}, {}, {})?;",
                 srcs.join(", "),
                 metas.join(", "),
                 dst_args.join(", ")
@@ -4207,7 +4208,7 @@ fn emit_composed_open(
         } else {
             let _ = writeln!(
                 t,
-                "        let (sub{si}, _) = self.{callee}_OpenInternal({}, {anchor}{opt_tail})?;",
+                "        let (sub{si}, _) = self.{callee}_open_internal({}, {anchor}{opt_tail})?;",
                 srcs.join(", ")
             );
         }

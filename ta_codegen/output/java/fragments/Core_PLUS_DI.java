@@ -738,7 +738,7 @@
    /**
     * A live PLUS_DI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#PLUS_DI} over the same series.
-    * Open with {@link Core#PLUS_DI_Open}; there is no close — the handle is
+    * Open with {@link Core#plusDiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -749,7 +749,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class PLUS_DI_Stream {
+   public static final class PlusDiStream {
       Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -761,7 +761,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      PLUS_DI_Stream( Core core ) { this.core = core; }
+      PlusDiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -775,7 +775,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      PLUS_DI_Stream( PLUS_DI_Stream other ) {
+      PlusDiStream( PlusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -788,7 +788,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PLUS_DI_Stream other ) {
+      void copyFrom( PlusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -816,7 +816,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
-         core.PLUS_DI_StepImpl(this, inHigh, inLow, inClose);
+         core.plusDiStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -844,7 +844,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("PLUS_DI updateAndFill: BadParam", RetCode.BadParam);
-            core.PLUS_DI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.plusDiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -860,8 +860,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
-         PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
-         core.PLUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
+         PlusDiStream scratch = new PlusDiStream(this);
+         core.plusDiStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -878,11 +878,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public PLUS_DI_Stream copy() {
-         return new PLUS_DI_Stream(this);
+      public PlusDiStream copy() {
+         return new PlusDiStream(this);
       }
    }
-   void PLUS_DI_StepImpl( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+   void plusDiStepImpl( PlusDiStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -962,7 +962,7 @@
          }
       }
    }
-   private RetCode PLUS_DI_OpenImpl( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode plusDiOpenImpl( PlusDiStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1433,11 +1433,11 @@
          return RetCode.Success;
       }
    }
-   /* PLUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   PLUS_DI_Stream PLUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* plusDiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PlusDiStream plusDiOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
-      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      PlusDiStream sp = new PlusDiStream(this);
+      RetCode retCode = plusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1451,14 +1451,14 @@
       }
       throw new TaLibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind PLUS_DI_Open (composition seam). */
-   PLUS_DI_Stream PLUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind plusDiOpen (composition seam). */
+   PlusDiStream plusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      PlusDiStream sp = new PlusDiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = plusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1485,7 +1485,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public PLUS_DI_Stream PLUS_DI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public PlusDiStream plusDiOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("PLUS_DI open", "inHigh", inHigh);
       requireHistory("PLUS_DI open", inHigh.length);
@@ -1493,10 +1493,10 @@
       requireArgument("PLUS_DI open", "inClose", inClose);
       requireHistoryLength("PLUS_DI open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("PLUS_DI open", "inClose", inClose.length, inHigh.length);
-      return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return plusDiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#PLUS_DI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#plusDiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#PLUS_DI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1504,9 +1504,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link PLUS_DI_Stream#outRange()}.
+    * {@link PlusDiStream#outRange()}.
     */
-   public PLUS_DI_Stream PLUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public PlusDiStream plusDiOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("PLUS_DI openAndFill", "inHigh", inHigh);
       requireHistory("PLUS_DI openAndFill", inHigh.length);
@@ -1521,5 +1521,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return PLUS_DI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return plusDiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

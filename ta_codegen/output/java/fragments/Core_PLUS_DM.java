@@ -518,7 +518,7 @@
    /**
     * A live PLUS_DM stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#PLUS_DM} over the same series.
-    * Open with {@link Core#PLUS_DM_Open}; there is no close — the handle is
+    * Open with {@link Core#plusDmOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -529,7 +529,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class PLUS_DM_Stream {
+   public static final class PlusDmStream {
       Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -539,7 +539,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      PLUS_DM_Stream( Core core ) { this.core = core; }
+      PlusDmStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -553,7 +553,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      PLUS_DM_Stream( PLUS_DM_Stream other ) {
+      PlusDmStream( PlusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -564,7 +564,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PLUS_DM_Stream other ) {
+      void copyFrom( PlusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -590,7 +590,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
-         core.PLUS_DM_StepImpl(this, inHigh, inLow);
+         core.plusDmStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -617,7 +617,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
                throw new TaLibArgumentException("PLUS_DM updateAndFill: BadParam", RetCode.BadParam);
-            core.PLUS_DM_StepImpl(this, inHigh[i], inLow[i]);
+            core.plusDmStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -633,8 +633,8 @@
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
-         PLUS_DM_Stream scratch = new PLUS_DM_Stream(this);
-         core.PLUS_DM_StepImpl(scratch, inHigh, inLow);
+         PlusDmStream scratch = new PlusDmStream(this);
+         core.plusDmStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -651,11 +651,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public PLUS_DM_Stream copy() {
-         return new PLUS_DM_Stream(this);
+      public PlusDmStream copy() {
+         return new PlusDmStream(this);
       }
    }
-   void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
+   void plusDmStepImpl( PlusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -697,7 +697,7 @@
          sp.cur_outReal = sp.prevPlusDM;
       }
    }
-   private RetCode PLUS_DM_OpenImpl( PLUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode plusDmOpenImpl( PlusDmStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1016,11 +1016,11 @@
          return RetCode.Success;
       }
    }
-   /* PLUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   PLUS_DM_Stream PLUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* plusDmOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PlusDmStream plusDmOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      PlusDmStream sp = new PlusDmStream(this);
+      RetCode retCode = plusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1034,14 +1034,14 @@
       }
       throw new TaLibArgumentException("PLUS_DM openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind PLUS_DM_Open (composition seam). */
-   PLUS_DM_Stream PLUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind plusDmOpen (composition seam). */
+   PlusDmStream plusDmOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
-      PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
+      PlusDmStream sp = new PlusDmStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = plusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1068,16 +1068,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public PLUS_DM_Stream PLUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
+   public PlusDmStream plusDmOpen( double inHigh[], double inLow[], int optInTimePeriod )
    {
       requireArgument("PLUS_DM open", "inHigh", inHigh);
       requireHistory("PLUS_DM open", inHigh.length);
       requireArgument("PLUS_DM open", "inLow", inLow);
       requireHistoryLength("PLUS_DM open", "inLow", inLow.length, inHigh.length);
-      return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return plusDmOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#PLUS_DM_Open} that also fills the output array(s) bit-identically
+    * {@link Core#plusDmOpen} that also fills the output array(s) bit-identically
     * to {@link Core#PLUS_DM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1085,9 +1085,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link PLUS_DM_Stream#outRange()}.
+    * {@link PlusDmStream#outRange()}.
     */
-   public PLUS_DM_Stream PLUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
+   public PlusDmStream plusDmOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("PLUS_DM openAndFill", "inHigh", inHigh);
       requireHistory("PLUS_DM openAndFill", inHigh.length);
@@ -1100,5 +1100,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return PLUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return plusDmOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

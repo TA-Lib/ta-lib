@@ -399,7 +399,7 @@
    /**
     * A live CCI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CCI} over the same series.
-    * Open with {@link Core#CCI_Open}; there is no close — the handle is
+    * Open with {@link Core#cciOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -410,7 +410,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CCI_Stream {
+   public static final class CciStream {
       Core core;
       int optInTimePeriod;
       int circBuffer_Idx;
@@ -421,7 +421,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CCI_Stream( Core core ) { this.core = core; }
+      CciStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -435,7 +435,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CCI_Stream( CCI_Stream other ) {
+      CciStream( CciStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.circBuffer_Idx = other.circBuffer_Idx;
@@ -447,7 +447,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CCI_Stream other ) {
+      void copyFrom( CciStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.circBuffer_Idx = other.circBuffer_Idx;
@@ -478,7 +478,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CCI update: BadParam", RetCode.BadParam);
-         core.CCI_StepImpl(this, inHigh, inLow, inClose);
+         core.cciStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -506,7 +506,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CCI updateAndFill: BadParam", RetCode.BadParam);
-            core.CCI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.cciStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -522,8 +522,8 @@
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
-         CCI_Stream scratch = new CCI_Stream(this);
-         core.CCI_StepImpl(scratch, inHigh, inLow, inClose);
+         CciStream scratch = new CciStream(this);
+         core.cciStepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -540,11 +540,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CCI_Stream copy() {
-         return new CCI_Stream(this);
+      public CciStream copy() {
+         return new CciStream(this);
       }
    }
-   void CCI_StepImpl( CCI_Stream sp, double inHigh, double inLow, double inClose )
+   void cciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -591,7 +591,7 @@
          sp.circBuffer_Idx = 0;
       }
    }
-   private RetCode CCI_OpenImpl( CCI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode cciOpenImpl( CciStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double tempReal = 0;
       double tempReal2 = 0;
@@ -726,11 +726,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CCI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CCI_Stream CCI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* cciOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CciStream cciOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      CCI_Stream sp = new CCI_Stream(this);
-      RetCode retCode = CCI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      CciStream sp = new CciStream(this);
+      RetCode retCode = cciOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -744,14 +744,14 @@
       }
       throw new TaLibArgumentException("CCI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CCI_Open (composition seam). */
-   CCI_Stream CCI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind cciOpen (composition seam). */
+   CciStream cciOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      CCI_Stream sp = new CCI_Stream(this);
+      CciStream sp = new CciStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = CCI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = cciOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -778,7 +778,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CCI_Stream CCI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public CciStream cciOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("CCI open", "inHigh", inHigh);
       requireHistory("CCI open", inHigh.length);
@@ -786,10 +786,10 @@
       requireArgument("CCI open", "inClose", inClose);
       requireHistoryLength("CCI open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("CCI open", "inClose", inClose.length, inHigh.length);
-      return CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return cciOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#CCI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cciOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CCI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -797,9 +797,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CCI_Stream#outRange()}.
+    * {@link CciStream#outRange()}.
     */
-   public CCI_Stream CCI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public CciStream cciOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("CCI openAndFill", "inHigh", inHigh);
       requireHistory("CCI openAndFill", inHigh.length);
@@ -814,5 +814,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CCI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return cciOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

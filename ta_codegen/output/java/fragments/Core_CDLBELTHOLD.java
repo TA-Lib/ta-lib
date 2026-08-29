@@ -346,7 +346,7 @@
    /**
     * A live CDLBELTHOLD stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLBELTHOLD} over the same series.
-    * Open with {@link Core#CDLBELTHOLD_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlbeltholdOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -357,7 +357,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLBELTHOLD_Stream {
+   public static final class CdlbeltholdStream {
       Core core;
       double BodyLongPeriodTotal;
       double ShadowVeryShortPeriodTotal;
@@ -377,7 +377,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLBELTHOLD_Stream( Core core ) { this.core = core; }
+      CdlbeltholdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -391,7 +391,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLBELTHOLD_Stream( CDLBELTHOLD_Stream other ) {
+      CdlbeltholdStream( CdlbeltholdStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -412,7 +412,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLBELTHOLD_Stream other ) {
+      void copyFrom( CdlbeltholdStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -442,7 +442,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLBELTHOLD_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlbeltholdStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -459,7 +459,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLBELTHOLD update: BadParam", RetCode.BadParam);
-         core.CDLBELTHOLD_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlbeltholdStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -488,7 +488,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLBELTHOLD updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLBELTHOLD_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlbeltholdStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -506,14 +506,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLBELTHOLD peek: BadParam", RetCode.BadParam);
-         CDLBELTHOLD_Stream scratch = PEEK_SCRATCH.get();
+         CdlbeltholdStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLBELTHOLD_Stream(this);
+            scratch = new CdlbeltholdStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLBELTHOLD_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlbeltholdStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -530,11 +530,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLBELTHOLD_Stream copy() {
-         return new CDLBELTHOLD_Stream(this);
+      public CdlbeltholdStream copy() {
+         return new CdlbeltholdStream(this);
       }
    }
-   void CDLBELTHOLD_StepImpl( CDLBELTHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlbeltholdStepImpl( CdlbeltholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -571,7 +571,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLBELTHOLD_OpenImpl( CDLBELTHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlbeltholdOpenImpl( CdlbeltholdStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -698,11 +698,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLBELTHOLD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLBELTHOLD_Stream CDLBELTHOLD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlbeltholdOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlbeltholdStream cdlbeltholdOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLBELTHOLD_Stream sp = new CDLBELTHOLD_Stream(this);
-      RetCode retCode = CDLBELTHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlbeltholdStream sp = new CdlbeltholdStream(this);
+      RetCode retCode = cdlbeltholdOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -716,14 +716,14 @@
       }
       throw new TaLibArgumentException("CDLBELTHOLD openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLBELTHOLD_Open (composition seam). */
-   CDLBELTHOLD_Stream CDLBELTHOLD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlbeltholdOpen (composition seam). */
+   CdlbeltholdStream cdlbeltholdOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLBELTHOLD_Stream sp = new CDLBELTHOLD_Stream(this);
+      CdlbeltholdStream sp = new CdlbeltholdStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLBELTHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlbeltholdOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -750,7 +750,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLBELTHOLD_Stream CDLBELTHOLD_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlbeltholdStream cdlbeltholdOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLBELTHOLD open", "inOpen", inOpen);
       requireHistory("CDLBELTHOLD open", inOpen.length);
@@ -760,10 +760,10 @@
       requireHistoryLength("CDLBELTHOLD open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLBELTHOLD open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLBELTHOLD open", "inClose", inClose.length, inOpen.length);
-      return CDLBELTHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlbeltholdOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLBELTHOLD_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlbeltholdOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLBELTHOLD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -771,9 +771,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLBELTHOLD_Stream#outRange()}.
+    * {@link CdlbeltholdStream#outRange()}.
     */
-   public CDLBELTHOLD_Stream CDLBELTHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlbeltholdStream cdlbeltholdOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLBELTHOLD openAndFill", "inOpen", inOpen);
       requireHistory("CDLBELTHOLD openAndFill", inOpen.length);
@@ -790,5 +790,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLBELTHOLD_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlbeltholdOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

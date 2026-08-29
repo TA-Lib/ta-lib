@@ -321,6 +321,27 @@ pub fn pascal_word(s: &str) -> String {
     }
 }
 
+/// PascalCase a `_`-joined SCREAMING name, one word per segment (`"HT_TRENDLINE"`
+/// -> `"HtTrendline"`, `"CDL2CROWS"` (no `_`) -> `"Cdl2crows"`, `"MA"` -> `"Ma"`).
+pub fn pascal_words(name: &str) -> String {
+    name.split('_').map(pascal_word).collect()
+}
+
+/// `pascal_words` with the leading segment lower-cased (`"HT_TRENDLINE"` -> `"htTrendline"`).
+pub fn camel_words(name: &str) -> String {
+    let p = pascal_words(name);
+    let mut chars = p.chars();
+    match chars.next() {
+        Some(f) => f.to_ascii_lowercase().to_string() + chars.as_str(),
+        None => String::new(),
+    }
+}
+
+/// Lower-case a SCREAMING name, `_` untouched (`"HT_TRENDLINE"` -> `"ht_trendline"`).
+pub fn snake_words(name: &str) -> String {
+    name.to_lowercase()
+}
+
 /// True if any statement is `return ALLOC_ERR;`.
 pub fn contains_alloc_err_return(stmts: &[Statement]) -> bool {
     // "Err(RetCode::AllocErr)" is the Rust stream tier's pre-mapped form of the

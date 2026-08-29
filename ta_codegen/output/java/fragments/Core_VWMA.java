@@ -382,7 +382,7 @@
    /**
     * A live VWMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#VWMA} over the same series.
-    * Open with {@link Core#VWMA_Open}; there is no close — the handle is
+    * Open with {@link Core#vwmaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -393,7 +393,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class VWMA_Stream {
+   public static final class VwmaStream {
       Core core;
       int optInTimePeriod;
       double sumPV;
@@ -406,7 +406,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      VWMA_Stream( Core core ) { this.core = core; }
+      VwmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -420,7 +420,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      VWMA_Stream( VWMA_Stream other ) {
+      VwmaStream( VwmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
@@ -434,7 +434,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( VWMA_Stream other ) {
+      void copyFrom( VwmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
@@ -457,7 +457,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<VWMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<VwmaStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -474,7 +474,7 @@
       public double update( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
-         core.VWMA_StepImpl(this, inReal, inVolume);
+         core.vwmaStepImpl(this, inReal, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -501,7 +501,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("VWMA updateAndFill: BadParam", RetCode.BadParam);
-            core.VWMA_StepImpl(this, inReal[i], inVolume[i]);
+            core.vwmaStepImpl(this, inReal[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -519,14 +519,14 @@
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
-         VWMA_Stream scratch = PEEK_SCRATCH.get();
+         VwmaStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new VWMA_Stream(this);
+            scratch = new VwmaStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.VWMA_StepImpl(scratch, inReal, inVolume);
+         core.vwmaStepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -543,11 +543,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public VWMA_Stream copy() {
-         return new VWMA_Stream(this);
+      public VwmaStream copy() {
+         return new VwmaStream(this);
       }
    }
-   void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
+   void vwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
    {
       double tempPV = 0.0;
       double tempV = 0.0;
@@ -583,7 +583,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode VWMA_OpenImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode vwmaOpenImpl( VwmaStream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -724,11 +724,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   VWMA_Stream VWMA_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* vwmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   VwmaStream vwmaOpenAndFillInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      VwmaStream sp = new VwmaStream(this);
+      RetCode retCode = vwmaOpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -742,14 +742,14 @@
       }
       throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
-   VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind vwmaOpen (composition seam). */
+   VwmaStream vwmaOpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
    {
-      VWMA_Stream sp = new VWMA_Stream(this);
+      VwmaStream sp = new VwmaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = vwmaOpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -776,16 +776,16 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public VWMA_Stream VWMA_Open( double inReal[], double inVolume[], int optInTimePeriod )
+   public VwmaStream vwmaOpen( double inReal[], double inVolume[], int optInTimePeriod )
    {
       requireArgument("VWMA open", "inReal", inReal);
       requireHistory("VWMA open", inReal.length);
       requireArgument("VWMA open", "inVolume", inVolume);
       requireHistoryLength("VWMA open", "inVolume", inVolume.length, inReal.length);
-      return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
+      return vwmaOpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#VWMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#vwmaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#VWMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -793,9 +793,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link VWMA_Stream#outRange()}.
+    * {@link VwmaStream#outRange()}.
     */
-   public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
+   public VwmaStream vwmaOpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("VWMA openAndFill", "inReal", inReal);
       requireHistory("VWMA openAndFill", inReal.length);
@@ -808,5 +808,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return VWMA_OpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return vwmaOpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

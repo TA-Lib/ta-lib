@@ -317,7 +317,7 @@
    /**
     * A live CDLBREAKAWAY stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLBREAKAWAY} over the same series.
-    * Open with {@link Core#CDLBREAKAWAY_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlbreakawayOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -328,7 +328,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLBREAKAWAY_Stream {
+   public static final class CdlbreakawayStream {
       Core core;
       double BodyLongPeriodTotal;
       double lag1_inOpen;
@@ -358,7 +358,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLBREAKAWAY_Stream( Core core ) { this.core = core; }
+      CdlbreakawayStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -372,7 +372,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLBREAKAWAY_Stream( CDLBREAKAWAY_Stream other ) {
+      CdlbreakawayStream( CdlbreakawayStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -403,7 +403,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLBREAKAWAY_Stream other ) {
+      void copyFrom( CdlbreakawayStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -453,7 +453,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLBREAKAWAY update: BadParam", RetCode.BadParam);
-         core.CDLBREAKAWAY_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlbreakawayStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -482,7 +482,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLBREAKAWAY updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLBREAKAWAY_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlbreakawayStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -498,8 +498,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLBREAKAWAY peek: BadParam", RetCode.BadParam);
-         CDLBREAKAWAY_Stream scratch = new CDLBREAKAWAY_Stream(this);
-         core.CDLBREAKAWAY_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlbreakawayStream scratch = new CdlbreakawayStream(this);
+         core.cdlbreakawayStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -516,11 +516,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLBREAKAWAY_Stream copy() {
-         return new CDLBREAKAWAY_Stream(this);
+      public CdlbreakawayStream copy() {
+         return new CdlbreakawayStream(this);
       }
    }
-   void CDLBREAKAWAY_StepImpl( CDLBREAKAWAY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlbreakawayStepImpl( CdlbreakawayStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -561,7 +561,7 @@
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLBREAKAWAY_OpenImpl( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlbreakawayOpenImpl( CdlbreakawayStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -685,11 +685,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLBREAKAWAY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlbreakawayOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlbreakawayStream cdlbreakawayOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
-      RetCode retCode = CDLBREAKAWAY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlbreakawayStream sp = new CdlbreakawayStream(this);
+      RetCode retCode = cdlbreakawayOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -703,14 +703,14 @@
       }
       throw new TaLibArgumentException("CDLBREAKAWAY openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLBREAKAWAY_Open (composition seam). */
-   CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlbreakawayOpen (composition seam). */
+   CdlbreakawayStream cdlbreakawayOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
+      CdlbreakawayStream sp = new CdlbreakawayStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLBREAKAWAY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlbreakawayOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -737,7 +737,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLBREAKAWAY_Stream CDLBREAKAWAY_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlbreakawayStream cdlbreakawayOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLBREAKAWAY open", "inOpen", inOpen);
       requireHistory("CDLBREAKAWAY open", inOpen.length);
@@ -747,10 +747,10 @@
       requireHistoryLength("CDLBREAKAWAY open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLBREAKAWAY open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLBREAKAWAY open", "inClose", inClose.length, inOpen.length);
-      return CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlbreakawayOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLBREAKAWAY_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlbreakawayOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLBREAKAWAY} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -758,9 +758,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLBREAKAWAY_Stream#outRange()}.
+    * {@link CdlbreakawayStream#outRange()}.
     */
-   public CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlbreakawayStream cdlbreakawayOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLBREAKAWAY openAndFill", "inOpen", inOpen);
       requireHistory("CDLBREAKAWAY openAndFill", inOpen.length);
@@ -777,5 +777,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLBREAKAWAY_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlbreakawayOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

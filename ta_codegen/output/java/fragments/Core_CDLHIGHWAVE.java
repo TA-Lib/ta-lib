@@ -347,7 +347,7 @@
    /**
     * A live CDLHIGHWAVE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLHIGHWAVE} over the same series.
-    * Open with {@link Core#CDLHIGHWAVE_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlhighwaveOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -358,7 +358,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLHIGHWAVE_Stream {
+   public static final class CdlhighwaveStream {
       Core core;
       double BodyPeriodTotal;
       double ShadowPeriodTotal;
@@ -378,7 +378,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLHIGHWAVE_Stream( Core core ) { this.core = core; }
+      CdlhighwaveStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -392,7 +392,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLHIGHWAVE_Stream( CDLHIGHWAVE_Stream other ) {
+      CdlhighwaveStream( CdlhighwaveStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -413,7 +413,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLHIGHWAVE_Stream other ) {
+      void copyFrom( CdlhighwaveStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -443,7 +443,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLHIGHWAVE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlhighwaveStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -460,7 +460,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
-         core.CDLHIGHWAVE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlhighwaveStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -489,7 +489,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLHIGHWAVE updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLHIGHWAVE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlhighwaveStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -507,14 +507,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
-         CDLHIGHWAVE_Stream scratch = PEEK_SCRATCH.get();
+         CdlhighwaveStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLHIGHWAVE_Stream(this);
+            scratch = new CdlhighwaveStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLHIGHWAVE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlhighwaveStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -531,11 +531,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLHIGHWAVE_Stream copy() {
-         return new CDLHIGHWAVE_Stream(this);
+      public CdlhighwaveStream copy() {
+         return new CdlhighwaveStream(this);
       }
    }
-   void CDLHIGHWAVE_StepImpl( CDLHIGHWAVE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlhighwaveStepImpl( CdlhighwaveStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -570,7 +570,7 @@
          sp.ringPos_ShadowTrailingIdx = 0;
       }
    }
-   private RetCode CDLHIGHWAVE_OpenImpl( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlhighwaveOpenImpl( CdlhighwaveStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -696,11 +696,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLHIGHWAVE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlhighwaveOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlhighwaveStream cdlhighwaveOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
-      RetCode retCode = CDLHIGHWAVE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlhighwaveStream sp = new CdlhighwaveStream(this);
+      RetCode retCode = cdlhighwaveOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -714,14 +714,14 @@
       }
       throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLHIGHWAVE_Open (composition seam). */
-   CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlhighwaveOpen (composition seam). */
+   CdlhighwaveStream cdlhighwaveOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
+      CdlhighwaveStream sp = new CdlhighwaveStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHIGHWAVE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlhighwaveOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -748,7 +748,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLHIGHWAVE_Stream CDLHIGHWAVE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlhighwaveStream cdlhighwaveOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLHIGHWAVE open", "inOpen", inOpen);
       requireHistory("CDLHIGHWAVE open", inOpen.length);
@@ -758,10 +758,10 @@
       requireHistoryLength("CDLHIGHWAVE open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHIGHWAVE open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHIGHWAVE open", "inClose", inClose.length, inOpen.length);
-      return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlhighwaveOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLHIGHWAVE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlhighwaveOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLHIGHWAVE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -769,9 +769,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLHIGHWAVE_Stream#outRange()}.
+    * {@link CdlhighwaveStream#outRange()}.
     */
-   public CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlhighwaveStream cdlhighwaveOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLHIGHWAVE openAndFill", "inOpen", inOpen);
       requireHistory("CDLHIGHWAVE openAndFill", inOpen.length);
@@ -788,5 +788,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLHIGHWAVE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlhighwaveOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

@@ -736,12 +736,12 @@ public partial class Core
    /// </remarks>
    /// <param name="SlowK">Raw FastK smoothed by SlowK_Period MA.</param>
    /// <param name="SlowD">Signal line: SlowK smoothed by SlowD_Period MA.</param>
-   public readonly record struct STOCH_Value( double SlowK, double SlowD );
+   public readonly record struct StochValue( double SlowK, double SlowD );
 
    /// <summary>A live <c>STOCH</c> stream: one value per closed bar, bit-identical to
    /// <c>STOCH</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.STOCH_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.StochOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -754,7 +754,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class STOCH_Stream
+   public sealed class StochStream
    {
       internal Core core;
       internal int optInFastK_Period;
@@ -776,17 +776,17 @@ public partial class Core
       internal double[] x_inClose = [];
       internal double cur_outSlowK;
       internal double cur_outSlowD;
-      internal MA_Stream sub0 = null!;
-      internal MA_Stream sub1 = null!;
+      internal MaStream sub0 = null!;
+      internal MaStream sub1 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal STOCH_Stream( Core core ) { this.core = core; }
+      internal StochStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.STOCH</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Stoch</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -795,7 +795,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal STOCH_Stream( STOCH_Stream other )
+      internal StochStream( StochStream other )
       {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
@@ -820,13 +820,13 @@ public partial class Core
          Array.Copy( other.x_inClose, this.x_inClose, other.x_inClose.Length );
          this.cur_outSlowK = other.cur_outSlowK;
          this.cur_outSlowD = other.cur_outSlowD;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( STOCH_Stream other )
+      internal void CopyFrom( StochStream other )
       {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
@@ -858,12 +858,12 @@ public partial class Core
          this.cur_outSlowK = other.cur_outSlowK;
          this.cur_outSlowD = other.cur_outSlowD;
          if( this.sub0 is null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.CopyFrom(other.sub0);
          }
          if( this.sub1 is null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
@@ -872,7 +872,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static STOCH_Stream? peekScratch;
+      [ThreadStatic] private static StochStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -889,12 +889,12 @@ public partial class Core
       /// <param name="inLow">This bar's low price.</param>
       /// <param name="inClose">This bar's close price.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public STOCH_Value Update( double inHigh, double inLow, double inClose )
+      public StochValue Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("STOCH", "update", RetCode.BadParam);
-         core.STOCH_StepImpl(this, inHigh, inLow, inClose);
+         core.StochStepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new STOCH_Value(cur_outSlowK, cur_outSlowD);
+         return new StochValue(cur_outSlowK, cur_outSlowD);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -910,18 +910,18 @@ public partial class Core
       /// <param name="inLow">This bar's low price.</param>
       /// <param name="inClose">This bar's close price.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public STOCH_Value Peek( double inHigh, double inLow, double inClose )
+      public StochValue Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("STOCH", "peek", RetCode.BadParam);
-         STOCH_Stream? scratch = peekScratch;
+         StochStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new STOCH_Stream(this);
+            scratch = new StochStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.STOCH_StepImpl(scratch, inHigh, inLow, inClose);
-         return new STOCH_Value(scratch.cur_outSlowK, scratch.cur_outSlowD);
+         core.StochStepImpl(scratch, inHigh, inLow, inClose);
+         return new StochValue(scratch.cur_outSlowK, scratch.cur_outSlowD);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -947,7 +947,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("STOCH", "updateAndFill", RetCode.BadParam);
-            core.STOCH_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            core.StochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
             outSlowK[i] = cur_outSlowK;
             outSlowD[i] = cur_outSlowD;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -959,18 +959,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public STOCH_Value Value => new STOCH_Value(cur_outSlowK, cur_outSlowD);
+      public StochValue Value => new StochValue(cur_outSlowK, cur_outSlowD);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public STOCH_Stream Clone()
+      public StochStream Clone()
       {
-         return new STOCH_Stream(this);
+         return new StochStream(this);
       }
    }
 
-   internal void STOCH_StepImpl( STOCH_Stream sp, double inHigh, double inLow, double inClose )
+   internal void StochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;
@@ -1046,7 +1046,7 @@ public partial class Core
       sp.cur_outSlowD = cur_outSlowD;
    }
 
-   private RetCode STOCH_OpenImpl( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD, int outStride )
+   private RetCode StochOpenImpl( StochStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1268,7 +1268,7 @@ public partial class Core
       int subLen0 = (outIdx - 1) + 1;
       double[] subSrc0_0 = new double[subLen0];
       tempBuffer.Slice(0, subLen0).CopyTo(subSrc0_0);
-      MA_Stream sub0 = MA_OpenInternal(subSrc0_0, 0, optInSlowK_Period, optInSlowK_MAType);
+      MaStream sub0 = MaOpenInternal(subSrc0_0, 0, optInSlowK_Period, optInSlowK_MAType);
       OutRange _xr0 = MA(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
@@ -1287,7 +1287,7 @@ public partial class Core
       int subLen1 = ((int)outNBElement - 1) + 1;
       double[] subSrc1_0 = new double[subLen1];
       tempBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
-      MA_Stream sub1 = MA_OpenAndFillInternal(subSrc1_0, 0, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, sc_outSlowD);
+      MaStream sub1 = MaOpenAndFillInternal(subSrc1_0, 0, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, sc_outSlowD);
       retCode = RetCode.Success;
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
@@ -1347,11 +1347,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* STOCH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal STOCH_Stream STOCH_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
+   /* StochOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal StochStream StochOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
    {
-      STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1);
+      StochStream sp = new StochStream(this);
+      RetCode retCode = StochOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1360,13 +1360,13 @@ public partial class Core
       throw StreamFailure("STOCH", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind STOCH_Open (composition seam). */
-   internal STOCH_Stream STOCH_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   /* Internal startIdx-anchored open behind StochOpen (composition seam). */
+   internal StochStream StochOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
-      STOCH_Stream sp = new STOCH_Stream(this);
+      StochStream sp = new StochStream(this);
       double[] sink_outSlowK = new double[1];
       double[] sink_outSlowD = new double[1];
-      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, sink_outSlowK, sink_outSlowD, 0);
+      RetCode retCode = StochOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, sink_outSlowK, sink_outSlowD, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1377,11 +1377,11 @@ public partial class Core
 
    /// <summary>Open a live <c>STOCH</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="STOCH_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="StochStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>STOCH</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>STOCH_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>STOCH_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>StochOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1403,7 +1403,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public STOCH_Stream STOCH_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   public StochStream StochOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "STOCH open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "STOCH open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1411,10 +1411,10 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("STOCH open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("STOCH", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("STOCH", "open", "inClose", inClose.Length, inHigh.Length);
-      return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      return StochOpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
    }
 
-   /// <summary><c>STOCH_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>StochOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>STOCH</c> produces over
@@ -1426,7 +1426,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="STOCH_Stream.OutRange"/>.</para>
+   /// <see cref="StochStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1453,7 +1453,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public STOCH_Stream STOCH_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, Span<double> outSlowK, Span<double> outSlowD )
+   public StochStream StochOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, Span<double> outSlowK, Span<double> outSlowD )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "STOCH openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "STOCH openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1467,6 +1467,6 @@ public partial class Core
       if( outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || outSlowK.Overlaps(outSlowD) ) {
          throw StreamFailure("STOCH", "openAndFill", RetCode.BadParam);
       }
-      return STOCH_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, outSlowK, outSlowD);
+      return StochOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, outSlowK, outSlowD);
    }
 }

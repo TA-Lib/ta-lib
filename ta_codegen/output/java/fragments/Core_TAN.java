@@ -187,7 +187,7 @@
    /**
     * A live TAN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TAN} over the same series.
-    * Open with {@link Core#TAN_Open}; there is no close — the handle is
+    * Open with {@link Core#tanOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -198,13 +198,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TAN_Stream {
+   public static final class TanStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      TAN_Stream( Core core ) { this.core = core; }
+      TanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -218,14 +218,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TAN_Stream( TAN_Stream other ) {
+      TanStream( TanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TAN_Stream other ) {
+      void copyFrom( TanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -247,7 +247,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TAN update: BadParam", RetCode.BadParam);
-         core.TAN_StepImpl(this, inReal);
+         core.tanStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -273,7 +273,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("TAN updateAndFill: BadParam", RetCode.BadParam);
-            core.TAN_StepImpl(this, inReal[i]);
+            core.tanStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -289,8 +289,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
-         TAN_Stream scratch = new TAN_Stream(this);
-         core.TAN_StepImpl(scratch, inReal);
+         TanStream scratch = new TanStream(this);
+         core.tanStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -307,15 +307,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TAN_Stream copy() {
-         return new TAN_Stream(this);
+      public TanStream copy() {
+         return new TanStream(this);
       }
    }
-   void TAN_StepImpl( TAN_Stream sp, double inReal )
+   void tanStepImpl( TanStream sp, double inReal )
    {
       sp.cur_outReal = Math.tan(inReal);
    }
-   private RetCode TAN_OpenImpl( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode tanOpenImpl( TanStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -341,11 +341,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* TAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TAN_Stream TAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* tanOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TanStream tanOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      TanStream sp = new TanStream(this);
+      RetCode retCode = tanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -359,14 +359,14 @@
       }
       throw new TaLibArgumentException("TAN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TAN_Open (composition seam). */
-   TAN_Stream TAN_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind tanOpen (composition seam). */
+   TanStream tanOpenInternal( double inReal[], int startIdx )
    {
-      TAN_Stream sp = new TAN_Stream(this);
+      TanStream sp = new TanStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = tanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -393,14 +393,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TAN_Stream TAN_Open( double inReal[] )
+   public TanStream tanOpen( double inReal[] )
    {
       requireArgument("TAN open", "inReal", inReal);
       requireHistory("TAN open", inReal.length);
-      return TAN_OpenInternal(inReal, 0);
+      return tanOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#TAN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#tanOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -408,9 +408,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TAN_Stream#outRange()}.
+    * {@link TanStream#outRange()}.
     */
-   public TAN_Stream TAN_OpenAndFill( double inReal[], double outReal[] )
+   public TanStream tanOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("TAN openAndFill", "inReal", inReal);
       requireHistory("TAN openAndFill", inReal.length);
@@ -421,5 +421,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TAN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return tanOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

@@ -241,7 +241,7 @@ public partial class Core
    /// <summary>A live <c>TANH</c> stream: one value per closed bar, bit-identical to
    /// <c>TANH</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.TANH_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.TanhOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -254,19 +254,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class TANH_Stream
+   public sealed class TanhStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal TANH_Stream( Core core ) { this.core = core; }
+      internal TanhStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.TANH</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Tanh</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -274,7 +274,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal TANH_Stream( TANH_Stream other )
+      internal TanhStream( TanhStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -282,7 +282,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( TANH_Stream other )
+      internal void CopyFrom( TanhStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -306,7 +306,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TANH", "update", RetCode.BadParam);
-         core.TANH_StepImpl(this, inReal);
+         core.TanhStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -325,8 +325,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TANH", "peek", RetCode.BadParam);
-         TANH_Stream scratch = new TANH_Stream(this);
-         core.TANH_StepImpl(scratch, inReal);
+         TanhStream scratch = new TanhStream(this);
+         core.TanhStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -350,7 +350,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("TANH", "updateAndFill", RetCode.BadParam);
-            core.TANH_StepImpl(this, inReal[i]);
+            core.TanhStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -366,18 +366,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public TANH_Stream Clone()
+      public TanhStream Clone()
       {
-         return new TANH_Stream(this);
+         return new TanhStream(this);
       }
    }
 
-   internal void TANH_StepImpl( TANH_Stream sp, double inReal )
+   internal void TanhStepImpl( TanhStream sp, double inReal )
    {
       sp.cur_outReal = Math.Tanh(inReal);
    }
 
-   private RetCode TANH_OpenImpl( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TanhOpenImpl( TanhStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -406,11 +406,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal TANH_Stream TANH_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* TanhOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal TanhStream TanhOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      TanhStream sp = new TanhStream(this);
+      RetCode retCode = TanhOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -419,12 +419,12 @@ public partial class Core
       throw StreamFailure("TANH", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind TANH_Open (composition seam). */
-   internal TANH_Stream TANH_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind TanhOpen (composition seam). */
+   internal TanhStream TanhOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      TANH_Stream sp = new TANH_Stream(this);
+      TanhStream sp = new TanhStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = TanhOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -435,11 +435,11 @@ public partial class Core
 
    /// <summary>Open a live <c>TANH</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="TANH_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="TanhStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>TANH</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>TANH_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>TANH_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>TanhOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input value series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -449,15 +449,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TANH_Stream TANH_Open( ReadOnlySpan<double> inReal )
+   public TanhStream TanhOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TANH open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TANH open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return TANH_OpenInternal(inReal, 0);
+      return TanhOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>TANH_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>TanhOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>TANH</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -468,7 +468,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="TANH_Stream.OutRange"/>.</para>
+   /// <see cref="TanhStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input value series. The warm-up history, oldest bar first.</param>
    /// <param name="outReal">Hyperbolic tangent of each input. Must hold at least <c>historyLen -
@@ -481,7 +481,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TANH_Stream TANH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
+   public TanhStream TanhOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TANH openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TANH openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -490,6 +490,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("TANH", "openAndFill", RetCode.BadParam);
       }
-      return TANH_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
+      return TanhOpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

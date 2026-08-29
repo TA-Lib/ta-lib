@@ -403,7 +403,7 @@
    /**
     * A live CDLHAMMER stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLHAMMER} over the same series.
-    * Open with {@link Core#CDLHAMMER_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlhammerOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -414,7 +414,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLHAMMER_Stream {
+   public static final class CdlhammerStream {
       Core core;
       double BodyPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -452,7 +452,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLHAMMER_Stream( Core core ) { this.core = core; }
+      CdlhammerStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -466,7 +466,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLHAMMER_Stream( CDLHAMMER_Stream other ) {
+      CdlhammerStream( CdlhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -505,7 +505,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLHAMMER_Stream other ) {
+      void copyFrom( CdlhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -561,7 +561,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLHAMMER_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlhammerStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -578,7 +578,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
-         core.CDLHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -607,7 +607,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLHAMMER updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLHAMMER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlhammerStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -625,14 +625,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
-         CDLHAMMER_Stream scratch = PEEK_SCRATCH.get();
+         CdlhammerStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLHAMMER_Stream(this);
+            scratch = new CdlhammerStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLHAMMER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlhammerStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -649,11 +649,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLHAMMER_Stream copy() {
-         return new CDLHAMMER_Stream(this);
+      public CdlhammerStream copy() {
+         return new CdlhammerStream(this);
       }
    }
-   void CDLHAMMER_StepImpl( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlhammerStepImpl( CdlhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -720,7 +720,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLHAMMER_OpenImpl( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlhammerOpenImpl( CdlhammerStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -917,11 +917,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLHAMMER_Stream CDLHAMMER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlhammerOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlhammerStream cdlhammerOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
-      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlhammerStream sp = new CdlhammerStream(this);
+      RetCode retCode = cdlhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -935,14 +935,14 @@
       }
       throw new TaLibArgumentException("CDLHAMMER openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLHAMMER_Open (composition seam). */
-   CDLHAMMER_Stream CDLHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlhammerOpen (composition seam). */
+   CdlhammerStream cdlhammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
+      CdlhammerStream sp = new CdlhammerStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -969,7 +969,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLHAMMER_Stream CDLHAMMER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlhammerStream cdlhammerOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLHAMMER open", "inOpen", inOpen);
       requireHistory("CDLHAMMER open", inOpen.length);
@@ -979,10 +979,10 @@
       requireHistoryLength("CDLHAMMER open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHAMMER open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHAMMER open", "inClose", inClose.length, inOpen.length);
-      return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlhammerOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLHAMMER_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlhammerOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLHAMMER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -990,9 +990,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLHAMMER_Stream#outRange()}.
+    * {@link CdlhammerStream#outRange()}.
     */
-   public CDLHAMMER_Stream CDLHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlhammerStream cdlhammerOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLHAMMER openAndFill", "inOpen", inOpen);
       requireHistory("CDLHAMMER openAndFill", inOpen.length);
@@ -1009,5 +1009,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLHAMMER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlhammerOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

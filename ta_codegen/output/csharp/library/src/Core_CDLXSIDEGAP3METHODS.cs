@@ -337,7 +337,7 @@ public partial class Core
    /// <summary>A live <c>CDLXSIDEGAP3METHODS</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLXSIDEGAP3METHODS</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLXSIDEGAP3METHODS_Open"/>. There is no close
+   /// <para>Open with <see cref="Core.Cdlxsidegap3methodsOpen"/>. There is no close
    /// and nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -350,7 +350,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLXSIDEGAP3METHODS_Stream
+   public sealed class Cdlxsidegap3methodsStream
    {
       internal Core core;
       internal double lag1_inOpen;
@@ -361,12 +361,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLXSIDEGAP3METHODS_Stream( Core core ) { this.core = core; }
+      internal Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLXSIDEGAP3METHODS</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdlxsidegap3methods</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -375,7 +375,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLXSIDEGAP3METHODS_Stream( CDLXSIDEGAP3METHODS_Stream other )
+      internal Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other )
       {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -387,7 +387,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLXSIDEGAP3METHODS_Stream other )
+      internal void CopyFrom( Cdlxsidegap3methodsStream other )
       {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -418,7 +418,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "update", RetCode.BadParam);
-         core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.Cdlxsidegap3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -440,8 +440,8 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "peek", RetCode.BadParam);
-         CDLXSIDEGAP3METHODS_Stream scratch = new CDLXSIDEGAP3METHODS_Stream(this);
-         core.CDLXSIDEGAP3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         Cdlxsidegap3methodsStream scratch = new Cdlxsidegap3methodsStream(this);
+         core.Cdlxsidegap3methodsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -468,7 +468,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "updateAndFill", RetCode.BadParam);
-            core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.Cdlxsidegap3methodsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -484,13 +484,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLXSIDEGAP3METHODS_Stream Clone()
+      public Cdlxsidegap3methodsStream Clone()
       {
-         return new CDLXSIDEGAP3METHODS_Stream(this);
+         return new Cdlxsidegap3methodsStream(this);
       }
    }
 
-   internal void CDLXSIDEGAP3METHODS_StepImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void Cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
@@ -513,7 +513,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode CDLXSIDEGAP3METHODS_OpenImpl( CDLXSIDEGAP3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode Cdlxsidegap3methodsOpenImpl( Cdlxsidegap3methodsStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -596,11 +596,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLXSIDEGAP3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* Cdlxsidegap3methodsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Cdlxsidegap3methodsStream Cdlxsidegap3methodsOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      Cdlxsidegap3methodsStream sp = new Cdlxsidegap3methodsStream(this);
+      RetCode retCode = Cdlxsidegap3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -609,12 +609,12 @@ public partial class Core
       throw StreamFailure("CDLXSIDEGAP3METHODS", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLXSIDEGAP3METHODS_Open (composition seam). */
-   internal CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind Cdlxsidegap3methodsOpen (composition seam). */
+   internal Cdlxsidegap3methodsStream Cdlxsidegap3methodsOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
+      Cdlxsidegap3methodsStream sp = new Cdlxsidegap3methodsStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdlxsidegap3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -625,13 +625,13 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLXSIDEGAP3METHODS</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLXSIDEGAP3METHODS_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="Cdlxsidegap3methodsStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what
    /// <c>CDLXSIDEGAP3METHODS</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLXSIDEGAP3METHODS_Lookback(...) +
    /// 1</c> bars (unstable-period aware). Nothing is written to any caller
-   /// array; use <c>CDLXSIDEGAP3METHODS_OpenAndFill</c> to get the warm-up
-   /// values as well.</para>
+   /// array; use <c>Cdlxsidegap3methodsOpenAndFill</c> to get the warm-up values
+   /// as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -645,7 +645,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public Cdlxsidegap3methodsStream Cdlxsidegap3methodsOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLXSIDEGAP3METHODS open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLXSIDEGAP3METHODS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -655,10 +655,10 @@ public partial class Core
       RequireHistoryLength("CDLXSIDEGAP3METHODS", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLXSIDEGAP3METHODS", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLXSIDEGAP3METHODS", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return Cdlxsidegap3methodsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLXSIDEGAP3METHODS_Open</c> that also fills the output array(s) over
+   /// <summary><c>Cdlxsidegap3methodsOpen</c> that also fills the output array(s) over
    /// the whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLXSIDEGAP3METHODS</c>
@@ -672,7 +672,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLXSIDEGAP3METHODS_Stream.OutRange"/>.</para>
+   /// <see cref="Cdlxsidegap3methodsStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -691,7 +691,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public Cdlxsidegap3methodsStream Cdlxsidegap3methodsOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLXSIDEGAP3METHODS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLXSIDEGAP3METHODS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -703,6 +703,6 @@ public partial class Core
       RequireHistoryLength("CDLXSIDEGAP3METHODS", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLXSIDEGAP3METHODS", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLXSIDEGAP3METHODS", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLXSIDEGAP3METHODS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return Cdlxsidegap3methodsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

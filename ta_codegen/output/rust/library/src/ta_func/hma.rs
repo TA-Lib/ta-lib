@@ -595,23 +595,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live HMA stream: one value per closed bar, bit-identical to [`Core::HMA`]
-/// over the same series. Open with [`Core::HMA_Open`]; dropping the handle
+/// over the same series. Open with [`Core::hma_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HMA_Stream")]
-pub struct HMA_Stream {
-    state: HMA_StreamState,
+pub struct HmaStream {
+    state: HmaStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl HMA_Stream {
+impl HmaStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `HMA_StreamState::restore_from`.
+    /// allocating new ones. See `HmaStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -620,7 +620,7 @@ impl HMA_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HMA_StreamState {
+struct HmaStreamState {
     optInTimePeriod: i32,
     dividerFull: f64,
     periodSubFull: f64,
@@ -661,7 +661,7 @@ struct HMA_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl HMA_StreamState {
+impl HmaStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -705,14 +705,13 @@ impl HMA_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HMA_step_impl(sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn hma_step_impl(sp: &mut HmaStreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
@@ -888,11 +887,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::HMA_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::HMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HMA_OpenImpl(
+    /// The single whole-history transcription behind [`Core::hma_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::hma_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn hma_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<HMA_Stream, RetCode> {
+    ) -> Result<HmaStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -920,7 +919,7 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let state = HMA_StreamState {
+            let state = HmaStreamState {
                 optInTimePeriod: optInTimePeriod,
                 dividerFull: 0.0_f64,
                 periodSubFull: 0.0_f64,
@@ -970,7 +969,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
+            return Ok(HmaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         if optInTimePeriod == 2 || optInTimePeriod == 3 {
             let mut lookbackTotal: usize = 0_usize;
@@ -1123,7 +1122,7 @@ impl Core {
             }
             let mut win_jFull_inReal: Vec<f64> = vec![0.0_f64; cap_jFull as usize];
             win_jFull_inReal.copy_from_slice(&inReal[historyLen - cap_jFull as usize..]);
-            let state = HMA_StreamState {
+            let state = HmaStreamState {
                 optInTimePeriod,
                 dividerFull,
                 periodSubFull,
@@ -1162,7 +1161,7 @@ impl Core {
                 cbSize_dRing: 0_usize,
                 cb_dRing: Vec::new(),
             };
-            Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(HmaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
             let mut lookbackTotal: usize = 0_usize;
             let mut lookbackSqrt: usize = 0_usize;
@@ -1477,7 +1476,7 @@ impl Core {
             if cbSize_dRing > historyLen + 1 {
                 return Err(RetCode::InternalError);
             }
-            let state = HMA_StreamState {
+            let state = HmaStreamState {
                 optInTimePeriod,
                 dividerFull,
                 periodSubFull,
@@ -1516,18 +1515,18 @@ impl Core {
                 cbSize_dRing: cbSize_dRing,
                 cb_dRing: dRing,
             };
-            Ok(HMA_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            Ok(HmaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::HMA_Open`] (composition seam).
-    pub(crate) fn HMA_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::hma_open`] (composition seam).
+    pub(crate) fn hma_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(HMA_Stream, f64), RetCode> {
+    ) -> Result<(HmaStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.HMA_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.hma_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1547,7 +1546,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.HMA_Open(&data, 20).expect("enough history");
+    /// let (mut s, _last) = core.hma_open(&data, 20).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1557,11 +1556,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_HMA_Open")]
-    pub fn HMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(HMA_Stream, f64), RetCode> {
-        self.HMA_OpenInternal(inReal, 0, optInTimePeriod)
+    pub fn hma_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(HmaStream, f64), RetCode> {
+        self.hma_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::HMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::hma_open`] that also fills the output array(s) bit-identically to
     /// [`Core::HMA`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1569,12 +1568,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::HMA_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::hma_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_HMA_OpenAndFill")]
-    pub fn HMA_OpenAndFill(
+    pub fn hma_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(HMA_Stream, OutRange), RetCode> {
+    ) -> Result<(HmaStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1588,31 +1587,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.hma_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::HMA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::hma_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn HMA_OpenAndFillInternal(
+    pub(crate) fn hma_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<HMA_Stream, RetCode> {
-        self.HMA_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<HmaStream, RetCode> {
+        self.hma_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `HMA_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `HmaStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HMA_Stream>>> =
+    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HmaStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HMA_Stream {
+impl HmaStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1630,7 +1629,7 @@ impl HMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::HMA_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::hma_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1663,7 +1662,7 @@ impl HMA_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::HMA_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::hma_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1711,7 +1710,7 @@ impl HMA_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HMA_Stream>();
+    _assert_auto::<HmaStream>();
 };
 
 /***************/

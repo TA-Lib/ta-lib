@@ -207,23 +207,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live COS stream: one value per closed bar, bit-identical to [`Core::COS`]
-/// over the same series. Open with [`Core::COS_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cos_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_COS_Stream")]
-pub struct COS_Stream {
-    state: COS_StreamState,
+pub struct CosStream {
+    state: CosStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl COS_Stream {
+impl CosStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `COS_StreamState::restore_from`.
+    /// allocating new ones. See `CosStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -232,33 +232,32 @@ impl COS_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct COS_StreamState {
+struct CosStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl COS_StreamState {
+impl CosStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn COS_step_impl(sp: &mut COS_StreamState, inReal: f64, outReal: &mut f64) {
+    fn cos_step_impl(sp: &mut CosStreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).cos();
     }
 
-    /// The single whole-history transcription behind [`Core::COS_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::COS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn COS_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cos_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cos_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cos_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<COS_Stream, RetCode> {
+    ) -> Result<CosStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -289,19 +288,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = COS_StreamState {
+        let state = CosStreamState {
         };
-        Ok(COS_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CosStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::COS_Open`] (composition seam).
-    pub(crate) fn COS_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cos_open`] (composition seam).
+    pub(crate) fn cos_open_internal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(COS_Stream, f64), RetCode> {
+    ) -> Result<(CosStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.COS_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.cos_open_impl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -321,7 +320,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.COS_Open(&data).expect("enough history");
+    /// let (mut s, _last) = core.cos_open(&data).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -331,11 +330,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_COS_Open")]
-    pub fn COS_Open(&self, inReal: &[f64], ) -> Result<(COS_Stream, f64), RetCode> {
-        self.COS_OpenInternal(inReal, 0)
+    pub fn cos_open(&self, inReal: &[f64], ) -> Result<(CosStream, f64), RetCode> {
+        self.cos_open_internal(inReal, 0)
     }
 
-    /// [`Core::COS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cos_open`] that also fills the output array(s) bit-identically to
     /// [`Core::COS`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -343,12 +342,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::COS_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cos_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_COS_OpenAndFill")]
-    pub fn COS_OpenAndFill(
+    pub fn cos_open_and_fill(
         &self, inReal: &[f64], outReal: &mut [f64],
-    ) -> Result<(COS_Stream, OutRange), RetCode> {
+    ) -> Result<(CosStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -362,23 +361,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.COS_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.cos_open_and_fill_internal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::COS_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cos_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn COS_OpenAndFillInternal(
+    pub(crate) fn cos_open_and_fill_internal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<COS_Stream, RetCode> {
-        self.COS_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<CosStream, RetCode> {
+        self.cos_open_impl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl COS_Stream {
+impl CosStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -396,7 +395,7 @@ impl COS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::COS_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::cos_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -429,7 +428,7 @@ impl COS_Stream {
             if !inReal[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::COS_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
+            Core::cos_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -472,7 +471,7 @@ impl COS_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<COS_Stream>();
+    _assert_auto::<CosStream>();
 };
 
 /***************/

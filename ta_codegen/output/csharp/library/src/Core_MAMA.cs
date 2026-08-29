@@ -1013,12 +1013,12 @@ public partial class Core
    /// </remarks>
    /// <param name="MAMA">Adaptive moving average (fast line)</param>
    /// <param name="FAMA">Following adaptive moving average, using half the alpha (slow line)</param>
-   public readonly record struct MAMA_Value( double MAMA, double FAMA );
+   public readonly record struct MamaValue( double MAMA, double FAMA );
 
    /// <summary>A live <c>MAMA</c> stream: one value per closed bar, bit-identical to
    /// <c>MAMA</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MAMA_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.MamaOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -1031,7 +1031,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MAMA_Stream
+   public sealed class MamaStream
    {
       internal Core core;
       internal double optInFastLimit;
@@ -1088,12 +1088,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MAMA_Stream( Core core ) { this.core = core; }
+      internal MamaStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MAMA</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Mama</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -1101,7 +1101,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MAMA_Stream( MAMA_Stream other )
+      internal MamaStream( MamaStream other )
       {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
@@ -1168,7 +1168,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MAMA_Stream other )
+      internal void CopyFrom( MamaStream other )
       {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
@@ -1254,7 +1254,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MAMA_Stream? peekScratch;
+      [ThreadStatic] private static MamaStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1269,12 +1269,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public MAMA_Value Update( double inReal )
+      public MamaValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "update", RetCode.BadParam);
-         core.MAMA_StepImpl(this, inReal);
+         core.MamaStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new MAMA_Value(cur_outMAMA, cur_outFAMA);
+         return new MamaValue(cur_outMAMA, cur_outFAMA);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -1288,18 +1288,18 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public MAMA_Value Peek( double inReal )
+      public MamaValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "peek", RetCode.BadParam);
-         MAMA_Stream? scratch = peekScratch;
+         MamaStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new MAMA_Stream(this);
+            scratch = new MamaStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.MAMA_StepImpl(scratch, inReal);
-         return new MAMA_Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
+         core.MamaStepImpl(scratch, inReal);
+         return new MamaValue(scratch.cur_outMAMA, scratch.cur_outFAMA);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -1326,7 +1326,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MAMA", "updateAndFill", RetCode.BadParam);
-            core.MAMA_StepImpl(this, inReal[i]);
+            core.MamaStepImpl(this, inReal[i]);
             outMAMA[i] = cur_outMAMA;
             if( !outFAMA.IsEmpty ) outFAMA[i] = cur_outFAMA;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -1338,18 +1338,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public MAMA_Value Value => new MAMA_Value(cur_outMAMA, cur_outFAMA);
+      public MamaValue Value => new MamaValue(cur_outMAMA, cur_outFAMA);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MAMA_Stream Clone()
+      public MamaStream Clone()
       {
-         return new MAMA_Stream(this);
+         return new MamaStream(this);
       }
    }
 
-   internal void MAMA_StepImpl( MAMA_Stream sp, double inReal )
+   internal void MamaStepImpl( MamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -1542,7 +1542,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode MAMA_OpenImpl( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA, int outStride )
+   private RetCode MamaOpenImpl( MamaStream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1998,11 +1998,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MAMA_Stream MAMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
+   /* MamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MamaStream MamaOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
    {
-      MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1);
+      MamaStream sp = new MamaStream(this);
+      RetCode retCode = MamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2011,13 +2011,13 @@ public partial class Core
       throw StreamFailure("MAMA", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MAMA_Open (composition seam). */
-   internal MAMA_Stream MAMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
+   /* Internal startIdx-anchored open behind MamaOpen (composition seam). */
+   internal MamaStream MamaOpenInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
    {
-      MAMA_Stream sp = new MAMA_Stream(this);
+      MamaStream sp = new MamaStream(this);
       double[] sink_outMAMA = new double[1];
       double[] sink_outFAMA = new double[1];
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, sink_outMAMA, sink_outFAMA, 0);
+      RetCode retCode = MamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, sink_outMAMA, sink_outFAMA, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2028,11 +2028,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MAMA</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MAMA_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MamaStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MAMA</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MAMA_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MAMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MamaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
@@ -2046,15 +2046,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MAMA_Stream MAMA_Open( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
+   public MamaStream MamaOpen( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
+      return MamaOpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
-   /// <summary><c>MAMA_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>MamaOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MAMA</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -2065,7 +2065,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MAMA_Stream.OutRange"/>.</para>
+   /// <see cref="MamaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
@@ -2086,7 +2086,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
+   public MamaStream MamaOpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -2096,6 +2096,6 @@ public partial class Core
       if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) {
          throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       }
-      return MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, out _, out _, outMAMA, outFAMA);
+      return MamaOpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, out _, out _, outMAMA, outFAMA);
    }
 }

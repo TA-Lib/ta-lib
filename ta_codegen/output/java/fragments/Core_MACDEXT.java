@@ -575,7 +575,7 @@
    /**
     * A live MACDEXT stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MACDEXT} over the same series.
-    * Open with {@link Core#MACDEXT_Open}; there is no close — the handle is
+    * Open with {@link Core#macdextOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -586,7 +586,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MACDEXT_Stream {
+   public static final class MacdextStream {
       Core core;
       int optInFastPeriod;
       MAType optInFastMAType;
@@ -598,13 +598,13 @@
       double cur_outMACDSignal;
       double cur_outMACDHist;
       Value cachedValue;
-      MA_Stream sub0;
-      MA_Stream sub1;
-      MA_Stream sub2;
+      MaStream sub0;
+      MaStream sub1;
+      MaStream sub2;
       int outRangeBegIdx;
       int outRangeCount;
 
-      MACDEXT_Stream( Core core ) { this.core = core; }
+      MacdextStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -618,7 +618,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MACDEXT_Stream( MACDEXT_Stream other ) {
+      MacdextStream( MacdextStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInFastMAType = other.optInFastMAType;
@@ -630,14 +630,14 @@
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
          this.cachedValue = other.cachedValue;
-         this.sub0 = new MA_Stream(other.sub0);
-         this.sub1 = new MA_Stream(other.sub1);
-         this.sub2 = new MA_Stream(other.sub2);
+         this.sub0 = new MaStream(other.sub0);
+         this.sub1 = new MaStream(other.sub1);
+         this.sub2 = new MaStream(other.sub2);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MACDEXT_Stream other ) {
+      void copyFrom( MacdextStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInFastMAType = other.optInFastMAType;
@@ -650,17 +650,17 @@
          this.cur_outMACDHist = other.cur_outMACDHist;
          this.cachedValue = other.cachedValue;
          if( this.sub0 == null ) {
-            this.sub0 = new MA_Stream(other.sub0);
+            this.sub0 = new MaStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
          if( this.sub1 == null ) {
-            this.sub1 = new MA_Stream(other.sub1);
+            this.sub1 = new MaStream(other.sub1);
          } else {
             this.sub1.copyFrom(other.sub1);
          }
          if( this.sub2 == null ) {
-            this.sub2 = new MA_Stream(other.sub2);
+            this.sub2 = new MaStream(other.sub2);
          } else {
             this.sub2.copyFrom(other.sub2);
          }
@@ -669,7 +669,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MACDEXT_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<MacdextStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -700,7 +700,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
-         core.MACDEXT_StepImpl(this, inReal);
+         core.macdextStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -731,7 +731,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inReal[i]) )
                   throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
-               core.MACDEXT_StepImpl(this, inReal[i]);
+               core.macdextStepImpl(this, inReal[i]);
                outMACD[i] = this.cur_outMACD;
                outMACDSignal[i] = this.cur_outMACDSignal;
                outMACDHist[i] = this.cur_outMACDHist;
@@ -755,14 +755,14 @@
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
-         MACDEXT_Stream scratch = PEEK_SCRATCH.get();
+         MacdextStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new MACDEXT_Stream(this);
+            scratch = new MacdextStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.MACDEXT_StepImpl(scratch, inReal);
+         core.macdextStepImpl(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -779,11 +779,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MACDEXT_Stream copy() {
-         return new MACDEXT_Stream(this);
+      public MacdextStream copy() {
+         return new MacdextStream(this);
       }
    }
-   void MACDEXT_StepImpl( MACDEXT_Stream sp, double inReal )
+   void macdextStepImpl( MacdextStream sp, double inReal )
    {
       double cur_slowMABuffer = 0.0;
       double cur_fastMABuffer = 0.0;
@@ -801,7 +801,7 @@
       sp.cur_outMACDSignal = cur_outMACDSignal;
       sp.cur_outMACDHist = cur_outMACDHist;
    }
-   private RetCode MACDEXT_OpenImpl( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+   private RetCode macdextOpenImpl( MacdextStream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
    {
       double[] slowMABuffer;
       double[] fastMABuffer;
@@ -907,12 +907,12 @@
       tempInteger = startIdx - lookbackSignal;
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, tempInteger, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      MaStream sub0 = maOpenAndFillInternal(inReal, tempInteger, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       retCode = RetCode.Success;
       /* Calculate the fast MA. */
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      MaStream sub1 = maOpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       retCode = RetCode.Success;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
@@ -932,7 +932,7 @@
       /* Calculate the signal/trigger line. */
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub2 = MA_OpenAndFillInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
+      MaStream sub2 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
       retCode = RetCode.Success;
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2.value; i += 1 ) {
@@ -957,14 +957,14 @@
       sp.cur_outMACD = sc_outMACD[outNBElement.value - 1];
       sp.cur_outMACDSignal = sc_outMACDSignal[outNBElement.value - 1];
       sp.cur_outMACDHist = sc_outMACDHist[outNBElement.value - 1];
-      sp.cachedValue = new MACDEXT_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
+      sp.cachedValue = new MacdextStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   /* MACDEXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MACDEXT_Stream MACDEXT_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   /* macdextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MacdextStream macdextOpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      MACDEXT_Stream sp = new MACDEXT_Stream(this);
-      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
+      MacdextStream sp = new MacdextStream(this);
+      RetCode retCode = macdextOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -978,16 +978,16 @@
       }
       throw new TaLibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MACDEXT_Open (composition seam). */
-   MACDEXT_Stream MACDEXT_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   /* Internal startIdx-anchored open behind macdextOpen (composition seam). */
+   MacdextStream macdextOpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
-      MACDEXT_Stream sp = new MACDEXT_Stream(this);
+      MacdextStream sp = new MacdextStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
       double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      RetCode retCode = macdextOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1014,17 +1014,17 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MACDEXT_Stream MACDEXT_Open( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   public MacdextStream macdextOpen( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       requireArgument("MACDEXT open", "inReal", inReal);
       requireHistory("MACDEXT open", inReal.length);
       requireArgument("MACDEXT open", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT open", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT open", "optInSignalMAType", optInSignalMAType);
-      return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+      return macdextOpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
    /**
-    * {@link Core#MACDEXT_Open} that also fills the output array(s) bit-identically
+    * {@link Core#macdextOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MACDEXT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1032,9 +1032,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MACDEXT_Stream#outRange()}.
+    * {@link MacdextStream#outRange()}.
     */
-   public MACDEXT_Stream MACDEXT_OpenAndFill( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   public MacdextStream macdextOpenAndFill( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       requireArgument("MACDEXT openAndFill", "inReal", inReal);
       requireHistory("MACDEXT openAndFill", inReal.length);
@@ -1050,5 +1050,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MACDEXT_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      return macdextOpenAndFillInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
    }

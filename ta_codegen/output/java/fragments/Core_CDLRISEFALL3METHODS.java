@@ -383,7 +383,7 @@
    /**
     * A live CDLRISEFALL3METHODS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLRISEFALL3METHODS} over the same series.
-    * Open with {@link Core#CDLRISEFALL3METHODS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlrisefall3methodsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -394,7 +394,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLRISEFALL3METHODS_Stream {
+   public static final class Cdlrisefall3methodsStream {
       Core core;
       double[] BodyPeriodTotal;
       double lag1_inOpen;
@@ -431,7 +431,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLRISEFALL3METHODS_Stream( Core core ) { this.core = core; }
+      Cdlrisefall3methodsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -445,7 +445,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLRISEFALL3METHODS_Stream( CDLRISEFALL3METHODS_Stream other ) {
+      Cdlrisefall3methodsStream( Cdlrisefall3methodsStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -483,7 +483,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLRISEFALL3METHODS_Stream other ) {
+      void copyFrom( Cdlrisefall3methodsStream other ) {
          this.core = other.core;
          if( this.BodyPeriodTotal != null && this.BodyPeriodTotal.length == other.BodyPeriodTotal.length ) {
             System.arraycopy( other.BodyPeriodTotal, 0, this.BodyPeriodTotal, 0, other.BodyPeriodTotal.length );
@@ -534,7 +534,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLRISEFALL3METHODS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdlrisefall3methodsStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -551,7 +551,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRISEFALL3METHODS update: BadParam", RetCode.BadParam);
-         core.CDLRISEFALL3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlrisefall3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -580,7 +580,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLRISEFALL3METHODS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLRISEFALL3METHODS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlrisefall3methodsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -598,14 +598,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRISEFALL3METHODS peek: BadParam", RetCode.BadParam);
-         CDLRISEFALL3METHODS_Stream scratch = PEEK_SCRATCH.get();
+         Cdlrisefall3methodsStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLRISEFALL3METHODS_Stream(this);
+            scratch = new Cdlrisefall3methodsStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLRISEFALL3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlrisefall3methodsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -622,11 +622,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLRISEFALL3METHODS_Stream copy() {
-         return new CDLRISEFALL3METHODS_Stream(this);
+      public Cdlrisefall3methodsStream copy() {
+         return new Cdlrisefall3methodsStream(this);
       }
    }
-   void CDLRISEFALL3METHODS_StepImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlrisefall3methodsStepImpl( Cdlrisefall3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -694,7 +694,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLRISEFALL3METHODS_OpenImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlrisefall3methodsOpenImpl( Cdlrisefall3methodsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -871,11 +871,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLRISEFALL3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlrisefall3methodsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdlrisefall3methodsStream cdlrisefall3methodsOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
-      RetCode retCode = CDLRISEFALL3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdlrisefall3methodsStream sp = new Cdlrisefall3methodsStream(this);
+      RetCode retCode = cdlrisefall3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -889,14 +889,14 @@
       }
       throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLRISEFALL3METHODS_Open (composition seam). */
-   CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlrisefall3methodsOpen (composition seam). */
+   Cdlrisefall3methodsStream cdlrisefall3methodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
+      Cdlrisefall3methodsStream sp = new Cdlrisefall3methodsStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLRISEFALL3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlrisefall3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -923,7 +923,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdlrisefall3methodsStream cdlrisefall3methodsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLRISEFALL3METHODS open", "inOpen", inOpen);
       requireHistory("CDLRISEFALL3METHODS open", inOpen.length);
@@ -933,10 +933,10 @@
       requireHistoryLength("CDLRISEFALL3METHODS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLRISEFALL3METHODS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLRISEFALL3METHODS open", "inClose", inClose.length, inOpen.length);
-      return CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlrisefall3methodsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLRISEFALL3METHODS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlrisefall3methodsOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLRISEFALL3METHODS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -944,9 +944,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLRISEFALL3METHODS_Stream#outRange()}.
+    * {@link Cdlrisefall3methodsStream#outRange()}.
     */
-   public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdlrisefall3methodsStream cdlrisefall3methodsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLRISEFALL3METHODS openAndFill", "inOpen", inOpen);
       requireHistory("CDLRISEFALL3METHODS openAndFill", inOpen.length);
@@ -963,5 +963,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLRISEFALL3METHODS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlrisefall3methodsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

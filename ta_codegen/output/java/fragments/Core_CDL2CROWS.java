@@ -318,7 +318,7 @@
    /**
     * A live CDL2CROWS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDL2CROWS} over the same series.
-    * Open with {@link Core#CDL2CROWS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdl2crowsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -329,7 +329,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDL2CROWS_Stream {
+   public static final class Cdl2crowsStream {
       Core core;
       double BodyLongPeriodTotal;
       double lag1_inOpen;
@@ -350,7 +350,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDL2CROWS_Stream( Core core ) { this.core = core; }
+      Cdl2crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -364,7 +364,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDL2CROWS_Stream( CDL2CROWS_Stream other ) {
+      Cdl2crowsStream( Cdl2crowsStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -386,7 +386,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDL2CROWS_Stream other ) {
+      void copyFrom( Cdl2crowsStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -427,7 +427,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL2CROWS update: BadParam", RetCode.BadParam);
-         core.CDL2CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdl2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -456,7 +456,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDL2CROWS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDL2CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdl2crowsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -472,8 +472,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL2CROWS peek: BadParam", RetCode.BadParam);
-         CDL2CROWS_Stream scratch = new CDL2CROWS_Stream(this);
-         core.CDL2CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         Cdl2crowsStream scratch = new Cdl2crowsStream(this);
+         core.cdl2crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -490,11 +490,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDL2CROWS_Stream copy() {
-         return new CDL2CROWS_Stream(this);
+      public Cdl2crowsStream copy() {
+         return new Cdl2crowsStream(this);
       }
    }
-   void CDL2CROWS_StepImpl( CDL2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdl2crowsStepImpl( Cdl2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -534,7 +534,7 @@
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDL2CROWS_OpenImpl( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdl2crowsOpenImpl( Cdl2crowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -651,11 +651,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDL2CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDL2CROWS_Stream CDL2CROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdl2crowsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdl2crowsStream cdl2crowsOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
-      RetCode retCode = CDL2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdl2crowsStream sp = new Cdl2crowsStream(this);
+      RetCode retCode = cdl2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -669,14 +669,14 @@
       }
       throw new TaLibArgumentException("CDL2CROWS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDL2CROWS_Open (composition seam). */
-   CDL2CROWS_Stream CDL2CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdl2crowsOpen (composition seam). */
+   Cdl2crowsStream cdl2crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
+      Cdl2crowsStream sp = new Cdl2crowsStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdl2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -703,7 +703,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDL2CROWS_Stream CDL2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdl2crowsStream cdl2crowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDL2CROWS open", "inOpen", inOpen);
       requireHistory("CDL2CROWS open", inOpen.length);
@@ -713,10 +713,10 @@
       requireHistoryLength("CDL2CROWS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDL2CROWS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDL2CROWS open", "inClose", inClose.length, inOpen.length);
-      return CDL2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdl2crowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDL2CROWS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdl2crowsOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDL2CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -724,9 +724,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDL2CROWS_Stream#outRange()}.
+    * {@link Cdl2crowsStream#outRange()}.
     */
-   public CDL2CROWS_Stream CDL2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdl2crowsStream cdl2crowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDL2CROWS openAndFill", "inOpen", inOpen);
       requireHistory("CDL2CROWS openAndFill", inOpen.length);
@@ -743,5 +743,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDL2CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdl2crowsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

@@ -597,6 +597,7 @@ fn functions_registry(rows: &[FuncRow]) -> String {
         "import java.util.Collections;\n\
          import java.util.LinkedHashMap;\n\
          import java.util.List;\n\
+         import java.util.Locale;\n\
          import java.util.Map;\n\n\
          /**\n\
          \x20* The catalogue of every TA-Lib indicator, for applications that pick a\n\
@@ -627,12 +628,15 @@ fn functions_registry(rows: &[FuncRow]) -> String {
          \x20     return List.copyOf(BY_NAME.values());\n\
          \x20  }\n\n\
          \x20  /**\n\
-         \x20   * One function by canonical upper-case name, e.g. {@code \"SMA\"}.\n\
+         \x20   * One function by name, matched case-insensitively (ASCII; {@link Locale#ROOT},\n\
+         \x20   * not the platform default, so a Turkish JVM does not turn {@code \"i\"} into\n\
+         \x20   * {@code \"İ\"}). The metadata itself always reports the canonical upper-case\n\
+         \x20   * spelling, e.g. {@code \"SMA\"}, regardless of the case looked up.\n\
          \x20   *\n\
          \x20   * @return the metadata, or {@code null} if no such function exists\n\
          \x20   */\n\
          \x20  public static FunctionInfo byName(String name) {\n\
-         \x20     return BY_NAME.get(name);\n\
+         \x20     return BY_NAME.get(name.toUpperCase(Locale.ROOT));\n\
          \x20  }\n\n\
          \x20  /** The distinct group names, in first-appearance order. */\n\
          \x20  public static List<String> groups() {\n\

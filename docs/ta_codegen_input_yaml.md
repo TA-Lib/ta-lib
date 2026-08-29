@@ -50,17 +50,30 @@ ta_codegen/input/
 
 ### Naming
 
-`name` is the only spelling there is. Rust, Java and C# use it verbatim; C alone
-prefixes `TA_`. Generated variants append an underscore-separated suffix that
-mirrors C minus that prefix:
+`name` is the base every backend spells the **batch** tier from, verbatim: `SMA`
+in Rust/Java/C#, `TA_SMA` in C. The **streaming** tier built on top of it no
+longer mirrors this (issue #278, pre-publish): C alone still appends an
+underscore-separated, verbatim-uppercase suffix (`TA_SMA_Open`, `TA_SMA_Stream`);
+Rust, Java and C# each recase `name` and the verb to their own idiom instead —
+snake_case methods in Rust, camelCase in Java, PascalCase (already the .NET
+default) in C# — with the acronym single-capitalized wherever it is recast
+(`Sma`, not `SMA`):
 
-| C | Rust / Java | C# |
-|---|---|---|
-| `TA_SMA`, `TA_SMA_Lookback`, `TA_SMA_Open`, `TA_SMA_Stream` | `SMA`, `SMA_Lookback`, `SMA_Open`, `SMA_Stream` | `SMA`, `SMA_Lookback` |
+| | Batch | Streaming Open | Streaming handle type |
+|---|---|---|---|
+| C | `TA_SMA`, `TA_SMA_Lookback` | `TA_SMA_Open` | `TA_SMA_Stream` |
+| Rust | `SMA`, `SMA_Lookback` | `sma_open` | `SmaStream` |
+| Java | `SMA`, `SMA_Lookback` | `smaOpen` | `SmaStream` |
+| C# | `SMA`, `SMA_Lookback` | `SmaOpen` | `SmaStream` |
 
-One spelling means nothing can drift out of sync, so pick `name` carefully: it is
-the public API in four languages at once. Rust file and module names stay
-lower-case (`sma.rs`, `mod sma`) — only public identifiers are verbatim.
+`name`'s case-insensitive by-name lookup (`TA_GetFuncHandle` and each backend's
+metadata equivalent) is what a caller can now rely on spelling identically
+everywhere, since the compiled identifier no longer does.
+
+One `name` still means the *batch* tier cannot drift out of sync, so pick it
+carefully: it is the public API in four languages at once. Rust file and module
+names stay lower-case (`sma.rs`, `mod sma`) — only public identifiers are
+verbatim (batch) or idiomatically recast (streaming, #278).
 
 ### Input parameters
 

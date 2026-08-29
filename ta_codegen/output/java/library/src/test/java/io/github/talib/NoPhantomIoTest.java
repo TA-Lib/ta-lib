@@ -105,7 +105,7 @@ import java.util.TreeSet;
  *     declared legs, and the {@code double[]} and {@code float[]} transcriptions
  *     — independently generated bodies — read the same set.</li>
  * <li><b>{@link #openAndFillSweep}</b> — the streaming tier's one array-shaped
- *     promise: {@code NAME_OpenAndFill} fills exactly {@code historyLen - lookback}
+ *     promise: {@code nameOpenAndFill} fills exactly {@code historyLen - lookback}
  *     values. Sized to exactly that, a writer running past it is out of bounds.
  *     ({@code update} and {@code peek} take scalars, so there is no array to size;
  *     {@code Open} derives its range from the history's own length, so it cannot
@@ -170,6 +170,23 @@ public class NoPhantomIoTest {
         checks++;
         failures++;
         System.out.println("  FAIL: " + what);
+    }
+
+    /** The registry's SCREAMING_SNAKE name as the streaming tier spells it (#278). */
+    private static String camelCase(String screaming) {
+        StringBuilder sb = new StringBuilder();
+        for (String word : screaming.split("_")) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            String w = word.toLowerCase(java.util.Locale.ROOT);
+            if (sb.length() == 0) {
+                sb.append(w);
+            } else {
+                sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+            }
+        }
+        return sb.toString();
     }
 
     /* ------------------------------------------------------------------ model */
@@ -879,7 +896,7 @@ public class NoPhantomIoTest {
     /* ---------------------------------------------- sweep 4: openAndFill tier */
 
     /**
-     * {@code NAME_OpenAndFill} over a history of {@code lookback + 5} bars, with
+     * {@code nameOpenAndFill} over a history of {@code lookback + 5} bars, with
      * each output sized to exactly the {@code outRange} the handle reports.
      *
      * <p>This is the streaming tier's only array-shaped promise. {@code update}
@@ -899,12 +916,23 @@ public class NoPhantomIoTest {
         int violations = 0;
         List<String> reached = new ArrayList<>();
 
+        // The method is spelled `<camelCase(name)>OpenAndFill` (#278); reverse the
+        // discovered prefix back to the registry's canonical name so `fills` keys
+        // the same way `cores` does.
+        Map<String, String> byCamel = new TreeMap<>();
+        for (String name : cores.keySet()) {
+            byCamel.put(camelCase(name), name);
+        }
         Map<String, Method> fills = new TreeMap<>();
         for (Method m : Core.class.getMethods()) {
-            if (m.getName().endsWith("_OpenAndFill")
+            if (m.getName().endsWith("OpenAndFill")
                     && m.getParameterTypes()[0] == double[].class) {
-                fills.put(m.getName().substring(0, m.getName().length()
-                                                - "_OpenAndFill".length()), m);
+                String prefix = m.getName().substring(0, m.getName().length()
+                                                - "OpenAndFill".length());
+                String canonical = byCamel.get(prefix);
+                if (canonical != null) {
+                    fills.put(canonical, m);
+                }
             }
         }
         // Discovery, not a list: the streaming tier reaches every function, so a
@@ -930,7 +958,7 @@ public class NoPhantomIoTest {
             int nOpts = sig.optPos.length;
             int nOuts = sig.outputPos.length;
             if (pt.length != nLegs + nOpts + nOuts) {
-                violation(sig.name + "_OpenAndFill has " + pt.length + " parameters, "
+                violation(camelCase(sig.name) + "OpenAndFill has " + pt.length + " parameters, "
                           + "expected " + nLegs + " legs + " + nOpts + " params + "
                           + nOuts + " outputs");
                 violations++;
@@ -968,7 +996,7 @@ public class NoPhantomIoTest {
                 }
                 try {
                     fill.invoke(sig.on, shortArgs);
-                    violation(sig.name + "_OpenAndFill[" + v.label + "] accepted a "
+                    violation(camelCase(sig.name) + "OpenAndFill[" + v.label + "] accepted a "
                         + v.lookback + "-bar history (lookback " + v.lookback
                         + "), which is one short of the documented minimum");
                     violations++;
@@ -976,7 +1004,7 @@ public class NoPhantomIoTest {
                     Throwable t = ite.getCause();
                     if (t instanceof IndexOutOfBoundsException
                             && !(t instanceof TaLibFailure)) {
-                        violation(sig.name + "_OpenAndFill[" + v.label + "] wrote to a "
+                        violation(camelCase(sig.name) + "OpenAndFill[" + v.label + "] wrote to a "
                             + "zero-length output before refusing a " + v.lookback
                             + "-bar history: " + t);
                         violations++;
@@ -984,7 +1012,7 @@ public class NoPhantomIoTest {
                         refusals++;
                     }
                 } catch (ReflectiveOperationException ex) {
-                    violation(sig.name + "_OpenAndFill could not be invoked: " + ex);
+                    violation(camelCase(sig.name) + "OpenAndFill could not be invoked: " + ex);
                     violations++;
                 }
 
@@ -999,19 +1027,19 @@ public class NoPhantomIoTest {
                     filled = (OutRange) handle.getClass().getMethod("outRange")
                                               .invoke(handle);
                 } catch (InvocationTargetException ite) {
-                    violation(sig.name + "_OpenAndFill[" + v.label + "] threw on a "
+                    violation(camelCase(sig.name) + "OpenAndFill[" + v.label + "] threw on a "
                               + historyLen + "-bar history (lookback " + v.lookback
                               + ") with padded outputs: " + ite.getCause());
                     violations++;
                     continue;
                 } catch (ReflectiveOperationException ex) {
-                    violation(sig.name + "_OpenAndFill could not be invoked: " + ex);
+                    violation(camelCase(sig.name) + "OpenAndFill could not be invoked: " + ex);
                     violations++;
                     continue;
                 }
                 // Same reason the batch sweep does not take its count on trust.
                 if (filled.count() != historyLen - v.lookback) {
-                    violation(sig.name + "_OpenAndFill[" + v.label + "] over "
+                    violation(camelCase(sig.name) + "OpenAndFill[" + v.label + "] over "
                         + historyLen + " bars reports a fill of " + filled.count()
                         + ", not the documented historyLen - lookback ("
                         + (historyLen - v.lookback) + ")");
@@ -1032,13 +1060,13 @@ public class NoPhantomIoTest {
                     fill.invoke(sig.on, args);
                 } catch (InvocationTargetException ite) {
                     Throwable t = ite.getCause();
-                    violation(sig.name + "_OpenAndFill[" + v.label + "] over "
+                    violation(camelCase(sig.name) + "OpenAndFill[" + v.label + "] over "
                         + historyLen + " bars wrote outside the " + filled.count()
                         + " values its outRange reports: "
                         + t.getClass().getSimpleName() + ": " + t.getMessage());
                     violations++;
                 } catch (ReflectiveOperationException ex) {
-                    violation(sig.name + "_OpenAndFill could not be invoked: " + ex);
+                    violation(camelCase(sig.name) + "OpenAndFill could not be invoked: " + ex);
                     violations++;
                 }
             }
@@ -1156,7 +1184,7 @@ public class NoPhantomIoTest {
         for (int i = 0; i < history.length; i++) {
             history[i] = bar("inReal", i);
         }
-        int fillCount = core.SMA_OpenAndFill(history, 30, new double[history.length])
+        int fillCount = core.smaOpenAndFill(history, 30, new double[history.length])
                             .outRange().count();
         check(fillCount == history.length - lookback,
               "openAndFill fills historyLen - lookback (" + fillCount + " of "
@@ -1166,7 +1194,7 @@ public class NoPhantomIoTest {
         // undersized output does not silently succeed — so the assertion is on
         // the REJECTION, not on which exception carries it. Typing it as an
         // IndexOutOfBoundsException is what broke when S1 became one.
-        check(rejects(() -> core.SMA_OpenAndFill(history, 30, new double[fillCount - 1])),
+        check(rejects(() -> core.smaOpenAndFill(history, 30, new double[fillCount - 1])),
               "an openAndFill output one short of outRange is rejected, so sweep 4 can fail");
     }
 

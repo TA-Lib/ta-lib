@@ -450,7 +450,7 @@ public partial class Core
    /// <summary>A live <c>AROONOSC</c> stream: one value per closed bar, bit-identical to
    /// <c>AROONOSC</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.AROONOSC_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.AroonoscOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -463,7 +463,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class AROONOSC_Stream
+   public sealed class AroonoscStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -482,12 +482,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal AROONOSC_Stream( Core core ) { this.core = core; }
+      internal AroonoscStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.AROONOSC</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Aroonosc</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -496,7 +496,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal AROONOSC_Stream( AROONOSC_Stream other )
+      internal AroonoscStream( AroonoscStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -518,7 +518,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AROONOSC_Stream other )
+      internal void CopyFrom( AroonoscStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -545,7 +545,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static AROONOSC_Stream? peekScratch;
+      [ThreadStatic] private static AroonoscStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -564,7 +564,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROONOSC", "update", RetCode.BadParam);
-         core.AROONOSC_StepImpl(this, inHigh, inLow);
+         core.AroonoscStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -584,14 +584,14 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROONOSC", "peek", RetCode.BadParam);
-         AROONOSC_Stream? scratch = peekScratch;
+         AroonoscStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new AROONOSC_Stream(this);
+            scratch = new AroonoscStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.AROONOSC_StepImpl(scratch, inHigh, inLow);
+         core.AroonoscStepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -616,7 +616,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("AROONOSC", "updateAndFill", RetCode.BadParam);
-            core.AROONOSC_StepImpl(this, inHigh[i], inLow[i]);
+            core.AroonoscStepImpl(this, inHigh[i], inLow[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -632,13 +632,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public AROONOSC_Stream Clone()
+      public AroonoscStream Clone()
       {
-         return new AROONOSC_Stream(this);
+         return new AroonoscStream(this);
       }
    }
 
-   internal void AROONOSC_StepImpl( AROONOSC_Stream sp, double inHigh, double inLow )
+   internal void AroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       double aroon = 0.0;
@@ -703,7 +703,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode AROONOSC_OpenImpl( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AroonoscOpenImpl( AroonoscStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -863,11 +863,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* AROONOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AROONOSC_Stream AROONOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* AroonoscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AroonoscStream AroonoscOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      AroonoscStream sp = new AroonoscStream(this);
+      RetCode retCode = AroonoscOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -876,12 +876,12 @@ public partial class Core
       throw StreamFailure("AROONOSC", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind AROONOSC_Open (composition seam). */
-   internal AROONOSC_Stream AROONOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind AroonoscOpen (composition seam). */
+   internal AroonoscStream AroonoscOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
-      AROONOSC_Stream sp = new AROONOSC_Stream(this);
+      AroonoscStream sp = new AroonoscStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = AroonoscOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -892,12 +892,11 @@ public partial class Core
 
    /// <summary>Open a live <c>AROONOSC</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="AROONOSC_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>AROONOSC</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="AroonoscStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>AROONOSC</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>AROONOSC_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>AROONOSC_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AroonoscOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -910,16 +909,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public AROONOSC_Stream AROONOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
+   public AroonoscStream AroonoscOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AROONOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("AROONOSC", "open", "inLow", inLow.Length, inHigh.Length);
-      return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return AroonoscOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
-   /// <summary><c>AROONOSC_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>AroonoscOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>AROONOSC</c> produces over
@@ -931,7 +930,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="AROONOSC_Stream.OutRange"/>.</para>
+   /// <see cref="AroonoscStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -947,7 +946,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public AROONOSC_Stream AROONOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
+   public AroonoscStream AroonoscOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -958,6 +957,6 @@ public partial class Core
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          throw StreamFailure("AROONOSC", "openAndFill", RetCode.BadParam);
       }
-      return AROONOSC_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
+      return AroonoscOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

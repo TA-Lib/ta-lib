@@ -828,9 +828,9 @@ public partial class Core
    /// <summary>A live <c>HT_DCPERIOD</c> stream: one value per closed bar, bit-identical
    /// to <c>HT_DCPERIOD</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.HT_DCPERIOD_Open"/>. There is no close and
-   /// nothing to dispose — the handle is ordinary managed state, and an
-   /// unreferenced handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.HtDcperiodOpen"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -841,7 +841,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class HT_DCPERIOD_Stream
+   public sealed class HtDcperiodStream
    {
       internal Core core;
       internal double period;
@@ -893,12 +893,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal HT_DCPERIOD_Stream( Core core ) { this.core = core; }
+      internal HtDcperiodStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.HT_DCPERIOD</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.HtDcperiod</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -907,7 +907,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal HT_DCPERIOD_Stream( HT_DCPERIOD_Stream other )
+      internal HtDcperiodStream( HtDcperiodStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -969,7 +969,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HT_DCPERIOD_Stream other )
+      internal void CopyFrom( HtDcperiodStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1050,7 +1050,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HT_DCPERIOD_Stream? peekScratch;
+      [ThreadStatic] private static HtDcperiodStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1068,7 +1068,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_DCPERIOD", "update", RetCode.BadParam);
-         core.HT_DCPERIOD_StepImpl(this, inReal);
+         core.HtDcperiodStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1087,14 +1087,14 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_DCPERIOD", "peek", RetCode.BadParam);
-         HT_DCPERIOD_Stream? scratch = peekScratch;
+         HtDcperiodStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new HT_DCPERIOD_Stream(this);
+            scratch = new HtDcperiodStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_DCPERIOD_StepImpl(scratch, inReal);
+         core.HtDcperiodStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1118,7 +1118,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HT_DCPERIOD", "updateAndFill", RetCode.BadParam);
-            core.HT_DCPERIOD_StepImpl(this, inReal[i]);
+            core.HtDcperiodStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -1134,13 +1134,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public HT_DCPERIOD_Stream Clone()
+      public HtDcperiodStream Clone()
       {
-         return new HT_DCPERIOD_Stream(this);
+         return new HtDcperiodStream(this);
       }
    }
 
-   internal void HT_DCPERIOD_StepImpl( HT_DCPERIOD_Stream sp, double inReal )
+   internal void HtDcperiodStepImpl( HtDcperiodStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -1299,7 +1299,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HtDcperiodOpenImpl( HtDcperiodStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1698,11 +1698,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* HT_DCPERIOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* HtDcperiodOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal HtDcperiodStream HtDcperiodOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      HtDcperiodStream sp = new HtDcperiodStream(this);
+      RetCode retCode = HtDcperiodOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1711,12 +1711,12 @@ public partial class Core
       throw StreamFailure("HT_DCPERIOD", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind HT_DCPERIOD_Open (composition seam). */
-   internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind HtDcperiodOpen (composition seam). */
+   internal HtDcperiodStream HtDcperiodOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
+      HtDcperiodStream sp = new HtDcperiodStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = HtDcperiodOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1727,12 +1727,12 @@ public partial class Core
 
    /// <summary>Open a live <c>HT_DCPERIOD</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="HT_DCPERIOD_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="HtDcperiodStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>HT_DCPERIOD</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>HT_DCPERIOD_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>HT_DCPERIOD_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>HtDcperiodOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -1742,14 +1742,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_DCPERIOD_Stream HT_DCPERIOD_Open( ReadOnlySpan<double> inReal )
+   public HtDcperiodStream HtDcperiodOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return HT_DCPERIOD_OpenInternal(inReal, 0);
+      return HtDcperiodOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>HT_DCPERIOD_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>HtDcperiodOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>HT_DCPERIOD</c> produces
@@ -1763,7 +1763,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HT_DCPERIOD_Stream.OutRange"/>.</para>
+   /// <see cref="HtDcperiodStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
    /// <param name="outReal">Smoothed dominant cycle period in bars. Must hold at least <c>historyLen -
@@ -1776,7 +1776,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
+   public HtDcperiodStream HtDcperiodOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1785,6 +1785,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("HT_DCPERIOD", "openAndFill", RetCode.BadParam);
       }
-      return HT_DCPERIOD_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
+      return HtDcperiodOpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

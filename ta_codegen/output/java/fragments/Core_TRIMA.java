@@ -581,7 +581,7 @@
    /**
     * A live TRIMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TRIMA} over the same series.
-    * Open with {@link Core#TRIMA_Open}; there is no close — the handle is
+    * Open with {@link Core#trimaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -592,7 +592,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TRIMA_Stream {
+   public static final class TrimaStream {
       Core core;
       int optInTimePeriod;
       double numerator;
@@ -610,7 +610,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      TRIMA_Stream( Core core ) { this.core = core; }
+      TrimaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -624,7 +624,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TRIMA_Stream( TRIMA_Stream other ) {
+      TrimaStream( TrimaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.numerator = other.numerator;
@@ -643,7 +643,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TRIMA_Stream other ) {
+      void copyFrom( TrimaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.numerator = other.numerator;
@@ -671,7 +671,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<TRIMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<TrimaStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -688,7 +688,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
-         core.TRIMA_StepImpl(this, inReal);
+         core.trimaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -714,7 +714,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("TRIMA updateAndFill: BadParam", RetCode.BadParam);
-            core.TRIMA_StepImpl(this, inReal[i]);
+            core.trimaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -732,14 +732,14 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
-         TRIMA_Stream scratch = PEEK_SCRATCH.get();
+         TrimaStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new TRIMA_Stream(this);
+            scratch = new TrimaStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.TRIMA_StepImpl(scratch, inReal);
+         core.trimaStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -756,11 +756,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TRIMA_Stream copy() {
-         return new TRIMA_Stream(this);
+      public TrimaStream copy() {
+         return new TrimaStream(this);
       }
    }
-   void TRIMA_StepImpl( TRIMA_Stream sp, double inReal )
+   void trimaStepImpl( TrimaStream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {
@@ -828,7 +828,7 @@
          }
       }
    }
-   private RetCode TRIMA_OpenImpl( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode trimaOpenImpl( TrimaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -1277,11 +1277,11 @@
          return RetCode.Success;
       }
    }
-   /* TRIMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TRIMA_Stream TRIMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* trimaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TrimaStream trimaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TRIMA_Stream sp = new TRIMA_Stream(this);
-      RetCode retCode = TRIMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      TrimaStream sp = new TrimaStream(this);
+      RetCode retCode = trimaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1295,14 +1295,14 @@
       }
       throw new TaLibArgumentException("TRIMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TRIMA_Open (composition seam). */
-   TRIMA_Stream TRIMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind trimaOpen (composition seam). */
+   TrimaStream trimaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      TRIMA_Stream sp = new TRIMA_Stream(this);
+      TrimaStream sp = new TrimaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TRIMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = trimaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1329,14 +1329,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TRIMA_Stream TRIMA_Open( double inReal[], int optInTimePeriod )
+   public TrimaStream trimaOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("TRIMA open", "inReal", inReal);
       requireHistory("TRIMA open", inReal.length);
-      return TRIMA_OpenInternal(inReal, 0, optInTimePeriod);
+      return trimaOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#TRIMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#trimaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TRIMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1344,9 +1344,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TRIMA_Stream#outRange()}.
+    * {@link TrimaStream#outRange()}.
     */
-   public TRIMA_Stream TRIMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public TrimaStream trimaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("TRIMA openAndFill", "inReal", inReal);
       requireHistory("TRIMA openAndFill", inReal.length);
@@ -1357,5 +1357,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TRIMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return trimaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

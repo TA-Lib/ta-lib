@@ -448,23 +448,23 @@ impl Core {
 /* Using willr_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 /// Live WILLR stream: one value per closed bar, bit-identical to [`Core::WILLR`]
-/// over the same series. Open with [`Core::WILLR_Open`]; dropping the handle
+/// over the same series. Open with [`Core::willr_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WILLR_Stream")]
-pub struct WILLR_Stream {
-    state: WILLR_StreamState,
+pub struct WillrStream {
+    state: WillrStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl WILLR_Stream {
+impl WillrStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `WILLR_StreamState::restore_from`.
+    /// allocating new ones. See `WillrStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -473,7 +473,7 @@ impl WILLR_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct WILLR_StreamState {
+struct WillrStreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
@@ -490,7 +490,7 @@ struct WILLR_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl WILLR_StreamState {
+impl WillrStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -510,14 +510,13 @@ impl WILLR_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn WILLR_step_impl(sp: &mut WILLR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn willr_step_impl(sp: &mut WillrStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -577,11 +576,11 @@ impl Core {
         sp.today += 1;
     }
 
-    /// The single whole-history transcription behind [`Core::WILLR_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::WILLR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn WILLR_OpenImpl(
+    /// The single whole-history transcription behind [`Core::willr_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::willr_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn willr_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<WILLR_Stream, RetCode> {
+    ) -> Result<WillrStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -735,7 +734,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = WILLR_StreamState {
+        let state = WillrStreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -750,17 +749,17 @@ impl Core {
             x_inLow,
             x_inClose,
         };
-        Ok(WILLR_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(WillrStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::WILLR_Open`] (composition seam).
-    pub(crate) fn WILLR_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::willr_open`] (composition seam).
+    pub(crate) fn willr_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(WILLR_Stream, f64), RetCode> {
+    ) -> Result<(WillrStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.WILLR_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.willr_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -784,7 +783,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.WILLR_Open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.willr_open(&high, &low, &close, 14).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -794,11 +793,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_WILLR_Open")]
-    pub fn WILLR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(WILLR_Stream, f64), RetCode> {
-        self.WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn willr_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(WillrStream, f64), RetCode> {
+        self.willr_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::WILLR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::willr_open`] that also fills the output array(s) bit-identically to
     /// [`Core::WILLR`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -806,12 +805,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::WILLR_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::willr_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_WILLR_OpenAndFill")]
-    pub fn WILLR_OpenAndFill(
+    pub fn willr_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
-    ) -> Result<(WILLR_Stream, OutRange), RetCode> {
+    ) -> Result<(WillrStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -828,31 +827,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.WILLR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.willr_open_and_fill_internal(inHigh, inLow, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::WILLR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::willr_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn WILLR_OpenAndFillInternal(
+    pub(crate) fn willr_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<WILLR_Stream, RetCode> {
-        self.WILLR_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<WillrStream, RetCode> {
+        self.willr_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `WILLR_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `WillrStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static WILLR_PEEK_SCRATCH: std::cell::Cell<Option<Box<WILLR_Stream>>> =
+    static WILLR_PEEK_SCRATCH: std::cell::Cell<Option<Box<WillrStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl WILLR_Stream {
+impl WillrStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -870,7 +869,7 @@ impl WILLR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::WILLR_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        Core::willr_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -903,7 +902,7 @@ impl WILLR_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::WILLR_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::willr_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -951,7 +950,7 @@ impl WILLR_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<WILLR_Stream>();
+    _assert_auto::<WillrStream>();
 };
 
 /***************/

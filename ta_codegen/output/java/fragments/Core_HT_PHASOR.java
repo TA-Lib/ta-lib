@@ -810,7 +810,7 @@
    /**
     * A live HT_PHASOR stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#HT_PHASOR} over the same series.
-    * Open with {@link Core#HT_PHASOR_Open}; there is no close — the handle is
+    * Open with {@link Core#htPhasorOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -821,7 +821,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HT_PHASOR_Stream {
+   public static final class HtPhasorStream {
       Core core;
       double period;
       double periodWMASum;
@@ -873,7 +873,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      HT_PHASOR_Stream( Core core ) { this.core = core; }
+      HtPhasorStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -887,7 +887,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      HT_PHASOR_Stream( HT_PHASOR_Stream other ) {
+      HtPhasorStream( HtPhasorStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -940,7 +940,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HT_PHASOR_Stream other ) {
+      void copyFrom( HtPhasorStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1030,7 +1030,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HT_PHASOR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<HtPhasorStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -1060,7 +1060,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
-         core.HT_PHASOR_StepImpl(this, inReal);
+         core.htPhasorStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
          return this.cachedValue;
@@ -1090,7 +1090,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inReal[i]) )
                   throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-               core.HT_PHASOR_StepImpl(this, inReal[i]);
+               core.htPhasorStepImpl(this, inReal[i]);
                outInPhase[i] = this.cur_outInPhase;
                outQuadrature[i] = this.cur_outQuadrature;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -1113,14 +1113,14 @@
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
-         HT_PHASOR_Stream scratch = PEEK_SCRATCH.get();
+         HtPhasorStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new HT_PHASOR_Stream(this);
+            scratch = new HtPhasorStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_PHASOR_StepImpl(scratch, inReal);
+         core.htPhasorStepImpl(scratch, inReal);
          return new Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
       }
 
@@ -1137,11 +1137,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HT_PHASOR_Stream copy() {
-         return new HT_PHASOR_Stream(this);
+      public HtPhasorStream copy() {
+         return new HtPhasorStream(this);
       }
    }
-   void HT_PHASOR_StepImpl( HT_PHASOR_Stream sp, double inReal )
+   void htPhasorStepImpl( HtPhasorStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -1301,7 +1301,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+   private RetCode htPhasorOpenImpl( HtPhasorStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1698,14 +1698,14 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outInPhase = outInPhase[(outNBElement.value - 1) * outStride];
       sp.cur_outQuadrature = outQuadrature[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
+      sp.cachedValue = new HtPhasorStream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   /* htPhasorOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HtPhasorStream htPhasorOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
+      HtPhasorStream sp = new HtPhasorStream(this);
+      RetCode retCode = htPhasorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1719,15 +1719,15 @@
       }
       throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind HT_PHASOR_Open (composition seam). */
-   HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind htPhasorOpen (composition seam). */
+   HtPhasorStream htPhasorOpenInternal( double inReal[], int startIdx )
    {
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
+      HtPhasorStream sp = new HtPhasorStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0);
+      RetCode retCode = htPhasorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1754,14 +1754,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public HT_PHASOR_Stream HT_PHASOR_Open( double inReal[] )
+   public HtPhasorStream htPhasorOpen( double inReal[] )
    {
       requireArgument("HT_PHASOR open", "inReal", inReal);
       requireHistory("HT_PHASOR open", inReal.length);
-      return HT_PHASOR_OpenInternal(inReal, 0);
+      return htPhasorOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#HT_PHASOR_Open} that also fills the output array(s) bit-identically
+    * {@link Core#htPhasorOpen} that also fills the output array(s) bit-identically
     * to {@link Core#HT_PHASOR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1769,9 +1769,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link HT_PHASOR_Stream#outRange()}.
+    * {@link HtPhasorStream#outRange()}.
     */
-   public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
+   public HtPhasorStream htPhasorOpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
       requireArgument("HT_PHASOR openAndFill", "inReal", inReal);
       requireHistory("HT_PHASOR openAndFill", inReal.length);
@@ -1783,5 +1783,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return HT_PHASOR_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      return htPhasorOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature);
    }

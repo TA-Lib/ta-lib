@@ -429,7 +429,7 @@
    /**
     * A live STOCHRSI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#STOCHRSI} over the same series.
-    * Open with {@link Core#STOCHRSI_Open}; there is no close — the handle is
+    * Open with {@link Core#stochrsiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -440,7 +440,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class STOCHRSI_Stream {
+   public static final class StochrsiStream {
       Core core;
       int optInTimePeriod;
       int optInFastK_Period;
@@ -449,12 +449,12 @@
       double cur_outFastK;
       double cur_outFastD;
       Value cachedValue;
-      RSI_Stream sub0;
-      STOCHF_Stream sub1;
+      RsiStream sub0;
+      StochfStream sub1;
       int outRangeBegIdx;
       int outRangeCount;
 
-      STOCHRSI_Stream( Core core ) { this.core = core; }
+      StochrsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -468,7 +468,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      STOCHRSI_Stream( STOCHRSI_Stream other ) {
+      StochrsiStream( StochrsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastK_Period = other.optInFastK_Period;
@@ -477,13 +477,13 @@
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
          this.cachedValue = other.cachedValue;
-         this.sub0 = new RSI_Stream(other.sub0);
-         this.sub1 = new STOCHF_Stream(other.sub1);
+         this.sub0 = new RsiStream(other.sub0);
+         this.sub1 = new StochfStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( STOCHRSI_Stream other ) {
+      void copyFrom( StochrsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastK_Period = other.optInFastK_Period;
@@ -493,12 +493,12 @@
          this.cur_outFastD = other.cur_outFastD;
          this.cachedValue = other.cachedValue;
          if( this.sub0 == null ) {
-            this.sub0 = new RSI_Stream(other.sub0);
+            this.sub0 = new RsiStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
          if( this.sub1 == null ) {
-            this.sub1 = new STOCHF_Stream(other.sub1);
+            this.sub1 = new StochfStream(other.sub1);
          } else {
             this.sub1.copyFrom(other.sub1);
          }
@@ -507,7 +507,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<STOCHRSI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<StochrsiStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -537,7 +537,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
-         core.STOCHRSI_StepImpl(this, inReal);
+         core.stochrsiStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
          return this.cachedValue;
@@ -567,7 +567,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inReal[i]) )
                   throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-               core.STOCHRSI_StepImpl(this, inReal[i]);
+               core.stochrsiStepImpl(this, inReal[i]);
                outFastK[i] = this.cur_outFastK;
                outFastD[i] = this.cur_outFastD;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -590,14 +590,14 @@
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
-         STOCHRSI_Stream scratch = PEEK_SCRATCH.get();
+         StochrsiStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new STOCHRSI_Stream(this);
+            scratch = new StochrsiStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.STOCHRSI_StepImpl(scratch, inReal);
+         core.stochrsiStepImpl(scratch, inReal);
          return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
@@ -614,11 +614,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public STOCHRSI_Stream copy() {
-         return new STOCHRSI_Stream(this);
+      public StochrsiStream copy() {
+         return new StochrsiStream(this);
       }
    }
-   void STOCHRSI_StepImpl( STOCHRSI_Stream sp, double inReal )
+   void stochrsiStepImpl( StochrsiStream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;
@@ -626,14 +626,14 @@
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempRSIBuffer = sp.sub0.update(inReal);
       {
-         STOCHF_Stream.Value subOut1 = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+         StochfStream.Value subOut1 = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
          cur_outFastK = subOut1.fastK();
          cur_outFastD = subOut1.fastD();
       }
       sp.cur_outFastK = cur_outFastK;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
+   private RetCode stochrsiOpenImpl( StochrsiStream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       double[] tempRSIBuffer;
       RetCode retCode;
@@ -722,7 +722,7 @@
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RSI_Stream sub0 = RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
+      RsiStream sub0 = rsiOpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       retCode = RetCode.Success;
       if( outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
@@ -731,7 +731,7 @@
       }
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
+      StochfStream sub1 = stochfOpenAndFillInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
       retCode = RetCode.Success;
       if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
@@ -750,14 +750,14 @@
       sp.sub1 = sub1;
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new STOCHRSI_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
+      sp.cachedValue = new StochrsiStream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
-   /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
+   /* stochrsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   StochrsiStream stochrsiOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
+      StochrsiStream sp = new StochrsiStream(this);
+      RetCode retCode = stochrsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -771,15 +771,15 @@
       }
       throw new TaLibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind STOCHRSI_Open (composition seam). */
-   STOCHRSI_Stream STOCHRSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   /* Internal startIdx-anchored open behind stochrsiOpen (composition seam). */
+   StochrsiStream stochrsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      StochrsiStream sp = new StochrsiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
+      RetCode retCode = stochrsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -806,15 +806,15 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public STOCHRSI_Stream STOCHRSI_Open( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public StochrsiStream stochrsiOpen( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       requireArgument("STOCHRSI open", "inReal", inReal);
       requireHistory("STOCHRSI open", inReal.length);
       requireArgument("STOCHRSI open", "optInFastD_MAType", optInFastD_MAType);
-      return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      return stochrsiOpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
-    * {@link Core#STOCHRSI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#stochrsiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#STOCHRSI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -822,9 +822,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link STOCHRSI_Stream#outRange()}.
+    * {@link StochrsiStream#outRange()}.
     */
-   public STOCHRSI_Stream STOCHRSI_OpenAndFill( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
+   public StochrsiStream stochrsiOpenAndFill( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
       requireArgument("STOCHRSI openAndFill", "inReal", inReal);
       requireHistory("STOCHRSI openAndFill", inReal.length);
@@ -837,5 +837,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return STOCHRSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      return stochrsiOpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
    }

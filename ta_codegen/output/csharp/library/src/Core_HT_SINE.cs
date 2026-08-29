@@ -989,14 +989,14 @@ public partial class Core
    /// </remarks>
    /// <param name="Sine">Sine of the dominant-cycle phase.</param>
    /// <param name="LeadSine">Sine of the phase advanced 45 degrees (lead)</param>
-   public readonly record struct HT_SINE_Value( double Sine, double LeadSine );
+   public readonly record struct HtSineValue( double Sine, double LeadSine );
 
    /// <summary>A live <c>HT_SINE</c> stream: one value per closed bar, bit-identical to
    /// <c>HT_SINE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.HT_SINE_Open"/>. There is no close and nothing
-   /// to dispose — the handle is ordinary managed state, and an unreferenced
-   /// handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.HtSineOpen"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -1007,7 +1007,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class HT_SINE_Stream
+   public sealed class HtSineStream
    {
       internal Core core;
       internal double period;
@@ -1067,12 +1067,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal HT_SINE_Stream( Core core ) { this.core = core; }
+      internal HtSineStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.HT_SINE</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.HtSine</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -1081,7 +1081,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal HT_SINE_Stream( HT_SINE_Stream other )
+      internal HtSineStream( HtSineStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1152,7 +1152,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HT_SINE_Stream other )
+      internal void CopyFrom( HtSineStream other )
       {
          this.core = other.core;
          this.period = other.period;
@@ -1244,7 +1244,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HT_SINE_Stream? peekScratch;
+      [ThreadStatic] private static HtSineStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -1259,12 +1259,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public HT_SINE_Value Update( double inReal )
+      public HtSineValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_SINE", "update", RetCode.BadParam);
-         core.HT_SINE_StepImpl(this, inReal);
+         core.HtSineStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new HT_SINE_Value(cur_outSine, cur_outLeadSine);
+         return new HtSineValue(cur_outSine, cur_outLeadSine);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -1278,18 +1278,18 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public HT_SINE_Value Peek( double inReal )
+      public HtSineValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_SINE", "peek", RetCode.BadParam);
-         HT_SINE_Stream? scratch = peekScratch;
+         HtSineStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new HT_SINE_Stream(this);
+            scratch = new HtSineStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_SINE_StepImpl(scratch, inReal);
-         return new HT_SINE_Value(scratch.cur_outSine, scratch.cur_outLeadSine);
+         core.HtSineStepImpl(scratch, inReal);
+         return new HtSineValue(scratch.cur_outSine, scratch.cur_outLeadSine);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -1313,7 +1313,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HT_SINE", "updateAndFill", RetCode.BadParam);
-            core.HT_SINE_StepImpl(this, inReal[i]);
+            core.HtSineStepImpl(this, inReal[i]);
             outSine[i] = cur_outSine;
             outLeadSine[i] = cur_outLeadSine;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -1325,18 +1325,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public HT_SINE_Value Value => new HT_SINE_Value(cur_outSine, cur_outLeadSine);
+      public HtSineValue Value => new HtSineValue(cur_outSine, cur_outLeadSine);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public HT_SINE_Stream Clone()
+      public HtSineStream Clone()
       {
-         return new HT_SINE_Stream(this);
+         return new HtSineStream(this);
       }
    }
 
-   internal void HT_SINE_StepImpl( HT_SINE_Stream sp, double inReal )
+   internal void HtSineStepImpl( HtSineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -1549,7 +1549,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine, int outStride )
+   private RetCode HtSineOpenImpl( HtSineStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -2031,11 +2031,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* HT_SINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_SINE_Stream HT_SINE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
+   /* HtSineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal HtSineStream HtSineOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
    {
-      HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine, 1);
+      HtSineStream sp = new HtSineStream(this);
+      RetCode retCode = HtSineOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2044,13 +2044,13 @@ public partial class Core
       throw StreamFailure("HT_SINE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind HT_SINE_Open (composition seam). */
-   internal HT_SINE_Stream HT_SINE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind HtSineOpen (composition seam). */
+   internal HtSineStream HtSineOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      HT_SINE_Stream sp = new HT_SINE_Stream(this);
+      HtSineStream sp = new HtSineStream(this);
       double[] sink_outSine = new double[1];
       double[] sink_outLeadSine = new double[1];
-      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outSine, sink_outLeadSine, 0);
+      RetCode retCode = HtSineOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outSine, sink_outLeadSine, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2061,11 +2061,11 @@ public partial class Core
 
    /// <summary>Open a live <c>HT_SINE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="HT_SINE_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="HtSineStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>HT_SINE</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>HT_SINE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>HT_SINE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>HtSineOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -2075,14 +2075,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_SINE_Stream HT_SINE_Open( ReadOnlySpan<double> inReal )
+   public HtSineStream HtSineOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return HT_SINE_OpenInternal(inReal, 0);
+      return HtSineOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>HT_SINE_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>HtSineOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>HT_SINE</c> produces over
@@ -2094,7 +2094,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HT_SINE_Stream.OutRange"/>.</para>
+   /// <see cref="HtSineStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <param name="outSine">Sine of the dominant-cycle phase. Must hold at least <c>historyLen -
@@ -2109,7 +2109,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public HT_SINE_Stream HT_SINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
+   public HtSineStream HtSineOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -2119,6 +2119,6 @@ public partial class Core
       if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || outSine.Overlaps(outLeadSine) ) {
          throw StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
       }
-      return HT_SINE_OpenAndFillInternal(inReal, 0, out _, out _, outSine, outLeadSine);
+      return HtSineOpenAndFillInternal(inReal, 0, out _, out _, outSine, outLeadSine);
    }
 }

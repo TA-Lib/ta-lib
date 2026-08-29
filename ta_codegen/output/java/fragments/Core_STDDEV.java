@@ -302,7 +302,7 @@
    /**
     * A live STDDEV stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#STDDEV} over the same series.
-    * Open with {@link Core#STDDEV_Open}; there is no close — the handle is
+    * Open with {@link Core#stddevOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -313,16 +313,16 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class STDDEV_Stream {
+   public static final class StddevStream {
       Core core;
       int optInTimePeriod;
       double optInNbDev;
       double cur_outReal;
-      VAR_Stream sub0;
+      VarStream sub0;
       int outRangeBegIdx;
       int outRangeCount;
 
-      STDDEV_Stream( Core core ) { this.core = core; }
+      StddevStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -336,23 +336,23 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      STDDEV_Stream( STDDEV_Stream other ) {
+      StddevStream( StddevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
          this.cur_outReal = other.cur_outReal;
-         this.sub0 = new VAR_Stream(other.sub0);
+         this.sub0 = new VarStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( STDDEV_Stream other ) {
+      void copyFrom( StddevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
          this.cur_outReal = other.cur_outReal;
          if( this.sub0 == null ) {
-            this.sub0 = new VAR_Stream(other.sub0);
+            this.sub0 = new VarStream(other.sub0);
          } else {
             this.sub0.copyFrom(other.sub0);
          }
@@ -375,7 +375,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
-         core.STDDEV_StepImpl(this, inReal);
+         core.stddevStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -401,7 +401,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("STDDEV updateAndFill: BadParam", RetCode.BadParam);
-            core.STDDEV_StepImpl(this, inReal[i]);
+            core.stddevStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -417,8 +417,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
-         STDDEV_Stream scratch = new STDDEV_Stream(this);
-         core.STDDEV_StepImpl(scratch, inReal);
+         StddevStream scratch = new StddevStream(this);
+         core.stddevStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -435,11 +435,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public STDDEV_Stream copy() {
-         return new STDDEV_Stream(this);
+      public StddevStream copy() {
+         return new StddevStream(this);
       }
    }
-   void STDDEV_StepImpl( STDDEV_Stream sp, double inReal )
+   void stddevStepImpl( StddevStream sp, double inReal )
    {
       double cur_outReal = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -452,7 +452,7 @@
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode stddevOpenImpl( StddevStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       RetCode retCode;
@@ -500,7 +500,7 @@
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      VAR_Stream sub0 = VAR_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      VarStream sub0 = varOpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.Success;
       /* Calculate the square root of each variance, this
        * is the standard deviation.
@@ -536,11 +536,11 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* STDDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   STDDEV_Stream STDDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* stddevOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   StddevStream stddevOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
+      StddevStream sp = new StddevStream(this);
+      RetCode retCode = stddevOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -554,14 +554,14 @@
       }
       throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind STDDEV_Open (composition seam). */
-   STDDEV_Stream STDDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   /* Internal startIdx-anchored open behind stddevOpen (composition seam). */
+   StddevStream stddevOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
-      STDDEV_Stream sp = new STDDEV_Stream(this);
+      StddevStream sp = new StddevStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = stddevOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -588,14 +588,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public STDDEV_Stream STDDEV_Open( double inReal[], int optInTimePeriod, double optInNbDev )
+   public StddevStream stddevOpen( double inReal[], int optInTimePeriod, double optInNbDev )
    {
       requireArgument("STDDEV open", "inReal", inReal);
       requireHistory("STDDEV open", inReal.length);
-      return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+      return stddevOpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
-    * {@link Core#STDDEV_Open} that also fills the output array(s) bit-identically
+    * {@link Core#stddevOpen} that also fills the output array(s) bit-identically
     * to {@link Core#STDDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -603,9 +603,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link STDDEV_Stream#outRange()}.
+    * {@link StddevStream#outRange()}.
     */
-   public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
+   public StddevStream stddevOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
       requireArgument("STDDEV openAndFill", "inReal", inReal);
       requireHistory("STDDEV openAndFill", inReal.length);
@@ -616,5 +616,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return STDDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      return stddevOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
    }

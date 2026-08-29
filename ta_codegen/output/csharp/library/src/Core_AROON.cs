@@ -453,12 +453,12 @@ public partial class Core
    /// ages)</param>
    /// <param name="AroonUp">Recency of the highest high (100 = it is the current bar, decaying as it
    /// ages)</param>
-   public readonly record struct AROON_Value( double AroonDown, double AroonUp );
+   public readonly record struct AroonValue( double AroonDown, double AroonUp );
 
    /// <summary>A live <c>AROON</c> stream: one value per closed bar, bit-identical to
    /// <c>AROON</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.AROON_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.AroonOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -471,7 +471,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class AROON_Stream
+   public sealed class AroonStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -491,12 +491,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal AROON_Stream( Core core ) { this.core = core; }
+      internal AroonStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.AROON</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Aroon</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -505,7 +505,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal AROON_Stream( AROON_Stream other )
+      internal AroonStream( AroonStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -528,7 +528,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AROON_Stream other )
+      internal void CopyFrom( AroonStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -556,7 +556,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static AROON_Stream? peekScratch;
+      [ThreadStatic] private static AroonStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -572,12 +572,12 @@ public partial class Core
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public AROON_Value Update( double inHigh, double inLow )
+      public AroonValue Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROON", "update", RetCode.BadParam);
-         core.AROON_StepImpl(this, inHigh, inLow);
+         core.AroonStepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new AROON_Value(cur_outAroonDown, cur_outAroonUp);
+         return new AroonValue(cur_outAroonDown, cur_outAroonUp);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -592,18 +592,18 @@ public partial class Core
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public AROON_Value Peek( double inHigh, double inLow )
+      public AroonValue Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROON", "peek", RetCode.BadParam);
-         AROON_Stream? scratch = peekScratch;
+         AroonStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new AROON_Stream(this);
+            scratch = new AroonStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.AROON_StepImpl(scratch, inHigh, inLow);
-         return new AROON_Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
+         core.AroonStepImpl(scratch, inHigh, inLow);
+         return new AroonValue(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -628,7 +628,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("AROON", "updateAndFill", RetCode.BadParam);
-            core.AROON_StepImpl(this, inHigh[i], inLow[i]);
+            core.AroonStepImpl(this, inHigh[i], inLow[i]);
             outAroonDown[i] = cur_outAroonDown;
             outAroonUp[i] = cur_outAroonUp;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -640,18 +640,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public AROON_Value Value => new AROON_Value(cur_outAroonDown, cur_outAroonUp);
+      public AroonValue Value => new AroonValue(cur_outAroonDown, cur_outAroonUp);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public AROON_Stream Clone()
+      public AroonStream Clone()
       {
-         return new AROON_Stream(this);
+         return new AroonStream(this);
       }
    }
 
-   internal void AROON_StepImpl( AROON_Stream sp, double inHigh, double inLow )
+   internal void AroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -707,7 +707,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode AROON_OpenImpl( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp, int outStride )
+   private RetCode AroonOpenImpl( AroonStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -853,11 +853,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AROON_Stream AROON_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
+   /* AroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AroonStream AroonOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
    {
-      AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1);
+      AroonStream sp = new AroonStream(this);
+      RetCode retCode = AroonOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -866,13 +866,13 @@ public partial class Core
       throw StreamFailure("AROON", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind AROON_Open (composition seam). */
-   internal AROON_Stream AROON_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind AroonOpen (composition seam). */
+   internal AroonStream AroonOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
-      AROON_Stream sp = new AROON_Stream(this);
+      AroonStream sp = new AroonStream(this);
       double[] sink_outAroonDown = new double[1];
       double[] sink_outAroonUp = new double[1];
-      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
+      RetCode retCode = AroonOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -883,11 +883,11 @@ public partial class Core
 
    /// <summary>Open a live <c>AROON</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="AROON_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="AroonStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>AROON</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>AROON_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>AROON_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>AroonOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -900,16 +900,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public AROON_Stream AROON_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
+   public AroonStream AroonOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROON open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROON open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("AROON open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("AROON", "open", "inLow", inLow.Length, inHigh.Length);
-      return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return AroonOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
-   /// <summary><c>AROON_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>AroonOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>AROON</c> produces over
@@ -921,7 +921,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="AROON_Stream.OutRange"/>.</para>
+   /// <see cref="AroonStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -939,7 +939,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public AROON_Stream AROON_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outAroonDown, Span<double> outAroonUp )
+   public AroonStream AroonOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outAroonDown, Span<double> outAroonUp )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROON openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROON openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -951,6 +951,6 @@ public partial class Core
       if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || outAroonDown.Overlaps(outAroonUp) ) {
          throw StreamFailure("AROON", "openAndFill", RetCode.BadParam);
       }
-      return AROON_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outAroonDown, outAroonUp);
+      return AroonOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outAroonDown, outAroonUp);
    }
 }

@@ -408,9 +408,9 @@ public partial class Core
    /// <summary>A live <c>CDLHIKKAKE</c> stream: one value per closed bar, bit-identical
    /// to <c>CDLHIKKAKE</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLHIKKAKE_Open"/>. There is no close and
-   /// nothing to dispose — the handle is ordinary managed state, and an
-   /// unreferenced handle is simply collected.</para>
+   /// <para>Open with <see cref="Core.CdlhikkakeOpen"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
    /// race with an <c>Update</c> on the same handle. With no concurrent
@@ -421,7 +421,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLHIKKAKE_Stream
+   public sealed class CdlhikkakeStream
    {
       internal Core core;
       internal int patternResult;
@@ -436,12 +436,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLHIKKAKE_Stream( Core core ) { this.core = core; }
+      internal CdlhikkakeStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLHIKKAKE</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Cdlhikkake</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -450,7 +450,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLHIKKAKE_Stream( CDLHIKKAKE_Stream other )
+      internal CdlhikkakeStream( CdlhikkakeStream other )
       {
          this.core = other.core;
          this.patternResult = other.patternResult;
@@ -466,7 +466,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLHIKKAKE_Stream other )
+      internal void CopyFrom( CdlhikkakeStream other )
       {
          this.core = other.core;
          this.patternResult = other.patternResult;
@@ -501,7 +501,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIKKAKE", "update", RetCode.BadParam);
-         core.CDLHIKKAKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.CdlhikkakeStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -523,8 +523,8 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIKKAKE", "peek", RetCode.BadParam);
-         CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
-         core.CDLHIKKAKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlhikkakeStream scratch = new CdlhikkakeStream(this);
+         core.CdlhikkakeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -551,7 +551,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLHIKKAKE", "updateAndFill", RetCode.BadParam);
-            core.CDLHIKKAKE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.CdlhikkakeStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -567,13 +567,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLHIKKAKE_Stream Clone()
+      public CdlhikkakeStream Clone()
       {
-         return new CDLHIKKAKE_Stream(this);
+         return new CdlhikkakeStream(this);
       }
    }
 
-   internal void CDLHIKKAKE_StepImpl( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CdlhikkakeStepImpl( CdlhikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -601,7 +601,7 @@ public partial class Core
       sp.lag1_inLow = inLow;
    }
 
-   private RetCode CDLHIKKAKE_OpenImpl( CDLHIKKAKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CdlhikkakeOpenImpl( CdlhikkakeStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -724,11 +724,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLHIKKAKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* CdlhikkakeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CdlhikkakeStream CdlhikkakeOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
-      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      CdlhikkakeStream sp = new CdlhikkakeStream(this);
+      RetCode retCode = CdlhikkakeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -737,12 +737,12 @@ public partial class Core
       throw StreamFailure("CDLHIKKAKE", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLHIKKAKE_Open (composition seam). */
-   internal CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind CdlhikkakeOpen (composition seam). */
+   internal CdlhikkakeStream CdlhikkakeOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      CdlhikkakeStream sp = new CdlhikkakeStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdlhikkakeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -753,12 +753,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLHIKKAKE</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLHIKKAKE_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="CdlhikkakeStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLHIKKAKE</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>CDLHIKKAKE_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLHIKKAKE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>CdlhikkakeOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -771,7 +771,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLHIKKAKE_Stream CDLHIKKAKE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public CdlhikkakeStream CdlhikkakeOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKE open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -781,10 +781,10 @@ public partial class Core
       RequireHistoryLength("CDLHIKKAKE", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKE", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKE", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CdlhikkakeOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLHIKKAKE_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>CdlhikkakeOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLHIKKAKE</c> produces
@@ -798,7 +798,7 @@ public partial class Core
    /// <c>ArgumentException</c> naming it rather than a fault from inside the
    /// fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLHIKKAKE_Stream.OutRange"/>.</para>
+   /// <see cref="CdlhikkakeStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -815,7 +815,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public CdlhikkakeStream CdlhikkakeOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -827,6 +827,6 @@ public partial class Core
       RequireHistoryLength("CDLHIKKAKE", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKE", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLHIKKAKE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLHIKKAKE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return CdlhikkakeOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

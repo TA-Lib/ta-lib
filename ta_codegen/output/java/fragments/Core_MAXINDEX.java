@@ -318,7 +318,7 @@
    /**
     * A live MAXINDEX stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MAXINDEX} over the same series.
-    * Open with {@link Core#MAXINDEX_Open}; there is no close — the handle is
+    * Open with {@link Core#maxindexOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -329,7 +329,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MAXINDEX_Stream {
+   public static final class MaxindexStream {
       Core core;
       int optInTimePeriod;
       double highest;
@@ -343,7 +343,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MAXINDEX_Stream( Core core ) { this.core = core; }
+      MaxindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -357,7 +357,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MAXINDEX_Stream( MAXINDEX_Stream other ) {
+      MaxindexStream( MaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -372,7 +372,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MAXINDEX_Stream other ) {
+      void copyFrom( MaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -406,7 +406,7 @@
       public int update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
-         core.MAXINDEX_StepImpl(this, inReal);
+         core.maxindexStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -432,7 +432,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("MAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-            core.MAXINDEX_StepImpl(this, inReal[i]);
+            core.maxindexStepImpl(this, inReal[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -448,8 +448,8 @@
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
-         MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
-         core.MAXINDEX_StepImpl(scratch, inReal);
+         MaxindexStream scratch = new MaxindexStream(this);
+         core.maxindexStepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -466,11 +466,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MAXINDEX_Stream copy() {
-         return new MAXINDEX_Stream(this);
+      public MaxindexStream copy() {
+         return new MaxindexStream(this);
       }
    }
-   void MAXINDEX_StepImpl( MAXINDEX_Stream sp, double inReal )
+   void maxindexStepImpl( MaxindexStream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -501,7 +501,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode maxindexOpenImpl( MaxindexStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double highest = 0;
       double tmp = 0;
@@ -605,11 +605,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* maxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MaxindexStream maxindexOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
+      MaxindexStream sp = new MaxindexStream(this);
+      RetCode retCode = maxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,14 +623,14 @@
       }
       throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MAXINDEX_Open (composition seam). */
-   MAXINDEX_Stream MAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind maxindexOpen (composition seam). */
+   MaxindexStream maxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      MaxindexStream sp = new MaxindexStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = maxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -657,14 +657,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MAXINDEX_Stream MAXINDEX_Open( double inReal[], int optInTimePeriod )
+   public MaxindexStream maxindexOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("MAXINDEX open", "inReal", inReal);
       requireHistory("MAXINDEX open", inReal.length);
-      return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
+      return maxindexOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MAXINDEX_Open} that also fills the output array(s) bit-identically
+    * {@link Core#maxindexOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MAXINDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -672,9 +672,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MAXINDEX_Stream#outRange()}.
+    * {@link MaxindexStream#outRange()}.
     */
-   public MAXINDEX_Stream MAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
+   public MaxindexStream maxindexOpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
       requireArgument("MAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MAXINDEX openAndFill", inReal.length);
@@ -685,5 +685,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      return maxindexOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger);
    }

@@ -509,7 +509,7 @@ public partial class Core
    /// <summary>A live <c>LINEARREG</c> stream: one value per closed bar, bit-identical to
    /// <c>LINEARREG</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.LINEARREG_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.LinearregOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -522,7 +522,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class LINEARREG_Stream
+   public sealed class LinearregStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -543,12 +543,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal LINEARREG_Stream( Core core ) { this.core = core; }
+      internal LinearregStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.LINEARREG</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Linearreg</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -557,7 +557,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal LINEARREG_Stream( LINEARREG_Stream other )
+      internal LinearregStream( LinearregStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -580,7 +580,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( LINEARREG_Stream other )
+      internal void CopyFrom( LinearregStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -621,7 +621,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG", "update", RetCode.BadParam);
-         core.LINEARREG_StepImpl(this, inReal);
+         core.LinearregStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -640,8 +640,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG", "peek", RetCode.BadParam);
-         LINEARREG_Stream scratch = new LINEARREG_Stream(this);
-         core.LINEARREG_StepImpl(scratch, inReal);
+         LinearregStream scratch = new LinearregStream(this);
+         core.LinearregStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -665,7 +665,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("LINEARREG", "updateAndFill", RetCode.BadParam);
-            core.LINEARREG_StepImpl(this, inReal[i]);
+            core.LinearregStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -681,13 +681,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public LINEARREG_Stream Clone()
+      public LinearregStream Clone()
       {
-         return new LINEARREG_Stream(this);
+         return new LinearregStream(this);
       }
    }
 
-   internal void LINEARREG_StepImpl( LINEARREG_Stream sp, double inReal )
+   internal void LinearregStepImpl( LinearregStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -789,7 +789,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode LINEARREG_OpenImpl( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LinearregOpenImpl( LinearregStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1015,11 +1015,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* LINEARREG_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal LINEARREG_Stream LINEARREG_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* LinearregOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal LinearregStream LinearregOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      LINEARREG_Stream sp = new LINEARREG_Stream(this);
-      RetCode retCode = LINEARREG_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      LinearregStream sp = new LinearregStream(this);
+      RetCode retCode = LinearregOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1028,12 +1028,12 @@ public partial class Core
       throw StreamFailure("LINEARREG", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind LINEARREG_Open (composition seam). */
-   internal LINEARREG_Stream LINEARREG_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind LinearregOpen (composition seam). */
+   internal LinearregStream LinearregOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      LINEARREG_Stream sp = new LINEARREG_Stream(this);
+      LinearregStream sp = new LinearregStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = LinearregOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1044,12 +1044,12 @@ public partial class Core
 
    /// <summary>Open a live <c>LINEARREG</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="LINEARREG_Stream.Value"/> starts at the last
+   /// <para>The handle's <see cref="LinearregStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>LINEARREG</c> reports for
    /// that bar.</para>
    /// <para>The history must hold at least <c>LINEARREG_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>LINEARREG_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>LinearregOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Series to fit. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_Lookback"/> for its default
@@ -1061,14 +1061,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public LINEARREG_Stream LINEARREG_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public LinearregStream LinearregOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return LINEARREG_OpenInternal(inReal, 0, optInTimePeriod);
+      return LinearregOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>LINEARREG_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>LinearregOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>LINEARREG</c> produces
@@ -1081,7 +1081,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="LINEARREG_Stream.OutRange"/>.</para>
+   /// <see cref="LinearregStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Series to fit. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_Lookback"/> for its default
@@ -1096,7 +1096,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public LINEARREG_Stream LINEARREG_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public LinearregStream LinearregOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "LINEARREG openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1105,6 +1105,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("LINEARREG", "openAndFill", RetCode.BadParam);
       }
-      return LINEARREG_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return LinearregOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

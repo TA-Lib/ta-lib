@@ -718,7 +718,7 @@ public partial class Core
    /// <summary>A live <c>MAVP</c> stream: one value per closed bar, bit-identical to
    /// <c>MAVP</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MAVP_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.MavpOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -731,7 +731,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MAVP_Stream
+   public sealed class MavpStream
    {
       internal Core core;
       internal int optInMinPeriod;
@@ -739,16 +739,16 @@ public partial class Core
       internal MAType optInMAType;
       internal double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-      internal MA_Stream[] bank = [];
+      internal MaStream[] bank = [];
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MAVP_Stream( Core core ) { this.core = core; }
+      internal MavpStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MAVP</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Mavp</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -756,22 +756,22 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MAVP_Stream( MAVP_Stream other )
+      internal MavpStream( MavpStream other )
       {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
          this.optInMaxPeriod = other.optInMaxPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.bank = new MA_Stream[other.bank.Length];
+         this.bank = new MaStream[other.bank.Length];
          for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
-            this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+            this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
          }
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MAVP_Stream other )
+      internal void CopyFrom( MavpStream other )
       {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
@@ -783,9 +783,9 @@ public partial class Core
                this.bank[bankIdx].CopyFrom(other.bank[bankIdx]);
             }
          } else {
-            this.bank = new MA_Stream[other.bank.Length];
+            this.bank = new MaStream[other.bank.Length];
             for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
-               this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+               this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
             }
          }
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -793,7 +793,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MAVP_Stream? peekScratch;
+      [ThreadStatic] private static MavpStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -812,7 +812,7 @@ public partial class Core
       public double Update( double inReal, double inPeriods )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "update", RetCode.BadParam);
-         core.MAVP_StepImpl(this, inReal, inPeriods);
+         core.MavpStepImpl(this, inReal, inPeriods);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -832,14 +832,14 @@ public partial class Core
       public double Peek( double inReal, double inPeriods )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "peek", RetCode.BadParam);
-         MAVP_Stream? scratch = peekScratch;
+         MavpStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new MAVP_Stream(this);
+            scratch = new MavpStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.MAVP_StepImpl(scratch, inReal, inPeriods);
+         core.MavpStepImpl(scratch, inReal, inPeriods);
          return scratch.cur_outReal;
       }
 
@@ -864,7 +864,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) || !double.IsFinite(inPeriods[i]) ) throw Core.StreamFailure("MAVP", "updateAndFill", RetCode.BadParam);
-            core.MAVP_StepImpl(this, inReal[i], inPeriods[i]);
+            core.MavpStepImpl(this, inReal[i], inPeriods[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -880,13 +880,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MAVP_Stream Clone()
+      public MavpStream Clone()
       {
-         return new MAVP_Stream(this);
+         return new MavpStream(this);
       }
    }
 
-   internal void MAVP_StepImpl( MAVP_Stream sp, double inReal, double inPeriods )
+   internal void MavpStepImpl( MavpStream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {
@@ -895,7 +895,7 @@ public partial class Core
          cp = sp.optInMaxPeriod;
       }
       int slot = cp - sp.optInMinPeriod;
-      MA_Stream[] bank = sp.bank;
+      MaStream[] bank = sp.bank;
       for( int bankIdx = 0; bankIdx < bank.Length; bankIdx++ ) {
          double subValue = bank[bankIdx].Update(inReal);
          if( bankIdx == slot ) {
@@ -904,7 +904,7 @@ public partial class Core
       }
    }
 
-   private RetCode MAVP_OpenImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode MavpOpenImpl( MavpStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 ) {
@@ -949,9 +949,9 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
-      MA_Stream[] bank = new MA_Stream[nBank];
+      MaStream[] bank = new MaStream[nBank];
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         bank[bankIdx] = MA_OpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+         bank[bankIdx] = MaOpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
       }
       int cp = (int)inPeriods[historyLen - 1];
       if( cp < optInMinPeriod ) {
@@ -969,7 +969,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MavpOpenAndFillImpl( MavpStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1011,12 +1011,12 @@ public partial class Core
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
-      MA_Stream[] bank = new MA_Stream[nBank];
+      MaStream[] bank = new MaStream[nBank];
       double[] scratch = new double[nBank];
       double[] seedPrefix = new double[lookbackTotal + 1];
       inReal.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         MA_Stream sub = MA_OpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
+         MaStream sub = MaOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
          bank[bankIdx] = sub;
          scratch[bankIdx] = sub.cur_outReal;
       }
@@ -1050,11 +1050,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* Internal startIdx-anchored open behind MAVP_Open (composition seam). */
-   internal MAVP_Stream MAVP_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind MavpOpen (composition seam). */
+   internal MavpStream MavpOpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      MavpStream sp = new MavpStream(this);
+      RetCode retCode = MavpOpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1063,11 +1063,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MAVP</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MAVP_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MavpStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MAVP</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MAVP_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MAVP_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MavpOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">series to be averaged. The warm-up history, oldest bar first.</param>
    /// <param name="inPeriods">per-bar desired MA period. The warm-up history, oldest bar first.</param>
@@ -1084,17 +1084,17 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MAVP_Stream MAVP_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   public MavpStream MavpOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inPeriods.IsEmpty ) throw new TaLibArgumentException("MAVP open: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       RequireHistoryLength("MAVP", "open", "inPeriods", inPeriods.Length, inReal.Length);
-      return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
+      return MavpOpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
-   /// <summary><c>MAVP_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>MavpOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MAVP</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -1105,7 +1105,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MAVP_Stream.OutRange"/>.</para>
+   /// <see cref="MavpStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">series to be averaged. The warm-up history, oldest bar first.</param>
    /// <param name="inPeriods">per-bar desired MA period. The warm-up history, oldest bar first.</param>
@@ -1125,7 +1125,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MAVP_Stream MAVP_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
+   public MavpStream MavpOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAVP openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1133,8 +1133,8 @@ public partial class Core
       int guardOutLen = OpenFillCount("MAVP", "openAndFill", inReal.Length, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       RequireHistoryLength("MAVP", "openAndFill", "inPeriods", inPeriods.Length, inReal.Length);
       RequireFillLength("MAVP", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      MavpStream sp = new MavpStream(this);
+      RetCode retCode = MavpOpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {

@@ -68,8 +68,8 @@ namespace TALib.Test;
 /// NUMERATOR over a non-zero divisor stays a signed zero, and ordinary
 /// quotients are untouched.</para>
 /// <para>The streaming tier takes the same table twice, because it emits two
-/// loops. <c>DIV_OpenImpl</c> carries its own transcription of the batch body
-/// (the warm-up fill) and <c>DIV_StepImpl</c> carries the per-bar one, so a
+/// loops. <c>DivOpenImpl</c> carries its own transcription of the batch body
+/// (the warm-up fill) and <c>DivStepImpl</c> carries the per-bar one, so a
 /// guard added to one is invisible to the other — measured on the C side: an
 /// <c>_OpenImpl</c>-only guard on a zero divisor survived every other assertion
 /// in the group. Neither entry point may reject the bar: both guard their
@@ -191,20 +191,20 @@ public static class DivZeroTest
 
     private static void FillLoop()
     {
-        // DIV_OpenImpl, not DIV_StepImpl: a separate transcription of the batch
+        // DivOpenImpl, not DivStepImpl: a separate transcription of the batch
         // body, and the only assertion that reaches it.
         var core = new Core();
         double[] outReal = new double[Num.Length];
-        Core.DIV_Stream s;
+        Core.DivStream s;
         OutRange r;
         try
         {
-            s = core.DIV_OpenAndFill(Num, Den, outReal);
+            s = core.DivOpenAndFill(Num, Den, outReal);
             r = s.OutRange;
         }
         catch (Exception e)
         {
-            Fail($"DIV_OpenAndFill threw on a zero divisor: {e.GetType().Name}: {e.Message}");
+            Fail($"DivOpenAndFill threw on a zero divisor: {e.GetType().Name}: {e.Message}");
             return;
         }
 
@@ -212,7 +212,7 @@ public static class DivZeroTest
         if (r.BegIdx != 0 || r.Count != Num.Length)
         {
             _failures++;
-            Console.WriteLine($"  FAIL: DIV_OpenAndFill range {r.BegIdx}/{r.Count}, expected 0/{Num.Length}");
+            Console.WriteLine($"  FAIL: DivOpenAndFill range {r.BegIdx}/{r.Count}, expected 0/{Num.Length}");
             return;
         }
         for (int i = 0; i < Num.Length; i++)
@@ -220,20 +220,20 @@ public static class DivZeroTest
             Check("fill", i, outReal[i]);
         }
         // The same loop with no output array: only the last row survives.
-        Check("open-last", Num.Length - 1, core.DIV_Open(Num, Den).Value);
+        Check("open-last", Num.Length - 1, core.DivOpen(Num, Den).Value);
     }
 
     private static void StreamingTier()
     {
         var core = new Core();
-        Core.DIV_Stream s;
+        Core.DivStream s;
         try
         {
-            s = core.DIV_Open(new[] { Num[0] }, new[] { Den[0] });
+            s = core.DivOpen(new[] { Num[0] }, new[] { Den[0] });
         }
         catch (Exception e)
         {
-            Fail($"DIV_Open threw on a zero divisor: {e.GetType().Name}: {e.Message}");
+            Fail($"DivOpen threw on a zero divisor: {e.GetType().Name}: {e.Message}");
             return;
         }
         Check("open", 0, s.Value);
@@ -279,7 +279,7 @@ public static class DivZeroTest
         // nothing". The MESSAGE is checked, not just the type -- see
         // StreamApiTest.ThrowsBadParam for why.
         var core = new Core();
-        Core.DIV_Stream s = core.DIV_Open(new[] { 1.0 }, new[] { 2.0 });
+        Core.DivStream s = core.DivOpen(new[] { 1.0 }, new[] { 2.0 });
         foreach (double bad in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
         {
             for (int slot = 0; slot < 2; slot++)

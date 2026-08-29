@@ -185,7 +185,7 @@
    /**
     * A live SIN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SIN} over the same series.
-    * Open with {@link Core#SIN_Open}; there is no close — the handle is
+    * Open with {@link Core#sinOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -196,13 +196,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SIN_Stream {
+   public static final class SinStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      SIN_Stream( Core core ) { this.core = core; }
+      SinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -216,14 +216,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SIN_Stream( SIN_Stream other ) {
+      SinStream( SinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SIN_Stream other ) {
+      void copyFrom( SinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
-         core.SIN_StepImpl(this, inReal);
+         core.sinStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("SIN updateAndFill: BadParam", RetCode.BadParam);
-            core.SIN_StepImpl(this, inReal[i]);
+            core.sinStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -287,8 +287,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
-         SIN_Stream scratch = new SIN_Stream(this);
-         core.SIN_StepImpl(scratch, inReal);
+         SinStream scratch = new SinStream(this);
+         core.sinStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -305,15 +305,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SIN_Stream copy() {
-         return new SIN_Stream(this);
+      public SinStream copy() {
+         return new SinStream(this);
       }
    }
-   void SIN_StepImpl( SIN_Stream sp, double inReal )
+   void sinStepImpl( SinStream sp, double inReal )
    {
       sp.cur_outReal = Math.sin(inReal);
    }
-   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode sinOpenImpl( SinStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -339,11 +339,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SIN_Stream SIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* sinOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SinStream sinOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      SinStream sp = new SinStream(this);
+      RetCode retCode = sinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -357,14 +357,14 @@
       }
       throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SIN_Open (composition seam). */
-   SIN_Stream SIN_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind sinOpen (composition seam). */
+   SinStream sinOpenInternal( double inReal[], int startIdx )
    {
-      SIN_Stream sp = new SIN_Stream(this);
+      SinStream sp = new SinStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = sinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -391,14 +391,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SIN_Stream SIN_Open( double inReal[] )
+   public SinStream sinOpen( double inReal[] )
    {
       requireArgument("SIN open", "inReal", inReal);
       requireHistory("SIN open", inReal.length);
-      return SIN_OpenInternal(inReal, 0);
+      return sinOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#SIN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#sinOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -406,9 +406,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SIN_Stream#outRange()}.
+    * {@link SinStream#outRange()}.
     */
-   public SIN_Stream SIN_OpenAndFill( double inReal[], double outReal[] )
+   public SinStream sinOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("SIN openAndFill", "inReal", inReal);
       requireHistory("SIN openAndFill", inReal.length);
@@ -419,5 +419,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SIN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return sinOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

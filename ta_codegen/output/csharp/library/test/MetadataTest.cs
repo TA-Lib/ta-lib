@@ -189,9 +189,13 @@ public static class MetadataTest
         Check(!c.TryGet("NOSUCHFUNCTION", out _), "TryGet reports an unknown name");
         Check(c.TryGet("SMA", out FunctionInfo? sma) && sma.Name == "SMA", "TryGet finds a known name");
 
-        // Case sensitivity is a contract, not an accident: C's TA_GetFuncHandle
-        // is a strcmp, and the catalogue pins StringComparer.Ordinal to match.
-        Check(!c.TryGet("sma", out _), "lookup is case-sensitive, matching C");
+        // Case-insensitivity is a contract, not an accident (issue #278): once
+        // each backend spells the streaming API in its own idiom, "SMA" is the
+        // only spelling a caller can rely on across all four, so the catalogue
+        // folds ASCII case (StringComparer.OrdinalIgnoreCase) the way C's
+        // TA_GetFuncHandle now does too.
+        Check(c.TryGet("sma", out FunctionInfo? smaLower) && smaLower.Name == "SMA",
+              "lookup is case-insensitive, matching C, and still reports the canonical name");
 
         int inGroups = FunctionCatalog.Groups.Sum(g => c.InGroup(g).Count());
         Check(inGroups == c.Count, $"the groups partition the catalogue ({inGroups} vs {c.Count})");

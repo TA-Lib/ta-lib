@@ -2498,7 +2498,7 @@ fn emit_rust_warmup_arms(
     input_names: &[String],
     outputs: &[Output],
 ) {
-    let base = func.name.clone();
+    let base = crate::backends::common::snake_words(&func.name);
     let mut ins = String::new();
     for name in input_names {
         // Slice to the benched range. Rust derives historyLen from the slice
@@ -2527,14 +2527,14 @@ fn emit_rust_warmup_arms(
     }
     s.push_str("            if bench_mode == 1 {\n");
     s.push_str(&format!(
-        "                rc = match core.{base}_Open({ins}{opts}) {{ Ok(_h) => RetCode::Success, Err(e) => e }};\n"
+        "                rc = match core.{base}_open({ins}{opts}) {{ Ok(_h) => RetCode::Success, Err(e) => e }};\n"
     ));
     s.push_str("            } else {\n");
     // The fill reports its range as an `OutRange` beside the handle (#179 C15);
     // unpack it into the same two locals the batch arm sets, which the output
     // hash below reads.
     s.push_str(&format!(
-        "                rc = match core.{base}_OpenAndFill({ins}{opts}{}) {{ Ok((_h, r)) => {{ outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }} Err(e) => e }};\n",
+        "                rc = match core.{base}_open_and_fill({ins}{opts}{}) {{ Ok((_h, r)) => {{ outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }} Err(e) => e }};\n",
         fill_outs.trim_start_matches(", ")
     ));
     s.push_str("            }\n");
@@ -3672,6 +3672,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Per-function handler methods — each is small enough for C2 JIT compilation.
     for func in funcs {
         let func_base = func.name.clone();
+        let func_base_camel = crate::backends::common::camel_words(&func.name);
+        let func_stream_class = crate::backends::java_stream::stream_class_name(func);
 
         s.push_str(&format!(
             "    static String handle_{}(String json) {{\n",
@@ -3912,7 +3914,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("        else { try {\n");
             s.push_str("            if (bench_mode == 1) {\n");
             s.push_str(&format!(
-                "                core.{func_base}_Open({ins});\n"
+                "                core.{func_base_camel}Open({ins});\n"
             ));
             s.push_str("            } else {\n");
             // The fill reports its range via the returned handle's outRange()
@@ -3923,7 +3925,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // (timing-only) but wrong for anything that reads the value, same
             // shape as the Rust arm's `Ok((_h, r)) => outBegIdx = r.beg_idx`.
             s.push_str(&format!(
-                "                Core.{func_base}_Stream _wh = core.{func_base}_OpenAndFill({fill});\n\
+                "                Core.{func_stream_class} _wh = core.{func_base_camel}OpenAndFill({fill});\n\
                  \x20               outBegIdx.value = _wh.outRange().begIdx();\n\
                  \x20               outNBElement.value = _wh.outRange().count();\n"
             ));
@@ -4613,6 +4615,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // Per-function handler methods.
     for func in funcs {
         let base = func.name.clone();
+        let base_pascal = crate::backends::common::pascal_words(&func.name);
+        let stream_class = crate::backends::csharp_stream::stream_class_name(func);
         let input_names = expand_input_names(&func.inputs);
         let outputs = &func.outputs;
 
@@ -4806,7 +4810,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             let fill = fill_args.join(", ");
             s.push_str("            } else if (bench_mode == 1) {\n");
             s.push_str("                try {\n");
-            s.push_str(&format!("                    core.{base}_Open({ins});\n"));
+            s.push_str(&format!("                    core.{base_pascal}Open({ins});\n"));
             s.push_str("                    rc = RetCode.Success;\n");
             s.push_str("                } catch (Exception _e3) when (_e3 is ITaLibFailure) {\n");
             s.push_str("                    rc = ((ITaLibFailure)_e3).RetCode;\n");
@@ -4817,7 +4821,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             // property -- unpack it into the same two locals the batch arm
             // sets, which the response builder below reads.
             s.push_str(&format!(
-                "                    Core.{base}_Stream _wh = core.{base}_OpenAndFill({fill});\n"
+                "                    Core.{stream_class} _wh = core.{base_pascal}OpenAndFill({fill});\n"
             ));
             s.push_str("                    outBegIdx = _wh.OutRange.BegIdx;\n");
             s.push_str("                    outNBElement = _wh.OutRange.Count;\n");
@@ -6292,6 +6296,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // the verbatim function name.
     let sn = func.name.to_lowercase();
     let fname = &func.name;
+    let fname_snake = crate::backends::common::snake_words(fname);
     let candle = func.name.starts_with("CDL");
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;
@@ -6485,12 +6490,12 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         let _ = writeln!(s, "        if {guard} {{");
         let _ = writeln!(
             s,
-            "            let r1 = c2.{fname}_Open({full_ins}{opts_tail}).is_err();"
+            "            let r1 = c2.{fname_snake}_open({full_ins}{opts_tail}).is_err();"
         );
         s.push_str(&fdecls.replace("        ", "            "));
         let _ = writeln!(
             s,
-            "            let r2 = c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}).is_err();"
+            "            let r2 = c2.{fname_snake}_open_and_fill({full_ins}{opts_tail}{fargs}).is_err();"
         );
         s.push_str("            let okr = r1 && r2;\n");
         s.push_str("            return format!(\"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", i32::from(okr));\n");
@@ -6509,7 +6514,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        if rc != RetCode::Success || nb == 0 {\n");
     let _ = writeln!(
         s,
-        "            let open_rejects = c2.{fname}_Open({full_ins}{opts_tail}).is_err();"
+        "            let open_rejects = c2.{fname_snake}_open({full_ins}{opts_tail}).is_err();"
     );
     if candle {
         s.push_str("            if !open_rejects { all_ok = false; }\n");
@@ -6525,7 +6530,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&fdecls);
     let _ = writeln!(
         s,
-        "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}) {{"
+        "        match c2.{fname_snake}_open_and_fill({full_ins}{opts_tail}{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
     let fill_bit = sv_range_bit(SvRangeSite::Fill, SV_RANGE_SITES_RUST);
@@ -6560,7 +6565,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .join(", ");
     let _ = writeln!(
         s,
-        "            if c2.{fname}_Open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
+        "            if c2.{fname_snake}_open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
     );
     s.push_str("        }\n");
 
@@ -6595,7 +6600,8 @@ fn emit_rust_sv_prefix_sweep(
     s.push_str("        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);\n");
     s.push_str("        pcs.sort_unstable();\n        pcs.dedup();\n");
     s.push_str("        for &p in &pcs {\n");
-    let _ = writeln!(s, "            match c2.{fname}_Open({pfx_ins}{opts_tail}) {{");
+    let fname_snake = crate::backends::common::snake_words(fname);
+    let _ = writeln!(s, "            match c2.{fname_snake}_open({pfx_ins}{opts_tail}) {{");
     s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(\",\\\"openRejectP\\\":{}\", p); } }\n");
     s.push_str("                Ok((mut st, v0)) => {\n                    legs += 1;\n");
     // open-value compare
@@ -6694,7 +6700,8 @@ fn emit_rust_sv_update_and_fill_leg(
     out_nullable: &[bool],
 ) {
     s.push_str("        if let Some(&p) = pcs.first() {\n");
-    let _ = writeln!(s, "            match c2.{fname}_Open({pfx_ins}{opts_tail}) {{");
+    let fname_snake = crate::backends::common::snake_words(fname);
+    let _ = writeln!(s, "            match c2.{fname_snake}_open({pfx_ins}{opts_tail}) {{");
     s.push_str("                Err(_) => { ufill_ok = false; }\n");
     s.push_str("                Ok((mut stu, _uv0)) => {\n");
     s.push_str("                    ufill_checked = 1;\n");
@@ -6866,6 +6873,7 @@ fn sv_java_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     use std::fmt::Write as _;
     let base = func.name.clone();
+    let base_camel = crate::backends::common::camel_words(&func.name);
     let class = crate::backends::java_stream::stream_class_name(func);
     let candle = func.name.starts_with("CDL");
     let inputs = crate::streaming::input_array_names(func);
@@ -7060,13 +7068,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str("                boolean r1;\n");
         let _ = writeln!(
             s,
-            "                try {{ c2.{base}_Open({full_ins}{opts_tail}); r1 = false; }} catch (IllegalArgumentException _e) {{ r1 = true; }}"
+            "                try {{ c2.{base_camel}Open({full_ins}{opts_tail}); r1 = false; }} catch (IllegalArgumentException _e) {{ r1 = true; }}"
         );
         s.push_str(&fdecls.replace("            ", "                "));
         s.push_str("                boolean r2;\n");
         let _ = writeln!(
             s,
-            "                try {{ c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs}); r2 = false; }} catch (IllegalArgumentException _e) {{ r2 = true; }}"
+            "                try {{ c2.{base_camel}OpenAndFill({full_ins}{opts_tail}{fargs}); r2 = false; }} catch (IllegalArgumentException _e) {{ r2 = true; }}"
         );
         s.push_str("                boolean okr = r1 && r2;\n");
         s.push_str("                return \"{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":\" + (okr ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
@@ -7083,7 +7091,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                boolean openRejects;\n");
     let _ = writeln!(
         s,
-        "                try {{ c2.{base}_Open({full_ins}{opts_tail}); openRejects = false; }} catch (IllegalArgumentException _e) {{ openRejects = true; }}"
+        "                try {{ c2.{base_camel}Open({full_ins}{opts_tail}); openRejects = false; }} catch (IllegalArgumentException _e) {{ openRejects = true; }}"
     );
     if candle {
         s.push_str("                if (!openRejects) allOk = false;\n");
@@ -7099,7 +7107,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&fdecls.replace("            ", "                "));
     let _ = writeln!(
         s,
-        "                Core.{class} _fh = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs});"
+        "                Core.{class} _fh = c2.{base_camel}OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
     s.push_str("                OutRange _fr = _fh.outRange();\n");
     let _ = writeln!(s, "                rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Fill, SV_RANGE_SITES_JAVA));
@@ -7136,7 +7144,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         };
         let _ = writeln!(
             s,
-            "                try {{ c2.{base}_OpenAndFill({full_ins}{opts_tail}{alias_args}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases input */ }}"
+            "                try {{ c2.{base_camel}OpenAndFill({full_ins}{opts_tail}{alias_args}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases input */ }}"
         );
         if multi && !out_is_int[1] {
             let alias_args2 = {
@@ -7152,7 +7160,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             };
             let _ = writeln!(
                 s,
-                "                try {{ c2.{base}_OpenAndFill({full_ins}{opts_tail}{alias_args2}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases output */ }}"
+                "                try {{ c2.{base_camel}OpenAndFill({full_ins}{opts_tail}{alias_args2}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases output */ }}"
             );
         }
     }
@@ -7174,7 +7182,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let _ = writeln!(s, "                Core.{class} st;");
     let _ = writeln!(
         s,
-        "                try {{ st = c2.{base}_Open({}{opts_tail}); }}",
+        "                try {{ st = c2.{base_camel}Open({}{opts_tail}); }}",
         pfx_ins("p")
     );
     s.push_str("                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"openRejectP\\\":\" + p; continue; }\n");
@@ -7267,7 +7275,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                    try {\n");
     let _ = writeln!(
         s,
-        "                        Core.{class} stu = c2.{base}_Open({}{opts_tail});",
+        "                        Core.{class} stu = c2.{base_camel}Open({}{opts_tail});",
         pfx_ins("p")
     );
     s.push_str("                        OutRange ur0 = stu.outRange();\n");
@@ -7362,7 +7370,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                    try {\n");
     let _ = writeln!(
         s,
-        "                        Core.{class} sA = c2.{base}_Open({}{opts_tail});",
+        "                        Core.{class} sA = c2.{base_camel}Open({}{opts_tail});",
         pfx_ins("p0")
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
@@ -7394,7 +7402,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("            if (lb >= 1 && lb < svN) {\n");
     let _ = writeln!(
         s,
-        "                try {{ c2.{base}_Open({}{opts_tail}); allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
+        "                try {{ c2.{base_camel}Open({}{opts_tail}); allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
         pfx_ins("lb")
     );
     s.push_str("                catch (InsufficientHistoryException _e) { /* expected, typed */ }\n");
@@ -7423,12 +7431,12 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str("            try {\n");
         let _ = writeln!(
             s,
-            "                Core.{class} sD = c2.{base}_Open({full_ins}, {});",
+            "                Core.{class} sD = c2.{base_camel}Open({full_ins}, {});",
             sent_args.join(", ")
         );
         let _ = writeln!(
             s,
-            "                Core.{class} sE = c2.{base}_Open({full_ins}, {});",
+            "                Core.{class} sE = c2.{base_camel}Open({full_ins}, {});",
             expl_args.join(", ")
         );
         if multi {
@@ -7470,7 +7478,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let _ = writeln!(
         s,
         "                        try {{\n\
-         \x20                           Core.{class} stA = c2.{base}_OpenInternal({}, Sidx{opts_tail});\n\
+         \x20                           Core.{class} stA = c2.{base_camel}OpenInternal({}, Sidx{opts_tail});\n\
          \x20                           rangeChecked = 1; rangeLegs++; rangeSites |= {anchored_bit};\n\
          \x20                           if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;\n\
          \x20                       }} catch (IllegalArgumentException _e) {{ rangeOk = false; if (diag.isEmpty()) diag = \",\\\"anchoredOpenRejected\\\":1\"; }}",
@@ -7915,6 +7923,7 @@ fn emit_csharp_sv_func(
 ) -> String {
     use std::fmt::Write as _;
     let base = func.name.clone();
+    let base_pascal = crate::backends::common::pascal_words(&func.name);
     let class = crate::backends::csharp_stream::stream_class_name(func);
     let valty = crate::backends::csharp_stream::value_type_name(func);
     let candle = func.name.starts_with("CDL");
@@ -8190,13 +8199,13 @@ fn emit_csharp_sv_func(
         s.push_str("            bool eOpen, eFill;\n");
         let _ = writeln!(
             s,
-            "            try {{ _ = c0.{base}_Open({full_ins}{opts_tail}); eOpen = false; }}"
+            "            try {{ _ = c0.{base_pascal}Open({full_ins}{opts_tail}); eOpen = false; }}"
         );
         s.push_str("            catch (ArgumentException) { eOpen = true; }\n");
         s.push_str(&fdecls);
         let _ = writeln!(
             s,
-            "            try {{ _ = c0.{base}_OpenAndFill({full_ins}{opts_tail}{fargs}); eFill = false; }}"
+            "            try {{ _ = c0.{base_pascal}OpenAndFill({full_ins}{opts_tail}{fargs}); eFill = false; }}"
         );
         s.push_str("            catch (ArgumentException) { eFill = true; }\n");
         s.push_str("            bool eOk = eOpen && eFill;\n");
@@ -8251,13 +8260,13 @@ fn emit_csharp_sv_func(
         s.push_str("                bool r1, r2;\n");
         let _ = writeln!(
             s,
-            "                try {{ _ = c2.{base}_Open({full_ins}{opts_tail}); r1 = false; }}"
+            "                try {{ _ = c2.{base_pascal}Open({full_ins}{opts_tail}); r1 = false; }}"
         );
         s.push_str("                catch (ArgumentException) { r1 = true; }\n");
         s.push_str(&fdecls.replace("            ", "                "));
         let _ = writeln!(
             s,
-            "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs}); r2 = false; }}"
+            "                try {{ _ = c2.{base_pascal}OpenAndFill({full_ins}{opts_tail}{fargs}); r2 = false; }}"
         );
         s.push_str("                catch (ArgumentException) { r2 = true; }\n");
         s.push_str("                bool okr = r1 && r2;\n");
@@ -8283,7 +8292,7 @@ fn emit_csharp_sv_func(
     s.push_str("                bool openRejects;\n");
     let _ = writeln!(
         s,
-        "                try {{ _ = c2.{base}_Open({full_ins}{opts_tail}); openRejects = false; }}"
+        "                try {{ _ = c2.{base_pascal}Open({full_ins}{opts_tail}); openRejects = false; }}"
     );
     s.push_str("                catch (ArgumentException) { openRejects = true; }\n");
     if candle {
@@ -8301,7 +8310,7 @@ fn emit_csharp_sv_func(
     s.push_str(&fdecls.replace("            ", "                "));
     let _ = writeln!(
         s,
-        "                Core.{class} _fh = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs});"
+        "                Core.{class} _fh = c2.{base_pascal}OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
     // `OutRange` is a PROPERTY on the C# handle (Java spells it `outRange()`),
     // returning the shipped `OutRange` with `BegIdx` / `Count`.
@@ -8370,7 +8379,7 @@ fn emit_csharp_sv_func(
             }
             let _ = writeln!(
                 s,
-                "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                "                try {{ _ = c2.{base_pascal}OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
             );
             let _ = writeln!(
                 s,
@@ -8394,7 +8403,7 @@ fn emit_csharp_sv_func(
             }
             let _ = writeln!(
                 s,
-                "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                "                try {{ _ = c2.{base_pascal}OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
             );
             let _ = writeln!(
                 s,
@@ -8472,7 +8481,7 @@ fn emit_csharp_sv_func(
                     }
                     let _ = writeln!(
                         s,
-                        "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                        "                try {{ _ = c2.{base_pascal}OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
                     );
                     let _ = writeln!(
                         s,
@@ -8510,7 +8519,7 @@ fn emit_csharp_sv_func(
                     .join(", ");
                 let _ = writeln!(
                     s,
-                    "                try {{ _ = c2.{base}_OpenAndFill({ov_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                    "                try {{ _ = c2.{base_pascal}OpenAndFill({ov_ins}{opts_tail}{aargs}); fillOk = false; }}"
                 );
                 let _ = writeln!(
                     s,
@@ -8542,7 +8551,7 @@ fn emit_csharp_sv_func(
     let _ = writeln!(s, "                Core.{class} st;");
     let _ = writeln!(
         s,
-        "                try {{ st = c2.{base}_Open({}{opts_tail}); }}",
+        "                try {{ st = c2.{base_pascal}Open({}{opts_tail}); }}",
         pfx_ins("p")
     );
     s.push_str("                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = \",\\\"openRejectP\\\":\" + p; continue; }\n");
@@ -8653,7 +8662,7 @@ fn emit_csharp_sv_func(
     s.push_str("                    try {\n");
     let _ = writeln!(
         s,
-        "                        Core.{class} stu = c2.{base}_Open({}{opts_tail});",
+        "                        Core.{class} stu = c2.{base_pascal}Open({}{opts_tail});",
         pfx_ins("p")
     );
     s.push_str("                        OutRange ur0 = stu.OutRange;\n");
@@ -8740,7 +8749,7 @@ fn emit_csharp_sv_func(
     s.push_str("                    try {\n");
     let _ = writeln!(
         s,
-        "                        Core.{class} sA = c2.{base}_Open({}{opts_tail});",
+        "                        Core.{class} sA = c2.{base_pascal}Open({}{opts_tail});",
         pfx_ins("p0")
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
@@ -8790,7 +8799,7 @@ fn emit_csharp_sv_func(
     s.push_str("                    try {\n");
     let _ = writeln!(
         s,
-        "                        Core.{class} sQ = c2.{base}_Open({}{opts_tail});",
+        "                        Core.{class} sQ = c2.{base_pascal}Open({}{opts_tail});",
         pfx_ins("pa")
     );
     let _ = writeln!(s, "                        {sink_ty} sink = {sink_zero};");
@@ -8831,7 +8840,7 @@ fn emit_csharp_sv_func(
         s.push_str("                    try {\n");
         let _ = writeln!(
             s,
-            "                        Core.{class} sC = c2.{base}_Open({}{opts_tail});",
+            "                        Core.{class} sC = c2.{base_pascal}Open({}{opts_tail});",
             pfx_ins("pc")
         );
         s.push_str("                        SvMutateLiveCandles(c2);\n");
@@ -8890,7 +8899,7 @@ fn emit_csharp_sv_func(
     s.push_str("            if (lb >= 1 && lb < svN) {\n");
     let _ = writeln!(
         s,
-        "                try {{ _ = c2.{base}_Open({}{opts_tail}); allOk = false; if (diag.Length == 0) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
+        "                try {{ _ = c2.{base_pascal}Open({}{opts_tail}); allOk = false; if (diag.Length == 0) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
         pfx_ins("lb")
     );
     s.push_str("                catch (InsufficientHistoryException) { /* expected, typed */ }\n");
@@ -8920,12 +8929,12 @@ fn emit_csharp_sv_func(
         s.push_str("            try {\n");
         let _ = writeln!(
             s,
-            "                Core.{class} sD = c2.{base}_Open({full_ins}, {});",
+            "                Core.{class} sD = c2.{base_pascal}Open({full_ins}, {});",
             sent_args.join(", ")
         );
         let _ = writeln!(
             s,
-            "                Core.{class} sE = c2.{base}_Open({full_ins}, {});",
+            "                Core.{class} sE = c2.{base_pascal}Open({full_ins}, {});",
             expl_args.join(", ")
         );
         let _ = writeln!(s, "                {up_ty} vD = sD.Value;");
@@ -8958,7 +8967,7 @@ fn emit_csharp_sv_func(
     let _ = writeln!(
         s,
         "                        try {{\n\
-         \x20                           Core.{class} stA = c2.{base}_OpenInternal({}, Sidx{opts_tail});\n\
+         \x20                           Core.{class} stA = c2.{base_pascal}OpenInternal({}, Sidx{opts_tail});\n\
          \x20                           rangeChecked = 1; rangeLegs++; rangeSites |= {anchored_bit};\n\
          \x20                           if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;\n\
          \x20                       }} catch (ArgumentException) {{ rangeOk = false; if (diag.Length == 0) diag = \",\\\"anchoredOpenRejected\\\":1\"; }}",

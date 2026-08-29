@@ -374,7 +374,7 @@
    /**
     * A live CDLIDENTICAL3CROWS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLIDENTICAL3CROWS} over the same series.
-    * Open with {@link Core#CDLIDENTICAL3CROWS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlidentical3crowsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -385,7 +385,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLIDENTICAL3CROWS_Stream {
+   public static final class Cdlidentical3crowsStream {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
       double[] EqualPeriodTotal;
@@ -415,7 +415,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLIDENTICAL3CROWS_Stream( Core core ) { this.core = core; }
+      Cdlidentical3crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -429,7 +429,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLIDENTICAL3CROWS_Stream( CDLIDENTICAL3CROWS_Stream other ) {
+      Cdlidentical3crowsStream( Cdlidentical3crowsStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.EqualPeriodTotal = other.EqualPeriodTotal.clone();
@@ -460,7 +460,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLIDENTICAL3CROWS_Stream other ) {
+      void copyFrom( Cdlidentical3crowsStream other ) {
          this.core = other.core;
          if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
             System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
@@ -508,7 +508,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLIDENTICAL3CROWS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<Cdlidentical3crowsStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -525,7 +525,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLIDENTICAL3CROWS update: BadParam", RetCode.BadParam);
-         core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlidentical3crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -554,7 +554,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLIDENTICAL3CROWS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlidentical3crowsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -572,14 +572,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLIDENTICAL3CROWS peek: BadParam", RetCode.BadParam);
-         CDLIDENTICAL3CROWS_Stream scratch = PEEK_SCRATCH.get();
+         Cdlidentical3crowsStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLIDENTICAL3CROWS_Stream(this);
+            scratch = new Cdlidentical3crowsStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLIDENTICAL3CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlidentical3crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -596,11 +596,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLIDENTICAL3CROWS_Stream copy() {
-         return new CDLIDENTICAL3CROWS_Stream(this);
+      public Cdlidentical3crowsStream copy() {
+         return new Cdlidentical3crowsStream(this);
       }
    }
-   void CDLIDENTICAL3CROWS_StepImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlidentical3crowsStepImpl( Cdlidentical3crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -654,7 +654,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLIDENTICAL3CROWS_OpenImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlidentical3crowsOpenImpl( Cdlidentical3crowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] EqualPeriodTotal = new double[3];
@@ -820,11 +820,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLIDENTICAL3CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlidentical3crowsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdlidentical3crowsStream cdlidentical3crowsOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdlidentical3crowsStream sp = new Cdlidentical3crowsStream(this);
+      RetCode retCode = cdlidentical3crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -838,14 +838,14 @@
       }
       throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLIDENTICAL3CROWS_Open (composition seam). */
-   CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlidentical3crowsOpen (composition seam). */
+   Cdlidentical3crowsStream cdlidentical3crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
+      Cdlidentical3crowsStream sp = new Cdlidentical3crowsStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlidentical3crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -872,7 +872,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdlidentical3crowsStream cdlidentical3crowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLIDENTICAL3CROWS open", "inOpen", inOpen);
       requireHistory("CDLIDENTICAL3CROWS open", inOpen.length);
@@ -882,10 +882,10 @@
       requireHistoryLength("CDLIDENTICAL3CROWS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLIDENTICAL3CROWS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLIDENTICAL3CROWS open", "inClose", inClose.length, inOpen.length);
-      return CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlidentical3crowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLIDENTICAL3CROWS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlidentical3crowsOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLIDENTICAL3CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -893,9 +893,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLIDENTICAL3CROWS_Stream#outRange()}.
+    * {@link Cdlidentical3crowsStream#outRange()}.
     */
-   public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdlidentical3crowsStream cdlidentical3crowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inOpen", inOpen);
       requireHistory("CDLIDENTICAL3CROWS openAndFill", inOpen.length);
@@ -912,5 +912,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLIDENTICAL3CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlidentical3crowsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

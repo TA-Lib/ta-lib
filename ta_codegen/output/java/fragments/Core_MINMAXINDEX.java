@@ -379,7 +379,7 @@
    /**
     * A live MINMAXINDEX stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MINMAXINDEX} over the same series.
-    * Open with {@link Core#MINMAXINDEX_Open}; there is no close — the handle is
+    * Open with {@link Core#minmaxindexOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -390,7 +390,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MINMAXINDEX_Stream {
+   public static final class MinmaxindexStream {
       Core core;
       int optInTimePeriod;
       double highest;
@@ -408,7 +408,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MINMAXINDEX_Stream( Core core ) { this.core = core; }
+      MinmaxindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -422,7 +422,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MINMAXINDEX_Stream( MINMAXINDEX_Stream other ) {
+      MinmaxindexStream( MinmaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -441,7 +441,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MINMAXINDEX_Stream other ) {
+      void copyFrom( MinmaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -492,7 +492,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
-         core.MINMAXINDEX_StepImpl(this, inReal);
+         core.minmaxindexStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
          return this.cachedValue;
@@ -522,7 +522,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inReal[i]) )
                   throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-               core.MINMAXINDEX_StepImpl(this, inReal[i]);
+               core.minmaxindexStepImpl(this, inReal[i]);
                outMinIdx[i] = this.cur_outMinIdx;
                outMaxIdx[i] = this.cur_outMaxIdx;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -543,8 +543,8 @@
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
-         MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);
-         core.MINMAXINDEX_StepImpl(scratch, inReal);
+         MinmaxindexStream scratch = new MinmaxindexStream(this);
+         core.minmaxindexStepImpl(scratch, inReal);
          return new Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
       }
 
@@ -561,11 +561,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MINMAXINDEX_Stream copy() {
-         return new MINMAXINDEX_Stream(this);
+      public MinmaxindexStream copy() {
+         return new MinmaxindexStream(this);
       }
    }
-   void MINMAXINDEX_StepImpl( MINMAXINDEX_Stream sp, double inReal )
+   void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;
@@ -615,7 +615,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
+   private RetCode minmaxindexOpenImpl( MinmaxindexStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -743,14 +743,14 @@
       sp.x_inReal = capX_inReal;
       sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
       sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MINMAXINDEX_Stream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
+      sp.cachedValue = new MinmaxindexStream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
-   /* MINMAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MINMAXINDEX_Stream MINMAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
+   /* minmaxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MinmaxindexStream minmaxindexOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
-      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
+      MinmaxindexStream sp = new MinmaxindexStream(this);
+      RetCode retCode = minmaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -764,15 +764,15 @@
       }
       throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MINMAXINDEX_Open (composition seam). */
-   MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind minmaxindexOpen (composition seam). */
+   MinmaxindexStream minmaxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
+      MinmaxindexStream sp = new MinmaxindexStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outMinIdx = new int[1];
       int[] sink_outMaxIdx = new int[1];
-      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0);
+      RetCode retCode = minmaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -799,14 +799,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MINMAXINDEX_Stream MINMAXINDEX_Open( double inReal[], int optInTimePeriod )
+   public MinmaxindexStream minmaxindexOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("MINMAXINDEX open", "inReal", inReal);
       requireHistory("MINMAXINDEX open", inReal.length);
-      return MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
+      return minmaxindexOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MINMAXINDEX_Open} that also fills the output array(s) bit-identically
+    * {@link Core#minmaxindexOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MINMAXINDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -814,9 +814,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MINMAXINDEX_Stream#outRange()}.
+    * {@link MinmaxindexStream#outRange()}.
     */
-   public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outMinIdx[], int outMaxIdx[] )
+   public MinmaxindexStream minmaxindexOpenAndFill( double inReal[], int optInTimePeriod, int outMinIdx[], int outMaxIdx[] )
    {
       requireArgument("MINMAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MINMAXINDEX openAndFill", inReal.length);
@@ -828,5 +828,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MINMAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      return minmaxindexOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
    }

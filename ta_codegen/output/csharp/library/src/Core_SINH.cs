@@ -241,7 +241,7 @@ public partial class Core
    /// <summary>A live <c>SINH</c> stream: one value per closed bar, bit-identical to
    /// <c>SINH</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.SINH_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.SinhOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -254,19 +254,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class SINH_Stream
+   public sealed class SinhStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal SINH_Stream( Core core ) { this.core = core; }
+      internal SinhStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.SINH</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Sinh</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -274,7 +274,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal SINH_Stream( SINH_Stream other )
+      internal SinhStream( SinhStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -282,7 +282,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SINH_Stream other )
+      internal void CopyFrom( SinhStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -306,7 +306,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SINH", "update", RetCode.BadParam);
-         core.SINH_StepImpl(this, inReal);
+         core.SinhStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -325,8 +325,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SINH", "peek", RetCode.BadParam);
-         SINH_Stream scratch = new SINH_Stream(this);
-         core.SINH_StepImpl(scratch, inReal);
+         SinhStream scratch = new SinhStream(this);
+         core.SinhStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -350,7 +350,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("SINH", "updateAndFill", RetCode.BadParam);
-            core.SINH_StepImpl(this, inReal[i]);
+            core.SinhStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -366,18 +366,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public SINH_Stream Clone()
+      public SinhStream Clone()
       {
-         return new SINH_Stream(this);
+         return new SinhStream(this);
       }
    }
 
-   internal void SINH_StepImpl( SINH_Stream sp, double inReal )
+   internal void SinhStepImpl( SinhStream sp, double inReal )
    {
       sp.cur_outReal = Math.Sinh(inReal);
    }
 
-   private RetCode SINH_OpenImpl( SINH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SinhOpenImpl( SinhStream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -406,11 +406,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* SINH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SINH_Stream SINH_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* SinhOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SinhStream SinhOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      SINH_Stream sp = new SINH_Stream(this);
-      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      SinhStream sp = new SinhStream(this);
+      RetCode retCode = SinhOpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -419,12 +419,12 @@ public partial class Core
       throw StreamFailure("SINH", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind SINH_Open (composition seam). */
-   internal SINH_Stream SINH_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
+   /* Internal startIdx-anchored open behind SinhOpen (composition seam). */
+   internal SinhStream SinhOpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
-      SINH_Stream sp = new SINH_Stream(this);
+      SinhStream sp = new SinhStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = SinhOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -435,11 +435,11 @@ public partial class Core
 
    /// <summary>Open a live <c>SINH</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="SINH_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="SinhStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>SINH</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>SINH_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>SINH_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>SinhOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input series. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
@@ -449,15 +449,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SINH_Stream SINH_Open( ReadOnlySpan<double> inReal )
+   public SinhStream SinhOpen( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SINH open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SINH open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return SINH_OpenInternal(inReal, 0);
+      return SinhOpenInternal(inReal, 0);
    }
 
-   /// <summary><c>SINH_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>SinhOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>SINH</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -468,7 +468,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="SINH_Stream.OutRange"/>.</para>
+   /// <see cref="SinhStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input series. The warm-up history, oldest bar first.</param>
    /// <param name="outReal">Hyperbolic sine of each input value. Must hold at least <c>historyLen -
@@ -481,7 +481,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SINH_Stream SINH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
+   public SinhStream SinhOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SINH openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "SINH openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -490,6 +490,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("SINH", "openAndFill", RetCode.BadParam);
       }
-      return SINH_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
+      return SinhOpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

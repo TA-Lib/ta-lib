@@ -217,23 +217,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live MEDPRICE stream: one value per closed bar, bit-identical to [`Core::MEDPRICE`]
-/// over the same series. Open with [`Core::MEDPRICE_Open`]; dropping the handle
+/// over the same series. Open with [`Core::medprice_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MEDPRICE_Stream")]
-pub struct MEDPRICE_Stream {
-    state: MEDPRICE_StreamState,
+pub struct MedpriceStream {
+    state: MedpriceStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl MEDPRICE_Stream {
+impl MedpriceStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MEDPRICE_StreamState::restore_from`.
+    /// allocating new ones. See `MedpriceStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -242,33 +242,32 @@ impl MEDPRICE_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MEDPRICE_StreamState {
+struct MedpriceStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl MEDPRICE_StreamState {
+impl MedpriceStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MEDPRICE_step_impl(sp: &mut MEDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn medprice_step_impl(sp: &mut MedpriceStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         (*outReal) = (inHigh + inLow) / 2.0;
     }
 
-    /// The single whole-history transcription behind [`Core::MEDPRICE_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::MEDPRICE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MEDPRICE_OpenImpl(
+    /// The single whole-history transcription behind [`Core::medprice_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::medprice_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn medprice_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<MEDPRICE_Stream, RetCode> {
+    ) -> Result<MedpriceStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -304,19 +303,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = MEDPRICE_StreamState {
+        let state = MedpriceStreamState {
         };
-        Ok(MEDPRICE_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MedpriceStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MEDPRICE_Open`] (composition seam).
-    pub(crate) fn MEDPRICE_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::medprice_open`] (composition seam).
+    pub(crate) fn medprice_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize,
-    ) -> Result<(MEDPRICE_Stream, f64), RetCode> {
+    ) -> Result<(MedpriceStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MEDPRICE_OpenImpl(inHigh, inLow, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.medprice_open_impl(inHigh, inLow, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -337,7 +336,7 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MEDPRICE_Open(&high, &low).expect("enough history");
+    /// let (mut s, _last) = core.medprice_open(&high, &low).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -347,11 +346,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MEDPRICE_Open")]
-    pub fn MEDPRICE_Open(&self, inHigh: &[f64], inLow: &[f64], ) -> Result<(MEDPRICE_Stream, f64), RetCode> {
-        self.MEDPRICE_OpenInternal(inHigh, inLow, 0)
+    pub fn medprice_open(&self, inHigh: &[f64], inLow: &[f64], ) -> Result<(MedpriceStream, f64), RetCode> {
+        self.medprice_open_internal(inHigh, inLow, 0)
     }
 
-    /// [`Core::MEDPRICE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::medprice_open`] that also fills the output array(s) bit-identically to
     /// [`Core::MEDPRICE`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -359,12 +358,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::MEDPRICE_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::medprice_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_MEDPRICE_OpenAndFill")]
-    pub fn MEDPRICE_OpenAndFill(
+    pub fn medprice_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], outReal: &mut [f64],
-    ) -> Result<(MEDPRICE_Stream, OutRange), RetCode> {
+    ) -> Result<(MedpriceStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -381,23 +380,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MEDPRICE_OpenAndFillInternal(inHigh, inLow, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.medprice_open_and_fill_internal(inHigh, inLow, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::MEDPRICE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::medprice_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn MEDPRICE_OpenAndFillInternal(
+    pub(crate) fn medprice_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MEDPRICE_Stream, RetCode> {
-        self.MEDPRICE_OpenImpl(inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<MedpriceStream, RetCode> {
+        self.medprice_open_impl(inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MEDPRICE_Stream {
+impl MedpriceStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -415,7 +414,7 @@ impl MEDPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::MEDPRICE_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
+        Core::medprice_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -448,7 +447,7 @@ impl MEDPRICE_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::MEDPRICE_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
+            Core::medprice_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -491,7 +490,7 @@ impl MEDPRICE_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MEDPRICE_Stream>();
+    _assert_auto::<MedpriceStream>();
 };
 
 /***************/

@@ -402,7 +402,7 @@
    /**
     * A live TRIX stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#TRIX} over the same series.
-    * Open with {@link Core#TRIX_Open}; there is no close — the handle is
+    * Open with {@link Core#trixOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -413,7 +413,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TRIX_Stream {
+   public static final class TrixStream {
       Core core;
       int optInTimePeriod;
       double prevEMA1;
@@ -424,7 +424,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      TRIX_Stream( Core core ) { this.core = core; }
+      TrixStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -438,7 +438,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      TRIX_Stream( TRIX_Stream other ) {
+      TrixStream( TrixStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -450,7 +450,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TRIX_Stream other ) {
+      void copyFrom( TrixStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -477,7 +477,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
-         core.TRIX_StepImpl(this, inReal);
+         core.trixStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -503,7 +503,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("TRIX updateAndFill: BadParam", RetCode.BadParam);
-            core.TRIX_StepImpl(this, inReal[i]);
+            core.trixStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -519,8 +519,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
-         TRIX_Stream scratch = new TRIX_Stream(this);
-         core.TRIX_StepImpl(scratch, inReal);
+         TrixStream scratch = new TrixStream(this);
+         core.trixStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -537,11 +537,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TRIX_Stream copy() {
-         return new TRIX_Stream(this);
+      public TrixStream copy() {
+         return new TrixStream(this);
       }
    }
-   void TRIX_StepImpl( TRIX_Stream sp, double inReal )
+   void trixStepImpl( TrixStream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;
@@ -554,7 +554,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode TRIX_OpenImpl( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode trixOpenImpl( TrixStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -690,11 +690,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* TRIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   TRIX_Stream TRIX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* trixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TrixStream trixOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      TrixStream sp = new TrixStream(this);
+      RetCode retCode = trixOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -708,14 +708,14 @@
       }
       throw new TaLibArgumentException("TRIX openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind TRIX_Open (composition seam). */
-   TRIX_Stream TRIX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind trixOpen (composition seam). */
+   TrixStream trixOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      TRIX_Stream sp = new TRIX_Stream(this);
+      TrixStream sp = new TrixStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = trixOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -742,14 +742,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public TRIX_Stream TRIX_Open( double inReal[], int optInTimePeriod )
+   public TrixStream trixOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("TRIX open", "inReal", inReal);
       requireHistory("TRIX open", inReal.length);
-      return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
+      return trixOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#TRIX_Open} that also fills the output array(s) bit-identically
+    * {@link Core#trixOpen} that also fills the output array(s) bit-identically
     * to {@link Core#TRIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -757,9 +757,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link TRIX_Stream#outRange()}.
+    * {@link TrixStream#outRange()}.
     */
-   public TRIX_Stream TRIX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public TrixStream trixOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("TRIX openAndFill", "inReal", inReal);
       requireHistory("TRIX openAndFill", inReal.length);
@@ -770,5 +770,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return TRIX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return trixOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

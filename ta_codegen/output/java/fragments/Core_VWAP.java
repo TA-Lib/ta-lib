@@ -376,7 +376,7 @@
    /**
     * A live VWAP stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#VWAP} over the same series.
-    * Open with {@link Core#VWAP_Open}; there is no close — the handle is
+    * Open with {@link Core#vwapOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -387,7 +387,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class VWAP_Stream {
+   public static final class VwapStream {
       Core core;
       double sumPV;
       double sumV;
@@ -396,7 +396,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      VWAP_Stream( Core core ) { this.core = core; }
+      VwapStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -410,7 +410,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      VWAP_Stream( VWAP_Stream other ) {
+      VwapStream( VwapStream other ) {
          this.core = other.core;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
@@ -420,7 +420,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( VWAP_Stream other ) {
+      void copyFrom( VwapStream other ) {
          this.core = other.core;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
@@ -445,7 +445,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
-         core.VWAP_StepImpl(this, inHigh, inLow, inClose, inVolume);
+         core.vwapStepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -474,7 +474,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
                throw new TaLibArgumentException("VWAP updateAndFill: BadParam", RetCode.BadParam);
-            core.VWAP_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            core.vwapStepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -490,8 +490,8 @@
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
-         VWAP_Stream scratch = new VWAP_Stream(this);
-         core.VWAP_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
+         VwapStream scratch = new VwapStream(this);
+         core.vwapStepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -508,11 +508,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public VWAP_Stream copy() {
-         return new VWAP_Stream(this);
+      public VwapStream copy() {
+         return new VwapStream(this);
       }
    }
-   void VWAP_StepImpl( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void vwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;
@@ -603,7 +603,7 @@
       }
       sp.cur_outReal = sp.vwap;
    }
-   private RetCode VWAP_OpenImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode vwapOpenImpl( VwapStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -741,11 +741,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* VWAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   VWAP_Stream VWAP_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* vwapOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   VwapStream vwapOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      VWAP_Stream sp = new VWAP_Stream(this);
-      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      VwapStream sp = new VwapStream(this);
+      RetCode retCode = vwapOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -759,14 +759,14 @@
       }
       throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind VWAP_Open (composition seam). */
-   VWAP_Stream VWAP_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind vwapOpen (composition seam). */
+   VwapStream vwapOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
-      VWAP_Stream sp = new VWAP_Stream(this);
+      VwapStream sp = new VwapStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = vwapOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -793,7 +793,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public VWAP_Stream VWAP_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
+   public VwapStream vwapOpen( double inHigh[], double inLow[], double inClose[], double inVolume[] )
    {
       requireArgument("VWAP open", "inHigh", inHigh);
       requireHistory("VWAP open", inHigh.length);
@@ -803,10 +803,10 @@
       requireHistoryLength("VWAP open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("VWAP open", "inClose", inClose.length, inHigh.length);
       requireHistoryLength("VWAP open", "inVolume", inVolume.length, inHigh.length);
-      return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
+      return vwapOpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
-    * {@link Core#VWAP_Open} that also fills the output array(s) bit-identically
+    * {@link Core#vwapOpen} that also fills the output array(s) bit-identically
     * to {@link Core#VWAP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -814,9 +814,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link VWAP_Stream#outRange()}.
+    * {@link VwapStream#outRange()}.
     */
-   public VWAP_Stream VWAP_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
+   public VwapStream vwapOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
       requireArgument("VWAP openAndFill", "inHigh", inHigh);
       requireHistory("VWAP openAndFill", inHigh.length);
@@ -833,5 +833,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return VWAP_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
+      return vwapOpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

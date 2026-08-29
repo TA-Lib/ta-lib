@@ -440,7 +440,7 @@
    /**
     * A live ACCBANDS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ACCBANDS} over the same series.
-    * Open with {@link Core#ACCBANDS_Open}; there is no close — the handle is
+    * Open with {@link Core#accbandsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -451,7 +451,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ACCBANDS_Stream {
+   public static final class AccbandsStream {
       Core core;
       int optInTimePeriod;
       double periodTotalUpper;
@@ -469,7 +469,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      ACCBANDS_Stream( Core core ) { this.core = core; }
+      AccbandsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -483,7 +483,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ACCBANDS_Stream( ACCBANDS_Stream other ) {
+      AccbandsStream( AccbandsStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotalUpper = other.periodTotalUpper;
@@ -502,7 +502,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ACCBANDS_Stream other ) {
+      void copyFrom( AccbandsStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotalUpper = other.periodTotalUpper;
@@ -534,7 +534,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<ACCBANDS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<AccbandsStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -565,7 +565,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
-         core.ACCBANDS_StepImpl(this, inHigh, inLow, inClose);
+         core.accbandsStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
          return this.cachedValue;
@@ -598,7 +598,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                   throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-               core.ACCBANDS_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
                outRealUpperBand[i] = this.cur_outRealUpperBand;
                outRealMiddleBand[i] = this.cur_outRealMiddleBand;
                outRealLowerBand[i] = this.cur_outRealLowerBand;
@@ -622,14 +622,14 @@
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
-         ACCBANDS_Stream scratch = PEEK_SCRATCH.get();
+         AccbandsStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new ACCBANDS_Stream(this);
+            scratch = new AccbandsStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.ACCBANDS_StepImpl(scratch, inHigh, inLow, inClose);
+         core.accbandsStepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
@@ -646,11 +646,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ACCBANDS_Stream copy() {
-         return new ACCBANDS_Stream(this);
+      public AccbandsStream copy() {
+         return new AccbandsStream(this);
       }
    }
-   void ACCBANDS_StepImpl( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
+   void accbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
    {
       double tempUpper = 0.0;
       double tempMiddle = 0.0;
@@ -699,7 +699,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ACCBANDS_OpenImpl( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+   private RetCode accbandsOpenImpl( AccbandsStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -857,14 +857,14 @@
       sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new ACCBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+      sp.cachedValue = new AccbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
-   /* ACCBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ACCBANDS_Stream ACCBANDS_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   /* accbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AccbandsStream accbandsOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
-      RetCode retCode = ACCBANDS_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
+      AccbandsStream sp = new AccbandsStream(this);
+      RetCode retCode = accbandsOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -878,16 +878,16 @@
       }
       throw new TaLibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ACCBANDS_Open (composition seam). */
-   ACCBANDS_Stream ACCBANDS_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind accbandsOpen (composition seam). */
+   AccbandsStream accbandsOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
+      AccbandsStream sp = new AccbandsStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outRealUpperBand = new double[1];
       double[] sink_outRealMiddleBand = new double[1];
       double[] sink_outRealLowerBand = new double[1];
-      RetCode retCode = ACCBANDS_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
+      RetCode retCode = accbandsOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -914,7 +914,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ACCBANDS_Stream ACCBANDS_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public AccbandsStream accbandsOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
       requireArgument("ACCBANDS open", "inHigh", inHigh);
       requireHistory("ACCBANDS open", inHigh.length);
@@ -922,10 +922,10 @@
       requireArgument("ACCBANDS open", "inClose", inClose);
       requireHistoryLength("ACCBANDS open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("ACCBANDS open", "inClose", inClose.length, inHigh.length);
-      return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return accbandsOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#ACCBANDS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#accbandsOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ACCBANDS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -933,9 +933,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ACCBANDS_Stream#outRange()}.
+    * {@link AccbandsStream#outRange()}.
     */
-   public ACCBANDS_Stream ACCBANDS_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   public AccbandsStream accbandsOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
       requireArgument("ACCBANDS openAndFill", "inHigh", inHigh);
       requireHistory("ACCBANDS openAndFill", inHigh.length);
@@ -952,5 +952,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ACCBANDS_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      return accbandsOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
    }

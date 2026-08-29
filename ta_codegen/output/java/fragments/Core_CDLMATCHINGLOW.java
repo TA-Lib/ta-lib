@@ -313,7 +313,7 @@
    /**
     * A live CDLMATCHINGLOW stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLMATCHINGLOW} over the same series.
-    * Open with {@link Core#CDLMATCHINGLOW_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlmatchinglowOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -324,7 +324,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLMATCHINGLOW_Stream {
+   public static final class CdlmatchinglowStream {
       Core core;
       double EqualPeriodTotal;
       double lag1_inOpen;
@@ -342,7 +342,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLMATCHINGLOW_Stream( Core core ) { this.core = core; }
+      CdlmatchinglowStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -356,7 +356,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLMATCHINGLOW_Stream( CDLMATCHINGLOW_Stream other ) {
+      CdlmatchinglowStream( CdlmatchinglowStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -375,7 +375,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLMATCHINGLOW_Stream other ) {
+      void copyFrom( CdlmatchinglowStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -413,7 +413,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
-         core.CDLMATCHINGLOW_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlmatchinglowStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -442,7 +442,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLMATCHINGLOW updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLMATCHINGLOW_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlmatchinglowStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -458,8 +458,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
-         CDLMATCHINGLOW_Stream scratch = new CDLMATCHINGLOW_Stream(this);
-         core.CDLMATCHINGLOW_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         CdlmatchinglowStream scratch = new CdlmatchinglowStream(this);
+         core.cdlmatchinglowStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -476,11 +476,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLMATCHINGLOW_Stream copy() {
-         return new CDLMATCHINGLOW_Stream(this);
+      public CdlmatchinglowStream copy() {
+         return new CdlmatchinglowStream(this);
       }
    }
-   void CDLMATCHINGLOW_StepImpl( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlmatchinglowStepImpl( CdlmatchinglowStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -508,7 +508,7 @@
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLMATCHINGLOW_OpenImpl( CDLMATCHINGLOW_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlmatchinglowOpenImpl( CdlmatchinglowStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -614,11 +614,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLMATCHINGLOW_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlmatchinglowOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlmatchinglowStream cdlmatchinglowOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
-      RetCode retCode = CDLMATCHINGLOW_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlmatchinglowStream sp = new CdlmatchinglowStream(this);
+      RetCode retCode = cdlmatchinglowOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -632,14 +632,14 @@
       }
       throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLMATCHINGLOW_Open (composition seam). */
-   CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlmatchinglowOpen (composition seam). */
+   CdlmatchinglowStream cdlmatchinglowOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
+      CdlmatchinglowStream sp = new CdlmatchinglowStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMATCHINGLOW_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlmatchinglowOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -666,7 +666,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlmatchinglowStream cdlmatchinglowOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLMATCHINGLOW open", "inOpen", inOpen);
       requireHistory("CDLMATCHINGLOW open", inOpen.length);
@@ -676,10 +676,10 @@
       requireHistoryLength("CDLMATCHINGLOW open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMATCHINGLOW open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMATCHINGLOW open", "inClose", inClose.length, inOpen.length);
-      return CDLMATCHINGLOW_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlmatchinglowOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLMATCHINGLOW_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlmatchinglowOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLMATCHINGLOW} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -687,9 +687,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLMATCHINGLOW_Stream#outRange()}.
+    * {@link CdlmatchinglowStream#outRange()}.
     */
-   public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlmatchinglowStream cdlmatchinglowOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLMATCHINGLOW openAndFill", "inOpen", inOpen);
       requireHistory("CDLMATCHINGLOW openAndFill", inOpen.length);
@@ -706,5 +706,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLMATCHINGLOW_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlmatchinglowOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

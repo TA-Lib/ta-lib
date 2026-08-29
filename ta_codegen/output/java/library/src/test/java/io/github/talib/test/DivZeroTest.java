@@ -68,10 +68,10 @@ import io.github.talib.TaLibArgumentException;
  * non-zero divisor stays a signed zero, and ordinary quotients are untouched.
  *
  * <p>The streaming tier takes the same table twice, because it emits two loops.
- * {@code DIV_OpenImpl} carries its own transcription of the batch body (the
- * warm-up fill) and {@code DIV_StepImpl} carries the per-bar one, so a guard
+ * {@code divOpenImpl} carries its own transcription of the batch body (the
+ * warm-up fill) and {@code divStepImpl} carries the per-bar one, so a guard
  * added to one is invisible to the other — measured on the C side: an
- * {@code _OpenImpl}-only guard on a zero divisor survived every other assertion
+ * {@code divOpenImpl}-only guard on a zero divisor survived every other assertion
  * in the group. Neither entry point may reject the bar: both guard their INPUTS
  * with {@code Double.isFinite}, and a zero divisor is finite.
  *
@@ -177,22 +177,22 @@ public class DivZeroTest {
     }
 
     static void fillLoop() {
-        // DIV_OpenImpl, not DIV_StepImpl: a separate transcription of the batch
+        // divOpenImpl, not divStepImpl: a separate transcription of the batch
         // body, and the only assertion that reaches it.
         double[] out = new double[NUM.length];
-        Core.DIV_Stream s;
+        Core.DivStream s;
         OutRange r;
         try {
-            s = Core.DEFAULT.DIV_OpenAndFill(NUM, DEN, out);
+            s = Core.DEFAULT.divOpenAndFill(NUM, DEN, out);
             r = s.outRange();
         } catch (RuntimeException e) {
-            fail("DIV_OpenAndFill threw on a zero divisor: " + e);
+            fail("divOpenAndFill threw on a zero divisor: " + e);
             return;
         }
         checks++;
         if (r.begIdx() != 0 || r.count() != NUM.length) {
             failures++;
-            System.out.println("  FAIL: DIV_OpenAndFill range " + r.begIdx() + "/" + r.count()
+            System.out.println("  FAIL: divOpenAndFill range " + r.begIdx() + "/" + r.count()
                                + ", expected 0/" + NUM.length);
             return;
         }
@@ -200,16 +200,16 @@ public class DivZeroTest {
             check("fill", i, out[i]);
         }
         // The same loop with no output array: only the last row survives.
-        check("open-last", NUM.length - 1, Core.DEFAULT.DIV_Open(NUM, DEN).value());
+        check("open-last", NUM.length - 1, Core.DEFAULT.divOpen(NUM, DEN).value());
     }
 
     static void streamingTier() {
         double[] head0 = { NUM[0] }, head1 = { DEN[0] };
-        Core.DIV_Stream s;
+        Core.DivStream s;
         try {
-            s = Core.DEFAULT.DIV_Open(head0, head1);
+            s = Core.DEFAULT.divOpen(head0, head1);
         } catch (RuntimeException e) {
-            fail("DIV_Open threw on a zero divisor: " + e);
+            fail("divOpen threw on a zero divisor: " + e);
             return;
         }
         check("open", 0, s.value());
@@ -246,7 +246,7 @@ public class DivZeroTest {
         // The control for the case above: the tier's own contract is unchanged,
         // so "does not reject a zero divisor" cannot be read as "rejects
         // nothing".
-        Core.DIV_Stream s = Core.DEFAULT.DIV_Open(new double[] { 1.0 }, new double[] { 2.0 });
+        Core.DivStream s = Core.DEFAULT.divOpen(new double[] { 1.0 }, new double[] { 2.0 });
         for (double bad : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
             for (int slot = 0; slot < 2; slot++) {
                 double a0 = slot == 0 ? bad : 1.0, a1 = slot == 0 ? 1.0 : bad;

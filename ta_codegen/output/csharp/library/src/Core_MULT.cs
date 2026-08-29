@@ -257,7 +257,7 @@ public partial class Core
    /// <summary>A live <c>MULT</c> stream: one value per closed bar, bit-identical to
    /// <c>MULT</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MULT_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.MultOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -270,19 +270,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MULT_Stream
+   public sealed class MultStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MULT_Stream( Core core ) { this.core = core; }
+      internal MultStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MULT</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Mult</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -290,7 +290,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MULT_Stream( MULT_Stream other )
+      internal MultStream( MultStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -298,7 +298,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MULT_Stream other )
+      internal void CopyFrom( MultStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -323,7 +323,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "update", RetCode.BadParam);
-         core.MULT_StepImpl(this, inReal0, inReal1);
+         core.MultStepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -343,8 +343,8 @@ public partial class Core
       public double Peek( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "peek", RetCode.BadParam);
-         MULT_Stream scratch = new MULT_Stream(this);
-         core.MULT_StepImpl(scratch, inReal0, inReal1);
+         MultStream scratch = new MultStream(this);
+         core.MultStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -369,7 +369,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal0[i]) || !double.IsFinite(inReal1[i]) ) throw Core.StreamFailure("MULT", "updateAndFill", RetCode.BadParam);
-            core.MULT_StepImpl(this, inReal0[i], inReal1[i]);
+            core.MultStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -385,18 +385,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MULT_Stream Clone()
+      public MultStream Clone()
       {
-         return new MULT_Stream(this);
+         return new MultStream(this);
       }
    }
 
-   internal void MULT_StepImpl( MULT_Stream sp, double inReal0, double inReal1 )
+   internal void MultStepImpl( MultStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }
 
-   private RetCode MULT_OpenImpl( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MultOpenImpl( MultStream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -432,11 +432,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MULT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MULT_Stream MULT_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* MultOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MultStream MultOpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      MULT_Stream sp = new MULT_Stream(this);
-      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      MultStream sp = new MultStream(this);
+      RetCode retCode = MultOpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -445,12 +445,12 @@ public partial class Core
       throw StreamFailure("MULT", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MULT_Open (composition seam). */
-   internal MULT_Stream MULT_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
+   /* Internal startIdx-anchored open behind MultOpen (composition seam). */
+   internal MultStream MultOpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
-      MULT_Stream sp = new MULT_Stream(this);
+      MultStream sp = new MultStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = MultOpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -461,11 +461,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MULT</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MULT_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MultStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MULT</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MULT_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MULT_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MultOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal0">First operand series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second operand series. The warm-up history, oldest bar first.</param>
@@ -476,17 +476,17 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MULT_Stream MULT_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
+   public MultStream MultOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("MULT open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("MULT", "open", "inReal1", inReal1.Length, inReal0.Length);
-      return MULT_OpenInternal(inReal0, inReal1, 0);
+      return MultOpenInternal(inReal0, inReal1, 0);
    }
 
-   /// <summary><c>MULT_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>MultOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MULT</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -497,7 +497,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MULT_Stream.OutRange"/>.</para>
+   /// <see cref="MultStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal0">First operand series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second operand series. The warm-up history, oldest bar first.</param>
@@ -511,7 +511,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MULT_Stream MULT_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
+   public MultStream MultOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -522,6 +522,6 @@ public partial class Core
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          throw StreamFailure("MULT", "openAndFill", RetCode.BadParam);
       }
-      return MULT_OpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
+      return MultOpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
    }
 }

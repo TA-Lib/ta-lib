@@ -364,7 +364,7 @@ public partial class Core
    /// <summary>A live <c>MININDEX</c> stream: one value per closed bar, bit-identical to
    /// <c>MININDEX</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MININDEX_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.MinindexOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -382,7 +382,7 @@ public partial class Core
    /// position within the current window, not as an identifier you can store and
    /// compare against one read much later.</para>
    /// </remarks>
-   public sealed class MININDEX_Stream
+   public sealed class MinindexStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -397,12 +397,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MININDEX_Stream( Core core ) { this.core = core; }
+      internal MinindexStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MININDEX</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Minindex</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -411,7 +411,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MININDEX_Stream( MININDEX_Stream other )
+      internal MinindexStream( MinindexStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -428,7 +428,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MININDEX_Stream other )
+      internal void CopyFrom( MinindexStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -463,7 +463,7 @@ public partial class Core
       public int Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MININDEX", "update", RetCode.BadParam);
-         core.MININDEX_StepImpl(this, inReal);
+         core.MinindexStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -482,8 +482,8 @@ public partial class Core
       public int Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MININDEX", "peek", RetCode.BadParam);
-         MININDEX_Stream scratch = new MININDEX_Stream(this);
-         core.MININDEX_StepImpl(scratch, inReal);
+         MinindexStream scratch = new MinindexStream(this);
+         core.MinindexStepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -507,7 +507,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MININDEX", "updateAndFill", RetCode.BadParam);
-            core.MININDEX_StepImpl(this, inReal[i]);
+            core.MinindexStepImpl(this, inReal[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -523,13 +523,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MININDEX_Stream Clone()
+      public MinindexStream Clone()
       {
-         return new MININDEX_Stream(this);
+         return new MinindexStream(this);
       }
    }
 
-   internal void MININDEX_StepImpl( MININDEX_Stream sp, double inReal )
+   internal void MinindexStepImpl( MinindexStream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -561,7 +561,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MININDEX_OpenImpl( MININDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode MinindexOpenImpl( MinindexStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -668,11 +668,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MININDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MININDEX_Stream MININDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* MinindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MinindexStream MinindexOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      MININDEX_Stream sp = new MININDEX_Stream(this);
-      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
+      MinindexStream sp = new MinindexStream(this);
+      RetCode retCode = MinindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -681,12 +681,12 @@ public partial class Core
       throw StreamFailure("MININDEX", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MININDEX_Open (composition seam). */
-   internal MININDEX_Stream MININDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MinindexOpen (composition seam). */
+   internal MinindexStream MinindexOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      MININDEX_Stream sp = new MININDEX_Stream(this);
+      MinindexStream sp = new MinindexStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = MinindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -697,12 +697,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MININDEX</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MININDEX_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>MININDEX</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="MinindexStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MININDEX</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MININDEX_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MININDEX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MinindexOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Series to scan for its minimum. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MININDEX_Lookback"/> for its default
@@ -714,14 +713,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MININDEX_Stream MININDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public MinindexStream MinindexOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MININDEX open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MININDEX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
+      return MinindexOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>MININDEX_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MinindexOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MININDEX</c> produces over
@@ -733,7 +732,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MININDEX_Stream.OutRange"/>.</para>
+   /// <see cref="MinindexStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Series to scan for its minimum. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MININDEX_Lookback"/> for its default
@@ -748,12 +747,12 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MININDEX_Stream MININDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
+   public MinindexStream MinindexOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MININDEX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MININDEX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MININDEX", "openAndFill", inReal.Length, MININDEX_Lookback(optInTimePeriod));
       RequireFillLength("MININDEX", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return MININDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);
+      return MinindexOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);
    }
 }

@@ -415,7 +415,7 @@
    /**
     * A live MIN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MIN} over the same series.
-    * Open with {@link Core#MIN_Open}; there is no close — the handle is
+    * Open with {@link Core#minOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -426,7 +426,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MIN_Stream {
+   public static final class MinStream {
       Core core;
       int optInTimePeriod;
       double lowest;
@@ -440,7 +440,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MIN_Stream( Core core ) { this.core = core; }
+      MinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -454,7 +454,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MIN_Stream( MIN_Stream other ) {
+      MinStream( MinStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -469,7 +469,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MIN_Stream other ) {
+      void copyFrom( MinStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -503,7 +503,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
-         core.MIN_StepImpl(this, inReal);
+         core.minStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -529,7 +529,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("MIN updateAndFill: BadParam", RetCode.BadParam);
-            core.MIN_StepImpl(this, inReal[i]);
+            core.minStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -545,8 +545,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
-         MIN_Stream scratch = new MIN_Stream(this);
-         core.MIN_StepImpl(scratch, inReal);
+         MinStream scratch = new MinStream(this);
+         core.minStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -563,11 +563,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MIN_Stream copy() {
-         return new MIN_Stream(this);
+      public MinStream copy() {
+         return new MinStream(this);
       }
    }
-   void MIN_StepImpl( MIN_Stream sp, double inReal )
+   void minStepImpl( MinStream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -598,7 +598,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MIN_OpenImpl( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode minOpenImpl( MinStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double tmp = 0;
@@ -710,11 +710,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* MIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MIN_Stream MIN_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* minOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MinStream minOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      MinStream sp = new MinStream(this);
+      RetCode retCode = minOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -728,14 +728,14 @@
       }
       throw new TaLibArgumentException("MIN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MIN_Open (composition seam). */
-   MIN_Stream MIN_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind minOpen (composition seam). */
+   MinStream minOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MIN_Stream sp = new MIN_Stream(this);
+      MinStream sp = new MinStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = minOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -762,14 +762,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MIN_Stream MIN_Open( double inReal[], int optInTimePeriod )
+   public MinStream minOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("MIN open", "inReal", inReal);
       requireHistory("MIN open", inReal.length);
-      return MIN_OpenInternal(inReal, 0, optInTimePeriod);
+      return minOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#MIN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#minOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -777,9 +777,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link MIN_Stream#outRange()}.
+    * {@link MinStream#outRange()}.
     */
-   public MIN_Stream MIN_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public MinStream minOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("MIN openAndFill", "inReal", inReal);
       requireHistory("MIN openAndFill", inReal.length);
@@ -790,5 +790,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MIN_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return minOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

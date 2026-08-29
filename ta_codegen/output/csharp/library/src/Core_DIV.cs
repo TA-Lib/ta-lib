@@ -255,7 +255,7 @@ public partial class Core
    /// <summary>A live <c>DIV</c> stream: one value per closed bar, bit-identical to
    /// <c>DIV</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.DIV_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.DivOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -268,19 +268,19 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class DIV_Stream
+   public sealed class DivStream
    {
       internal Core core;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal DIV_Stream( Core core ) { this.core = core; }
+      internal DivStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.DIV</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Div</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -288,7 +288,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal DIV_Stream( DIV_Stream other )
+      internal DivStream( DivStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -296,7 +296,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( DIV_Stream other )
+      internal void CopyFrom( DivStream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
@@ -321,7 +321,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("DIV", "update", RetCode.BadParam);
-         core.DIV_StepImpl(this, inReal0, inReal1);
+         core.DivStepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -341,8 +341,8 @@ public partial class Core
       public double Peek( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("DIV", "peek", RetCode.BadParam);
-         DIV_Stream scratch = new DIV_Stream(this);
-         core.DIV_StepImpl(scratch, inReal0, inReal1);
+         DivStream scratch = new DivStream(this);
+         core.DivStepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -367,7 +367,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal0[i]) || !double.IsFinite(inReal1[i]) ) throw Core.StreamFailure("DIV", "updateAndFill", RetCode.BadParam);
-            core.DIV_StepImpl(this, inReal0[i], inReal1[i]);
+            core.DivStepImpl(this, inReal0[i], inReal1[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -383,18 +383,18 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public DIV_Stream Clone()
+      public DivStream Clone()
       {
-         return new DIV_Stream(this);
+         return new DivStream(this);
       }
    }
 
-   internal void DIV_StepImpl( DIV_Stream sp, double inReal0, double inReal1 )
+   internal void DivStepImpl( DivStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
 
-   private RetCode DIV_OpenImpl( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode DivOpenImpl( DivStream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -426,11 +426,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* DIV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal DIV_Stream DIV_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* DivOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal DivStream DivOpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      DivStream sp = new DivStream(this);
+      RetCode retCode = DivOpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -439,12 +439,12 @@ public partial class Core
       throw StreamFailure("DIV", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind DIV_Open (composition seam). */
-   internal DIV_Stream DIV_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
+   /* Internal startIdx-anchored open behind DivOpen (composition seam). */
+   internal DivStream DivOpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
-      DIV_Stream sp = new DIV_Stream(this);
+      DivStream sp = new DivStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = DivOpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -455,11 +455,11 @@ public partial class Core
 
    /// <summary>Open a live <c>DIV</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="DIV_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="DivStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>DIV</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>DIV_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>DIV_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>DivOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal0">Dividend (numerator) series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Divisor (denominator) series. The warm-up history, oldest bar first.</param>
@@ -470,16 +470,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public DIV_Stream DIV_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
+   public DivStream DivOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "DIV open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "DIV open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("DIV open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("DIV", "open", "inReal1", inReal1.Length, inReal0.Length);
-      return DIV_OpenInternal(inReal0, inReal1, 0);
+      return DivOpenInternal(inReal0, inReal1, 0);
    }
 
-   /// <summary><c>DIV_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>DivOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>DIV</c> produces over the
@@ -491,7 +491,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="DIV_Stream.OutRange"/>.</para>
+   /// <see cref="DivStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal0">Dividend (numerator) series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Divisor (denominator) series. The warm-up history, oldest bar first.</param>
@@ -505,7 +505,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public DIV_Stream DIV_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
+   public DivStream DivOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "DIV openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "DIV openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -516,6 +516,6 @@ public partial class Core
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          throw StreamFailure("DIV", "openAndFill", RetCode.BadParam);
       }
-      return DIV_OpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
+      return DivOpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
    }
 }

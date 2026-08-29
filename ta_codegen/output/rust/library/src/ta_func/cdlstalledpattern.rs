@@ -608,14 +608,14 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLSTALLEDPATTERN stream: one value per closed bar, bit-identical to [`Core::CDLSTALLEDPATTERN`]
-/// over the same series. Open with [`Core::CDLSTALLEDPATTERN_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdlstalledpattern_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSTALLEDPATTERN_Stream")]
-pub struct CDLSTALLEDPATTERN_Stream {
+pub struct CdlstalledpatternStream {
     /// The `BodyLong` setting this stream was opened with.
     cs_body_long: CandleSetting,
     /// The `BodyShort` setting this stream was opened with.
@@ -624,15 +624,15 @@ pub struct CDLSTALLEDPATTERN_Stream {
     cs_near: CandleSetting,
     /// The `ShadowVeryShort` setting this stream was opened with.
     cs_shadow_very_short: CandleSetting,
-    state: CDLSTALLEDPATTERN_StreamState,
+    state: CdlstalledpatternStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLSTALLEDPATTERN_Stream {
+impl CdlstalledpatternStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLSTALLEDPATTERN_StreamState::restore_from`.
+    /// allocating new ones. See `CdlstalledpatternStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_long = src.cs_body_long;
         self.cs_body_short = src.cs_body_short;
@@ -645,7 +645,7 @@ impl CDLSTALLEDPATTERN_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLSTALLEDPATTERN_StreamState {
+struct CdlstalledpatternStreamState {
     BodyLongPeriodTotal: [f64; 3 as usize],
     NearPeriodTotal: [f64; 3 as usize],
     BodyShortPeriodTotal: f64,
@@ -676,7 +676,7 @@ struct CDLSTALLEDPATTERN_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLSTALLEDPATTERN_StreamState {
+impl CdlstalledpatternStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -710,14 +710,13 @@ impl CDLSTALLEDPATTERN_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLSTALLEDPATTERN_step_impl(sp: &mut CDLSTALLEDPATTERN_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, cs_near: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdlstalledpattern_step_impl(sp: &mut CdlstalledpatternStreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, cs_near: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
@@ -910,11 +909,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLSTALLEDPATTERN_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLSTALLEDPATTERN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLSTALLEDPATTERN_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdlstalledpattern_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdlstalledpattern_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdlstalledpattern_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLSTALLEDPATTERN_Stream, RetCode> {
+    ) -> Result<CdlstalledpatternStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1341,7 +1340,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLSTALLEDPATTERN_StreamState {
+        let state = CdlstalledpatternStreamState {
             BodyLongPeriodTotal,
             NearPeriodTotal,
             BodyShortPeriodTotal,
@@ -1370,17 +1369,17 @@ impl Core {
             ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
             ring_ShadowVeryShortTrailingIdx_derived,
         };
-        Ok(CDLSTALLEDPATTERN_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, cs_near: self.candle_settings.near, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdlstalledpatternStream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, cs_near: self.candle_settings.near, cs_shadow_very_short: self.candle_settings.shadow_very_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLSTALLEDPATTERN_Open`] (composition seam).
-    pub(crate) fn CDLSTALLEDPATTERN_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdlstalledpattern_open`] (composition seam).
+    pub(crate) fn cdlstalledpattern_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLSTALLEDPATTERN_Stream, i32), RetCode> {
+    ) -> Result<(CdlstalledpatternStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLSTALLEDPATTERN_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdlstalledpattern_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1407,7 +1406,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLSTALLEDPATTERN_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.cdlstalledpattern_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1417,11 +1416,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSTALLEDPATTERN_Open")]
-    pub fn CDLSTALLEDPATTERN_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSTALLEDPATTERN_Stream, i32), RetCode> {
-        self.CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn cdlstalledpattern_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlstalledpatternStream, i32), RetCode> {
+        self.cdlstalledpattern_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::CDLSTALLEDPATTERN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdlstalledpattern_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLSTALLEDPATTERN`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1429,12 +1428,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLSTALLEDPATTERN_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdlstalledpattern_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLSTALLEDPATTERN_OpenAndFill")]
-    pub fn CDLSTALLEDPATTERN_OpenAndFill(
+    pub fn cdlstalledpattern_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
-    ) -> Result<(CDLSTALLEDPATTERN_Stream, OutRange), RetCode> {
+    ) -> Result<(CdlstalledpatternStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1451,31 +1450,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLSTALLEDPATTERN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdlstalledpattern_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLSTALLEDPATTERN_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdlstalledpattern_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLSTALLEDPATTERN_OpenAndFillInternal(
+    pub(crate) fn cdlstalledpattern_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLSTALLEDPATTERN_Stream, RetCode> {
-        self.CDLSTALLEDPATTERN_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdlstalledpatternStream, RetCode> {
+        self.cdlstalledpattern_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLSTALLEDPATTERN_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `CdlstalledpatternStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLSTALLEDPATTERN_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLSTALLEDPATTERN_Stream>>> =
+    static CDLSTALLEDPATTERN_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdlstalledpatternStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLSTALLEDPATTERN_Stream {
+impl CdlstalledpatternStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1493,7 +1492,7 @@ impl CDLSTALLEDPATTERN_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLSTALLEDPATTERN_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, &self.cs_near, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdlstalledpattern_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, &self.cs_near, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1526,7 +1525,7 @@ impl CDLSTALLEDPATTERN_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLSTALLEDPATTERN_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, &self.cs_near, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdlstalledpattern_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, &self.cs_near, &self.cs_shadow_very_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1574,7 +1573,7 @@ impl CDLSTALLEDPATTERN_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLSTALLEDPATTERN_Stream>();
+    _assert_auto::<CdlstalledpatternStream>();
 };
 
 /***************/

@@ -493,23 +493,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::STOCHF`]
-/// over the same series. Open with [`Core::STOCHF_Open`]; dropping the handle
+/// over the same series. Open with [`Core::stochf_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCHF_Stream")]
-pub struct STOCHF_Stream {
-    state: STOCHF_StreamState,
+pub struct StochfStream {
+    state: StochfStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl STOCHF_Stream {
+impl StochfStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `STOCHF_StreamState::restore_from`.
+    /// allocating new ones. See `StochfStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -518,7 +518,7 @@ impl STOCHF_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct STOCHF_StreamState {
+struct StochfStreamState {
     optInFastK_Period: i32,
     optInFastD_Period: i32,
     optInFastD_MAType: MAType,
@@ -534,11 +534,11 @@ struct STOCHF_StreamState {
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
-    sub0: MA_Stream,
+    sub0: MaStream,
 }
 
 #[allow(non_snake_case, dead_code)]
-impl STOCHF_StreamState {
+impl StochfStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -561,14 +561,13 @@ impl STOCHF_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCHF_step_impl(sp: &mut STOCHF_StreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
+    fn stochf_step_impl(sp: &mut StochfStreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
@@ -643,11 +642,11 @@ impl Core {
         Ok(())
     }
 
-    /// The single whole-history transcription behind [`Core::STOCHF_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::STOCHF_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn STOCHF_OpenImpl(
+    /// The single whole-history transcription behind [`Core::stochf_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::stochf_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn stochf_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64], outStride: usize,
-    ) -> Result<STOCHF_Stream, RetCode> {
+    ) -> Result<StochfStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -847,7 +846,7 @@ impl Core {
         // to the caller. It is smoothed to become Fast-D.
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.MA_OpenAndFillInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..])?;
+        let sub0 = self.ma_open_and_fill_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..])?;
         retCode = RetCode::Success;
         if ((*outNBElement) as usize) == 0 {
             // Something wrong happen? No further data?
@@ -895,7 +894,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = STOCHF_StreamState {
+        let state = StochfStreamState {
             optInFastK_Period,
             optInFastD_Period,
             optInFastD_MAType,
@@ -921,18 +920,18 @@ impl Core {
             let last_sc_outFastD = sc_outFastD[*outNBElement - 1];
             outFastD[0] = last_sc_outFastD;
         }
-        Ok(STOCHF_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(StochfStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::STOCHF_Open`] (composition seam).
-    pub(crate) fn STOCHF_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::stochf_open`] (composition seam).
+    pub(crate) fn stochf_open_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType,
-    ) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
+    ) -> Result<(StochfStream, (f64, f64)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outFastK = [0.0_f64; 1];
         let mut sink_outFastD = [0.0_f64; 1];
-        let handle = self.STOCHF_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outFastK, &mut sink_outFastD, 0)?;
+        let handle = self.stochf_open_impl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outFastK, &mut sink_outFastD, 0)?;
         Ok((handle, (sink_outFastK[0], sink_outFastD[0])))
     }
 
@@ -956,7 +955,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STOCHF_Open(&high, &low, &close, 5, 3, MAType::SMA).expect("enough history");
+    /// let (mut s, _last) = core.stochf_open(&high, &low, &close, 5, 3, MAType::SMA).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -967,11 +966,11 @@ impl Core {
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCHF_Open")]
-    pub fn STOCHF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
-        self.STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+    pub fn stochf_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(StochfStream, (f64, f64)), RetCode> {
+        self.stochf_open_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
-    /// [`Core::STOCHF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::stochf_open`] that also fills the output array(s) bit-identically to
     /// [`Core::STOCHF`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -979,12 +978,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::STOCHF_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::stochf_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_STOCHF_OpenAndFill")]
-    pub fn STOCHF_OpenAndFill(
+    pub fn stochf_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
-    ) -> Result<(STOCHF_Stream, OutRange), RetCode> {
+    ) -> Result<(StochfStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1007,31 +1006,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.STOCHF_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD)?;
+        let handle = self.stochf_open_and_fill_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::STOCHF_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::stochf_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn STOCHF_OpenAndFillInternal(
+    pub(crate) fn stochf_open_and_fill_internal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
-    ) -> Result<STOCHF_Stream, RetCode> {
-        self.STOCHF_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
+    ) -> Result<StochfStream, RetCode> {
+        self.stochf_open_impl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `STOCHF_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `StochfStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static STOCHF_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCHF_Stream>>> =
+    static STOCHF_PEEK_SCRATCH: std::cell::Cell<Option<Box<StochfStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl STOCHF_Stream {
+impl StochfStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1050,7 +1049,7 @@ impl STOCHF_Stream {
         }
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        Core::STOCHF_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD)?;
+        Core::stochf_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1083,7 +1082,7 @@ impl STOCHF_Stream {
             if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::STOCHF_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outFastK[i], &mut outFastD[i])?;
+            Core::stochf_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outFastK[i], &mut outFastD[i])?;
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1131,7 +1130,7 @@ impl STOCHF_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<STOCHF_Stream>();
+    _assert_auto::<StochfStream>();
 };
 
 /***************/

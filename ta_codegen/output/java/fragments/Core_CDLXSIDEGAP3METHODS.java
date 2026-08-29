@@ -286,7 +286,7 @@
    /**
     * A live CDLXSIDEGAP3METHODS stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLXSIDEGAP3METHODS} over the same series.
-    * Open with {@link Core#CDLXSIDEGAP3METHODS_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlxsidegap3methodsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -297,7 +297,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLXSIDEGAP3METHODS_Stream {
+   public static final class Cdlxsidegap3methodsStream {
       Core core;
       double lag1_inOpen;
       double lag2_inOpen;
@@ -307,7 +307,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLXSIDEGAP3METHODS_Stream( Core core ) { this.core = core; }
+      Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -321,7 +321,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLXSIDEGAP3METHODS_Stream( CDLXSIDEGAP3METHODS_Stream other ) {
+      Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
@@ -332,7 +332,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLXSIDEGAP3METHODS_Stream other ) {
+      void copyFrom( Cdlxsidegap3methodsStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
@@ -358,7 +358,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLXSIDEGAP3METHODS update: BadParam", RetCode.BadParam);
-         core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlxsidegap3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -387,7 +387,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLXSIDEGAP3METHODS updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlxsidegap3methodsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -403,8 +403,8 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
-         CDLXSIDEGAP3METHODS_Stream scratch = new CDLXSIDEGAP3METHODS_Stream(this);
-         core.CDLXSIDEGAP3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         Cdlxsidegap3methodsStream scratch = new Cdlxsidegap3methodsStream(this);
+         core.cdlxsidegap3methodsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -421,11 +421,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLXSIDEGAP3METHODS_Stream copy() {
-         return new CDLXSIDEGAP3METHODS_Stream(this);
+      public Cdlxsidegap3methodsStream copy() {
+         return new Cdlxsidegap3methodsStream(this);
       }
    }
-   void CDLXSIDEGAP3METHODS_StepImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
@@ -447,7 +447,7 @@
       sp.lag2_inClose = sp.lag1_inClose;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDLXSIDEGAP3METHODS_OpenImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlxsidegap3methodsOpenImpl( Cdlxsidegap3methodsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -527,11 +527,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLXSIDEGAP3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlxsidegap3methodsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   Cdlxsidegap3methodsStream cdlxsidegap3methodsOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      Cdlxsidegap3methodsStream sp = new Cdlxsidegap3methodsStream(this);
+      RetCode retCode = cdlxsidegap3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -545,14 +545,14 @@
       }
       throw new TaLibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLXSIDEGAP3METHODS_Open (composition seam). */
-   CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlxsidegap3methodsOpen (composition seam). */
+   Cdlxsidegap3methodsStream cdlxsidegap3methodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
+      Cdlxsidegap3methodsStream sp = new Cdlxsidegap3methodsStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlxsidegap3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -579,7 +579,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public Cdlxsidegap3methodsStream cdlxsidegap3methodsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLXSIDEGAP3METHODS open", "inOpen", inOpen);
       requireHistory("CDLXSIDEGAP3METHODS open", inOpen.length);
@@ -589,10 +589,10 @@
       requireHistoryLength("CDLXSIDEGAP3METHODS open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLXSIDEGAP3METHODS open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLXSIDEGAP3METHODS open", "inClose", inClose.length, inOpen.length);
-      return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlxsidegap3methodsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLXSIDEGAP3METHODS_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlxsidegap3methodsOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLXSIDEGAP3METHODS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -600,9 +600,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLXSIDEGAP3METHODS_Stream#outRange()}.
+    * {@link Cdlxsidegap3methodsStream#outRange()}.
     */
-   public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public Cdlxsidegap3methodsStream cdlxsidegap3methodsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLXSIDEGAP3METHODS openAndFill", "inOpen", inOpen);
       requireHistory("CDLXSIDEGAP3METHODS openAndFill", inOpen.length);
@@ -619,5 +619,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLXSIDEGAP3METHODS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlxsidegap3methodsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

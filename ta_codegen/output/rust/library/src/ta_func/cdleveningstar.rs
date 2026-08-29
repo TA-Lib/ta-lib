@@ -497,27 +497,27 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live CDLEVENINGSTAR stream: one value per closed bar, bit-identical to [`Core::CDLEVENINGSTAR`]
-/// over the same series. Open with [`Core::CDLEVENINGSTAR_Open`]; dropping the handle
+/// over the same series. Open with [`Core::cdleveningstar_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLEVENINGSTAR_Stream")]
-pub struct CDLEVENINGSTAR_Stream {
+pub struct CdleveningstarStream {
     /// The `BodyLong` setting this stream was opened with.
     cs_body_long: CandleSetting,
     /// The `BodyShort` setting this stream was opened with.
     cs_body_short: CandleSetting,
-    state: CDLEVENINGSTAR_StreamState,
+    state: CdleveningstarStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl CDLEVENINGSTAR_Stream {
+impl CdleveningstarStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CDLEVENINGSTAR_StreamState::restore_from`.
+    /// allocating new ones. See `CdleveningstarStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.cs_body_long = src.cs_body_long;
         self.cs_body_short = src.cs_body_short;
@@ -528,7 +528,7 @@ impl CDLEVENINGSTAR_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CDLEVENINGSTAR_StreamState {
+struct CdleveningstarStreamState {
     optInPenetration: f64,
     BodyShortPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
@@ -551,7 +551,7 @@ struct CDLEVENINGSTAR_StreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl CDLEVENINGSTAR_StreamState {
+impl CdleveningstarStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
@@ -577,14 +577,13 @@ impl CDLEVENINGSTAR_StreamState {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLEVENINGSTAR_step_impl(sp: &mut CDLEVENINGSTAR_StreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn cdleveningstar_step_impl(sp: &mut CdleveningstarStreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -727,11 +726,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::CDLEVENINGSTAR_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::CDLEVENINGSTAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLEVENINGSTAR_OpenImpl(
+    /// The single whole-history transcription behind [`Core::cdleveningstar_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::cdleveningstar_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn cdleveningstar_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
-    ) -> Result<CDLEVENINGSTAR_Stream, RetCode> {
+    ) -> Result<CdleveningstarStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1012,7 +1011,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CDLEVENINGSTAR_StreamState {
+        let state = CdleveningstarStreamState {
             optInPenetration,
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
@@ -1033,17 +1032,17 @@ impl Core {
             ringLag_BodyShortTrailingIdx: capLag_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLEVENINGSTAR_Stream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(CdleveningstarStream { cs_body_long: self.candle_settings.body_long, cs_body_short: self.candle_settings.body_short, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLEVENINGSTAR_Open`] (composition seam).
-    pub(crate) fn CDLEVENINGSTAR_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::cdleveningstar_open`] (composition seam).
+    pub(crate) fn cdleveningstar_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CDLEVENINGSTAR_Stream, i32), RetCode> {
+    ) -> Result<(CdleveningstarStream, i32), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLEVENINGSTAR_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.cdleveningstar_open_impl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1070,7 +1069,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLEVENINGSTAR_Open(&open, &high, &low, &close, 0.3).expect("enough history");
+    /// let (mut s, _last) = core.cdleveningstar_open(&open, &high, &low, &close, 0.3).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1080,11 +1079,11 @@ impl Core {
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLEVENINGSTAR_Open")]
-    pub fn CDLEVENINGSTAR_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLEVENINGSTAR_Stream, i32), RetCode> {
-        self.CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn cdleveningstar_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdleveningstarStream, i32), RetCode> {
+        self.cdleveningstar_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::CDLEVENINGSTAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::cdleveningstar_open`] that also fills the output array(s) bit-identically to
     /// [`Core::CDLEVENINGSTAR`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -1092,12 +1091,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::CDLEVENINGSTAR_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::cdleveningstar_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_CDLEVENINGSTAR_OpenAndFill")]
-    pub fn CDLEVENINGSTAR_OpenAndFill(
+    pub fn cdleveningstar_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outInteger: &mut [i32],
-    ) -> Result<(CDLEVENINGSTAR_Stream, OutRange), RetCode> {
+    ) -> Result<(CdleveningstarStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -1114,31 +1113,31 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLEVENINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger)?;
+        let handle = self.cdleveningstar_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::CDLEVENINGSTAR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::cdleveningstar_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn CDLEVENINGSTAR_OpenAndFillInternal(
+    pub(crate) fn cdleveningstar_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLEVENINGSTAR_Stream, RetCode> {
-        self.CDLEVENINGSTAR_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
+    ) -> Result<CdleveningstarStream, RetCode> {
+        self.cdleveningstar_open_impl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
 
 thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLEVENINGSTAR_StreamState::restore_from`).
+    /// `peek`'s reusable scratch handle (see `CdleveningstarStreamState::restore_from`).
     /// Taken for the duration of the step and put back after, so a
     /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLEVENINGSTAR_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLEVENINGSTAR_Stream>>> =
+    static CDLEVENINGSTAR_PEEK_SCRATCH: std::cell::Cell<Option<Box<CdleveningstarStream>>> =
         const { std::cell::Cell::new(None) };
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CDLEVENINGSTAR_Stream {
+impl CdleveningstarStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -1156,7 +1155,7 @@ impl CDLEVENINGSTAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        Core::CDLEVENINGSTAR_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        Core::cdleveningstar_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1189,7 +1188,7 @@ impl CDLEVENINGSTAR_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::CDLEVENINGSTAR_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
+            Core::cdleveningstar_step_impl(&mut self.state, &self.cs_body_long, &self.cs_body_short, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outInteger[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1237,7 +1236,7 @@ impl CDLEVENINGSTAR_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CDLEVENINGSTAR_Stream>();
+    _assert_auto::<CdleveningstarStream>();
 };
 
 /***************/

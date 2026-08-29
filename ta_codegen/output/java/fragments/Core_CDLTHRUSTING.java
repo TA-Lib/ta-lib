@@ -350,7 +350,7 @@
    /**
     * A live CDLTHRUSTING stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLTHRUSTING} over the same series.
-    * Open with {@link Core#CDLTHRUSTING_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlthrustingOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -361,7 +361,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLTHRUSTING_Stream {
+   public static final class CdlthrustingStream {
       Core core;
       double EqualPeriodTotal;
       double BodyLongPeriodTotal;
@@ -387,7 +387,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLTHRUSTING_Stream( Core core ) { this.core = core; }
+      CdlthrustingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -401,7 +401,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLTHRUSTING_Stream( CDLTHRUSTING_Stream other ) {
+      CdlthrustingStream( CdlthrustingStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -428,7 +428,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLTHRUSTING_Stream other ) {
+      void copyFrom( CdlthrustingStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -464,7 +464,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLTHRUSTING_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlthrustingStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -481,7 +481,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTHRUSTING update: BadParam", RetCode.BadParam);
-         core.CDLTHRUSTING_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlthrustingStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -510,7 +510,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLTHRUSTING updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLTHRUSTING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlthrustingStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -528,14 +528,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTHRUSTING peek: BadParam", RetCode.BadParam);
-         CDLTHRUSTING_Stream scratch = PEEK_SCRATCH.get();
+         CdlthrustingStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLTHRUSTING_Stream(this);
+            scratch = new CdlthrustingStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLTHRUSTING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlthrustingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -552,11 +552,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLTHRUSTING_Stream copy() {
-         return new CDLTHRUSTING_Stream(this);
+      public CdlthrustingStream copy() {
+         return new CdlthrustingStream(this);
       }
    }
-   void CDLTHRUSTING_StepImpl( CDLTHRUSTING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlthrustingStepImpl( CdlthrustingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -595,7 +595,7 @@
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLTHRUSTING_OpenImpl( CDLTHRUSTING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlthrustingOpenImpl( CdlthrustingStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -739,11 +739,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLTHRUSTING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLTHRUSTING_Stream CDLTHRUSTING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlthrustingOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlthrustingStream cdlthrustingOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLTHRUSTING_Stream sp = new CDLTHRUSTING_Stream(this);
-      RetCode retCode = CDLTHRUSTING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlthrustingStream sp = new CdlthrustingStream(this);
+      RetCode retCode = cdlthrustingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -757,14 +757,14 @@
       }
       throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLTHRUSTING_Open (composition seam). */
-   CDLTHRUSTING_Stream CDLTHRUSTING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlthrustingOpen (composition seam). */
+   CdlthrustingStream cdlthrustingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLTHRUSTING_Stream sp = new CDLTHRUSTING_Stream(this);
+      CdlthrustingStream sp = new CdlthrustingStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTHRUSTING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlthrustingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -791,7 +791,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLTHRUSTING_Stream CDLTHRUSTING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlthrustingStream cdlthrustingOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLTHRUSTING open", "inOpen", inOpen);
       requireHistory("CDLTHRUSTING open", inOpen.length);
@@ -801,10 +801,10 @@
       requireHistoryLength("CDLTHRUSTING open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLTHRUSTING open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLTHRUSTING open", "inClose", inClose.length, inOpen.length);
-      return CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlthrustingOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLTHRUSTING_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlthrustingOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLTHRUSTING} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -812,9 +812,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLTHRUSTING_Stream#outRange()}.
+    * {@link CdlthrustingStream#outRange()}.
     */
-   public CDLTHRUSTING_Stream CDLTHRUSTING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlthrustingStream cdlthrustingOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLTHRUSTING openAndFill", "inOpen", inOpen);
       requireHistory("CDLTHRUSTING openAndFill", inOpen.length);
@@ -831,5 +831,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLTHRUSTING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlthrustingOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

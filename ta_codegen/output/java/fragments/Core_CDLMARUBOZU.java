@@ -338,7 +338,7 @@
    /**
     * A live CDLMARUBOZU stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#CDLMARUBOZU} over the same series.
-    * Open with {@link Core#CDLMARUBOZU_Open}; there is no close — the handle is
+    * Open with {@link Core#cdlmarubozuOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -349,7 +349,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CDLMARUBOZU_Stream {
+   public static final class CdlmarubozuStream {
       Core core;
       double BodyLongPeriodTotal;
       double ShadowVeryShortPeriodTotal;
@@ -369,7 +369,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      CDLMARUBOZU_Stream( Core core ) { this.core = core; }
+      CdlmarubozuStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -383,7 +383,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      CDLMARUBOZU_Stream( CDLMARUBOZU_Stream other ) {
+      CdlmarubozuStream( CdlmarubozuStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -404,7 +404,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CDLMARUBOZU_Stream other ) {
+      void copyFrom( CdlmarubozuStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -434,7 +434,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLMARUBOZU_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<CdlmarubozuStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -451,7 +451,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMARUBOZU update: BadParam", RetCode.BadParam);
-         core.CDLMARUBOZU_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.cdlmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -480,7 +480,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                throw new TaLibArgumentException("CDLMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
-            core.CDLMARUBOZU_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.cdlmarubozuStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = this.cur_outInteger;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -498,14 +498,14 @@
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMARUBOZU peek: BadParam", RetCode.BadParam);
-         CDLMARUBOZU_Stream scratch = PEEK_SCRATCH.get();
+         CdlmarubozuStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new CDLMARUBOZU_Stream(this);
+            scratch = new CdlmarubozuStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLMARUBOZU_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.cdlmarubozuStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -522,11 +522,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CDLMARUBOZU_Stream copy() {
-         return new CDLMARUBOZU_Stream(this);
+      public CdlmarubozuStream copy() {
+         return new CdlmarubozuStream(this);
       }
    }
-   void CDLMARUBOZU_StepImpl( CDLMARUBOZU_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void cdlmarubozuStepImpl( CdlmarubozuStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -561,7 +561,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMARUBOZU_OpenImpl( CDLMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode cdlmarubozuOpenImpl( CdlmarubozuStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -686,11 +686,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* CDLMARUBOZU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   /* cdlmarubozuOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CdlmarubozuStream cdlmarubozuOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
-      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      CdlmarubozuStream sp = new CdlmarubozuStream(this);
+      RetCode retCode = cdlmarubozuOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -704,14 +704,14 @@
       }
       throw new TaLibArgumentException("CDLMARUBOZU openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind CDLMARUBOZU_Open (composition seam). */
-   CDLMARUBOZU_Stream CDLMARUBOZU_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind cdlmarubozuOpen (composition seam). */
+   CdlmarubozuStream cdlmarubozuOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
+      CdlmarubozuStream sp = new CdlmarubozuStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlmarubozuOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -738,7 +738,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public CDLMARUBOZU_Stream CDLMARUBOZU_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CdlmarubozuStream cdlmarubozuOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
       requireArgument("CDLMARUBOZU open", "inOpen", inOpen);
       requireHistory("CDLMARUBOZU open", inOpen.length);
@@ -748,10 +748,10 @@
       requireHistoryLength("CDLMARUBOZU open", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMARUBOZU open", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMARUBOZU open", "inClose", inClose.length, inOpen.length);
-      return CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return cdlmarubozuOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#CDLMARUBOZU_Open} that also fills the output array(s) bit-identically
+    * {@link Core#cdlmarubozuOpen} that also fills the output array(s) bit-identically
     * to {@link Core#CDLMARUBOZU} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -759,9 +759,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link CDLMARUBOZU_Stream#outRange()}.
+    * {@link CdlmarubozuStream#outRange()}.
     */
-   public CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CdlmarubozuStream cdlmarubozuOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
       requireArgument("CDLMARUBOZU openAndFill", "inOpen", inOpen);
       requireHistory("CDLMARUBOZU openAndFill", inOpen.length);
@@ -778,5 +778,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return CDLMARUBOZU_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
+      return cdlmarubozuOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

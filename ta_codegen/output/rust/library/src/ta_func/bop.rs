@@ -245,23 +245,23 @@ impl Core {
 /**** Streaming API *****/
 
 /// Live BOP stream: one value per closed bar, bit-identical to [`Core::BOP`]
-/// over the same series. Open with [`Core::BOP_Open`]; dropping the handle
+/// over the same series. Open with [`Core::bop_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BOP_Stream")]
-pub struct BOP_Stream {
-    state: BOP_StreamState,
+pub struct BopStream {
+    state: BopStreamState,
     /// The bars this handle has produced a value for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[allow(dead_code)]
-impl BOP_Stream {
+impl BopStream {
     /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `BOP_StreamState::restore_from`.
+    /// allocating new ones. See `BopStreamState::restore_from`.
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.state.restore_from(&src.state);
         self.out = src.out;
@@ -270,25 +270,24 @@ impl BOP_Stream {
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct BOP_StreamState {
+struct BopStreamState {
 }
 
 #[allow(non_snake_case, dead_code)]
-impl BOP_StreamState {
+impl BopStreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
     }
 }
 
-#[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(dead_code)]
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BOP_step_impl(sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn bop_step_impl(sp: &mut BopStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         // BOP is a fraction of the bar's own range, so it is scale-free and the
         // divisor only has to be positive. An exact test, not the fixed
@@ -303,11 +302,11 @@ impl Core {
         }
     }
 
-    /// The single whole-history transcription behind [`Core::BOP_OpenInternal`]
-    /// (stride 0, scalar sink) and [`Core::BOP_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn BOP_OpenImpl(
+    /// The single whole-history transcription behind [`Core::bop_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::bop_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn bop_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<BOP_Stream, RetCode> {
+    ) -> Result<BopStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -350,19 +349,19 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = BOP_StreamState {
+        let state = BopStreamState {
         };
-        Ok(BOP_Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(BopStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::BOP_Open`] (composition seam).
-    pub(crate) fn BOP_OpenInternal(
+    /// Internal startIdx-anchored open behind [`Core::bop_open`] (composition seam).
+    pub(crate) fn bop_open_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(BOP_Stream, f64), RetCode> {
+    ) -> Result<(BopStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.BOP_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.bop_open_impl(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -389,7 +388,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.BOP_Open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.bop_open(&open, &high, &low, &close).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -399,11 +398,11 @@ impl Core {
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_BOP_Open")]
-    pub fn BOP_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(BOP_Stream, f64), RetCode> {
-        self.BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn bop_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(BopStream, f64), RetCode> {
+        self.bop_open_internal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::BOP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::bop_open`] that also fills the output array(s) bit-identically to
     /// [`Core::BOP`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
@@ -411,12 +410,12 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::BOP_Open`] rejects
+    /// or when two of them are the same slice. Everything [`Core::bop_open`] rejects
     /// is rejected here too.
     #[doc(alias = "TA_BOP_OpenAndFill")]
-    pub fn BOP_OpenAndFill(
+    pub fn bop_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outReal: &mut [f64],
-    ) -> Result<(BOP_Stream, OutRange), RetCode> {
+    ) -> Result<(BopStream, OutRange), RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -433,23 +432,23 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.BOP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.bop_open_and_fill_internal(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::BOP_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// [`Core::bop_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn BOP_OpenAndFillInternal(
+    pub(crate) fn bop_open_and_fill_internal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<BOP_Stream, RetCode> {
-        self.BOP_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
+    ) -> Result<BopStream, RetCode> {
+        self.bop_open_impl(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl BOP_Stream {
+impl BopStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -467,7 +466,7 @@ impl BOP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::BOP_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        Core::bop_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -500,7 +499,7 @@ impl BOP_Stream {
             if !inOpen[i].is_finite() || !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
                 return Err(RetCode::BadParam);
             }
-            Core::BOP_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            Core::bop_step_impl(&mut self.state, inOpen[i], inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -543,7 +542,7 @@ impl BOP_Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<BOP_Stream>();
+    _assert_auto::<BopStream>();
 };
 
 /***************/

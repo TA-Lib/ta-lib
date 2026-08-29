@@ -571,12 +571,12 @@ public partial class Core
    /// </remarks>
    /// <param name="Min">Lowest value in each rolling window.</param>
    /// <param name="Max">Highest value in each rolling window.</param>
-   public readonly record struct MINMAX_Value( double Min, double Max );
+   public readonly record struct MinmaxValue( double Min, double Max );
 
    /// <summary>A live <c>MINMAX</c> stream: one value per closed bar, bit-identical to
    /// <c>MINMAX</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MINMAX_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.MinmaxOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -589,7 +589,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class MINMAX_Stream
+   public sealed class MinmaxStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -607,12 +607,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MINMAX_Stream( Core core ) { this.core = core; }
+      internal MinmaxStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MINMAX</c> reports over the same bars: the opener sets
+      /// <para>It is what <c>Core.Minmax</c> reports over the same bars: the opener sets
       /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -621,7 +621,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MINMAX_Stream( MINMAX_Stream other )
+      internal MinmaxStream( MinmaxStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -641,7 +641,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MINMAX_Stream other )
+      internal void CopyFrom( MinmaxStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -676,12 +676,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
-      public MINMAX_Value Update( double inReal )
+      public MinmaxValue Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MINMAX", "update", RetCode.BadParam);
-         core.MINMAX_StepImpl(this, inReal);
+         core.MinmaxStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
-         return new MINMAX_Value(cur_outMin, cur_outMax);
+         return new MinmaxValue(cur_outMin, cur_outMax);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -695,12 +695,12 @@ public partial class Core
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
-      public MINMAX_Value Peek( double inReal )
+      public MinmaxValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MINMAX", "peek", RetCode.BadParam);
-         MINMAX_Stream scratch = new MINMAX_Stream(this);
-         core.MINMAX_StepImpl(scratch, inReal);
-         return new MINMAX_Value(scratch.cur_outMin, scratch.cur_outMax);
+         MinmaxStream scratch = new MinmaxStream(this);
+         core.MinmaxStepImpl(scratch, inReal);
+         return new MinmaxValue(scratch.cur_outMin, scratch.cur_outMax);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -724,7 +724,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MINMAX", "updateAndFill", RetCode.BadParam);
-            core.MINMAX_StepImpl(this, inReal[i]);
+            core.MinmaxStepImpl(this, inReal[i]);
             outMin[i] = cur_outMin;
             outMax[i] = cur_outMax;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
@@ -736,18 +736,18 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public MINMAX_Value Value => new MINMAX_Value(cur_outMin, cur_outMax);
+      public MinmaxValue Value => new MinmaxValue(cur_outMin, cur_outMax);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MINMAX_Stream Clone()
+      public MinmaxStream Clone()
       {
-         return new MINMAX_Stream(this);
+         return new MinmaxStream(this);
       }
    }
 
-   internal void MINMAX_StepImpl( MINMAX_Stream sp, double inReal )
+   internal void MinmaxStepImpl( MinmaxStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;
@@ -798,7 +798,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
+   private RetCode MinmaxOpenImpl( MinmaxStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -948,11 +948,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MINMAX_Stream MINMAX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
+   /* MinmaxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MinmaxStream MinmaxOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
-      MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
+      MinmaxStream sp = new MinmaxStream(this);
+      RetCode retCode = MinmaxOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -961,13 +961,13 @@ public partial class Core
       throw StreamFailure("MINMAX", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MINMAX_Open (composition seam). */
-   internal MINMAX_Stream MINMAX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MinmaxOpen (composition seam). */
+   internal MinmaxStream MinmaxOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      MINMAX_Stream sp = new MINMAX_Stream(this);
+      MinmaxStream sp = new MinmaxStream(this);
       double[] sink_outMin = new double[1];
       double[] sink_outMax = new double[1];
-      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outMin, sink_outMax, 0);
+      RetCode retCode = MinmaxOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outMin, sink_outMax, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -978,11 +978,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MINMAX</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MINMAX_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="MinmaxStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>MINMAX</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MINMAX_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MINMAX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MinmaxOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Values scanned for the window min and max. The warm-up history, oldest bar
    /// first.</param>
@@ -995,14 +995,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MINMAX_Stream MINMAX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public MinmaxStream MinmaxOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MINMAX_OpenInternal(inReal, 0, optInTimePeriod);
+      return MinmaxOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>MINMAX_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MinmaxOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MINMAX</c> produces over
@@ -1014,7 +1014,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MINMAX_Stream.OutRange"/>.</para>
+   /// <see cref="MinmaxStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Values scanned for the window min and max. The warm-up history, oldest bar
    /// first.</param>
@@ -1032,7 +1032,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MINMAX_Stream MINMAX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
+   public MinmaxStream MinmaxOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1042,6 +1042,6 @@ public partial class Core
       if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || outMin.Overlaps(outMax) ) {
          throw StreamFailure("MINMAX", "openAndFill", RetCode.BadParam);
       }
-      return MINMAX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMin, outMax);
+      return MinmaxOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMin, outMax);
    }
 }

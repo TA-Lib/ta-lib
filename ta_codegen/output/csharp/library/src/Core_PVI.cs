@@ -338,7 +338,7 @@ public partial class Core
    /// <summary>A live <c>PVI</c> stream: one value per closed bar, bit-identical to
    /// <c>PVI</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.PVI_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.PviOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -351,7 +351,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class PVI_Stream
+   public sealed class PviStream
    {
       internal Core core;
       internal double prevPVI;
@@ -361,12 +361,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal PVI_Stream( Core core ) { this.core = core; }
+      internal PviStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.PVI</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Pvi</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -374,7 +374,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal PVI_Stream( PVI_Stream other )
+      internal PviStream( PviStream other )
       {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
@@ -385,7 +385,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( PVI_Stream other )
+      internal void CopyFrom( PviStream other )
       {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
@@ -413,7 +413,7 @@ public partial class Core
       public double Update( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVI", "update", RetCode.BadParam);
-         core.PVI_StepImpl(this, inClose, inVolume);
+         core.PviStepImpl(this, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -433,8 +433,8 @@ public partial class Core
       public double Peek( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVI", "peek", RetCode.BadParam);
-         PVI_Stream scratch = new PVI_Stream(this);
-         core.PVI_StepImpl(scratch, inClose, inVolume);
+         PviStream scratch = new PviStream(this);
+         core.PviStepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -459,7 +459,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inClose[i]) || !double.IsFinite(inVolume[i]) ) throw Core.StreamFailure("PVI", "updateAndFill", RetCode.BadParam);
-            core.PVI_StepImpl(this, inClose[i], inVolume[i]);
+            core.PviStepImpl(this, inClose[i], inVolume[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -475,13 +475,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public PVI_Stream Clone()
+      public PviStream Clone()
       {
-         return new PVI_Stream(this);
+         return new PviStream(this);
       }
    }
 
-   internal void PVI_StepImpl( PVI_Stream sp, double inClose, double inVolume )
+   internal void PviStepImpl( PviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -515,7 +515,7 @@ public partial class Core
       sp.prevVolume = tempVolume;
    }
 
-   private RetCode PVI_OpenImpl( PVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PviOpenImpl( PviStream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -589,11 +589,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal PVI_Stream PVI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* PviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal PviStream PviOpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      PviStream sp = new PviStream(this);
+      RetCode retCode = PviOpenImpl(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -602,12 +602,12 @@ public partial class Core
       throw StreamFailure("PVI", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
-   internal PVI_Stream PVI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
+   /* Internal startIdx-anchored open behind PviOpen (composition seam). */
+   internal PviStream PviOpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
-      PVI_Stream sp = new PVI_Stream(this);
+      PviStream sp = new PviStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = PviOpenImpl(sp, inClose, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -618,11 +618,11 @@ public partial class Core
 
    /// <summary>Open a live <c>PVI</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="PVI_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="PviStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>PVI</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>PVI_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>PVI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>PviOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
@@ -633,16 +633,16 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PVI_Stream PVI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
+   public PviStream PviOpen( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
       if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("PVI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("PVI", "open", "inVolume", inVolume.Length, inClose.Length);
-      return PVI_OpenInternal(inClose, inVolume, 0);
+      return PviOpenInternal(inClose, inVolume, 0);
    }
 
-   /// <summary><c>PVI_Open</c> that also fills the output array(s) over the whole history
+   /// <summary><c>PviOpen</c> that also fills the output array(s) over the whole history
    /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>PVI</c> produces over the
@@ -654,7 +654,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="PVI_Stream.OutRange"/>.</para>
+   /// <see cref="PviStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
@@ -668,7 +668,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public PVI_Stream PVI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
+   public PviStream PviOpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
       if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -679,6 +679,6 @@ public partial class Core
       if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          throw StreamFailure("PVI", "openAndFill", RetCode.BadParam);
       }
-      return PVI_OpenAndFillInternal(inClose, inVolume, 0, out _, out _, outReal);
+      return PviOpenAndFillInternal(inClose, inVolume, 0, out _, out _, outReal);
    }
 }

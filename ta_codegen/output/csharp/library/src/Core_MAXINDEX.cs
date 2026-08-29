@@ -364,7 +364,7 @@ public partial class Core
    /// <summary>A live <c>MAXINDEX</c> stream: one value per closed bar, bit-identical to
    /// <c>MAXINDEX</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.MAXINDEX_Open"/>. There is no close and nothing
+   /// <para>Open with <see cref="Core.MaxindexOpen"/>. There is no close and nothing
    /// to dispose — the handle is ordinary managed state, and an unreferenced
    /// handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -382,7 +382,7 @@ public partial class Core
    /// position within the current window, not as an identifier you can store and
    /// compare against one read much later.</para>
    /// </remarks>
-   public sealed class MAXINDEX_Stream
+   public sealed class MaxindexStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -397,12 +397,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal MAXINDEX_Stream( Core core ) { this.core = core; }
+      internal MaxindexStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.MAXINDEX</c> reports over the same bars: the opener
+      /// <para>It is what <c>Core.Maxindex</c> reports over the same bars: the opener
       /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -411,7 +411,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal MAXINDEX_Stream( MAXINDEX_Stream other )
+      internal MaxindexStream( MaxindexStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -428,7 +428,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MAXINDEX_Stream other )
+      internal void CopyFrom( MaxindexStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -463,7 +463,7 @@ public partial class Core
       public int Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAXINDEX", "update", RetCode.BadParam);
-         core.MAXINDEX_StepImpl(this, inReal);
+         core.MaxindexStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -482,8 +482,8 @@ public partial class Core
       public int Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAXINDEX", "peek", RetCode.BadParam);
-         MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
-         core.MAXINDEX_StepImpl(scratch, inReal);
+         MaxindexStream scratch = new MaxindexStream(this);
+         core.MaxindexStepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -507,7 +507,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("MAXINDEX", "updateAndFill", RetCode.BadParam);
-            core.MAXINDEX_StepImpl(this, inReal[i]);
+            core.MaxindexStepImpl(this, inReal[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -523,13 +523,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public MAXINDEX_Stream Clone()
+      public MaxindexStream Clone()
       {
-         return new MAXINDEX_Stream(this);
+         return new MaxindexStream(this);
       }
    }
 
-   internal void MAXINDEX_StepImpl( MAXINDEX_Stream sp, double inReal )
+   internal void MaxindexStepImpl( MaxindexStream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -561,7 +561,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode MaxindexOpenImpl( MaxindexStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -668,11 +668,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* MaxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MaxindexStream MaxindexOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
+      MaxindexStream sp = new MaxindexStream(this);
+      RetCode retCode = MaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -681,12 +681,12 @@ public partial class Core
       throw StreamFailure("MAXINDEX", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind MAXINDEX_Open (composition seam). */
-   internal MAXINDEX_Stream MAXINDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MaxindexOpen (composition seam). */
+   internal MaxindexStream MaxindexOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      MaxindexStream sp = new MaxindexStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = MaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -697,12 +697,11 @@ public partial class Core
 
    /// <summary>Open a live <c>MAXINDEX</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="MAXINDEX_Stream.Value"/> starts at the last
-   /// history bar's value — bit-identical to what <c>MAXINDEX</c> reports for
-   /// that bar.</para>
+   /// <para>The handle's <see cref="MaxindexStream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MAXINDEX</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>MAXINDEX_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>MAXINDEX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>MaxindexOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Input series to scan. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MAXINDEX_Lookback"/> for its default
@@ -714,14 +713,14 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MAXINDEX_Stream MAXINDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public MaxindexStream MaxindexOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAXINDEX open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAXINDEX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
+      return MaxindexOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>MAXINDEX_Open</c> that also fills the output array(s) over the whole
+   /// <summary><c>MaxindexOpen</c> that also fills the output array(s) over the whole
    /// history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MAXINDEX</c> produces over
@@ -733,7 +732,7 @@ public partial class Core
    /// anything is written, so an undersized span is an <c>ArgumentException</c>
    /// naming it rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MAXINDEX_Stream.OutRange"/>.</para>
+   /// <see cref="MaxindexStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input series to scan. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MAXINDEX_Lookback"/> for its default
@@ -748,12 +747,12 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public MAXINDEX_Stream MAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
+   public MaxindexStream MaxindexOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAXINDEX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAXINDEX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MAXINDEX", "openAndFill", inReal.Length, MAXINDEX_Lookback(optInTimePeriod));
       RequireFillLength("MAXINDEX", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return MAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);
+      return MaxindexOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);
    }
 }

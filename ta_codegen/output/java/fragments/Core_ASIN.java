@@ -195,7 +195,7 @@
    /**
     * A live ASIN stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#ASIN} over the same series.
-    * Open with {@link Core#ASIN_Open}; there is no close — the handle is
+    * Open with {@link Core#asinOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -206,13 +206,13 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ASIN_Stream {
+   public static final class AsinStream {
       Core core;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
 
-      ASIN_Stream( Core core ) { this.core = core; }
+      AsinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -226,14 +226,14 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      ASIN_Stream( ASIN_Stream other ) {
+      AsinStream( AsinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ASIN_Stream other ) {
+      void copyFrom( AsinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -255,7 +255,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ASIN update: BadParam", RetCode.BadParam);
-         core.ASIN_StepImpl(this, inReal);
+         core.asinStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -281,7 +281,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("ASIN updateAndFill: BadParam", RetCode.BadParam);
-            core.ASIN_StepImpl(this, inReal[i]);
+            core.asinStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -297,8 +297,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
-         ASIN_Stream scratch = new ASIN_Stream(this);
-         core.ASIN_StepImpl(scratch, inReal);
+         AsinStream scratch = new AsinStream(this);
+         core.asinStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -315,15 +315,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ASIN_Stream copy() {
-         return new ASIN_Stream(this);
+      public AsinStream copy() {
+         return new AsinStream(this);
       }
    }
-   void ASIN_StepImpl( ASIN_Stream sp, double inReal )
+   void asinStepImpl( AsinStream sp, double inReal )
    {
       sp.cur_outReal = Math.asin(inReal);
    }
-   private RetCode ASIN_OpenImpl( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode asinOpenImpl( AsinStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -349,11 +349,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   ASIN_Stream ASIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* asinOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AsinStream asinOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      AsinStream sp = new AsinStream(this);
+      RetCode retCode = asinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -367,14 +367,14 @@
       }
       throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind ASIN_Open (composition seam). */
-   ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind asinOpen (composition seam). */
+   AsinStream asinOpenInternal( double inReal[], int startIdx )
    {
-      ASIN_Stream sp = new ASIN_Stream(this);
+      AsinStream sp = new AsinStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = asinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -401,14 +401,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public ASIN_Stream ASIN_Open( double inReal[] )
+   public AsinStream asinOpen( double inReal[] )
    {
       requireArgument("ASIN open", "inReal", inReal);
       requireHistory("ASIN open", inReal.length);
-      return ASIN_OpenInternal(inReal, 0);
+      return asinOpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#ASIN_Open} that also fills the output array(s) bit-identically
+    * {@link Core#asinOpen} that also fills the output array(s) bit-identically
     * to {@link Core#ASIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -416,9 +416,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link ASIN_Stream#outRange()}.
+    * {@link AsinStream#outRange()}.
     */
-   public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
+   public AsinStream asinOpenAndFill( double inReal[], double outReal[] )
    {
       requireArgument("ASIN openAndFill", "inReal", inReal);
       requireHistory("ASIN openAndFill", inReal.length);
@@ -429,5 +429,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return ASIN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+      return asinOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

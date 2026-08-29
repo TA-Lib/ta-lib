@@ -815,7 +815,7 @@
    /**
     * A live SMI stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#SMI} over the same series.
-    * Open with {@link Core#SMI_Open}; there is no close — the handle is
+    * Open with {@link Core#smiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -826,7 +826,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SMI_Stream {
+   public static final class SmiStream {
       Core core;
       int optInTimePeriod;
       int optInFastPeriod;
@@ -857,7 +857,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      SMI_Stream( Core core ) { this.core = core; }
+      SmiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -871,7 +871,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      SMI_Stream( SMI_Stream other ) {
+      SmiStream( SmiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -903,7 +903,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SMI_Stream other ) {
+      void copyFrom( SmiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -948,7 +948,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<SMI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<SmiStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -978,7 +978,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
-         core.SMI_StepImpl(this, inHigh, inLow, inClose);
+         core.smiStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
          return this.cachedValue;
@@ -1010,7 +1010,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
                   throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-               core.SMI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
                outSMI[i] = this.cur_outSMI;
                outSMISignal[i] = this.cur_outSMISignal;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -1033,14 +1033,14 @@
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
-         SMI_Stream scratch = PEEK_SCRATCH.get();
+         SmiStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new SMI_Stream(this);
+            scratch = new SmiStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.SMI_StepImpl(scratch, inHigh, inLow, inClose);
+         core.smiStepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
       }
 
@@ -1057,11 +1057,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SMI_Stream copy() {
-         return new SMI_Stream(this);
+      public SmiStream copy() {
+         return new SmiStream(this);
       }
    }
-   void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
+   void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double num = 0.0;
@@ -1142,7 +1142,7 @@
       sp.trailingIdx = sp.trailingIdx + 1;
       sp.today = sp.today + 1;
    }
-   private RetCode SMI_OpenImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
+   private RetCode smiOpenImpl( SmiStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
    {
       double kSlow = 0;
       double kFast = 0;
@@ -1478,14 +1478,14 @@
       sp.x_inClose = capX_inClose;
       sp.cur_outSMI = outSMI[(outNBElement.value - 1) * outStride];
       sp.cur_outSMISignal = outSMISignal[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new SMI_Stream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
+      sp.cachedValue = new SmiStream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
       return RetCode.Success;
    }
-   /* SMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SMI_Stream SMI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
+   /* smiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SmiStream smiOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
    {
-      SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
+      SmiStream sp = new SmiStream(this);
+      RetCode retCode = smiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1499,15 +1499,15 @@
       }
       throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind SMI_Open (composition seam). */
-   SMI_Stream SMI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind smiOpen (composition seam). */
+   SmiStream smiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      SMI_Stream sp = new SMI_Stream(this);
+      SmiStream sp = new SmiStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outSMI = new double[1];
       double[] sink_outSMISignal = new double[1];
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0);
+      RetCode retCode = smiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1534,7 +1534,7 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public SMI_Stream SMI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public SmiStream smiOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       requireArgument("SMI open", "inHigh", inHigh);
       requireHistory("SMI open", inHigh.length);
@@ -1542,10 +1542,10 @@
       requireArgument("SMI open", "inClose", inClose);
       requireHistoryLength("SMI open", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("SMI open", "inClose", inClose.length, inHigh.length);
-      return SMI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      return smiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**
-    * {@link Core#SMI_Open} that also fills the output array(s) bit-identically
+    * {@link Core#smiOpen} that also fills the output array(s) bit-identically
     * to {@link Core#SMI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1553,9 +1553,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link SMI_Stream#outRange()}.
+    * {@link SmiStream#outRange()}.
     */
-   public SMI_Stream SMI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outSMI[], double outSMISignal[] )
+   public SmiStream smiOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outSMI[], double outSMISignal[] )
    {
       requireArgument("SMI openAndFill", "inHigh", inHigh);
       requireHistory("SMI openAndFill", inHigh.length);
@@ -1571,5 +1571,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return SMI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+      return smiOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
    }

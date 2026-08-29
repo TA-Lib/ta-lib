@@ -451,7 +451,7 @@ public partial class Core
    /// <summary>A live <c>TRIX</c> stream: one value per closed bar, bit-identical to
    /// <c>TRIX</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.TRIX_Open"/>. There is no close and nothing to
+   /// <para>Open with <see cref="Core.TrixOpen"/>. There is no close and nothing to
    /// dispose — the handle is ordinary managed state, and an unreferenced handle
    /// is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
@@ -464,7 +464,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class TRIX_Stream
+   public sealed class TrixStream
    {
       internal Core core;
       internal int optInTimePeriod;
@@ -476,12 +476,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal TRIX_Stream( Core core ) { this.core = core; }
+      internal TrixStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.TRIX</c> reports over the same bars: the opener sets it
+      /// <para>It is what <c>Core.Trix</c> reports over the same bars: the opener sets it
       /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
       /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
       /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
@@ -489,7 +489,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal TRIX_Stream( TRIX_Stream other )
+      internal TrixStream( TrixStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -502,7 +502,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( TRIX_Stream other )
+      internal void CopyFrom( TrixStream other )
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
@@ -531,7 +531,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "update", RetCode.BadParam);
-         core.TRIX_StepImpl(this, inReal);
+         core.TrixStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -550,8 +550,8 @@ public partial class Core
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "peek", RetCode.BadParam);
-         TRIX_Stream scratch = new TRIX_Stream(this);
-         core.TRIX_StepImpl(scratch, inReal);
+         TrixStream scratch = new TrixStream(this);
+         core.TrixStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -575,7 +575,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("TRIX", "updateAndFill", RetCode.BadParam);
-            core.TRIX_StepImpl(this, inReal[i]);
+            core.TrixStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -591,13 +591,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public TRIX_Stream Clone()
+      public TrixStream Clone()
       {
-         return new TRIX_Stream(this);
+         return new TrixStream(this);
       }
    }
 
-   internal void TRIX_StepImpl( TRIX_Stream sp, double inReal )
+   internal void TrixStepImpl( TrixStream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;
@@ -611,7 +611,7 @@ public partial class Core
       }
    }
 
-   private RetCode TRIX_OpenImpl( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TrixOpenImpl( TrixStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -750,11 +750,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* TRIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal TRIX_Stream TRIX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   /* TrixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal TrixStream TrixOpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      TrixStream sp = new TrixStream(this);
+      RetCode retCode = TrixOpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -763,12 +763,12 @@ public partial class Core
       throw StreamFailure("TRIX", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind TRIX_Open (composition seam). */
-   internal TRIX_Stream TRIX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind TrixOpen (composition seam). */
+   internal TrixStream TrixOpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
-      TRIX_Stream sp = new TRIX_Stream(this);
+      TrixStream sp = new TrixStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      RetCode retCode = TrixOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -779,11 +779,11 @@ public partial class Core
 
    /// <summary>Open a live <c>TRIX</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="TRIX_Stream.Value"/> starts at the last history
+   /// <para>The handle's <see cref="TrixStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>TRIX</c> reports for that bar.</para>
    /// <para>The history must hold at least <c>TRIX_Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>TRIX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>TrixOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
@@ -795,15 +795,15 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TRIX_Stream TRIX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
+   public TrixStream TrixOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TRIX open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TRIX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
+      return TrixOpenInternal(inReal, 0, optInTimePeriod);
    }
 
-   /// <summary><c>TRIX_Open</c> that also fills the output array(s) over the whole
-   /// history in the same single pass.</summary>
+   /// <summary><c>TrixOpen</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>TRIX</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
@@ -814,7 +814,7 @@ public partial class Core
    /// written, so an undersized span is an <c>ArgumentException</c> naming it
    /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="TRIX_Stream.OutRange"/>.</para>
+   /// <see cref="TrixStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
@@ -829,7 +829,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public TRIX_Stream TRIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
+   public TrixStream TrixOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TRIX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TRIX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -838,6 +838,6 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("TRIX", "openAndFill", RetCode.BadParam);
       }
-      return TRIX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
+      return TrixOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

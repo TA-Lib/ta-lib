@@ -948,7 +948,7 @@
    /**
     * A live MAMA stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#MAMA} over the same series.
-    * Open with {@link Core#MAMA_Open}; there is no close — the handle is
+    * Open with {@link Core#mamaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -959,7 +959,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MAMA_Stream {
+   public static final class MamaStream {
       Core core;
       double optInFastLimit;
       double optInSlowLimit;
@@ -1016,7 +1016,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      MAMA_Stream( Core core ) { this.core = core; }
+      MamaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -1030,7 +1030,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      MAMA_Stream( MAMA_Stream other ) {
+      MamaStream( MamaStream other ) {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
          this.optInSlowLimit = other.optInSlowLimit;
@@ -1088,7 +1088,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MAMA_Stream other ) {
+      void copyFrom( MamaStream other ) {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
          this.optInSlowLimit = other.optInSlowLimit;
@@ -1183,7 +1183,7 @@
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MAMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+      private static final ThreadLocal<MamaStream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * One output set, in batch output order. Immutable.
@@ -1213,7 +1213,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
-         core.MAMA_StepImpl(this, inReal);
+         core.mamaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
          return this.cachedValue;
@@ -1245,7 +1245,7 @@
             for( int i = 0; i < barCount; i++ ) {
                if( !Double.isFinite(inReal[i]) )
                   throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-               core.MAMA_StepImpl(this, inReal[i]);
+               core.mamaStepImpl(this, inReal[i]);
                outMAMA[i] = this.cur_outMAMA;
                if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -1268,14 +1268,14 @@
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
-         MAMA_Stream scratch = PEEK_SCRATCH.get();
+         MamaStream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
-            scratch = new MAMA_Stream(this);
+            scratch = new MamaStream(this);
             PEEK_SCRATCH.set(scratch);
          } else {
             scratch.copyFrom(this);
          }
-         core.MAMA_StepImpl(scratch, inReal);
+         core.mamaStepImpl(scratch, inReal);
          return new Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
       }
 
@@ -1292,11 +1292,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MAMA_Stream copy() {
-         return new MAMA_Stream(this);
+      public MamaStream copy() {
+         return new MamaStream(this);
       }
    }
-   void MAMA_StepImpl( MAMA_Stream sp, double inReal )
+   void mamaStepImpl( MamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -1488,7 +1488,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
+   private RetCode mamaOpenImpl( MamaStream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
    {
       double lastCur_outFAMA = 0;
       int outIdx = 0;
@@ -1939,14 +1939,14 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
       sp.cur_outFAMA = lastCur_outFAMA;
-      sp.cachedValue = new MAMA_Stream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
+      sp.cachedValue = new MamaStream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
-   /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   MAMA_Stream MAMA_OpenAndFillInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
+   /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MamaStream mamaOpenAndFillInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
    {
-      MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
+      MamaStream sp = new MamaStream(this);
+      RetCode retCode = mamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1960,15 +1960,15 @@
       }
       throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind MAMA_Open (composition seam). */
-   MAMA_Stream MAMA_OpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
+   /* Internal startIdx-anchored open behind mamaOpen (composition seam). */
+   MamaStream mamaOpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
    {
-      MAMA_Stream sp = new MAMA_Stream(this);
+      MamaStream sp = new MamaStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outMAMA = new double[1];
       double[] sink_outFAMA = new double[1];
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0);
+      RetCode retCode = mamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1995,14 +1995,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public MAMA_Stream MAMA_Open( double inReal[], double optInFastLimit, double optInSlowLimit )
+   public MamaStream mamaOpen( double inReal[], double optInFastLimit, double optInSlowLimit )
    {
       requireArgument("MAMA open", "inReal", inReal);
       requireHistory("MAMA open", inReal.length);
-      return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
+      return mamaOpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
    /**
-    * {@link Core#MAMA_Open} that also fills the output array(s) bit-identically
+    * {@link Core#mamaOpen} that also fills the output array(s) bit-identically
     * to {@link Core#MAMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -2010,11 +2010,11 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>{@code outFAMA} may be declined with {@code null}: the value is still
-    * computed — {@link MAMA_Stream#value()} reports it — and nothing is written out.
+    * computed — {@link MamaStream#value()} reports it — and nothing is written out.
     * <p>The range written is on the returned handle:
-    * {@link MAMA_Stream#outRange()}.
+    * {@link MamaStream#outRange()}.
     */
-   public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
+   public MamaStream mamaOpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
       requireArgument("MAMA openAndFill", "inReal", inReal);
       requireHistory("MAMA openAndFill", inReal.length);
@@ -2026,5 +2026,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      return mamaOpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
    }

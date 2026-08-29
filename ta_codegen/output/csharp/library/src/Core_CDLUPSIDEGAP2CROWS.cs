@@ -401,8 +401,8 @@ public partial class Core
    /// <summary>A live <c>CDLUPSIDEGAP2CROWS</c> stream: one value per closed bar,
    /// bit-identical to <c>CDLUPSIDEGAP2CROWS</c> over the same series.</summary>
    /// <remarks>
-   /// <para>Open with <see cref="Core.CDLUPSIDEGAP2CROWS_Open"/>. There is no close
-   /// and nothing to dispose — the handle is ordinary managed state, and an
+   /// <para>Open with <see cref="Core.Cdlupsidegap2crowsOpen"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
    /// unreferenced handle is simply collected.</para>
    /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
    /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
@@ -414,7 +414,7 @@ public partial class Core
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
    /// </remarks>
-   public sealed class CDLUPSIDEGAP2CROWS_Stream
+   public sealed class Cdlupsidegap2crowsStream
    {
       internal Core core;
       internal double BodyShortPeriodTotal;
@@ -443,12 +443,12 @@ public partial class Core
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
-      internal CDLUPSIDEGAP2CROWS_Stream( Core core ) { this.core = core; }
+      internal Cdlupsidegap2crowsStream( Core core ) { this.core = core; }
 
       /// <summary>The bars this stream has produced a value for, in the input series'
       /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>It is what <c>Core.CDLUPSIDEGAP2CROWS</c> reports over the same bars: the
+      /// <para>It is what <c>Core.Cdlupsidegap2crows</c> reports over the same bars: the
       /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
       /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
       /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
@@ -457,7 +457,7 @@ public partial class Core
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
-      internal CDLUPSIDEGAP2CROWS_Stream( CDLUPSIDEGAP2CROWS_Stream other )
+      internal Cdlupsidegap2crowsStream( Cdlupsidegap2crowsStream other )
       {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -489,7 +489,7 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CDLUPSIDEGAP2CROWS_Stream other )
+      internal void CopyFrom( Cdlupsidegap2crowsStream other )
       {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -526,7 +526,7 @@ public partial class Core
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLUPSIDEGAP2CROWS_Stream? peekScratch;
+      [ThreadStatic] private static Cdlupsidegap2crowsStream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -547,7 +547,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLUPSIDEGAP2CROWS", "update", RetCode.BadParam);
-         core.CDLUPSIDEGAP2CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
+         core.Cdlupsidegap2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -569,14 +569,14 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLUPSIDEGAP2CROWS", "peek", RetCode.BadParam);
-         CDLUPSIDEGAP2CROWS_Stream? scratch = peekScratch;
+         Cdlupsidegap2crowsStream? scratch = peekScratch;
          if( scratch is null ) {
-            scratch = new CDLUPSIDEGAP2CROWS_Stream(this);
+            scratch = new Cdlupsidegap2crowsStream(this);
             peekScratch = scratch;
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLUPSIDEGAP2CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
+         core.Cdlupsidegap2crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -603,7 +603,7 @@ public partial class Core
          for( int i = 0; i < barCount; i++ )
          {
             if( !double.IsFinite(inOpen[i]) || !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("CDLUPSIDEGAP2CROWS", "updateAndFill", RetCode.BadParam);
-            core.CDLUPSIDEGAP2CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            core.Cdlupsidegap2crowsStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
             outInteger[i] = cur_outInteger;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
@@ -619,13 +619,13 @@ public partial class Core
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
       /// <returns>The new, independent handle.</returns>
-      public CDLUPSIDEGAP2CROWS_Stream Clone()
+      public Cdlupsidegap2crowsStream Clone()
       {
-         return new CDLUPSIDEGAP2CROWS_Stream(this);
+         return new Cdlupsidegap2crowsStream(this);
       }
    }
 
-   internal void CDLUPSIDEGAP2CROWS_StepImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void Cdlupsidegap2crowsStepImpl( Cdlupsidegap2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -678,7 +678,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLUPSIDEGAP2CROWS_OpenImpl( CDLUPSIDEGAP2CROWS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode Cdlupsidegap2crowsOpenImpl( Cdlupsidegap2crowsStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -829,11 +829,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   /* CDLUPSIDEGAP2CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   /* Cdlupsidegap2crowsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal Cdlupsidegap2crowsStream Cdlupsidegap2crowsOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      Cdlupsidegap2crowsStream sp = new Cdlupsidegap2crowsStream(this);
+      RetCode retCode = Cdlupsidegap2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -842,12 +842,12 @@ public partial class Core
       throw StreamFailure("CDLUPSIDEGAP2CROWS", "openAndFill", retCode);
    }
 
-   /* Internal startIdx-anchored open behind CDLUPSIDEGAP2CROWS_Open (composition seam). */
-   internal CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   /* Internal startIdx-anchored open behind Cdlupsidegap2crowsOpen (composition seam). */
+   internal Cdlupsidegap2crowsStream Cdlupsidegap2crowsOpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
-      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
+      Cdlupsidegap2crowsStream sp = new Cdlupsidegap2crowsStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdlupsidegap2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -858,12 +858,12 @@ public partial class Core
 
    /// <summary>Open a live <c>CDLUPSIDEGAP2CROWS</c> stream over the warm-up history.</summary>
    /// <remarks>
-   /// <para>The handle's <see cref="CDLUPSIDEGAP2CROWS_Stream.Value"/> starts at the
+   /// <para>The handle's <see cref="Cdlupsidegap2crowsStream.Value"/> starts at the
    /// last history bar's value — bit-identical to what <c>CDLUPSIDEGAP2CROWS</c>
    /// reports for that bar.</para>
    /// <para>The history must hold at least <c>CDLUPSIDEGAP2CROWS_Lookback(...) + 1</c>
    /// bars (unstable-period aware). Nothing is written to any caller array; use
-   /// <c>CDLUPSIDEGAP2CROWS_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// <c>Cdlupsidegap2crowsOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -877,7 +877,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
+   public Cdlupsidegap2crowsStream Cdlupsidegap2crowsOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLUPSIDEGAP2CROWS open: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLUPSIDEGAP2CROWS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -887,11 +887,11 @@ public partial class Core
       RequireHistoryLength("CDLUPSIDEGAP2CROWS", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLUPSIDEGAP2CROWS", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLUPSIDEGAP2CROWS", "open", "inClose", inClose.Length, inOpen.Length);
-      return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return Cdlupsidegap2crowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
-   /// <summary><c>CDLUPSIDEGAP2CROWS_Open</c> that also fills the output array(s) over
-   /// the whole history in the same single pass.</summary>
+   /// <summary><c>Cdlupsidegap2crowsOpen</c> that also fills the output array(s) over the
+   /// whole history in the same single pass.</summary>
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CDLUPSIDEGAP2CROWS</c>
    /// produces over the same series, so no separate batch call is needed for the
@@ -904,7 +904,7 @@ public partial class Core
    /// span is an <c>ArgumentException</c> naming it rather than a fault from
    /// inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLUPSIDEGAP2CROWS_Stream.OutRange"/>.</para>
+   /// <see cref="Cdlupsidegap2crowsStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -922,7 +922,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
+   public Cdlupsidegap2crowsStream Cdlupsidegap2crowsOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLUPSIDEGAP2CROWS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLUPSIDEGAP2CROWS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -934,6 +934,6 @@ public partial class Core
       RequireHistoryLength("CDLUPSIDEGAP2CROWS", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLUPSIDEGAP2CROWS", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLUPSIDEGAP2CROWS", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      return CDLUPSIDEGAP2CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
+      return Cdlupsidegap2crowsOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

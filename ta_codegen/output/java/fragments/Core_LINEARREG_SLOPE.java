@@ -457,7 +457,7 @@
    /**
     * A live LINEARREG_SLOPE stream (unrelated to {@code java.util.stream}): one value per
     * closed bar, bit-identical to {@link Core#LINEARREG_SLOPE} over the same series.
-    * Open with {@link Core#LINEARREG_SLOPE_Open}; there is no close — the handle is
+    * Open with {@link Core#linearregSlopeOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -468,7 +468,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class LINEARREG_SLOPE_Stream {
+   public static final class LinearregSlopeStream {
       Core core;
       int optInTimePeriod;
       int lookbackTotal;
@@ -488,7 +488,7 @@
       int outRangeBegIdx;
       int outRangeCount;
 
-      LINEARREG_SLOPE_Stream( Core core ) { this.core = core; }
+      LinearregSlopeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has produced a value for, in the input series'
@@ -502,7 +502,7 @@
        */
       public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
-      LINEARREG_SLOPE_Stream( LINEARREG_SLOPE_Stream other ) {
+      LinearregSlopeStream( LinearregSlopeStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -523,7 +523,7 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LINEARREG_SLOPE_Stream other ) {
+      void copyFrom( LinearregSlopeStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -563,7 +563,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
-         core.LINEARREG_SLOPE_StepImpl(this, inReal);
+         core.linearregSlopeStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -589,7 +589,7 @@
          for( int i = 0; i < barCount; i++ ) {
             if( !Double.isFinite(inReal[i]) )
                throw new TaLibArgumentException("LINEARREG_SLOPE updateAndFill: BadParam", RetCode.BadParam);
-            core.LINEARREG_SLOPE_StepImpl(this, inReal[i]);
+            core.linearregSlopeStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
@@ -605,8 +605,8 @@
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
-         LINEARREG_SLOPE_Stream scratch = new LINEARREG_SLOPE_Stream(this);
-         core.LINEARREG_SLOPE_StepImpl(scratch, inReal);
+         LinearregSlopeStream scratch = new LinearregSlopeStream(this);
+         core.linearregSlopeStepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -623,11 +623,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public LINEARREG_SLOPE_Stream copy() {
-         return new LINEARREG_SLOPE_Stream(this);
+      public LinearregSlopeStream copy() {
+         return new LinearregSlopeStream(this);
       }
    }
-   void LINEARREG_SLOPE_StepImpl( LINEARREG_SLOPE_Stream sp, double inReal )
+   void linearregSlopeStepImpl( LinearregSlopeStream sp, double inReal )
    {
       int windowStart = 0;
       double tempValue1 = 0.0;
@@ -724,7 +724,7 @@
       sp.cur_outReal = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
       sp.today += 1;
    }
-   private RetCode LINEARREG_SLOPE_OpenImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode linearregSlopeOpenImpl( LinearregSlopeStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -941,11 +941,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   /* LINEARREG_SLOPE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* linearregSlopeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   LinearregSlopeStream linearregSlopeOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
-      RetCode retCode = LINEARREG_SLOPE_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      LinearregSlopeStream sp = new LinearregSlopeStream(this);
+      RetCode retCode = linearregSlopeOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -959,14 +959,14 @@
       }
       throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + retCode, retCode);
    }
-   /* Internal startIdx-anchored open behind LINEARREG_SLOPE_Open (composition seam). */
-   LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind linearregSlopeOpen (composition seam). */
+   LinearregSlopeStream linearregSlopeOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
+      LinearregSlopeStream sp = new LinearregSlopeStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_SLOPE_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = linearregSlopeOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -993,14 +993,14 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_Open( double inReal[], int optInTimePeriod )
+   public LinearregSlopeStream linearregSlopeOpen( double inReal[], int optInTimePeriod )
    {
       requireArgument("LINEARREG_SLOPE open", "inReal", inReal);
       requireHistory("LINEARREG_SLOPE open", inReal.length);
-      return LINEARREG_SLOPE_OpenInternal(inReal, 0, optInTimePeriod);
+      return linearregSlopeOpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#LINEARREG_SLOPE_Open} that also fills the output array(s) bit-identically
+    * {@link Core#linearregSlopeOpen} that also fills the output array(s) bit-identically
     * to {@link Core#LINEARREG_SLOPE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
@@ -1008,9 +1008,9 @@
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link LINEARREG_SLOPE_Stream#outRange()}.
+    * {@link LinearregSlopeStream#outRange()}.
     */
-   public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public LinearregSlopeStream linearregSlopeOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
       requireArgument("LINEARREG_SLOPE openAndFill", "inReal", inReal);
       requireHistory("LINEARREG_SLOPE openAndFill", inReal.length);
@@ -1021,5 +1021,5 @@
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return LINEARREG_SLOPE_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      return linearregSlopeOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

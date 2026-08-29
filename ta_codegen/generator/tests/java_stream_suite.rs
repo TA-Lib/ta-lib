@@ -49,21 +49,21 @@ fn java_stream_section(name: &str) -> String {
 fn test_java_sma_ring_stream_section() {
     let s = java_stream_section("sma");
     // Nested handle class shape: package-private fields, no public ctor.
-    assert!(s.contains("public static final class SMA_Stream {"));
+    assert!(s.contains("public static final class SmaStream {"));
     assert!(s.contains("Core core;"));
     assert!(s.contains("double[] ring_trailingIdx_inReal;"));
     assert!(s.contains("int ringPos_trailingIdx;"));
-    assert!(!s.contains("public SMA_Stream("), "handle ctors stay non-public");
+    assert!(!s.contains("public SmaStream("), "handle ctors stay non-public");
     // Deep-copy constructor clones the ring array.
     assert!(s.contains("this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();"));
     // ...and every class gets its in-place twin (#201), because any of them can
     // be some other handle's sub-stream.
-    assert!(s.contains("void copyFrom( SMA_Stream other ) {"));
+    assert!(s.contains("void copyFrom( SmaStream other ) {"));
     assert!(s.contains("System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );"));
     // One array and no sub-stream: peek keeps the plain copy, because the
     // scratch lookup would cost more than the allocation it saves.
     assert!(!s.contains("PEEK_SCRATCH"));
-    assert!(s.contains("SMA_Stream scratch = new SMA_Stream(this);"));
+    assert!(s.contains("SmaStream scratch = new SmaStream(this);"));
     // The C mirror/peekMode machinery is deleted by design (copy-peek).
     assert!(!s.contains("Mirror"), "no peek mirrors in the Java tier");
     assert!(!s.contains("peekMode"), "no peekMode in the Java tier");
@@ -71,10 +71,10 @@ fn test_java_sma_ring_stream_section() {
     assert!(s.contains("public double update( double inReal ) {"));
     assert!(s.contains("public double peek( double inReal ) {"));
     assert!(s.contains("public double value() {"));
-    assert!(s.contains("public SMA_Stream copy() {"));
-    assert!(!s.contains("public SMA_Stream fork()"), "copy(), never fork()");
+    assert!(s.contains("public SmaStream copy() {"));
+    assert!(!s.contains("public SmaStream fork()"), "copy(), never fork()");
     // Step is a package-private Core method writing the cur_ field.
-    assert!(s.contains("void SMA_StepImpl( SMA_Stream sp, double inReal )"));
+    assert!(s.contains("void smaStepImpl( SmaStream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));
     // Open body: the early-success no-data guard maps to InsufficientHistory,
     // which the wrapper types. It used to BORROW OutOfRangeEndIndex in band,
@@ -93,7 +93,7 @@ fn test_java_sma_ring_stream_section() {
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
     assert!(s.contains("(Object)outReal == (Object)inReal"));
-    assert!(s.contains("public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )"));
+    assert!(s.contains("public SmaStream smaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )"));
     // The range rides on the handle instead of a pair of out-params, and it is
     // the whole produced range, not one call's fill (#241): seeded by EVERY
     // opener — the plain one included, which wrote nothing before — and extended
@@ -105,9 +105,9 @@ fn test_java_sma_ring_stream_section() {
     ));
     assert!(!s.contains("fillRange"), "fillRange is gone, not aliased");
     let scalar = s
-        .split("SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )")
+        .split("SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )")
         .nth(1)
-        .expect("SMA_OpenInternal")
+        .expect("smaOpenInternal")
         .split("\n   }")
         .next()
         .unwrap()
@@ -125,7 +125,7 @@ fn test_java_sma_ring_stream_section() {
     assert_eq!(s.matches("this.outRangeBegIdx = other.outRangeBegIdx;").count(), 2);
     assert_eq!(s.matches("this.outRangeCount = other.outRangeCount;").count(), 2);
     // Composition seam is package-private with a startIdx anchor.
-    assert!(s.contains("SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
+    assert!(s.contains("SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
 }
 
 #[test]
@@ -168,15 +168,15 @@ fn test_java_cdl_candle_snapshot() {
     let s = java_stream_section("cdl3blackcrows");
     // A candle handle owns a ring per price per averaged setting, so peek runs
     // on the reused per-thread scratch rather than allocating a peer (#201).
-    assert!(s.contains("private static final ThreadLocal<CDL3BLACKCROWS_Stream> PEEK_SCRATCH = new ThreadLocal<>();"));
-    assert!(s.contains("CDL3BLACKCROWS_Stream scratch = PEEK_SCRATCH.get();"));
+    assert!(s.contains("private static final ThreadLocal<Cdl3blackcrowsStream> PEEK_SCRATCH = new ThreadLocal<>();"));
+    assert!(s.contains("Cdl3blackcrowsStream scratch = PEEK_SCRATCH.get();"));
     assert!(s.contains("scratch.copyFrom(this);"));
     // Candle settings snapshot: primitive fields captured at open...
     assert!(s.contains("int cs_ShadowVeryShort_rangeType;"));
     assert!(s.contains("sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;"));
     // ...and the step reads ONLY the snapshot, never the live objects.
     assert!(s.contains("int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;"));
-    let step_start = s.find("void CDL3BLACKCROWS_StepImpl").expect("step");
+    let step_start = s.find("void cdl3blackcrowsStepImpl").expect("step");
     let step_end = s[step_start..].find("private RetCode").expect("open follows") + step_start;
     assert!(
         !s[step_start..step_end].contains("this.candleSettings"),
@@ -192,10 +192,10 @@ fn test_java_cdl_candle_snapshot() {
 fn test_java_trima_dual_mode() {
     let s = java_stream_section("trima");
     // One step, the arm re-derived from the stored param (no mode tag).
-    assert!(s.contains("void TRIMA_StepImpl( TRIMA_Stream sp, double inReal )"));
+    assert!(s.contains("void trimaStepImpl( TrimaStream sp, double inReal )"));
     assert!(s.contains("sp.optInTimePeriod % 2"));
     // Both open arms transcribe under one shared validation head.
-    let opens = s.matches("private RetCode TRIMA_OpenImpl").count();
+    let opens = s.matches("private RetCode trimaOpenImpl").count();
     assert_eq!(opens, 1, "one Scalar open body");
 }
 
@@ -204,7 +204,7 @@ fn test_java_midprice_stream_uses_the_declared_alternate() {
     let s = java_stream_section("midprice");
     // The stream runs `midprice_ALT1`'s automaton, one unconditional step — the
     // batch block scan never appears as a param-selected branch.
-    assert!(s.contains("void MIDPRICE_StepImpl( MIDPRICE_Stream sp, double inHigh, double inLow )"));
+    assert!(s.contains("void midpriceStepImpl( MidpriceStream sp, double inHigh, double inLow )"));
     assert!(
         s.contains("/* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */"),
         "the stream section must name the alternate it resolved to"
@@ -236,11 +236,11 @@ fn test_java_ma_dispatch() {
     }
     // MAMA arm routes OutSlot Forward(0) through the Value field and discards
     // FAMA; the fill tail materializes a throwaway buffer for the Discard.
-    assert!(s.contains("MAMA_Stream.Value subValue = ((MAMA_Stream) sp.sub).update(inReal);"));
+    assert!(s.contains("MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);"));
     assert!(s.contains("sp.cur_outReal = subValue.mama();"));
     // …and the Discard slot DECLINES the callee's nullable output rather than
     // materializing a throwaway buffer for it (rule B6a at the opener).
-    assert!(s.contains("MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, null)"));
+    assert!(s.contains("mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)"));
     assert!(!s.contains("new double[historyLen]"));
     // Identity path re-derived from the stored param on every step; the guard
     // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
@@ -252,10 +252,10 @@ fn test_java_ma_dispatch() {
 #[test]
 fn test_java_mavp_period_bank() {
     let s = java_stream_section("mavp");
-    assert!(s.contains("MA_Stream[] bank;"));
+    assert!(s.contains("MaStream[] bank;"));
     // T1 deep-copy trap (design review): the bank must copy ELEMENT-WISE —
     // Object-array clone() would alias sub-streams and corrupt peek.
-    assert!(s.contains("this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);"));
+    assert!(s.contains("this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);"));
     assert!(!s.contains("other.bank.clone()"), "bank.clone() is the aliasing trap");
     // Lockstep advance + clamp-select.
     assert!(s.contains("for( int bankIdx = 0; bankIdx < sp.bank.length; bankIdx++ ) {"));
@@ -273,9 +273,9 @@ fn test_java_mavp_period_bank() {
 fn test_java_stoch_composed() {
     let s = java_stream_section("stoch");
     // Owned public sub-handles, deep-copied in the copy constructor.
-    assert!(s.contains("MA_Stream sub0;"));
-    assert!(s.contains("MA_Stream sub1;"));
-    assert!(s.contains("this.sub0 = new MA_Stream(other.sub0);"));
+    assert!(s.contains("MaStream sub0;"));
+    assert!(s.contains("MaStream sub1;"));
+    assert!(s.contains("this.sub0 = new MaStream(other.sub0);"));
     // Pipeline in batch tail order over per-bar scalars.
     assert!(s.contains("cur_tempBuffer = sp.sub0.update(cur_tempBuffer);"));
     // Open: scratch outputs + sub-opens spliced at the consumption points. At
@@ -310,7 +310,7 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
     let adxr = java_stream_section("adxr");
     assert!(
         adxr.contains(
-            "ADX_OpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1)"
+            "adxOpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1)"
         ),
         "own inputs at endIdx pass straight through"
     );
@@ -320,7 +320,7 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
     // this pins the unfused shape and the ADXR row above pins the fused one.
     let stoch = java_stream_section("stoch");
     assert!(
-        stoch.contains("MA_OpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1)"),
+        stoch.contains("maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1)"),
         "an intermediate sub-range keeps its copy"
     );
     // Both shapes inside ONE function, so the rule cannot be satisfied by a
@@ -328,12 +328,12 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
     // sub a prefix of the RSI series.
     let stochrsi = java_stream_section("stochrsi");
     assert!(
-        stochrsi.contains("RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF"),
+        stochrsi.contains("rsiOpenAndFillInternal(inReal, startIdx - lookbackSTOCHF"),
         "STOCHRSI's own input is elided"
     );
     assert!(
         stochrsi.contains(
-            "STOCHF_OpenAndFillInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1)"
+            "stochfOpenAndFillInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1)"
         ),
         "STOCHRSI's intermediate prefix keeps its copy"
     );
@@ -460,7 +460,7 @@ fn test_java_stream_emit_ratchet() {
 fn java_open_family_is_one_core_with_three_entries() {
     let s = java_stream_section("cdlhammer");
     assert_eq!(
-        s.matches("private RetCode CDLHAMMER_OpenImpl(").count(),
+        s.matches("private RetCode cdlhammerOpenImpl(").count(),
         1,
         "the numerics are emitted exactly once"
     );
@@ -469,10 +469,10 @@ fn java_open_family_is_one_core_with_three_entries() {
     // The public fill goes through the anchored seam rather than straight down,
     // which is what keeps the seam reachable for every function.
     for (w, callee) in [
-        ("CDLHAMMER_Stream CDLHAMMER_OpenInternal(", "CDLHAMMER_OpenImpl("),
-        ("CDLHAMMER_Stream CDLHAMMER_OpenAndFillInternal(", "CDLHAMMER_OpenImpl("),
-        ("public CDLHAMMER_Stream CDLHAMMER_OpenAndFill(", "CDLHAMMER_OpenAndFillInternal("),
-        ("public CDLHAMMER_Stream CDLHAMMER_Open(", "CDLHAMMER_OpenInternal("),
+        ("CdlhammerStream cdlhammerOpenInternal(", "cdlhammerOpenImpl("),
+        ("CdlhammerStream cdlhammerOpenAndFillInternal(", "cdlhammerOpenImpl("),
+        ("public CdlhammerStream cdlhammerOpenAndFill(", "cdlhammerOpenAndFillInternal("),
+        ("public CdlhammerStream cdlhammerOpen(", "cdlhammerOpenInternal("),
     ] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
         // Wide enough for the four price legs' presence checks to precede the
@@ -496,7 +496,7 @@ fn java_open_family_is_one_core_with_three_entries() {
 fn java_plain_open_uses_a_one_element_sink_at_stride_zero() {
     let s = java_stream_section("cdlhammer");
     let at = s
-        .find("CDLHAMMER_Stream CDLHAMMER_OpenInternal(")
+        .find("CdlhammerStream cdlhammerOpenInternal(")
         .expect("the anchored plain open");
     let body = &s[at..at + 800.min(s.len() - at)];
     assert!(body.contains("new int[1]"), "an int output sinks into a 1-element array:\n{body}");
@@ -523,7 +523,7 @@ fn java_public_fill_keeps_the_aliasing_guards() {
     // public frame is where a code becomes an exception.
     let s = java_stream_section("accbands");
     let at = s
-        .find("public ACCBANDS_Stream ACCBANDS_OpenAndFill(")
+        .find("public AccbandsStream accbandsOpenAndFill(")
         .expect("public fill");
     // Sliced to the frame's END, not to a byte budget: the frame grows when a
     // rule is added to it, and a budget turns that into a false failure.
@@ -544,8 +544,8 @@ fn java_public_fill_keeps_the_aliasing_guards() {
     // Paired negatives: both are false today only because the guard moved UP,
     // so a re-render that pushes it back down fails the positive above.
     for (w, why) in [
-        ("ACCBANDS_Stream ACCBANDS_OpenInternal(", "the plain open sinks into fresh arrays"),
-        ("ACCBANDS_Stream ACCBANDS_OpenAndFillInternal(", "the composed seam's destinations are proved disjoint"),
+        ("AccbandsStream accbandsOpenInternal(", "the plain open sinks into fresh arrays"),
+        ("AccbandsStream accbandsOpenAndFillInternal(", "the composed seam's destinations are proved disjoint"),
     ] {
         let sat = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
         let sbody = &s[sat..sat + 900.min(s.len() - sat)];
@@ -560,27 +560,28 @@ fn java_exempt_tiers_keep_a_body_per_entry() {
     // RetCode-returning body each instead of sharing one strided `_OpenImpl`.
     // The discriminator is that signature: an exempt `_OpenImpl` takes no
     // stride. Asserting the ABSENCE of a name would now hold for all 176.
-    for (name, base) in [("ma", "MA"), ("mavp", "MAVP")] {
+    for (name, base) in [("ma", "maOpenImpl"), ("mavp", "mavpOpenImpl")] {
         let s = java_stream_section(name);
         let at = s
-            .find(&format!("private RetCode {base}_OpenImpl("))
-            .unwrap_or_else(|| panic!("{base}_OpenImpl"));
+            .find(&format!("private RetCode {base}("))
+            .unwrap_or_else(|| panic!("{base}"));
         let sig = &s[at..at + s[at..].find(')').expect("signature closes")];
         assert!(
             !sig.contains("int outStride"),
             "{base} is exempt: its open body is not the strided numerics:\n{sig}"
         );
+        let fill = base.replace("OpenImpl", "OpenAndFillImpl");
         assert!(
-            s.contains(&format!("private RetCode {base}_OpenAndFillImpl(")),
+            s.contains(&format!("private RetCode {fill}(")),
             "{base} keeps a separate fill body"
         );
     }
     // ...and the merged tiers are the other side of that discriminator.
     let s = java_stream_section("sma");
-    let at = s.find("private RetCode SMA_OpenImpl(").expect("SMA_OpenImpl");
+    let at = s.find("private RetCode smaOpenImpl(").expect("smaOpenImpl");
     let sig = &s[at..at + s[at..].find(')').expect("signature closes")];
     assert!(sig.contains("int outStride"), "a merged tier's open body IS the strided numerics");
-    assert!(!s.contains("private RetCode SMA_OpenAndFillImpl("), "and it needs no second body");
+    assert!(!s.contains("private RetCode smaOpenAndFillImpl("), "and it needs no second body");
 }
 
 #[test]
