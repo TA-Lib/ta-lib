@@ -24,7 +24,7 @@ class TaLibConan(ConanFile):
         "fPIC": True,
     }
 
-    exports_sources = "CMakeLists.txt", "cmake/*", "include/*", "src/*", "LICENSE", "README.md"
+    exports_sources = "CMakeLists.txt", "ta-lib.pc.in", "cmake/*", "include/*", "src/*", "LICENSE", "README.md"
 
     def config_options(self):
         if self.settings.os == "Windows":
