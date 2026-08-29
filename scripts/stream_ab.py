@@ -70,10 +70,16 @@ def parse_rust(root):
         if not fn.endswith(".rs"):
             continue
         src = open(os.path.join(d, fn)).read()
-        m = re.search(r"pub fn (\w+)_Open\(&self, (.*?)\) -> Result<\(\w+_Stream", src)
+        # #278 recased the Rust stream API: `SMA_Open` -> `sma_open`,
+        # `SMA_Stream` -> `SmaStream`. The report still keys on the uppercase
+        # function name, which is what `--funcs`/`--mark` and every other tool
+        # here spell, so the emitted call carries its own spelling.
+        m = re.search(r"pub fn (\w+)_open\(&self, (.*?)\) -> Result<\((\w+Stream)\b", src)
         if not m:
             continue
-        name = m.group(1)
+        name = m.group(1).upper()
+        open_fn = f"{m.group(1)}_open"
+        handle = m.group(3)
         args, why = [], None
         for a in [x.strip() for x in m.group(2).split(",") if x.strip()]:
             an, at = [x.strip() for x in a.split(":", 1)]
@@ -88,7 +94,7 @@ def parse_rust(root):
         # Every `impl <N>_Stream` block, not just the first: the handle carries
         # more than one (the scratch restore lives in its own).
         m2 = None
-        for impl in re.finditer(r"impl %s_Stream \{(.*?)\n\}" % name, src, re.S):
+        for impl in re.finditer(r"impl %s \{(.*?)\n\}" % handle, src, re.S):
             m2 = re.search(r"pub fn update\(&mut self(.*?)\) -> ", impl.group(1))
             if m2:
                 break
@@ -96,7 +102,7 @@ def parse_rust(root):
             declined[name] = "no update method"
             continue
         call = [x.strip().split(":")[0].strip() for x in m2.group(1).split(",") if x.strip()]
-        funcs[name] = {"open": args, "call": call}
+        funcs[name] = {"open": args, "call": call, "openfn": open_fn}
     return funcs, declined
 
 
@@ -204,7 +210,7 @@ RUST_BLOCK = """
     {
         let mut all: Vec<f64> = Vec::new();
         for _p in 0..passes {
-            if let Ok((%(mut)s st, _v)) = core.%(name)s_Open(%(oargs)s) {
+            if let Ok((%(mut)s st, _v)) = core.%(openfn)s(%(oargs)s) {
                 for i in 0..1000 { black_box(st.%(call)s(%(cargs)s)); }
                 let t0 = Instant::now();
                 for i in 0..iters { black_box(st.%(call)s(%(cargs)s)); }
@@ -236,12 +242,12 @@ RUST_OPEN_BLOCK = """
     {
         let mut all: Vec<f64> = Vec::new();
         for _p in 0..passes {
-            for _ in 0..8 { if let Ok(h) = core.%(name)s_Open(%(oargs)s) { black_box(&h); } }
+            for _ in 0..8 { if let Ok(h) = core.%(openfn)s(%(oargs)s) { black_box(&h); } }
             let t0 = Instant::now();
-            for _ in 0..iters { if let Ok(h) = core.%(name)s_Open(%(oargs)s) { black_box(&h); } }
+            for _ in 0..iters { if let Ok(h) = core.%(openfn)s(%(oargs)s) { black_box(&h); } }
             all.push(t0.elapsed().as_nanos() as f64 / iters as f64);
         }
-        if core.%(name)s_Open(%(oargs)s).is_err() {
+        if core.%(openfn)s(%(oargs)s).is_err() {
             println!("OPENFAIL %(name)s");
         } else {
             all.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -358,10 +364,11 @@ def emit_rust(funcs, names, call, period, marked):
         f = funcs[name]
         oargs = open_args(f, "rust", name, period, marked)
         if call == "open":
-            s.append(RUST_OPEN_BLOCK % {"name": name, "oargs": oargs})
+            s.append(RUST_OPEN_BLOCK % {"name": name, "openfn": f["openfn"], "oargs": oargs})
             continue
         s.append(RUST_BLOCK % {
-            "name": name, "call": call, "mut": "" if call == "peek" else "mut",
+            "name": name, "openfn": f["openfn"],
+            "call": call, "mut": "" if call == "peek" else "mut",
             "oargs": oargs,
             "cargs": ", ".join(f"f_{series(a)}[i & {FEED - 1}]" for a in f["call"]),
         })
@@ -551,6 +558,10 @@ def main():
             missing = (marked | only) - set(names)
             if missing:
                 sys.exit(f"[{lang}] requested but not benchable: {sorted(missing)}")
+            if not names:
+                sys.exit(f"[{lang}] parsed 0 benchable functions - the generated "
+                         f"API spelling has moved out from under this parser. A run "
+                         f"that measures nothing must not report a clean sweep.")
             print(f"[{lang}] {len(names)} functions, {len(marked)} marked; building both arms")
 
             emit = emit_rust if lang == "rust" else emit_java
