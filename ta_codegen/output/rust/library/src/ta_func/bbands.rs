@@ -940,6 +940,34 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::bbands_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_upper_band = vec![0.0; 252];
+    /// let mut batch_middle_band = vec![0.0; 252];
+    /// let mut batch_lower_band = vec![0.0; 252];
+    /// let batch = core.BBANDS(0, data.len() - 1, &data, 20, 2.0, 2.0, MAType::SMA, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
+    ///
+    /// let mut upper_band = vec![0.0; 252];
+    /// let mut middle_band = vec![0.0; 252];
+    /// let mut lower_band = vec![0.0; 252];
+    /// let (_stream, filled) = core.bbands_open_and_fill(&data, 20, 2.0, 2.0, MAType::SMA, &mut upper_band, &mut middle_band, &mut lower_band)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(upper_band[..filled.count].iter().zip(&batch_upper_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(middle_band[..filled.count].iter().zip(&batch_middle_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(lower_band[..filled.count].iter().zip(&batch_lower_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_BBANDS_OpenAndFill")]
     pub fn bbands_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],

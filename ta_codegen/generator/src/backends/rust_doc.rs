@@ -392,7 +392,7 @@ fn doc_aliases(func: &FuncDef, doc: &DocDef) -> Vec<String> {
 
 /// Number of bars in every example input series: one trading year, comfortably
 /// larger than the largest default lookback (~64 for the Hilbert Transform family).
-const EXAMPLE_LEN: usize = 252;
+pub(super) const EXAMPLE_LEN: usize = 252;
 
 /// `close` carries a second harmonic so it is never at the exact midpoint of the
 /// bar: a midpoint close makes the money-flow multiplier
@@ -615,7 +615,7 @@ pub(super) fn series_def(name: &str, expr: &str) -> Vec<String> {
 
 /// Example variable name for an output: `outRealUpperBand` → `upper_band`,
 /// `outMACDSignal` → `macd_signal`, bare `outReal`/`outInteger` → `out`.
-fn output_var_name(output: &Output) -> String {
+pub(super) fn output_var_name(output: &Output) -> String {
     let stripped = output.name.strip_prefix("out").unwrap_or(&output.name);
     let snake = camel_to_snake(stripped);
     let trimmed = snake

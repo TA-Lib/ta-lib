@@ -556,6 +556,31 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::qstick_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_out = vec![0.0; 252];
+    /// let batch = core.QSTICK(0, open.len() - 1, &open, &close, 10, &mut batch_out)?;
+    ///
+    /// let mut out = vec![0.0; 252];
+    /// let (_stream, filled) = core.qstick_open_and_fill(&open, &close, 10, &mut out)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(out[..filled.count].iter().zip(&batch_out[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_QSTICK_OpenAndFill")]
     pub fn qstick_open_and_fill(
         &self, inOpen: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],

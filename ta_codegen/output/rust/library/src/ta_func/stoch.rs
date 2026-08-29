@@ -1057,6 +1057,34 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::stoch_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_slow_k = vec![0.0; 252];
+    /// let mut batch_slow_d = vec![0.0; 252];
+    /// let batch = core.STOCH(0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA, &mut batch_slow_k, &mut batch_slow_d)?;
+    ///
+    /// let mut slow_k = vec![0.0; 252];
+    /// let mut slow_d = vec![0.0; 252];
+    /// let (_stream, filled) = core.stoch_open_and_fill(&high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA, &mut slow_k, &mut slow_d)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(slow_k[..filled.count].iter().zip(&batch_slow_k[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(slow_d[..filled.count].iter().zip(&batch_slow_d[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_STOCH_OpenAndFill")]
     pub fn stoch_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outSlowK: &mut [f64], outSlowD: &mut [f64],

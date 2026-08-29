@@ -573,6 +573,28 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::pvo_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_out = vec![0.0; 252];
+    /// let batch = core.PVO(0, volume.len() - 1, &volume, 12, 26, MAType::EMA, &mut batch_out)?;
+    ///
+    /// let mut out = vec![0.0; 252];
+    /// let (_stream, filled) = core.pvo_open_and_fill(&volume, 12, 26, MAType::EMA, &mut out)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(out[..filled.count].iter().zip(&batch_out[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_PVO_OpenAndFill")]
     pub fn pvo_open_and_fill(
         &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],

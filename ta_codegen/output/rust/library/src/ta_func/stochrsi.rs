@@ -627,6 +627,30 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::stochrsi_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_fast_k = vec![0.0; 252];
+    /// let mut batch_fast_d = vec![0.0; 252];
+    /// let batch = core.STOCHRSI(0, data.len() - 1, &data, 14, 5, 3, MAType::SMA, &mut batch_fast_k, &mut batch_fast_d)?;
+    ///
+    /// let mut fast_k = vec![0.0; 252];
+    /// let mut fast_d = vec![0.0; 252];
+    /// let (_stream, filled) = core.stochrsi_open_and_fill(&data, 14, 5, 3, MAType::SMA, &mut fast_k, &mut fast_d)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(fast_k[..filled.count].iter().zip(&batch_fast_k[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(fast_d[..filled.count].iter().zip(&batch_fast_d[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_STOCHRSI_OpenAndFill")]
     pub fn stochrsi_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],

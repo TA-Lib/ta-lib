@@ -1307,6 +1307,30 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::ht_phasor_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_in_phase = vec![0.0; 252];
+    /// let mut batch_quadrature = vec![0.0; 252];
+    /// let batch = core.HT_PHASOR(0, data.len() - 1, &data, &mut batch_in_phase, &mut batch_quadrature)?;
+    ///
+    /// let mut in_phase = vec![0.0; 252];
+    /// let mut quadrature = vec![0.0; 252];
+    /// let (_stream, filled) = core.ht_phasor_open_and_fill(&data, &mut in_phase, &mut quadrature)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(in_phase[..filled.count].iter().zip(&batch_in_phase[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(quadrature[..filled.count].iter().zip(&batch_quadrature[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_HT_PHASOR_OpenAndFill")]
     pub fn ht_phasor_open_and_fill(
         &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],

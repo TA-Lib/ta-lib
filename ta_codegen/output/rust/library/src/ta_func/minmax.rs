@@ -739,6 +739,30 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::minmax_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_min = vec![0.0; 252];
+    /// let mut batch_max = vec![0.0; 252];
+    /// let batch = core.MINMAX(0, data.len() - 1, &data, 30, &mut batch_min, &mut batch_max)?;
+    ///
+    /// let mut min = vec![0.0; 252];
+    /// let mut max = vec![0.0; 252];
+    /// let (_stream, filled) = core.minmax_open_and_fill(&data, 30, &mut min, &mut max)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(min[..filled.count].iter().zip(&batch_min[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(max[..filled.count].iter().zip(&batch_max[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_MINMAX_OpenAndFill")]
     pub fn minmax_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outMin: &mut [f64], outMax: &mut [f64],

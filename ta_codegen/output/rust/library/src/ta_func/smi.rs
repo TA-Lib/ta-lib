@@ -1208,6 +1208,34 @@ impl Core {
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
     /// or when two of them are the same slice. Everything [`Core::smi_open`] rejects
     /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_smi = vec![0.0; 252];
+    /// let mut batch_smi_signal = vec![0.0; 252];
+    /// let batch = core.SMI(0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9, &mut batch_smi, &mut batch_smi_signal)?;
+    ///
+    /// let mut smi = vec![0.0; 252];
+    /// let mut smi_signal = vec![0.0; 252];
+    /// let (_stream, filled) = core.smi_open_and_fill(&high, &low, &close, 13, 2, 25, 9, &mut smi, &mut smi_signal)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(smi[..filled.count].iter().zip(&batch_smi[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(smi_signal[..filled.count].iter().zip(&batch_smi_signal[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
     #[doc(alias = "TA_SMI_OpenAndFill")]
     pub fn smi_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outSMI: &mut [f64], outSMISignal: &mut [f64],
