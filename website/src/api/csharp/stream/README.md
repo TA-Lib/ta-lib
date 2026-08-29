@@ -43,13 +43,12 @@ double v = s.Update(newClose);                   // throws only on a non-finite 
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the handle directly; its `Value` starts at the last history bar's value. After a successful `Open`, the only thing `Update` and `Peek` reject is a **non-finite bar**, and they leave the handle exactly as it was.
+`Open` returns the handle directly; its `Value` starts at the last history bar's value. After a successful `Open`, the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf. The handle is left untouched on an error.
 
 ## Rules
 
 - **Warm-up.** `Open` succeeds only if `history.Length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the handle keeps everything it needs.
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing — call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
-- **Allocation.** `Update` allocates nothing — not handle state, and not a return value even for multi-output indicators, because those return a `readonly record struct`. `Peek` is different: where the handle owns several arrays or a sub-handle, the copy is a scratch held per thread and reused, so it allocates nothing after that thread's first peek of that indicator; otherwise `Peek` copies the handle and allocates in proportion to the state the indicator carries. If you peek on every tick and that matters, hold the value `Update` returns instead.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live handle — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A handle is single-writer — `Update`, `Peek`, `Value` and `Clone()` must not race with an `Update` on the same handle. With no concurrent `Update`, `Peek`/`Value`/`Clone()` never write the handle and may run concurrently. Distinct handles (a `Clone()` result included) are fully independent.
 - **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SmaOpen(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.

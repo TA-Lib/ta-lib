@@ -43,13 +43,12 @@ double v = s.update(newClose);                  // throws only on a non-finite b
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, the only thing `update` and `peek` reject is a **non-finite bar**, and they leave the handle exactly as it was.
+`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, the only thing `update` and `peek` reject is invalid input such as NaN or ±Inf. The handle is left untouched on an error.
 
 ## Rules
 
 - **Warm-up.** `open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
-- **Allocation.** `peek` runs on a copy of the handle and never writes it. Where the handle owns several arrays or a sub-stream, that copy is a scratch held per thread and reused, so it allocates nothing after the first peek of that indicator on that thread. It is held in a `ThreadLocal` for the life of the thread — one handle copy per indicator that thread has peeked, keeping its `Core` and arrays reachable. On a pooled thread that outlives a deployment, that is the usual `ThreadLocal` retention to be aware of.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
@@ -107,12 +106,12 @@ s.updateAndFill(gap, out);          // out[i] is the SMA at gap[i]
 `s.outRange()` reports the bars
 the stream has a value for, before and after.
 
-That includes a call that fails partway. A non-finite bar throws
-`IllegalArgumentException` exactly as `update` does, which means the bars
-**before** it are already committed and their values already written; the range
-tells you how many. It throws before committing anything if the input arrays
-differ in length, an output is shorter than the bar count, or an output is the
-same array as an input or as another output. A zero-length call does nothing.
+It throws `IllegalArgumentException` before committing anything if the input
+arrays differ in length, an output is shorter than the bar count, or an output
+is the same array as an input or as another output. A zero-length call does
+nothing. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`,
+exactly as `update` does, but commits the valid bars **before** it — their
+values are already written, and the range tells you how many.
 
 ## Error model
 
