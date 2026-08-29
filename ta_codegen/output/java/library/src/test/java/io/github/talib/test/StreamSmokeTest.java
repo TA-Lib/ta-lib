@@ -791,12 +791,20 @@ public class StreamSmokeTest {
      * {@code peek} does not commit and {@code copy} forks — on EVERY handle the
      * registry publishes, not on the handful they were proven on (#172 C4).
      *
-     * <p>These two are the Java-specific half of the streaming contract. The
-     * numerics are covered exhaustively elsewhere ({@code ta_regtest --codegen}
-     * driving the server's {@code stream_verify}), and that gate would stay
-     * green if {@code copy()} returned {@code this}: it never forks a handle.
-     * What is asserted here is per function, so a tier that forgot to deep-copy
+     * <p>These two are the Java-specific half of the streaming contract, and
+     * what is asserted here is per function, so a tier that forgot to deep-copy
      * one field is a named failure rather than a coverage gap.
+     *
+     * <p><b>The gap this closes is the RANGE, not the fork.</b> The server's
+     * {@code stream_verify} does fork a handle, and drives the fork and the
+     * original to the end against batch, so a {@code copy()} that returned
+     * {@code this} goes red there too. What that leg compares is values; its
+     * range checks sit on the fill, the prefix, the update-fill and the
+     * anchored open — none on a copy, none after a peek. So a copy constructor
+     * that carries every numeric field and forgets the two range fields is
+     * invisible to every other gate in the tree. That is what earns this sweep
+     * its place, and why the range assertions must not be traded for the value
+     * ones as the cheaper half.
      *
      * <p>Four properties, each one a defect if it fails:
      * <ol>
@@ -814,17 +822,26 @@ public class StreamSmokeTest {
      * pattern returning 0 on both bars would hide a shared handle behind a
      * coincidence.
      *
-     * <p><b>Both halves sabotage-proved, and the miss recorded rather than
-     * rounded off.</b> With every generated {@code copy()} rewritten to
-     * {@code return this}, this sweep names all 176 handles — and the count
-     * assertion is what does it: the value assertion alone names 105, so 71
-     * handles would have shared their state silently. With every {@code peek}
-     * rewritten to step the handle instead of a scratch copy (95 of the 176
-     * handles are emitted in that shape), it names 81 of the 95. The 14 it does
-     * not are candlestick patterns whose output is 0 on both sides of the
-     * corruption; making them observable needs bars that trigger the pattern,
-     * which is what the MC/DC suites (#219) are for, not a corpus this sweep
-     * can carry. Every other handle in the corpus is caught.
+     * <p><b>Sabotage-proved by rewriting the generator's emitter, each result
+     * paired with the same sabotage driven through {@code stream_verify}, and
+     * the miss recorded rather than rounded off:</b>
+     * <ul>
+     *   <li>{@code copy()} → {@code return this}: 176 of 176 named here, and
+     *       the range assertions are what do it — the value assertions alone
+     *       name 108, so 68 handles would have shared state silently.
+     *       {@code stream_verify} also goes red.
+     *   <li>the copy constructor drops the two range fields: 176 of 176 named
+     *       here, {@code stream_verify} fully green. The one defect class with
+     *       no other cover.
+     *   <li>{@code peek} moves the range: named here, {@code stream_verify}
+     *       also goes red.
+     * </ul>
+     * With every {@code peek} rewritten to step the handle instead of a scratch
+     * copy (95 of the 176 handles are emitted in that shape), it names 81 of the
+     * 95. The 14 it does not are candlestick patterns whose output is 0 on both
+     * sides of the corruption; making them observable needs bars that trigger
+     * the pattern, which is what the MC/DC suites (#219) are for, not a corpus
+     * this sweep can carry.
      */
     private static void peekAndCopyHoldOnEveryHandle(Core core) {
         java.util.List<String> unhandled = new java.util.ArrayList<String>();
