@@ -832,18 +832,23 @@ public class StreamSmokeTest {
 
         for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
             String name = f.name();
+            /* The registry name and the Java spelling are two different strings
+             * since #278 (HT_TRENDLINE -> HtTrendlineStream, htTrendlineOpen), so
+             * both are derived from the registry rather than hardcoded: a rename
+             * that misses a function shows up here as a named miss. */
+            String handleName = pascalCase(name) + "Stream";
             Class<?> handle = null;
             for (Class<?> nested : Core.class.getDeclaredClasses()) {
-                if (nested.getSimpleName().equals(name + "_Stream")) {
+                if (nested.getSimpleName().equals(handleName)) {
                     handle = nested;
                     break;
                 }
             }
             if (handle == null) {
-                unhandled.add(name + ": no " + name + "_Stream");
+                unhandled.add(name + ": no " + handleName);
                 continue;
             }
-            java.lang.reflect.Method open = methodNamed(Core.class, name + "_Open");
+            java.lang.reflect.Method open = methodNamed(Core.class, camelCase(name) + "Open");
             java.lang.reflect.Method update = methodNamed(handle, "update");
             java.lang.reflect.Method peek = methodNamed(handle, "peek");
             java.lang.reflect.Method copy = methodNamed(handle, "copy");
