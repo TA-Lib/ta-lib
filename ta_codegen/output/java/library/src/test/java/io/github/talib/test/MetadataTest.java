@@ -181,6 +181,65 @@ public class MetadataTest {
         }
     }
 
+    /**
+     * byName folds ASCII case; the name it reports back does not.
+     *
+     * <p>Swept over the corpus rather than spot-checked on {@code "sma"}: the
+     * long names ({@code CDL3STARSINSOUTH}) and the ones carrying a digit or an
+     * underscore ({@code HT_DCPERIOD}) are the ones a partial fold gets wrong,
+     * and no single case stands in for them.
+     */
+    static void byNameFoldsAsciiCase() {
+        for (FunctionInfo f : Functions.all()) {
+            FunctionInfo lower = Functions.byName(asciiLower(f.name()));
+            FunctionInfo mixed = Functions.byName(alternating(f.name()));
+            check(lower == f, f.name() + ": lower-case lookup finds it");
+            check(mixed == f, f.name() + ": mixed-case lookup finds it");
+            // Guarded rather than chained: a regressed fold returns null here,
+            // and this suite has to report that as a failure, not a stack trace
+            // that stops the remaining checks from running at all.
+            check(lower != null && lower.name().equals(f.name()),
+                  f.name() + ": the name reported back stays canonical");
+        }
+
+        check(Functions.byName(null) == null, "byName(null) is null, not a throw");
+
+        // The fold is ASCII-only and it is only a fold: it must not start
+        // accepting names no function has. 'İ' (U+0130) is the Turkish trap a
+        // locale-aware fold maps onto "sin".
+        check(Functions.byName("S\u0130N") == null, "the fold is ASCII, not locale-aware");
+        check(Functions.byName("s\u0131n") == null, "the fold is ASCII, not locale-aware");
+        check(Functions.byName("sma ") == null, "a trailing space is still part of the name");
+        check(Functions.byName("ht-dcperiod") == null, "a separator is still part of the name");
+        check(Functions.byName("") == null, "the empty name resolves to nothing");
+    }
+
+    /** ASCII-only lower fold, so the probe cannot inherit the bug it looks for. */
+    private static String asciiLower(String s) {
+        StringBuilder b = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            b.append(c >= 'A' && c <= 'Z' ? (char) (c + ('a' - 'A')) : c);
+        }
+        return b.toString();
+    }
+
+    /** Every letter position lands in both cases across the two probes. */
+    private static String alternating(String s) {
+        StringBuilder b = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            boolean up = i % 2 != 0;
+            if (c >= 'A' && c <= 'Z' && !up) {
+                c = (char) (c + ('a' - 'A'));
+            } else if (c >= 'a' && c <= 'z' && up) {
+                c = (char) (c - ('a' - 'A'));
+            }
+            b.append(c);
+        }
+        return b.toString();
+    }
+
     /** The gap the retired hand-written island never closed. */
     static void hintsArePopulated() {
         long withHint = Functions.all().stream().filter(f -> !f.hint().isEmpty()).count();
@@ -779,6 +838,7 @@ public class MetadataTest {
 
     public static void main(String[] args) throws Exception {
         registryIsComplete();
+        byNameFoldsAsciiCase();
         hintsArePopulated();
         flagVocabularyIsComplete();
         callByNameMatchesTheTypedApi();

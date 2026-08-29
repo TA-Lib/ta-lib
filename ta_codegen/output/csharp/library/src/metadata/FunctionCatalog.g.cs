@@ -288,7 +288,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeWillr(),
             MakeWma(),
         ];
-        _byName = _all.ToFrozenDictionary(f => f.Name, StringComparer.Ordinal);
+        _byName = _all.ToFrozenDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>How many functions the catalogue holds.</summary>
@@ -300,14 +300,17 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
     public FunctionInfo this[int index] => _all[index];
 
     /// <summary>The function with a given name.</summary>
-    /// <param name="name">The canonical upper-case name, for example <c>"SMA"</c>.
-    /// Case-sensitive, matching C's <c>TA_GetFuncHandle</c>.</param>
+    /// <param name="name">The name, for example <c>"SMA"</c>. Matched with
+    /// <see cref="StringComparer.OrdinalIgnoreCase"/>, matching C's
+    /// <c>TA_GetFuncHandle</c>, so <c>"SMA"</c>, <c>"sma"</c> and <c>"Sma"</c> all
+    /// find the same function. Only the match folds — <see cref="FunctionInfo.Name"/>
+    /// stays the canonical upper-case spelling.</param>
     /// <returns>The function's metadata.</returns>
     /// <exception cref="KeyNotFoundException">No function has that name.</exception>
     public FunctionInfo this[string name] => _byName[name];
 
     /// <summary>Looks a function up without throwing.</summary>
-    /// <param name="name">The canonical upper-case name.</param>
+    /// <param name="name">The name, in any casing.</param>
     /// <param name="info">The metadata, when the name is known.</param>
     /// <returns><see langword="true"/> when the name is known.</returns>
     public bool TryGet(string name, [NotNullWhen(true)] out FunctionInfo? info)

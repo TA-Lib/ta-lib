@@ -1834,9 +1834,10 @@ fn gen_ta_abstract_c() -> String {
          \x20*/\n\n",
     );
     o.push_str(
+        // No <ctype.h>: the one call that needed it was TA_GetFuncHandle's
+        // tolower, and that fold is now TA_AsciiToLower below (issue #278).
         "#include <stddef.h>\n\
          #include <string.h>\n\
-         #include <ctype.h>\n\
          #include \"ta_common.h\"\n\
          #include \"ta_memory.h\"\n\
          #include \"ta_abstract.h\"\n\
@@ -2090,6 +2091,45 @@ fn gen_ta_abstract_c() -> String {
          }\n\n",
     );
 
+    // --- the ASCII case fold TA_GetFuncHandle matches under (issue #278) ---
+    o.push_str(
+        "/* Fold one character to lower case, ASCII and nothing else.\n\
+         \x20*\n\
+         \x20* Not <ctype.h>'s tolower: that one is locale-aware, and the locale a caller\n\
+         \x20* happens to be in is not part of this library's contract. In tr_TR, 'I'\n\
+         \x20* lower-cases to the dotless 'i' (U+0131), which is not the 'i' any function\n\
+         \x20* name is spelled with -- so \"SIN\" would resolve for most of the world and\n\
+         \x20* fail for a Turkish user, at run time, with no diagnostic. Function names\n\
+         \x20* are invariant ASCII, so the fold that matches them is invariant ASCII too.\n\
+         \x20*\n\
+         \x20* It also takes an unsigned char by value: tolower(c) on a plain `char` that\n\
+         \x20* is negative is undefined behaviour.\n\
+         \x20*/\n\
+         static unsigned char TA_AsciiToLower( unsigned char c )\n\
+         {\n\
+         \x20  if( (c >= 'A') && (c <= 'Z') )\n\
+         \x20     return (unsigned char)(c + ('a' - 'A'));\n\
+         \x20  return c;\n\
+         }\n\n\
+         /* strcmp( a, b ) == 0, under the ASCII fold above.\n\
+         \x20*\n\
+         \x20* Returns 1 when the two names are the same name, 0 otherwise.\n\
+         \x20*/\n\
+         static int TA_AsciiEqualNoCase( const char *a, const char *b )\n\
+         {\n\
+         \x20  const unsigned char *ua = (const unsigned char *)a;\n\
+         \x20  const unsigned char *ub = (const unsigned char *)b;\n\n\
+         \x20  while( TA_AsciiToLower( *ua ) == TA_AsciiToLower( *ub ) )\n\
+         \x20  {\n\
+         \x20     if( *ua == '\\0' )\n\
+         \x20        return 1;\n\
+         \x20     ua++;\n\
+         \x20     ub++;\n\
+         \x20  }\n\n\
+         \x20  return 0;\n\
+         }\n\n",
+    );
+
     // --- TA_GetFuncHandle ---
     o.push_str(
         "TA_RetCode TA_GetFuncHandle( const char *name, const TA_FuncHandle **handle )\n\
@@ -2109,7 +2149,7 @@ fn gen_ta_abstract_c() -> String {
          \x20  {\n\
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
-         \x20  tmp = (char)tolower( firstChar );\n\n\
+         \x20  tmp = (char)TA_AsciiToLower( (unsigned char)firstChar );\n\n\
          \x20  if( (tmp < 'a') || (tmp > 'z') )\n\
          \x20  {\n\
          \x20     return TA_FUNC_NOT_FOUND;\n\
@@ -2129,7 +2169,11 @@ fn gen_ta_abstract_c() -> String {
          \x20     funcInfo = funcDef->funcInfo;\n\
          \x20     if( !funcInfo )\n\
          \x20        return TA_INTERNAL_ERROR(4);\n\n\
-         \x20     if( strcmp( funcInfo->name, name ) == 0 )\n\
+         \x20     /* The match folds case; the name reported back does not.\n\
+         \x20      * funcInfo->name stays the canonical \"SMA\" whatever spelling got us\n\
+         \x20      * here, so enumeration, error text and reverse lookup are unaffected.\n\
+         \x20      */\n\
+         \x20     if( TA_AsciiEqualNoCase( funcInfo->name, name ) )\n\
          \x20     {\n\
          \x20        *handle = (TA_FuncHandle *)funcDef;\n\
          \x20        return TA_SUCCESS;\n\

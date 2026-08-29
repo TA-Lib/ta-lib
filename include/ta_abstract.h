@@ -142,6 +142,11 @@ TA_LIB_API TA_RetCode TA_FuncTableFree ( TA_StringTable *table );
  * This handle is further used for obtaining information on the
  * parameters needed and also for potentially calling this TA function.
  *
+ * The name is matched without regard to case, under an ASCII fold and not
+ * the caller's locale: "SMA", "sma" and "Sma" all resolve to the same
+ * function. Only the match is folded -- the name reported back through
+ * TA_FuncInfo stays the canonical upper-case "SMA".
+ *
  * For convenience, this handle can also be found in
  * the TA_FuncInfo structure (see below).
  */

@@ -610,9 +610,14 @@ fn catalog(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
         let _ = writeln!(s, "            {}(),", factory_name(&r.name));
     }
     s.push_str("        ];\n");
-    // Ordinal: C's TA_GetFuncHandle is a case-sensitive strcmp, and every name
-    // is invariant ASCII, so culture-aware comparison would be both wrong and slower.
-    s.push_str("        _byName = _all.ToFrozenDictionary(f => f.Name, StringComparer.Ordinal);\n");
+    // OrdinalIgnoreCase: the lookup folds case, as C's TA_GetFuncHandle and the
+    // Rust and Java catalogues now do. Ordinal rather than culture-aware is the
+    // load-bearing half — every name is invariant ASCII, and a culture-aware
+    // comparison would resolve differently under tr_TR. Only the match folds:
+    // FunctionInfo.Name still carries the canonical upper-case spelling.
+    s.push_str(
+        "        _byName = _all.ToFrozenDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);\n",
+    );
     s.push_str("    }\n\n");
 
     s.push_str(CATALOG_MEMBERS);
@@ -1033,14 +1038,17 @@ const CATALOG_MEMBERS: &str = r#"    /// <summary>How many functions the catalog
     public FunctionInfo this[int index] => _all[index];
 
     /// <summary>The function with a given name.</summary>
-    /// <param name="name">The canonical upper-case name, for example <c>"SMA"</c>.
-    /// Case-sensitive, matching C's <c>TA_GetFuncHandle</c>.</param>
+    /// <param name="name">The name, for example <c>"SMA"</c>. Matched with
+    /// <see cref="StringComparer.OrdinalIgnoreCase"/>, matching C's
+    /// <c>TA_GetFuncHandle</c>, so <c>"SMA"</c>, <c>"sma"</c> and <c>"Sma"</c> all
+    /// find the same function. Only the match folds — <see cref="FunctionInfo.Name"/>
+    /// stays the canonical upper-case spelling.</param>
     /// <returns>The function's metadata.</returns>
     /// <exception cref="KeyNotFoundException">No function has that name.</exception>
     public FunctionInfo this[string name] => _byName[name];
 
     /// <summary>Looks a function up without throwing.</summary>
-    /// <param name="name">The canonical upper-case name.</param>
+    /// <param name="name">The name, in any casing.</param>
     /// <param name="info">The metadata, when the name is known.</param>
     /// <returns><see langword="true"/> when the name is known.</returns>
     public bool TryGet(string name, [NotNullWhen(true)] out FunctionInfo? info)

@@ -231,7 +231,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 ### 4.1 Abstraction Layer {#abstract}
 
-<p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime. For any function it reports the inputs it takes, its optional parameters with their valid ranges, and the outputs it produces — so you can call a function whose signature was unknown at compile time.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime (the name is matched under an ASCII case fold, so <code>"SMA"</code>, <code>"sma"</code> and <code>"Sma"</code> all resolve to the same function; the name reported back stays the canonical <code>"SMA"</code>). For any function it reports the inputs it takes, its optional parameters with their valid ranges, and the outputs it produces — so you can call a function whose signature was unknown at compile time.</p>
 <p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
 <ul>
   <li>Generating glue code or wrappers for higher-level languages.</li>

@@ -151,9 +151,10 @@ The `io.github.talib.metadata` package describes every function at run time and 
 import io.github.talib.metadata.FunctionInfo;
 import io.github.talib.metadata.Functions;
 
-FunctionInfo f = Functions.byName("SMA");
+FunctionInfo f = Functions.byName("SMA");  // or "sma", or "Sma" -- matched
+                                           // under an ASCII case fold
 
-f.name();       // "SMA"
+f.name();       // "SMA" -- always the canonical spelling
 f.group();      // "Overlap Studies"
 f.hint();       // one-line description
 f.inputs();     // List<InputInfo>    -- one entry per input

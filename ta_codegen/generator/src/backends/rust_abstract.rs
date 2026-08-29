@@ -228,15 +228,52 @@ fn emit_api(
     sorted: &[FuncRow],
     enum_params: &HashMap<String, HashMap<String, String>>,
 ) {
+    // The widest canonical name, which is how much stack the fold below needs.
+    // Derived, not a literal: a longer indicator lands here as a bigger buffer
+    // rather than as a name that silently stops resolving.
+    let max_name_len = sorted.iter().map(|f| f.name.len()).max().unwrap_or(0);
+
     o.push_str(
         "/// Resolve a function name (e.g. \"RSI\") to its [`FuncId`].\n\
          ///\n\
+         /// The name is matched under an ASCII case fold, so `\"RSI\"`, `\"rsi\"` and\n\
+         /// `\"Rsi\"` all resolve to the same handle. Only the *match* folds: the name\n\
+         /// this crate reports back — [`FuncId::name`], [`FuncInfo::name`] — stays the\n\
+         /// canonical upper-case spelling whatever was passed in.\n\
+         ///\n\
+         /// ASCII and not [`str::to_lowercase`] on purpose. Unicode case mapping is\n\
+         /// locale-shaped, and the Turkish dotless `ı` is the classic way a lookup\n\
+         /// like this one starts failing for some users and not others. Every\n\
+         /// function name is invariant ASCII, so the fold that matches it is too.\n\
+         ///\n\
          /// Uses a generated `match` — see the module-level docs for why this is O(1)\n\
-         /// and faster than C's linear `strcmp` scan, with zero allocation/dependencies.\n",
+         /// and faster than C's linear `strcmp` scan. The fold is a fixed-size stack\n\
+         /// buffer, so it stays allocation-free and dependency-free.\n",
     );
-    o.push_str("pub fn get_func_handle(name: &str) -> Option<FuncId> {\n    Some(match name {\n");
+    o.push_str("pub fn get_func_handle(name: &str) -> Option<FuncId> {\n");
+    let _ = writeln!(
+        o,
+        "    /// The longest canonical name; nothing longer can be one.\n\
+         \x20   const MAX_NAME_LEN: usize = {max_name_len};\n\
+         \n\
+         \x20   let raw = name.as_bytes();\n\
+         \x20   if raw.len() > MAX_NAME_LEN {{\n\
+         \x20       return None;\n\
+         \x20   }}\n\
+         \x20   let mut folded = [0u8; MAX_NAME_LEN];\n\
+         \x20   for (slot, byte) in folded.iter_mut().zip(raw) {{\n\
+         \x20       *slot = byte.to_ascii_uppercase();\n\
+         \x20   }}\n\
+         \n\
+         \x20   Some(match &folded[..raw.len()] {{"
+    );
     for f in sorted {
-        let _ = writeln!(o, "        {:?} => FuncId::{},", f.name, f.name);
+        let _ = writeln!(
+            o,
+            "        b{:?} => FuncId::{},",
+            f.name.to_ascii_uppercase(),
+            f.name
+        );
     }
     o.push_str("        _ => return None,\n    })\n}\n\n");
 
@@ -1153,6 +1190,55 @@ mod registry_tests {
     fn unknown_name_is_none() {
         assert_eq!(get_func_handle("definitely_not_a_ta_func"), None);
         assert!(get_func_handle_rc("definitely_not_a_ta_func").is_err());
+    }
+
+    /// The lookup folds case; the name it reports back does not.
+    ///
+    /// Swept over the whole corpus rather than spot-checked on `"sma"`, because
+    /// the fold runs over a fixed-size buffer and the interesting names are the
+    /// long ones (`CDL3STARSINSOUTH`) and the ones carrying a digit or an
+    /// underscore (`HT_DCPERIOD`), which no single case can stand in for.
+    #[test]
+    fn lookup_folds_ascii_case_but_the_name_does_not() {
+        for f in FUNCS.iter() {
+            let lower = f.name.to_ascii_lowercase();
+            assert_eq!(get_func_handle(&lower), Some(f.id), "lower-case lookup of {}", f.name);
+
+            // Alternating case: every letter position is exercised in both
+            // spellings across the two probes, so a fold applied to only part
+            // of the buffer fails here.
+            let mixed: String = f
+                .name
+                .chars()
+                .enumerate()
+                .map(|(i, c)| {
+                    if i % 2 == 0 { c.to_ascii_lowercase() } else { c.to_ascii_uppercase() }
+                })
+                .collect();
+            assert_eq!(get_func_handle(&mixed), Some(f.id), "mixed-case lookup of {}", f.name);
+
+            // The canonical spelling is what comes back, whichever went in.
+            assert_eq!(get_func_info(get_func_handle(&lower).unwrap()).name, f.name);
+            assert_eq!(get_func_handle_rc(&lower).unwrap().name(), f.name);
+        }
+    }
+
+    /// The fold is ASCII-only, and it is only a fold — not a normalisation that
+    /// would start accepting names no function has.
+    #[test]
+    fn the_fold_does_not_widen_what_resolves() {
+        // Non-ASCII bytes are left alone by the fold, so they cannot collide
+        // with an ASCII name. `SİN` (dotted capital I) is the Turkish-locale
+        // trap: a locale-aware fold maps it onto `sin`.
+        assert_eq!(get_func_handle("S\u{130}N"), None);
+        assert_eq!(get_func_handle("s\u{131}n"), None);
+        // Length, padding and separators are still part of the name.
+        assert_eq!(get_func_handle("sma "), None);
+        assert_eq!(get_func_handle(" sma"), None);
+        assert_eq!(get_func_handle("ht-dcperiod"), None);
+        assert_eq!(get_func_handle(""), None);
+        // Longer than any name: the early return, not a truncating match.
+        assert_eq!(get_func_handle(&"s".repeat(512)), None);
     }
 
     #[test]

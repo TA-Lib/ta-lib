@@ -189,9 +189,29 @@ public static class MetadataTest
         Check(!c.TryGet("NOSUCHFUNCTION", out _), "TryGet reports an unknown name");
         Check(c.TryGet("SMA", out FunctionInfo? sma) && sma.Name == "SMA", "TryGet finds a known name");
 
-        // Case sensitivity is a contract, not an accident: C's TA_GetFuncHandle
-        // is a strcmp, and the catalogue pins StringComparer.Ordinal to match.
-        Check(!c.TryGet("sma", out _), "lookup is case-sensitive, matching C");
+        // Case insensitivity is a contract, not an accident: C's TA_GetFuncHandle
+        // folds ASCII case, and the catalogue pins StringComparer.OrdinalIgnoreCase
+        // to match. Swept over the corpus, not spot-checked on "sma", so a
+        // comparer that folds only the first character fails here.
+        foreach (FunctionInfo f in c)
+        {
+            // TryGet rather than the indexer: a regressed comparer must be
+            // reported as a failing check, not a KeyNotFoundException that
+            // stops the rest of the suite from running.
+            bool foundLower = c.TryGet(f.Name.ToLowerInvariant(), out FunctionInfo? lower);
+            bool foundMixed = c.TryGet(Alternating(f.Name), out FunctionInfo? mixed);
+            Check(foundLower && ReferenceEquals(lower, f), $"{f.Name}: lower-case lookup finds it");
+            Check(foundMixed && ReferenceEquals(mixed, f), $"{f.Name}: mixed-case lookup finds it");
+            Check(foundLower && lower!.Name == f.Name,
+                  $"{f.Name}: the name reported back stays canonical");
+        }
+
+        // The fold is a relaxation of the match, not of what a name is.
+        // (The Turkish 'I' guardrail is Ordinal-vs-culture, which the comparer
+        // choice settles by contract; it is probed directly in the Rust and
+        // Java suites, where the fold is hand-written rather than a comparer.)
+        Check(!c.TryGet("sma ", out _), "trailing space is still part of the name");
+        Check(!c.TryGet(" sma", out _), "leading space is still part of the name");
 
         int inGroups = FunctionCatalog.Groups.Sum(g => c.InGroup(g).Count());
         Check(inGroups == c.Count, $"the groups partition the catalogue ({inGroups} vs {c.Count})");
@@ -200,6 +220,18 @@ public static class MetadataTest
             Check(c.InGroup(g).Any(), $"group {g} is non-empty");
             Check(g.ToDisplayName().Length > 0, $"group {g} has a display name");
         }
+    }
+
+    /// <summary>Re-cases every other letter, so the two probes above present
+    /// each letter position in both cases.</summary>
+    private static string Alternating(string s)
+    {
+        char[] o = s.ToCharArray();
+        for (int i = 0; i < o.Length; i++)
+        {
+            o[i] = (i % 2 != 0) ? char.ToUpperInvariant(o[i]) : char.ToLowerInvariant(o[i]);
+        }
+        return new string(o);
     }
 
     /* ----------------------------------------------------- domain invariants */

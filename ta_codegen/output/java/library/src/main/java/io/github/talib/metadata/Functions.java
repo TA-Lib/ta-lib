@@ -73,12 +73,44 @@ public final class Functions {
    }
 
    /**
-    * One function by canonical upper-case name, e.g. {@code "SMA"}.
+    * One function by name, e.g. {@code "SMA"}.
     *
+    * <p>The name is matched under an ASCII case fold, so {@code "SMA"},
+    * {@code "sma"} and {@code "Sma"} all find the same function. Only the
+    * match folds: {@link FunctionInfo#name()} still reports the canonical
+    * upper-case spelling whatever was passed in.
+    *
+    * @param name the function's name, in any ASCII casing
     * @return the metadata, or {@code null} if no such function exists
     */
    public static FunctionInfo byName(String name) {
-      return BY_NAME.get(name);
+      return name == null ? null : BY_NAME.get(asciiUpper(name));
+   }
+
+   /**
+    * Upper-cases the ASCII letters of {@code s} and nothing else.
+    *
+    * <p>Not {@code String.toUpperCase()}, with or without a {@code Locale}:
+    * in {@code tr_TR} that maps {@code 'i'} to the dotted {@code 'İ'}, so
+    * {@code byName("sin")} would resolve for most of the world and fail for a
+    * Turkish user. Function names are invariant ASCII, so the fold that
+    * matches them is invariant ASCII too.
+    *
+    * <p>Returns {@code s} itself when it holds no lower-case ASCII letter,
+    * which is every call that already passes a canonical name.
+    */
+   private static String asciiUpper(String s) {
+      char[] out = null;
+      for (int i = 0; i < s.length(); i++) {
+         char c = s.charAt(i);
+         if (c >= 'a' && c <= 'z') {
+            if (out == null) {
+               out = s.toCharArray();
+            }
+            out[i] = (char) (c - ('a' - 'A'));
+         }
+      }
+      return out == null ? s : new String(out);
    }
 
    /** The distinct group names, in first-appearance order. */
@@ -268,7 +300,7 @@ public final class Functions {
    }
 
    private static void put(Map<String, FunctionInfo> m, FunctionInfo f) {
-      m.put(f.name(), f);
+      m.put(asciiUpper(f.name()), f);
    }
 
    private static FunctionInfo f_AC() {
