@@ -576,6 +576,11 @@ if(UNIX)
     set(libdir ${CMAKE_INSTALL_PREFIX}/lib)
     set(includedir ${CMAKE_INSTALL_PREFIX}/include)
     set(PACKAGE_VERSION ${PROJECT_VERSION})
+    if(NOT WIN32)
+        set(LIBM "-lm")
+    else()
+        set(LIBM "")
+    endif()
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/ta-lib.pc.in"
         "${CMAKE_BINARY_DIR}/ta-lib.pc" @ONLY)
