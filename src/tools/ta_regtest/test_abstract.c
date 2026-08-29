@@ -1740,7 +1740,7 @@ static void nameFoldCb( const TA_FuncInfo *funcInfo, void *opaqueData )
    NameFoldCtx *ctx = (NameFoldCtx *)opaqueData;
    const TA_FuncHandle *canonical;
    const TA_FuncHandle *handle;
-   const TA_FuncInfo *back;
+   const TA_FuncInfo *back = NULL;
    char spelling[2][128];
    size_t i, len;
    int variant;

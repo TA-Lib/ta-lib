@@ -1200,7 +1200,16 @@ mod registry_tests {
                 })
                 .collect();
             assert_eq!(get_func_handle(&mixed), Some(f.id), "mixed-case lookup of {}", f.name);
-            assert_eq!(get_func_info(f.id).name, f.name, "{} reports its canonical name", f.name);
+            // The lookup answers a `FuncId`, so the spelling asked for cannot
+            // reach the name reported back: comparing that name to `f.name`
+            // would restate the table's index alignment, not the fold. What is
+            // worth pinning is the half that makes "canonical" mean something --
+            // the stored spelling is the upper-case one the fold folds onto.
+            assert!(
+                !f.name.chars().any(|c| c.is_ascii_lowercase()),
+                "{} is not stored in its canonical upper case",
+                f.name
+            );
         }
     }
 
