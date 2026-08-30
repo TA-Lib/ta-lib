@@ -27,6 +27,25 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     (func, enums)
 }
 
+/// Every indicator directory whose YAML declares a stream.
+fn streaming_indicators() -> Vec<String> {
+    let mut v: Vec<String> = std::fs::read_dir(input_dir())
+        .expect("input dir")
+        .filter_map(Result::ok)
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().to_string();
+            let yaml = e.path().join(format!("{name}.yaml"));
+            yaml.exists()
+                .then(|| parser::yaml::parse_yaml(&yaml))
+                .filter(|f| f.streaming)
+                .map(|_| name)
+        })
+        .collect();
+    v.sort();
+    v
+}
+
 fn rust_stream_section(name: &str) -> String {
     let (func, enums) = load_indicator(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
@@ -510,6 +529,45 @@ fn rust_composed_copy_out_is_stride_guarded() {
 ///
 /// Nothing in the input `.c` says the swap carries this weight, which is why it
 /// is pinned here. Identified by kevinlincg in the issue #205 write-bound proof.
+/// No tier copies a handle to peek it — swept over the whole corpus.
+///
+/// The property is structural, not a value one: a peek that copied and then
+/// wrote the copy would still answer correctly, so no value gate can see it.
+/// What it costs is the thing the frame exists to buy — a peek whose cost does
+/// not grow with the period — and the only place that is visible is here.
+#[test]
+fn no_rust_peek_copies_the_handle() {
+    let mut swept = 0usize;
+    let mut frames = 0usize;
+    let mut offenders: Vec<String> = Vec::new();
+    for name in streaming_indicators() {
+        let s = rust_stream_section(&name);
+        let Some(at) = s.find("    pub fn peek(&self") else { continue };
+        let end = s[at..].find("\n    }").map_or(s.len(), |k| at + k);
+        let peek = &s[at..end];
+        swept += 1;
+        if peek.contains("let sp = &self.state;") {
+            frames += 1;
+        }
+        for needle in ["self.clone()", "self.state.clone()", "PEEK_SCRATCH", "restore_from"] {
+            if peek.contains(needle) {
+                offenders.push(format!("{name}: {needle}"));
+            }
+        }
+    }
+    assert!(swept > 170, "only {swept} peek(s) swept");
+    assert!(
+        frames == swept,
+        "{} of {swept} peek(s) run a frame — the rest copy something",
+        frames
+    );
+    assert!(
+        offenders.is_empty(),
+        "a peek copies the handle:\n{}",
+        offenders.join("\n")
+    );
+}
+
 #[test]
 fn apo_family_period_swap_is_a_write_bound_precondition() {
     for name in ["apo", "ppo", "pvo"] {

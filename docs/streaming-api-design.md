@@ -104,19 +104,32 @@ per-handle mirror buffers are gone with it — they were ~38% of every handle.
 flag: the peek frame calls each sub-stream's `Peek` directly, so `update` stops
 testing a flag per sub-call.
 
-**Rust, Java and .NET still copy the handle per peek**, and that copy is the
-whole of the difference in cost between `peek` and `update` there. Where it is
-several allocations deep — two or more buffers, two or more sub-handles, or a
-period bank — it is made into a scratch held **per thread** and refreshed in
+**Rust runs the same frame**, in all five tiers: the loop and dual-mode tiers
+against the borrowed state, the composed tier driving each sub-stream's public
+`peek`, and dispatch and the period bank routing straight into the callee's.
+MAVP peeks only the slot the bar's period selects, where its step advances every
+slot — the other slots' next values are not this bar's answer. Nothing copies a
+handle, so the thread-local scratch tier that used to absorb the deepest clones
+is gone entirely.
+
+Rust needs three things C does not, because its renderer keys on how a name is
+spelled and a frame's locals drop the `sp.` qualifier: a localized field must
+inherit the classification the QUALIFIED name carried; the `while i <= n` to
+`for i in ..` lowering must be off inside a frame, since it rebinds the counter
+as `usize`; and the outputs are rebound as `&mut` inside a block so the body
+keeps the `(*out) = …` spelling and every cast with it.
+
+**Java and .NET still copy the handle per peek**, and that copy is the whole of
+the difference in cost between `peek` and `update` there. Where it is several
+allocations deep it is made into a scratch held **per thread** and refreshed in
 place, so only the first peek of that indicator on that thread allocates.
-Everywhere else the copy stays a throwaway, because a throwaway that dies
-inside `peek` is one the optimizer can delete outright, and where it does,
-reusing anything costs more than it saves.
+Everywhere else the copy stays a throwaway, because a throwaway that dies inside
+`peek` is one the optimizer can delete outright.
 
 No form writes the handle, which is what keeps Rust's `peek` a `&self` method
 and every backend's handles concurrently peekable — a per-thread scratch cannot
 be shared by two threads peeking the same handle. `update` never allocates
-(that is the hard constraint, not peek's). In the three copying backends the
+(that is the hard constraint, not peek's). In the two copying backends the
 transition also keeps a single call site: the scratch holds a *handle* and
 `peek` calls `update` on it, so `update`'s own code generation is untouched.
 
