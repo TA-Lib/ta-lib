@@ -3000,22 +3000,14 @@ fn emit_update_and_peek(
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
     o.push_str(&finite_bar_check(func, "        "));
-    if let Some(frame) = peek_frame {
-        // The frame commits nothing, so it runs against `&self.state` — no copy
-        // of the handle, and the buffers it reads are the live ones. Inline
-        // rather than a second method: it has one caller and always will, since
-        // a cross-indicator call enters the callee's PUBLIC `peek`.
-        o.push_str(&out_decls);
-        o.push_str(frame);
-        let _ = writeln!(o, "        Ok({ret})");
-    } else {
-        // Verbatim what every function did before #201, so these functions are
-        // byte-identical to the previous release: the clone is a local that
-        // dies here, and where the state is one buffer with no sub-handle and
-        // a loop-free transition, the optimizer deletes it outright.
-        let _ = writeln!(o, "        let mut scratch = self.clone();");
-        let _ = writeln!(o, "        scratch.update({fwd_bars})");
-    }
+    // Not a fallback: every tier emits a frame, and a tier that could not is a
+    // generator bug to fail on, not to ship a copying peek for. Java and C#
+    // already answer that way, and the three must agree — a silent degradation
+    // in one backend only is the shape no value gate can see.
+    let frame = peek_frame.expect("every tier emits a peek frame");
+    o.push_str(&out_decls);
+    o.push_str(frame);
+    let _ = writeln!(o, "        Ok({ret})");
     let _ = writeln!(o, "    }}\n");
     // The range accessor. Rust's `OpenAndFill` keeps returning the range beside
     // the handle (#179 C15) — this is the same pair, and the only way to read it
