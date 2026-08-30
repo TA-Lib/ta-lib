@@ -861,6 +861,57 @@ public class MetadataTest {
               "newCall(core) uses the given Core (" + viaTuned + " vs " + tuned.RSI_Lookback(14) + ")");
         check(viaTuned == viaDefault + 9,
               "the unstable period reaches the binder: " + viaDefault + " + 9 == " + viaTuned);
+
+        /* lookback() is not call(). Dispatch reads `h.core()` in two places --
+         * `Dispatch.lookback` (above) and `Dispatch.call` -- and only the first
+         * of them was pinned. Measured on this tree: rewriting the one line in
+         * `Dispatch.call` to `Core core = Core.DEFAULT;`, so that every
+         * call-by-name silently ignores the Core it was handed, leaves all six
+         * Java suites green (BatchApiTest 181, CoreApiTest 66, DivZeroTest 91,
+         * MetadataTest 1540, SMathOverflowTest 4, StreamSmokeTest 3859). The
+         * blanket rewrite of BOTH lines fails 2 of 1540 -- the three checks
+         * above -- which is exactly the half that was already covered.
+         *
+         * The unstable period is the oracle again, and it discriminates on the
+         * range rather than on the values: it does not change how RSI is
+         * computed, it withholds the first 9 bars it computes. So a call that
+         * honours `tuned` starts 9 bars later and produces 9 fewer values.
+         */
+        double[] outDefault = new double[N];
+        OutRange rDefault = rsi.newCall()
+            .setInput(0, CLOSE).setOptInput(0, 14).setOutput(0, outDefault).call(0, N - 1);
+        double[] outTuned = new double[N];
+        OutRange rTuned = rsi.newCall(tuned)
+            .setInput(0, CLOSE).setOptInput(0, 14).setOutput(0, outTuned).call(0, N - 1);
+
+        check(rTuned.begIdx() == rDefault.begIdx() + 9,
+              "call(core) starts where that Core's lookback says: "
+              + rDefault.begIdx() + " + 9 == " + rTuned.begIdx());
+        check(rTuned.count() == rDefault.count() - 9,
+              "call(core) withholds the 9 unstable bars: "
+              + rDefault.count() + " - 9 == " + rTuned.count());
+
+        /* And the binder's answer is the typed call's answer on that same Core,
+         * bit for bit -- the same standard callByNameMatchesTheTypedApi() holds
+         * the 176 functions to on Core.DEFAULT, now on a Core that is not it.
+         */
+        double[] direct = new double[N];
+        OutRange rDirect = tuned.RSI(0, N - 1, CLOSE, 14, direct);
+        check(rDirect.begIdx() == rTuned.begIdx() && rDirect.count() == rTuned.count(),
+              "the binder and the typed call agree on the range for the tuned Core");
+        boolean sameBits = true;
+        for (int i = 0; i < rTuned.count(); i++) {
+            sameBits &= Double.doubleToRawLongBits(direct[i])
+                     == Double.doubleToRawLongBits(outTuned[i]);
+        }
+        check(sameBits, "the binder and the typed call agree bit for bit on the tuned Core");
+        /* Non-vacuity: the bit compare above had something to compare, and the
+         * two Cores really do answer differently -- without this a binder that
+         * produced nothing at all would satisfy every check above.
+         */
+        check(rTuned.count() > 0 && rDefault.count() > rTuned.count(),
+              "both calls produced values, and the tuned Core produced fewer ("
+              + rDefault.count() + " vs " + rTuned.count() + ")");
     }
 
     public static void main(String[] args) throws Exception {
