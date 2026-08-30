@@ -4895,6 +4895,57 @@ fn rust_public_entry_documents_exactly_its_parameters() {
 }
 
 #[test]
+fn every_integer_output_carries_an_example_claim() {
+    // The generated example checks a real output for finiteness. An integer output
+    // has nothing analogous, so 65 of them -- 61 candlestick patterns, HT_TRENDMODE
+    // and the three index functions -- asserted nothing about their values at all
+    // (#179 E8, deferred from #136). The domain is per-function data and lives in
+    // `rust_doc::integer_domain_claim`; nothing in the metadata carries it, since
+    // all 66 integer outputs declare the same `line` flag. This is the gate that a
+    // function arriving with an integer output states its domain instead of
+    // silently rejoining that set.
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let mut checked = 0usize;
+    for entry in std::fs::read_dir(&base).expect("input dir") {
+        let entry = entry.expect("dir entry");
+        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_string();
+        let dir = entry.path();
+        if !dir.join(format!("{name}.c")).is_file() || !dir.join(format!("{name}.yaml")).is_file() {
+            continue;
+        }
+        let (func, enums) = load_indicator(&name);
+        let ints = func
+            .outputs
+            .iter()
+            .filter(|o| o.param_type == ir::ParamType::Integer)
+            .count();
+        if ints == 0 {
+            continue;
+        }
+        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        // One claim per integer output. Both shapes -- the `all(..)` domain test and
+        // the index loop -- read the written values as `<var>[..out_range.count]`,
+        // and nothing else in the example does.
+        let claims = out.matches("[..out_range.count]").count();
+        assert!(
+            claims >= ints,
+            "{name}: {ints} integer output(s) but {claims} example claim(s) -- add the \
+             output's domain to rust_doc::integer_domain_claim"
+        );
+        checked += 1;
+    }
+    assert_eq!(
+        checked, 65,
+        "expected the 65 integer-output functions, swept {checked}"
+    );
+}
+
+#[test]
 fn rust_cross_indicator_vec_input_gets_ref() {
     // Indicators that allocate a local buffer (Vec) and pass it to a cross-indicator
     // call should render the Vec as `&name` in input position. (MACD was the original
