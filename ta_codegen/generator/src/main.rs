@@ -2628,6 +2628,24 @@ path = "src/lib.rs"
 mod ta_func;
 pub mod abstract_api;
 pub use ta_func::*;
+
+// The README is the crate's front page on crates.io and on GitHub, and its Rust
+// sample is a claim about this API — yet nothing in the tree compiled it:
+// `readme = "README.md"` is packaging metadata, and every other doctest here
+// comes from a generated per-function page. So the front page was the one piece
+// of Rust in this crate that could say anything, and twice it did: the install
+// line resolved to no published version (#179 A1) and the indicator count was
+// seven stale (#179 A2), both found by reading rather than by a gate. The counts
+// and the install requirement are derived now; this covers the code.
+//
+// `cfg(doctest)` is what keeps it to `cargo test --doc`: the item does not exist
+// during `cargo build`, `cargo clippy` or `cargo doc`, so the README's headings
+// never appear in the rendered docs and its links are not resolved as intra-doc
+// links (they are ordinary Markdown links, and must stay that way to render on
+// crates.io).
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeExamples;
 "#;
     let lib_path = src_dir.join("lib.rs");
     write_if_changed(&lib_path, fill(lib_rs)).unwrap();
@@ -2692,11 +2710,16 @@ period and candlestick thresholds — are chosen up front with a builder and the
 frozen:
 
 ```rust
-use ta_lib::{Core, FuncUnstId};
+use ta_lib::{Core, FuncUnstId, RetCode};
 
-let core = Core::builder()
-    .unstable_period(FuncUnstId::EMA, 10)
-    .build()?;
+fn main() -> Result<(), RetCode> {
+    let core = Core::builder()
+        .unstable_period(FuncUnstId::EMA, 10)
+        .build()?;
+
+    assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);
+    Ok(())
+}
 ```
 
 The setters are infallible so that they chain; a rejected argument is reported
