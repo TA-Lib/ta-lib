@@ -112,27 +112,40 @@ cd bin && ./ta_bench_stream --points=20000 --iters=50
 ./ta_bench_stream --points=20000 --iters=50 --min-ratio=0.35   # exits 1 if any func is below
 ```
 
-`ta_bench_stream` is **C only**. For the Rust and Java streaming tiers,
+`ta_bench_stream` is **C only**. For the Rust, Java and C# streaming tiers,
 `scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
 the whole warm-up instead of one bar — between the working tree
 and a git revision — same generated harness compiled against two copies of the
 library, interleaved rounds with alternating arm order, every streaming function
-so the untouched ones are the control. It reads only the generated Rust crate and
-Java fragments (no ta_abstract, no servers, no C build) and derives every call
-from the emitted signatures, so adding an indicator needs no edit there.
+so the untouched ones are the control. It reads only the generated Rust crate,
+Java fragments and C# library (no ta_abstract, no servers, no C build) and
+derives every call from the emitted signatures, so adding an indicator needs no
+edit there.
 
-**C# streams too, but has no lane in either tool** — there is no C# row in any
-benchmark table, and `ta_bench --mode=open` answers `unsupported_mode` for it.
-So the C# peek-scratch election is Java's predicate shipped unchanged, and the
-emitted docs deliberately state what `Peek` allocates rather than claiming it is
-cheaper, which is a comparison nothing here has measured. Adding a C# lane needs
-a control arm first: reproduce a *known* effect (switch the copy constructor to
-`Clone()` and require ~2x on array-owning functions while the array-less ones
-stay flat) before trusting the tool to settle an unknown one.
+Every arm asserts a **floor** (`FUNC_FLOOR`, 170 against 176 today) on how many
+functions it parsed. That is not a style check: #278 recased the Rust and Java
+stream APIs and both arms' regexes kept the old spelling, so each parsed zero —
+Rust's until `c308e789`, Java's for a further day. Nothing but a person trying
+to use the tool noticed either. If an arm dies saying it is under the floor, the
+generated API moved: fix the parser, do not lower the floor.
+
+The **C# arm** pins `TieredCompilation` off in the harness project, so every
+method is fully optimised on its first call. The cost, stated rather than
+hidden: dynamic PGO is off with it, so the C# ns columns are static-opt numbers
+rather than what a long-lived process settles at. Both arms get the same
+treatment, so the change column — the output — is unaffected, and the ns columns
+were never comparable across invocations anyway. Note also that `TALib.csproj`
+sets `TreatWarningsAsErrors`, so a `--base` from an older revision has to compile
+*warning-clean* under today's SDK, a higher bar than the other two arms impose.
+
+There is still **no C# row in `ta_bench`** — `ta_bench --mode=open` answers
+`unsupported_mode` for it — so batch-vs-stream ratios remain a three-language
+table.
 
 ```bash
-scripts/stream_ab.py --base=origin/dev                                  # both languages
+scripts/stream_ab.py --base=origin/dev                                  # all three
 scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
+scripts/stream_ab.py --base=origin/dev --lang=csharp --call=peek
 scripts/stream_ab.py --base=origin/dev --call=open --mark=BBANDS,STDDEV   # the Open tier
 ```
 
