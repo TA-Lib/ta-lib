@@ -49,6 +49,7 @@ itself a failure there.
 
 import argparse
 import glob
+import json
 import os
 import subprocess
 import sys
@@ -56,7 +57,6 @@ import tarfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKSPACE = os.path.join(ROOT, "ta_codegen/output/rust")
-PACKAGE_DIR = os.path.join(WORKSPACE, "target/package")
 
 # (package name, directory under the workspace). Versions are read back off the
 # tarball cargo produces, so a version bump needs no edit here.
@@ -78,11 +78,39 @@ REQUIRED_IN_LIBRARY = ["Cargo.toml", "LICENSE", "README.md", "src/lib.rs"]
 # exactly by the git-tracked comparison.
 MIN_TA_FUNC_FILES = 100
 
+_PACKAGE_DIR = None
+
+
+def package_dir():
+    """Where cargo will leave the `.crate` tarballs: <target-dir>/package.
+
+    Asked, not assumed. `<workspace>/target` is only the default: CARGO_TARGET_DIR
+    and `build.target-dir` both move it, and sharing one target directory across
+    worktrees is the ordinary reason to set them. Hardcoding the default made
+    this gate fail on such a checkout with "expected exactly one
+    ta-lib-dispatch-<version>.crate ... found 0" -- cargo had packaged both
+    crates correctly, into a directory this script was not looking at. It also
+    pointed the stale-tarball sweep below at the wrong directory, so the run
+    could not even clean up after itself. `cargo metadata` reports the directory
+    cargo will actually use, whatever moved it.
+
+    CI sets neither, so this changes nothing there; it is the local-reproduction
+    path that was broken.
+    """
+    global _PACKAGE_DIR
+    if _PACKAGE_DIR is None:
+        out = subprocess.run(
+            ["cargo", "metadata", "--format-version", "1", "--no-deps"],
+            cwd=WORKSPACE, check=True, stdout=subprocess.PIPE,
+        ).stdout
+        _PACKAGE_DIR = os.path.join(json.loads(out)["target_directory"], "package")
+    return _PACKAGE_DIR
+
 
 def run_cargo_package(allow_dirty):
     # Stale tarballs from an earlier version would otherwise be picked up by the
     # glob below and checked instead of what this run produced.
-    for stale in glob.glob(os.path.join(PACKAGE_DIR, "*.crate")):
+    for stale in glob.glob(os.path.join(package_dir(), "*.crate")):
         os.remove(stale)
 
     cmd = ["cargo", "package", "--allow-dirty"] if allow_dirty else ["cargo", "package"]
@@ -107,11 +135,11 @@ def packaged_entries(name):
     """Paths inside the crate's tarball, relative to the crate root."""
     # `[0-9]*` and not `*`: the latter would make "ta-lib" also match
     # ta-lib-dispatch-0.1.2.crate, and the two would check each other.
-    found = glob.glob(os.path.join(PACKAGE_DIR, "%s-[0-9]*.crate" % name))
+    found = glob.glob(os.path.join(package_dir(), "%s-[0-9]*.crate" % name))
     if len(found) != 1:
         raise SystemExit(
             "FAIL: expected exactly one %s-<version>.crate in %s, found %d"
-            % (name, PACKAGE_DIR, len(found))
+            % (name, package_dir(), len(found))
         )
     path = found[0]
     prefix = os.path.basename(path)[: -len(".crate")] + "/"
