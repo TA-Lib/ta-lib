@@ -734,9 +734,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MavpStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -790,23 +787,23 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
             throw new TaLibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
-         MavpStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MavpStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MavpStream sp = this;
+         int cp = (int)inPeriods;
+         if( cp < sp.optInMinPeriod ) {
+            cp = sp.optInMinPeriod;
+         } else if( cp > sp.optInMaxPeriod ) {
+            cp = sp.optInMaxPeriod;
          }
-         core.mavpStepImpl(scratch, inReal, inPeriods);
-         return scratch.cur_outReal;
+         int slot = cp - sp.optInMinPeriod;
+         double cur_outReal = sp.bank[slot].peek(inReal);
+         return cur_outReal;
       }
 
       /**

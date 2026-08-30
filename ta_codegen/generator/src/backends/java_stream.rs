@@ -1398,9 +1398,82 @@ fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<S
     ))
 }
 
-/// One model's peek frame: the transition rewritten to commit nothing, run
-/// against the live handle at `indent`. `None` where it cannot be built and the
-/// caller falls back to peeking a copy.
+
+/// The dispatch tier's peek frame: the step's switch with each arm entering the
+/// callee's PUBLIC `peek`. The sub-handle is only read, which is the point —
+/// nothing here commits, so there is no copy to make.
+#[allow(clippy::too_many_arguments)]
+fn build_dispatch_peek_frame(
+    func: &FuncDef,
+    dp: &streaming::DispatchPlan,
+    outputs: &[String],
+    bar_args: &str,
+    ctx: &JavaRenderCtx,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    let mut f = String::new();
+    for out in &func.outputs {
+        let jty = out_java_type(func, &out.name);
+        let zero = if jty == "int" { "0" } else { "0.0" };
+        let _ = writeln!(f, "         {jty} cur_{} = {zero};", out.name);
+    }
+    if let Some(idp) = &dp.identity {
+        let cond = params_on_state(func, &idp.condition);
+        let cond = render_predicate(&cond, ctx, registry, helpers);
+        let _ = writeln!(f, "         if( {cond} ) {{");
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(f, "            cur_{out} = {inp};");
+        }
+        let _ = writeln!(f, "            return {};", fresh_value_expr_local(func));
+        let _ = writeln!(f, "         }}");
+    }
+    let _ = writeln!(f, "         switch( sp.{} )", dp.param);
+    let _ = writeln!(f, "         {{");
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let label = super::java::render_java_switch_label(&arm.label, enums);
+        let cls = callee_stream_class(registry, &arm.callee);
+        let _ = writeln!(f, "         case {label}: {{");
+        if arm.out_map.len() == 1 {
+            let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
+                panic!("single-output arm cannot discard its only slot")
+            };
+            let _ = writeln!(
+                f,
+                "            cur_{} = (({cls}) sp.sub).peek({bar_args});",
+                outputs[k]
+            );
+        } else {
+            let _ = writeln!(
+                f,
+                "            {cls}.Value subValue = (({cls}) sp.sub).peek({bar_args});"
+            );
+            for (i, slot) in arm.out_map.iter().enumerate() {
+                if let streaming::OutSlot::Forward(k) = slot {
+                    let _ = writeln!(
+                        f,
+                        "            cur_{} = subValue.{}();",
+                        outputs[*k],
+                        callee_value_field(registry, &arm.callee, i)
+                    );
+                }
+            }
+        }
+        let _ = writeln!(f, "            break;");
+        let _ = writeln!(f, "         }}");
+    }
+    let _ = writeln!(f, "         default:");
+    let _ = writeln!(
+        f,
+        "            throw new IllegalStateException(\"unreachable: open rejects arms without a sub-stream\");"
+    );
+    let _ = writeln!(f, "         }}");
+    f
+}
+
+/// [`peek_frame_arm_named`] for the tiers whose transition uses the ordinary
+/// stream names.
 #[allow(clippy::too_many_arguments)]
 fn peek_frame_arm(
     func: &FuncDef,
@@ -1415,9 +1488,33 @@ fn peek_frame_arm(
     indent: usize,
     predeclared: &BTreeSet<String>,
 ) -> Option<String> {
+    peek_frame_arm_named(
+        func, model, &JavaStreamNames, fields, step_settings, stream_fma, enums, registry, helpers,
+        counter, indent, predeclared,
+    )
+}
+
+/// One model's peek frame: the transition rewritten to commit nothing, run
+/// against the live handle at `indent`. `None` where it cannot be built and the
+/// caller falls back to peeking a copy.
+#[allow(clippy::too_many_arguments)]
+fn peek_frame_arm_named(
+    func: &FuncDef,
+    model: &StreamModel,
+    names: &dyn streaming::NameMap,
+    fields: &[Field],
+    step_settings: &BTreeSet<String>,
+    stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    indent: usize,
+    predeclared: &BTreeSet<String>,
+) -> Option<String> {
     let pad = " ".repeat(indent);
-    let transition = streaming::build_transition(model, &JavaStreamNames).ok()?;
-    let bufs = streaming::transition_buffers(model, &JavaStreamNames);
+    let transition = streaming::build_transition(model, names).ok()?;
+    let bufs = streaming::transition_buffers(model, names);
     let pt = streaming::peek_transition(&transition, &bufs, None).ok()?;
     // The extrema rebase moves the cursor before the first store, so its
     // targets localize with the transition's own.
@@ -3061,7 +3158,13 @@ fn emit_dispatch(
     // The dispatch arm is an `MAType` chosen at run time, so what the sub owns
     // is not knowable here.
     let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, None);
+    // The peek frame: the same routing, into each callee's PUBLIC peek. Nothing
+    // here commits, so the dispatch tier needs no copy of the handle it
+    // delegates to.
+    let dispatch_frame = build_dispatch_peek_frame(
+        func, dp, &outputs, &bar_args, &ctx, enums, registry, helpers,
+    );
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&dispatch_frame));
 
     // --- step ---------------------------------------------------------------
     emit_step_sig(o, func);
@@ -3367,7 +3470,20 @@ fn emit_period_bank(
     let _ = writeln!(restore_extra, "         }}");
     // A bank is one handle per period in the span: unbounded by construction.
     let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, None);
+    // The peek frame: only the SELECTED slot is peeked. The other slots' next
+    // values are not this bar's answer and peeking is non-committing per
+    // handle, so advancing them would be work thrown away — which is why the
+    // step advances all of them and the frame does not.
+    let mut bank_frame = String::new();
+    let _ = writeln!(bank_frame, "         int cp = (int){period};");
+    let _ = writeln!(bank_frame, "         if( cp < sp.{min} ) {{");
+    let _ = writeln!(bank_frame, "            cp = sp.{min};");
+    let _ = writeln!(bank_frame, "         }} else if( cp > sp.{max} ) {{");
+    let _ = writeln!(bank_frame, "            cp = sp.{max};");
+    let _ = writeln!(bank_frame, "         }}");
+    let _ = writeln!(bank_frame, "         int slot = cp - sp.{min};");
+    let _ = writeln!(bank_frame, "         double cur_{out} = sp.bank[slot].peek({price});");
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&bank_frame));
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
     emit_step_sig(o, func);
@@ -3684,21 +3800,26 @@ fn emit_composed_step_decls(
     func: &FuncDef,
     cp: &streaming::ComposedPlan,
     cur_scalars: &[String],
+    indent: usize,
+    frame: bool,
 ) {
-    if let Some(model) = &cp.producer {
+    let pad = " ".repeat(indent);
+    // In a frame the producer's temps are declared by the frame builder, beside
+    // the locals its stores live in.
+    if let (Some(model), false) = (&cp.producer, frame) {
         for (name, ty) in &model.temps {
             let (jty, default) = field_type_and_default(ty);
-            let _ = writeln!(o, "      {jty} {name} = {default};");
+            let _ = writeln!(o, "{pad}{jty} {name} = {default};");
         }
     }
     for (name, ty) in &cp.map_temps {
         let (jty, default) = field_type_and_default(ty);
-        let _ = writeln!(o, "      {jty} {name} = {default};");
+        let _ = writeln!(o, "{pad}{jty} {name} = {default};");
     }
     for name in cur_scalars {
         let ty = out_java_type(func, name);
         let zero = if ty == "int" { "0" } else { "0.0" };
-        let _ = writeln!(o, "      {ty} cur_{name} = {zero};");
+        let _ = writeln!(o, "{pad}{ty} cur_{name} = {zero};");
     }
 }
 
@@ -3719,11 +3840,20 @@ fn emit_composed_step(
     enums: &HashMap<String, EnumDef>,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-) {
-    emit_step_sig(o, func);
+    fields: &[Field],
+    frame: bool,
+) -> Option<String> {
+    // In a frame the body is the peek method's, three columns deeper.
+    let indent = if frame { 9 } else { 6 };
+    let pad = " ".repeat(indent);
+    let mut sink = String::new();
+    let o: &mut String = if frame { &mut sink } else { o };
+    if !frame {
+        emit_step_sig(o, func);
+    }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
 
-    emit_composed_step_decls(o, func, cp, &cur_scalars);
+    emit_composed_step_decls(o, func, cp, &cur_scalars, indent, frame);
 
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
@@ -3735,26 +3865,39 @@ fn emit_composed_step(
         .collect();
 
     if let Some(model) = &cp.producer {
-        emit_extrema_rebase(o, model, 6);
-        for s in step_settings {
-            let _ = writeln!(o, "      int {s}_rangeType = sp.cs_{s}_rangeType;");
-            let _ = writeln!(o, "      int {s}_avgPeriod = sp.cs_{s}_avgPeriod;");
-            let _ = writeln!(o, "      double {s}_factor = sp.cs_{s}_factor;");
-        }
         let names = JavaComposedNames {
             series: cp.series.clone().expect("producer plan carries a series"),
         };
+        if frame {
+            let declared: BTreeSet<String> = cur_scalars
+                .iter()
+                .map(|n| format!("cur_{n}"))
+                .chain(cp.map_temps.iter().map(|(n, _)| n.clone()))
+                .collect();
+            o.push_str(&peek_frame_arm_named(
+                func, model, &names, fields, step_settings, stream_fma, enums, registry, helpers,
+                counter, indent, &declared,
+            )?);
+        } else {
+        emit_extrema_rebase(o, model, indent);
+        for s in step_settings {
+            let _ = writeln!(o, "{pad}int {s}_rangeType = sp.cs_{s}_rangeType;");
+            let _ = writeln!(o, "{pad}int {s}_avgPeriod = sp.cs_{s}_avgPeriod;");
+            let _ = writeln!(o, "{pad}double {s}_factor = sp.cs_{s}_factor;");
+        }
         let transition = streaming::build_transition(model, &names)
             .unwrap_or_else(|e| panic!("streaming transition: {e}"));
         for st in &transition {
-            o.push_str(&render_statement_ctx(st, 6, &ctx, enums, registry, helpers));
+            o.push_str(&render_statement_ctx(st, indent, &ctx, enums, registry, helpers));
+        }
         }
         let series = cp.series.clone().expect("producer plan carries a series");
         cur.insert(series.clone(), format!("cur_{series}"));
     }
 
     // Pipeline: the batch tail, one scalar per bar through the sub handles.
-    let _ = writeln!(o, "      /* Pipeline the new bar through the sub-streams (batch tail order). */");
+    let verb = if frame { "peek" } else { "update" };
+    let _ = writeln!(o, "{pad}/* Pipeline the new bar through the sub-streams (batch tail order). */");
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     for step in &cp.steps {
         match step {
@@ -3769,19 +3912,19 @@ fn emit_composed_step(
                 let arg_str = args.join(", ");
                 if sub.dsts.len() == 1 {
                     let d = &sub.dsts[0];
-                    let _ = writeln!(o, "      cur_{d} = sp.sub{sub_idx}.update({arg_str});");
+                    let _ = writeln!(o, "{pad}cur_{d} = sp.sub{sub_idx}.{verb}({arg_str});");
                 } else {
                     let cls = callee_stream_class(registry, &callee_key);
-                    let _ = writeln!(o, "      {{");
-                    let _ = writeln!(o, "         {cls}.Value subOut{sub_idx} = sp.sub{sub_idx}.update({arg_str});");
+                    let _ = writeln!(o, "{pad}{{");
+                    let _ = writeln!(o, "{pad}   {cls}.Value subOut{sub_idx} = sp.sub{sub_idx}.{verb}({arg_str});");
                     for (k, d) in sub.dsts.iter().enumerate() {
                         let _ = writeln!(
                             o,
-                            "         cur_{d} = subOut{sub_idx}.{}();",
+                            "{pad}   cur_{d} = subOut{sub_idx}.{}();",
                             callee_value_field(registry, &callee_key, k)
                         );
                     }
-                    let _ = writeln!(o, "      }}");
+                    let _ = writeln!(o, "{pad}}}");
                 }
                 for d in &sub.dsts {
                     cur.insert(d.clone(), format!("cur_{d}"));
@@ -3795,27 +3938,39 @@ fn emit_composed_step(
                 for out in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
                     cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
                 }
-                let _ = writeln!(o, "      /* Combine map (batch tail, per bar). */");
+                let _ = writeln!(o, "{pad}/* Combine map (batch tail, per bar). */");
                 for st in &transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings) {
-                    o.push_str(&render_statement_ctx(st, 6, &ctx, enums, registry, helpers));
+                    o.push_str(&render_statement_ctx(st, indent, &ctx, enums, registry, helpers));
                 }
             }
         }
     }
     // Push the new sub-output value into each lag ring AFTER every read of the
     // oldest slot in the combine above (mirrors C, incl. the modulo advance).
-    for ring in &cp.sub_lag_rings {
-        let sn = &ring.series;
-        let _ = writeln!(o, "      sp.lagRing_{sn}[sp.lagRingPos_{sn}] = cur_{sn};");
+    // A frame drops the push outright: nothing below loads it back.
+    if !frame {
+        for ring in &cp.sub_lag_rings {
+            let sn = &ring.series;
+            let _ = writeln!(o, "{pad}sp.lagRing_{sn}[sp.lagRingPos_{sn}] = cur_{sn};");
+            let _ = writeln!(
+                o,
+                "{pad}sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
+            );
+        }
+    }
+    let target = if frame { "" } else { "sp." };
+    for out in outputs {
         let _ = writeln!(
             o,
-            "      sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
+            "{pad}{target}cur_{out} = {};",
+            cur.get(out).expect("analyzer gated output")
         );
     }
-    for out in outputs {
-        let _ = writeln!(o, "      sp.cur_{out} = {};", cur.get(out).expect("analyzer gated output"));
+    if frame {
+        return Some(sink);
     }
     let _ = writeln!(o, "   }}");
+    None
 }
 
 /// The transcribed (region, tail) for the composed open: output arrays renamed
@@ -4169,11 +4324,18 @@ fn emit_composed(
         subs: cp.subs.len(),
         unbounded: false,
     };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, None);
+    let frame = {
+        let mut sink = String::new();
+        emit_composed_step(
+            &mut sink, func, cp, &step_settings, stream_fma, registry, &inputs, &outputs, enums,
+            helpers, counter, &fields, true,
+        )
+    };
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, frame.as_deref());
 
     emit_composed_step(
         o, func, cp, &step_settings, stream_fma, registry, &inputs, &outputs, enums, helpers,
-        counter,
+        counter, &fields, false,
     );
     emit_composed_open(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,

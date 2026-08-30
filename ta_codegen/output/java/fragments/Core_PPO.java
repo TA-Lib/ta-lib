@@ -438,9 +438,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<PpoStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -493,23 +490,29 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("PPO peek: BadParam", RetCode.BadParam);
-         PpoStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new PpoStream(this);
-            PEEK_SCRATCH.set(scratch);
+         PpoStream sp = this;
+         double tempReal = 0.0;
+         double cur_tempBuffer = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.peek(inReal);
+         cur_outReal = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         tempReal = cur_outReal;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
          } else {
-            scratch.copyFrom(this);
+            cur_outReal = 0.0;
          }
-         core.ppoStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**

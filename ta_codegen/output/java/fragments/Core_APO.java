@@ -429,9 +429,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<ApoStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -484,23 +481,23 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("APO peek: BadParam", RetCode.BadParam);
-         ApoStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new ApoStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
-         core.apoStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         ApoStream sp = this;
+         double cur_tempBuffer = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.peek(inReal);
+         cur_outReal = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         cur_outReal = cur_tempBuffer - cur_outReal;
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**

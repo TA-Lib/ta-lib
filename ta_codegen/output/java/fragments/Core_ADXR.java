@@ -439,15 +439,22 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
-         AdxrStream scratch = new AdxrStream(this);
-         core.adxrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         AdxrStream sp = this;
+         double cur_adx = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
+         /* Combine map (batch tail, per bar). */
+         cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**

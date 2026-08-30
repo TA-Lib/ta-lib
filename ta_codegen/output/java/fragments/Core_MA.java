@@ -672,9 +672,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -727,23 +724,66 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
-         MaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+            cur_outReal = inReal;
+            return cur_outReal;
          }
-         core.maStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         switch( sp.optInMAType )
+         {
+         case SMA: {
+            cur_outReal = ((SmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case EMA: {
+            cur_outReal = ((EmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case WMA: {
+            cur_outReal = ((WmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case DEMA: {
+            cur_outReal = ((DemaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case TEMA: {
+            cur_outReal = ((TemaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case TRIMA: {
+            cur_outReal = ((TrimaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case KAMA: {
+            cur_outReal = ((KamaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case MAMA: {
+            MamaStream.Value subValue = ((MamaStream) sp.sub).peek(inReal);
+            cur_outReal = subValue.mama();
+            break;
+         }
+         case T3: {
+            cur_outReal = ((T3Stream) sp.sub).peek(inReal);
+            break;
+         }
+         case HMA: {
+            cur_outReal = ((HmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         default:
+            throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
+         }
+         return cur_outReal;
       }
 
       /**

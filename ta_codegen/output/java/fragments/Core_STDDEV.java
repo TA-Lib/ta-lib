@@ -412,15 +412,25 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
-         StddevStream scratch = new StddevStream(this);
-         core.stddevStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         StddevStream sp = this;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_outReal = sp.sub0.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         if( sp.optInNbDev != 1.0 ) {
+            cur_outReal = Math.sqrt(cur_outReal) * sp.optInNbDev;
+         } else {
+            cur_outReal = Math.sqrt(cur_outReal);
+         }
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**

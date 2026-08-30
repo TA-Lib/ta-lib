@@ -506,9 +506,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<StochrsiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -583,23 +580,27 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
-         StochrsiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new StochrsiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         StochrsiStream sp = this;
+         double cur_tempRSIBuffer = 0.0;
+         double cur_outFastK = 0.0;
+         double cur_outFastD = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempRSIBuffer = sp.sub0.peek(inReal);
+         {
+            StochfStream.Value subOut1 = sp.sub1.peek(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+            cur_outFastK = subOut1.fastK();
+            cur_outFastD = subOut1.fastD();
          }
-         core.stochrsiStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
+         cur_outFastK = cur_outFastK;
+         cur_outFastD = cur_outFastD;
+         return new Value(cur_outFastK, cur_outFastD);
       }
 
       /**

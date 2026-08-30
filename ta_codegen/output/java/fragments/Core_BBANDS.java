@@ -871,9 +871,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<BbandsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -951,23 +948,38 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
-         BbandsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new BbandsStream(this);
-            PEEK_SCRATCH.set(scratch);
+         BbandsStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double cur_tempBuffer1 = 0.0;
+         double cur_tempBuffer2 = 0.0;
+         double cur_outRealUpperBand = 0.0;
+         double cur_outRealLowerBand = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer1 = sp.sub0.peek(inReal);
+         cur_tempBuffer2 = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         if( sp.optInNbDevUp == sp.optInNbDevDn ) {
+            tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = tempReal2 + tempReal;
+            cur_outRealLowerBand = tempReal2 - tempReal;
          } else {
-            scratch.copyFrom(this);
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = Math.fma(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
+            cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
          }
-         core.bbandsStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+         cur_outRealUpperBand = cur_outRealUpperBand;
+         cur_outRealMiddleBand = cur_tempBuffer1;
+         cur_outRealLowerBand = cur_outRealLowerBand;
+         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
       /**

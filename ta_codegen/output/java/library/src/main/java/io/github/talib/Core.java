@@ -6992,15 +6992,22 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
-         AdxrStream scratch = new AdxrStream(this);
-         core.adxrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         AdxrStream sp = this;
+         double cur_adx = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
+         /* Combine map (batch tail, per bar). */
+         cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -8563,9 +8570,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<ApoStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -8618,23 +8622,23 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("APO peek: BadParam", RetCode.BadParam);
-         ApoStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new ApoStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
-         core.apoStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         ApoStream sp = this;
+         double cur_tempBuffer = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.peek(inReal);
+         cur_outReal = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         cur_outReal = cur_tempBuffer - cur_outReal;
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -14486,9 +14490,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<BbandsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -14566,23 +14567,38 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
-         BbandsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new BbandsStream(this);
-            PEEK_SCRATCH.set(scratch);
+         BbandsStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double cur_tempBuffer1 = 0.0;
+         double cur_tempBuffer2 = 0.0;
+         double cur_outRealUpperBand = 0.0;
+         double cur_outRealLowerBand = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer1 = sp.sub0.peek(inReal);
+         cur_tempBuffer2 = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         if( sp.optInNbDevUp == sp.optInNbDevDn ) {
+            tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = tempReal2 + tempReal;
+            cur_outRealLowerBand = tempReal2 - tempReal;
          } else {
-            scratch.copyFrom(this);
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = Math.fma(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
+            cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
          }
-         core.bbandsStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+         cur_outRealUpperBand = cur_outRealUpperBand;
+         cur_outRealMiddleBand = cur_tempBuffer1;
+         cur_outRealLowerBand = cur_outRealLowerBand;
+         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
       /**
@@ -107052,9 +107068,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -107107,23 +107120,66 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
-         MaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+            cur_outReal = inReal;
+            return cur_outReal;
          }
-         core.maStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         switch( sp.optInMAType )
+         {
+         case SMA: {
+            cur_outReal = ((SmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case EMA: {
+            cur_outReal = ((EmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case WMA: {
+            cur_outReal = ((WmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case DEMA: {
+            cur_outReal = ((DemaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case TEMA: {
+            cur_outReal = ((TemaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case TRIMA: {
+            cur_outReal = ((TrimaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case KAMA: {
+            cur_outReal = ((KamaStream) sp.sub).peek(inReal);
+            break;
+         }
+         case MAMA: {
+            MamaStream.Value subValue = ((MamaStream) sp.sub).peek(inReal);
+            cur_outReal = subValue.mama();
+            break;
+         }
+         case T3: {
+            cur_outReal = ((T3Stream) sp.sub).peek(inReal);
+            break;
+         }
+         case HMA: {
+            cur_outReal = ((HmaStream) sp.sub).peek(inReal);
+            break;
+         }
+         default:
+            throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
+         }
+         return cur_outReal;
       }
 
       /**
@@ -109430,9 +109486,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MacdextStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -109510,23 +109563,30 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
-         MacdextStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MacdextStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
-         core.macdextStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         MacdextStream sp = this;
+         double cur_slowMABuffer = 0.0;
+         double cur_fastMABuffer = 0.0;
+         double cur_outMACDSignal = 0.0;
+         double cur_outMACDHist = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_slowMABuffer = sp.sub0.peek(inReal);
+         cur_fastMABuffer = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
+         cur_outMACDSignal = sp.sub2.peek(cur_fastMABuffer);
+         /* Combine map (batch tail, per bar). */
+         cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
+         cur_outMACD = cur_fastMABuffer;
+         cur_outMACDSignal = cur_outMACDSignal;
+         cur_outMACDHist = cur_outMACDHist;
+         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /**
@@ -114374,9 +114434,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MavpStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -114430,23 +114487,23 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
             throw new TaLibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
-         MavpStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MavpStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MavpStream sp = this;
+         int cp = (int)inPeriods;
+         if( cp < sp.optInMinPeriod ) {
+            cp = sp.optInMinPeriod;
+         } else if( cp > sp.optInMaxPeriod ) {
+            cp = sp.optInMaxPeriod;
          }
-         core.mavpStepImpl(scratch, inReal, inPeriods);
-         return scratch.cur_outReal;
+         int slot = cp - sp.optInMinPeriod;
+         double cur_outReal = sp.bank[slot].peek(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -132549,9 +132606,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<PpoStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -132604,23 +132658,29 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("PPO peek: BadParam", RetCode.BadParam);
-         PpoStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new PpoStream(this);
-            PEEK_SCRATCH.set(scratch);
+         PpoStream sp = this;
+         double tempReal = 0.0;
+         double cur_tempBuffer = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.peek(inReal);
+         cur_outReal = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         tempReal = cur_outReal;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
          } else {
-            scratch.copyFrom(this);
+            cur_outReal = 0.0;
          }
-         core.ppoStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -133920,9 +133980,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<PvoStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -133975,23 +134032,29 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVO peek: BadParam", RetCode.BadParam);
-         PvoStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new PvoStream(this);
-            PEEK_SCRATCH.set(scratch);
+         PvoStream sp = this;
+         double tempReal = 0.0;
+         double cur_tempBuffer = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.peek(inVolume);
+         cur_outReal = sp.sub1.peek(inVolume);
+         /* Combine map (batch tail, per bar). */
+         tempReal = cur_outReal;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
          } else {
-            scratch.copyFrom(this);
+            cur_outReal = 0.0;
          }
-         core.pvoStepImpl(scratch, inVolume);
-         return scratch.cur_outReal;
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -145574,15 +145637,25 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
-         StddevStream scratch = new StddevStream(this);
-         core.stddevStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         StddevStream sp = this;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_outReal = sp.sub0.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         if( sp.optInNbDev != 1.0 ) {
+            cur_outReal = Math.sqrt(cur_outReal) * sp.optInNbDev;
+         } else {
+            cur_outReal = Math.sqrt(cur_outReal);
+         }
+         cur_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -146590,9 +146663,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<StochStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -146669,23 +146739,104 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
-         StochStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new StochStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         StochStream sp = this;
+         double cur_tempBuffer = 0.0;
+         double cur_outSlowD = 0.0;
+         double tmp = 0.0;
+         double diff = sp.diff;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.stochStepImpl(scratch, inHigh, inLow, inClose);
-         return new Value(scratch.cur_outSlowK, scratch.cur_outSlowD);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
+          */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / diff;
+         } else {
+            cur_tempBuffer = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.peek(cur_tempBuffer);
+         cur_outSlowD = sp.sub1.peek(cur_tempBuffer);
+         cur_outSlowK = cur_tempBuffer;
+         cur_outSlowD = cur_outSlowD;
+         return new Value(cur_outSlowK, cur_outSlowD);
       }
 
       /**
@@ -147884,9 +148035,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<StochfStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -147963,23 +148111,103 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
-         StochfStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new StochfStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         StochfStream sp = this;
+         double cur_tempBuffer = 0.0;
+         double cur_outFastD = 0.0;
+         double tmp = 0.0;
+         double diff = sp.diff;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.stochfStepImpl(scratch, inHigh, inLow, inClose);
-         return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
+          */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / diff;
+         } else {
+            cur_tempBuffer = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_outFastD = sp.sub0.peek(cur_tempBuffer);
+         cur_outFastK = cur_tempBuffer;
+         cur_outFastD = cur_outFastD;
+         return new Value(cur_outFastK, cur_outFastD);
       }
 
       /**
@@ -148939,9 +149167,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<StochrsiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -149016,23 +149241,27 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
-         StochrsiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new StochrsiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         StochrsiStream sp = this;
+         double cur_tempRSIBuffer = 0.0;
+         double cur_outFastK = 0.0;
+         double cur_outFastD = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempRSIBuffer = sp.sub0.peek(inReal);
+         {
+            StochfStream.Value subOut1 = sp.sub1.peek(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+            cur_outFastK = subOut1.fastK();
+            cur_outFastD = subOut1.fastD();
          }
-         core.stochrsiStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
+         cur_outFastK = cur_outFastK;
+         cur_outFastD = cur_outFastD;
+         return new Value(cur_outFastK, cur_outFastD);
       }
 
       /**

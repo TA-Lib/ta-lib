@@ -668,9 +668,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MacdextStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -748,23 +745,30 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
-         MacdextStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MacdextStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
-         core.macdextStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         MacdextStream sp = this;
+         double cur_slowMABuffer = 0.0;
+         double cur_fastMABuffer = 0.0;
+         double cur_outMACDSignal = 0.0;
+         double cur_outMACDHist = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_slowMABuffer = sp.sub0.peek(inReal);
+         cur_fastMABuffer = sp.sub1.peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
+         cur_outMACDSignal = sp.sub2.peek(cur_fastMABuffer);
+         /* Combine map (batch tail, per bar). */
+         cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
+         cur_outMACD = cur_fastMABuffer;
+         cur_outMACDSignal = cur_outMACDSignal;
+         cur_outMACDHist = cur_outMACDHist;
+         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /**
