@@ -111,13 +111,19 @@ def parse_java(root):
     d = os.path.join(root, "ta_codegen/output/java/fragments")
     funcs, declined = {}, {}
     for fn in sorted(os.listdir(d)):
-        if not fn.endswith(".java"):
+        if not fn.startswith("Core_") or not fn.endswith(".java"):
             continue
         src = open(os.path.join(d, fn)).read()
-        m = re.search(r"public (\w+)_Stream (\w+)_Open\( (.*?) \)\n", src)
+        # #278 recased the Java stream API: `SMA_Open` -> `smaOpen`,
+        # `SMA_Stream` -> `SmaStream`. The report keys on the uppercase function
+        # name, which is what `--funcs`/`--mark` and every other tool here
+        # spell, so it comes off the FILENAME and the emitted call carries its
+        # own spelling. `OpenAndFill` cannot collide: the `(` is required.
+        name = fn[len("Core_"):-len(".java")]
+        m = re.search(r"public (\w+Stream) (\w+Open)\( (.*?) \)\n", src)
         if not m:
             continue
-        name = m.group(2)
+        cls, open_fn = m.group(1), m.group(2)
         args, why = [], None
         for a in [x.strip() for x in m.group(3).split(",") if x.strip()]:
             parts = a.split()
@@ -136,13 +142,14 @@ def parse_java(root):
         if why:
             declined[name] = why
             continue
-        cls = re.search(r"public static final class %s_Stream\b(.*?)\n   \}" % name, src, re.S)
-        m2 = re.search(r"public (\w+) update\( (.*?) \)", cls.group(1) if cls else src)
+        blk = re.search(r"public static final class %s\b(.*?)\n   \}" % cls, src, re.S)
+        m2 = re.search(r"public (\w+) update\( (.*?) \)", blk.group(1) if blk else src)
         if not m2:
             declined[name] = "no update method"
             continue
         call = [x.split()[1] for x in m2.group(2).split(",") if x.strip()]
-        funcs[name] = {"open": args, "call": call, "ret": m2.group(1)}
+        funcs[name] = {"open": args, "call": call, "ret": m2.group(1),
+                       "cls": cls, "openfn": open_fn}
     return funcs, declined
 
 
@@ -259,9 +266,9 @@ JAVA_OPEN_BLOCK = """
       try {
          java.util.ArrayList<Double> all = new java.util.ArrayList<>();
          for (int p = 0; p < passes + 2; p++) {
-            for (int i = 0; i < 200; i++) { sink += core.%(name)s_Open(%(oargs)s) != null ? 1 : 0; }
+            for (int i = 0; i < 200; i++) { sink += core.%(openfn)s(%(oargs)s) != null ? 1 : 0; }
             long t0 = System.nanoTime();
-            for (int i = 0; i < iters; i++) { sink += core.%(name)s_Open(%(oargs)s) != null ? 1 : 0; }
+            for (int i = 0; i < iters; i++) { sink += core.%(openfn)s(%(oargs)s) != null ? 1 : 0; }
             if (p >= 2) all.add((System.nanoTime() - t0) / (double) iters);
          }
          java.util.Collections.sort(all);
@@ -329,7 +336,7 @@ JAVA_BLOCK = """
       try {
          java.util.ArrayList<Double> all = new java.util.ArrayList<>();
          for (int p = 0; p < passes + 2; p++) {
-            Core.%(name)s_Stream st = core.%(name)s_Open(%(oargs)s);
+            Core.%(cls)s st = core.%(openfn)s(%(oargs)s);
             for (int i = 0; i < 20000; i++) { %(ret)s r = st.%(call)s(%(cargs)s); %(consume)s }
             long t0 = System.nanoTime();
             for (int i = 0; i < iters; i++) { %(ret)s r = st.%(call)s(%(cargs)s); %(consume)s }
@@ -383,11 +390,12 @@ def emit_java(funcs, names, call, period, marked):
         ret = f["ret"]
         if call == "open":
             s.append(JAVA_OPEN_BLOCK % {
-                "name": name, "oargs": open_args(f, "java", name, period, marked),
+                "name": name, "openfn": f["openfn"],
+                "oargs": open_args(f, "java", name, period, marked),
             })
             continue
         s.append(JAVA_BLOCK % {
-            "name": name, "call": call,
+            "name": name, "call": call, "cls": f["cls"], "openfn": f["openfn"],
             "ret": ret if ret in ("double", "int") else "var",
             "consume": "sink += r;" if ret in ("double", "int") else "sink += (r != null ? 1.0 : 0.0);",
             "oargs": open_args(f, "java", name, period, marked),
