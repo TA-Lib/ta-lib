@@ -1112,7 +1112,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
     // After the step and after the finite-bar reject, so a rejected bar leaves
-    // the range where it was. `Peek` runs the same step on a scratch copy and so
+    // the range where it was. `Peek` runs a frame that commits nothing and so
     // never reaches this. Saturating: nothing bounds how many bars a live stream
     // is fed, and past MAX_INDEX it has left the batch index domain anyway.
     let _ = writeln!(
@@ -1138,11 +1138,26 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          return — the same transition, with every store it would make carried in a local \
          instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    d.para(
-        "It copies nothing: the frame runs against this handle, reading its buffers and \
-         holding what the step would commit in locals. The cost does not grow with the \
-         period, and <c>Peek</c> never allocates.",
-    );
+    // Conditional, because for 21 handles the unconditional claim was false: a
+    // C# array field is a reference, so a frame that writes a fixed-size
+    // accumulator has to copy it, and that copy is a real per-call allocation.
+    // The flat-in-period cost — the claim the frame exists to keep — holds
+    // either way, and is what both sentences lead with.
+    if frame.is_some_and(|f| f.contains("Array.Copy(")) {
+        d.para(
+            "It copies no buffer: the frame runs against this handle, reading its buffers \
+             and holding what the step would commit in locals, so the cost does not grow \
+             with the period. It does copy this indicator's fixed-size per-bar \
+             accumulators — a few elements, a count fixed by the indicator and not by the \
+             period — so <c>Peek</c> allocates a small bounded amount per call.",
+        );
+    } else {
+        d.para(
+            "It copies nothing: the frame runs against this handle, reading its buffers and \
+             holding what the step would commit in locals. The cost does not grow with the \
+             period, and <c>Peek</c> never allocates.",
+        );
+    }
     d.close("remarks");
     for input in &inputs {
         d.param(input, &bar_param_desc(input));
@@ -3421,10 +3436,6 @@ fn emit_dispatch(
     );
     let _ = writeln!(copy_extra, "            }}");
     let _ = writeln!(copy_extra, "         }}");
-    // The same switch in place: the scratch keeps the sub it already holds when
-    // the arm matches. It is only the same arm when the source handle's param is
-    // the same, which is why the tag is read off `this` after the field copy,
-    // exactly as the copy constructor reads it after its own.
     let subs = SubMembers { copy: copy_extra };
     // The peek frame: the same routing, into each callee's PUBLIC `Peek`.
     // Nothing here commits, so the dispatch tier needs no copy of the handle it

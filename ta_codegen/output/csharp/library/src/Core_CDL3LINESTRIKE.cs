@@ -498,9 +498,11 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>It copies no buffer: the frame runs against this handle, reading its
+      /// buffers and holding what the step would commit in locals, so the cost does
+      /// not grow with the period. It does copy this indicator's fixed-size per-bar
+      /// accumulators — a few elements, a count fixed by the indicator and not by
+      /// the period — so <c>Peek</c> allocates a small bounded amount per call.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>

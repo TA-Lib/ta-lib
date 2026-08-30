@@ -651,9 +651,7 @@ fn emit_handle_class(
 }
 
 /// [`emit_handle_class`] with additional raw member declarations (dispatch's
-/// `Object sub;`, composed/period-bank sub-handle fields). Returns whether the
-/// handle owns anything on the heap, which is what decides whether `peek`
-/// reuses a scratch.
+/// `Object sub;`, composed/period-bank sub-handle fields).
 fn emit_handle_class_with_members(
     o: &mut String,
     func: &FuncDef,
@@ -685,8 +683,6 @@ fn emit_handle_class_with_members(
          \x20   */"
     );
     let _ = writeln!(o, "   public static final class {class} {{");
-    // Not final: `copyFrom` retargets the peek scratch, which is one instance
-    // per thread per class and so outlives any one handle's Core.
     let _ = writeln!(o, "      Core core;");
     for (name, jty, _) in fields {
         let _ = writeln!(o, "      {jty} {name};");
@@ -878,7 +874,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
     // After the step and after the finite-bar reject, so a rejected bar leaves
-    // the range where it was. `peek` runs the same step on a scratch copy and so
+    // the range where it was. `peek` runs a frame that commits nothing and so
     // never reaches this. Saturating: nothing bounds how many bars a live stream
     // is fed, and past MAX_INDEX it has left the batch index domain anyway.
     let _ = writeln!(o, "         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;");
@@ -1061,6 +1057,24 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     };
     let (sig_bars, _) = bar_params(func);
 
+    // The allocation sentence is CONDITIONAL, because for 21 handles the
+    // unconditional one was false: a Java array field is a reference, so a
+    // frame that writes a fixed-size accumulator has to clone it, and that
+    // clone is a real per-call allocation. Both sentences say the thing that is
+    // actually true of THIS frame — the flat-in-period cost, which is the claim
+    // the frame exists to keep, holds either way.
+    let cost = if frame.is_some_and(|f| f.contains(".clone()")) {
+        "It copies no buffer: the frame runs against this handle, reading its\n\
+         \x20      * buffers and storing what the step would commit into locals, so the cost\n\
+         \x20      * does not grow with the period. It does clone this indicator's fixed-size\n\
+         \x20      * per-bar accumulators — a few elements, a count fixed by the indicator and\n\
+         \x20      * not by the period — so {@code peek} allocates a small bounded amount per\n\
+         \x20      * call."
+    } else {
+        "It copies nothing: the frame runs against this handle, reading its\n\
+         \x20      * buffers and storing what the step would commit into locals, so the cost\n\
+         \x20      * does not grow with the period and {@code peek} never allocates."
+    };
     let _ = writeln!(
         o,
         "\n      /**\n\
@@ -1068,10 +1082,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          \x20      * next {{@code update}} with the same bar would return — the same\n\
          \x20      * transition, with every store it would make carried in a local instead.\n\
          \x20      * Never writes this handle, so peeks may\n\
-         \x20      * run concurrently with each other. It copies nothing: the frame runs against\n\
-         \x20      * this handle, reading its buffers and storing what the step would\n\
-         \x20      * commit into locals, so the cost does not grow with the period and\n\
-         \x20      * {{@code peek}} never allocates.\n\
+         \x20      * run concurrently with each other. {cost}\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} peek( {sig_bars} ) {{");
@@ -3303,10 +3314,6 @@ fn emit_period_bank(
     let _ = writeln!(copy_extra, "         for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {{");
     let _ = writeln!(copy_extra, "            this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
     let _ = writeln!(copy_extra, "         }}");
-    // Same shape, in place: the bank a scratch already holds is the right
-    // length unless a differently-parameterised handle borrowed it, in which
-    // case it is rebuilt exactly as the copy constructor builds one.
-    // A bank is one handle per period in the span: unbounded by construction.
     let subs = SubMembers { copy: copy_extra };
     // The peek frame: only the SELECTED slot is peeked. The other slots' next
     // values are not this bar's answer and peeking is non-committing per
@@ -4164,9 +4171,6 @@ fn emit_composed(
         let cls = callee_stream_class(registry, &callee_key);
         let _ = writeln!(extra_members, "      {cls} sub{si};");
         let _ = writeln!(copy_extra, "         this.sub{si} = new {cls}(other.sub{si});");
-        // A sub's class is fixed by the plan, so a scratch always has one to
-        // overwrite; the null arm covers a scratch built by the bare
-        // `(Core)` constructor, which no path takes today.
     }
     let subs = SubMembers { copy: copy_extra };
     let frame = {

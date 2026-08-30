@@ -663,8 +663,13 @@ fn no_java_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
     let mut writes = 0usize;
+    let mut clones = 0usize;
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let registry = Registry::from_dir(&input_dir());
+        let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+        let batch = backends::java::generate(&func, &enums, &registry, &helpers);
         let s = java_stream_section(&name);
         let Some(at) = s.find(" peek( ") else { continue };
         let start = s[..at].rfind("      public ").expect("a peek signature");
@@ -703,7 +708,30 @@ fn no_java_peek_copies_the_handle() {
                 && l.contains("new ")
                 && !l.starts_with("throw new")
                 && !l.contains("new Value(");
-            if allocates_handle || l.contains("copyFrom") || l.contains("PEEK_SCRATCH") {
+            // `.clone()` is the OTHER way to allocate here, and matching only
+            // `new ` missed it: a frame clones a written array field because a
+            // Java array is a reference. It is allowed, but only for an
+            // accumulator the batch body sizes with a LITERAL — a period-sized
+            // buffer cloned per peek is the exact cost the frame exists to
+            // remove. Read off the emitted code, not from a list of names.
+            let cloned = (!code)
+                .then(|| l.split_once(" = sp."))
+                .flatten()
+                .and_then(|(lhs, rhs)| rhs.strip_suffix(".clone();").map(|f| (lhs, f)));
+            if let Some((lhs, f)) = cloned {
+                let ty = lhs.trim().split(' ').next().unwrap_or("");
+                let decl = format!("{ty} {f} = new {}[", ty.trim_end_matches("[]"));
+                let literal = batch.match_indices(&decl).any(|(i, _)| {
+                    batch[i + decl.len()..]
+                        .split_once(']')
+                        .is_some_and(|(n, _)| n.parse::<u32>().is_ok())
+                });
+                if literal {
+                    clones += 1;
+                } else {
+                    offenders.push(format!("{name}: clones a non-fixed-size array: {l}"));
+                }
+            } else if allocates_handle || l.contains("copyFrom") || l.contains("PEEK_SCRATCH") {
                 offenders.push(format!("{name}: {l}"));
             }
         }
@@ -711,6 +739,9 @@ fn no_java_peek_copies_the_handle() {
     assert!(swept > 170, "only {swept} peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} peek(s) run a frame");
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
+    // A floor on the exemption itself: if the clone shape stopped being emitted
+    // the branch above would be dead and would stop discriminating.
+    assert!(clones >= 20, "only {clones} accumulator clones seen — the exemption is untested");
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
 }
 

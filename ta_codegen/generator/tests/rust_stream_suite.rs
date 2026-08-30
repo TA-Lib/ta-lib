@@ -120,13 +120,9 @@ fn test_rust_sma_ring_stream_section() {
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
     assert!(s.contains(".copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);"));
-    // Handle impl: fallible update (non-finite bars are rejected),
-    // scratch-peek, auto-trait pin.
+    // Handle impl: fallible update (non-finite bars are rejected), the peek
+    // frame, auto-trait pin.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
-    // Every state gets the buffer-reusing restore (#201) — a state can be some
-    // other handle's sub — but SMA's own peek does not use it: the loop tier
-    // peeks a FRAME, the transition rewritten to commit nothing, so it copies
-    // neither the handle nor a scratch.
     assert!(s.contains("pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {"));
     assert!(s.contains("let sp = &self.state;"));
     assert!(!s.contains("let mut scratch = self.clone();"));
@@ -148,13 +144,8 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
     assert!(s.contains("self.compatibility"));
     // Update returns the bare value.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
-    // Peek runs a frame against the borrowed state; no copy of any kind, and
-    // no thread-local scratch (#201's tier is gone for this shape).
+    // Peek runs a frame against the borrowed state.
     assert!(s.contains("let sp = &self.state;"));
-    assert!(!s.contains("let mut scratch = self.clone();"));
-    assert!(!s.contains("PEEK_SCRATCH"), "a scalar state needs no scratch buffer");
-    // Nothing restores a scratch any more — no tier copies a handle to peek it.
-    assert!(!s.contains("fn restore_from(&mut self, src: &Self) {"));
 }
 
 #[test]
@@ -180,32 +171,6 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
     // point of that work. This assertion named `_inOpen`/`_inClose` until then,
     // and the collapse left it matching nothing.
     assert!(s.contains("ring_BodyDojiTrailingIdx_derived"));
-    // #201 gave `peek` a per-thread scratch wherever copying a handle really
-    // allocates — `StateShape::scratch_pays()`, `buffers >= 2 || subs >= 2 ||
-    // banks >= 1`. CDLDOJI used to qualify on four per-OHLC ring buffers.
-    //
-    // #229 then collapsed those four into one derived ring, which drops the
-    // handle to a SINGLE buffer, so the election no longer fires and `peek` is a
-    // plain clone again. That is a behaviour change, not a rename: twelve
-    // functions crossed the threshold (cdl2crows, cdlbreakaway, cdldarkcloudcover,
-    // cdldoji, cdlhikkakemod, cdlladderbottom, cdlmatchinglow, cdlspinningtop,
-    // cdlsticksandwich, cdltasukigap, cdltristar, qstick), consistently in Rust
-    // and Java, and their peek went from zero allocations per call after warm-up
-    // to one — against a clone a quarter the size. That trade is a CONSEQUENCE of
-    // #229 rather than a decision it recorded.
-    //
-    // Measured, so nobody has to re-derive the worry from the mechanism:
-    // CDLDOJI peek is 27.7 ns/call before the collapse and 27.1 ns/call after
-    // (best of 4 alternating passes) — a 2% gap inside a 5–28% run-to-run
-    // spread, i.e. no difference this machine can resolve. The extra
-    // allocation is paid for by the smaller copy. That is evidence it is not
-    // a regression on the shape that prompted the question, not evidence the
-    // trade is free on every shape.
-    //
-    // Asserted in both directions on purpose: the absence check alone would start
-    // passing for free the day the emitter stopped naming the scratch at all.
-    assert!(!s.contains("CDLDOJI_PEEK_SCRATCH"));
-    assert!(!s.contains("let mut scratch = self.clone();"));
     // The frame reads the settings the handle snapshotted, not a step parameter.
     assert!(s.contains("let sp = &self.state;"));
     assert!(s.contains("self.cs_body_doji"));
@@ -516,19 +481,6 @@ fn rust_composed_copy_out_is_stride_guarded() {
     );
 }
 
-/// The APO/PPO/PVO period swap is a MEMORY-SAFETY precondition, not a
-/// normalization convenience.
-///
-/// Their `sc_<out>`-writing sub-call passes `optInSlowPeriod`, while the
-/// caller's fill slice is sized by `ma_lookback(max(slow, fast))`. Those agree
-/// only because the body swaps first, so post-swap `slow == max`. Point the
-/// sub-call at the fast period, or drop the swap, and the callee writes
-/// `H - ma_lookback(min)` values into an array holding `H - ma_lookback(max)` —
-/// more than it can take. Since #205 that array is the caller's own, so Rust
-/// and Java would panic and **C would corrupt silently**.
-///
-/// Nothing in the input `.c` says the swap carries this weight, which is why it
-/// is pinned here. Identified by kevinlincg in the issue #205 write-bound proof.
 /// No tier copies a handle to peek it — swept over the whole corpus.
 ///
 /// The property is structural, not a value one: a peek that copied and then
@@ -568,6 +520,19 @@ fn no_rust_peek_copies_the_handle() {
     );
 }
 
+/// The APO/PPO/PVO period swap is a MEMORY-SAFETY precondition, not a
+/// normalization convenience.
+///
+/// Their `sc_<out>`-writing sub-call passes `optInSlowPeriod`, while the
+/// caller's fill slice is sized by `ma_lookback(max(slow, fast))`. Those agree
+/// only because the body swaps first, so post-swap `slow == max`. Point the
+/// sub-call at the fast period, or drop the swap, and the callee writes
+/// `H - ma_lookback(min)` values into an array holding `H - ma_lookback(max)` —
+/// more than it can take. Since #205 that array is the caller's own, so Rust
+/// and Java would panic and **C would corrupt silently**.
+///
+/// Nothing in the input `.c` says the swap carries this weight, which is why it
+/// is pinned here. Identified by kevinlincg in the issue #205 write-bound proof.
 #[test]
 fn apo_family_period_swap_is_a_write_bound_precondition() {
     for name in ["apo", "ppo", "pvo"] {

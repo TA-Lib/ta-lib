@@ -17,13 +17,10 @@
 //! expression text is hand-built outside the shared renderers.
 //!
 //! Deliberate simplifications vs the C emitter (see design spec):
-//! - `peek(&self)` = `update` on a scratch copy of the state, where C runs a
-//!   second frame of the transition that commits nothing. Either way the handle
-//!   is never written — which is what keeps the signature `&self` and the
-//!   handle `Sync`. A state
-//!   that owns no heap buffer is copied onto the stack; one that does is
-//!   restored into a reused thread-local scratch, so a peek calls the
-//!   allocator only the first time that thread peeks that function (#201).
+//! - `peek(&self)` runs a second frame of the transition that commits nothing,
+//!   as C does. The handle is never written — which is what keeps the signature
+//!   `&self` and the handle `Sync` — and nothing is copied, so the cost is flat
+//!   in the period.
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
 //! - `historyLen` is the FIRST input slice's length: empty is
 //!   `Err(OutOfRangeStartIndex)` (rule S1), and a multi-input open additionally
@@ -870,7 +867,6 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
     // reads none (issue #274). Ahead of `state`, so the fields a step touches
     // every bar sit together at the front of the handle.
     let mut cs_fields = String::new();
-    let mut cs_restore = String::new();
     for setting in &settings {
         let field = cs_binding(setting);
         let _ = write!(
@@ -878,7 +874,6 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
             "    /// The `{setting}` setting this stream was opened with.\n\
              \x20   {field}: CandleSetting,\n"
         );
-        let _ = writeln!(cs_restore, "        self.{field} = src.{field};");
     }
     let _ = writeln!(
         o,
@@ -894,9 +889,6 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          \x20   /// The bars this handle has produced a value for — see [`Self::out_range`].\n\
          \x20   out: OutRange,\n}}\n"
     );
-    // The handle's half of the scratch restore: only a handle embedded in
-    // another handle's state (a composed sub, a dispatch arm, a period bank
-    // slot) reaches it, so most functions never call their own.
 }
 
 
@@ -908,12 +900,9 @@ fn emit_state_struct_from(o: &mut String, func: &FuncDef, fields: &[(String, Str
 /// `struct <State> { .. }` from a field list, with an optional comment line
 /// before named fields.
 ///
-/// Every tier declares its state through here and restores it through
-/// [`emit_state_restore`], from the SAME slice. A field that exists in the
-/// struct but not in the restore would leave the peek scratch holding the
-/// previous peek's value for it — a wrong answer with no compile error, and
-/// the two tiers that build their field list by hand (dispatch, period bank)
-/// are one edit away from it if the two ever read from different places.
+/// Every tier declares its state through here, so the two that build their
+/// field list by hand (dispatch, period bank) render it the same way as the
+/// rest.
 fn emit_state_struct_decl(
     o: &mut String,
     state: &str,
@@ -3008,8 +2997,8 @@ fn emit_update_and_peek(
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Peek\")]");
     let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> Result<{vt}, RetCode> {{");
-    // Ahead of the scratch copy, not left to the `update` below: a rejected bar
-    // must not pay for a handle clone.
+    // Ahead of the frame, not left to the transition: a rejected bar must not
+    // run any of it.
     o.push_str(&finite_bar_check(func, "        "));
     if let Some(frame) = peek_frame {
         // The frame commits nothing, so it runs against `&self.state` — no copy
@@ -3781,7 +3770,8 @@ fn emit_dispatch(
 /// Emit the period-bank stream section: open builds `bank: Vec<MaStream>` (one
 /// slot per period in `[min, max]`, all seeded at the SHARED max-period
 /// lookback anchor); update advances every slot in lockstep and returns the
-/// slot the clamped per-bar period selects; peek is the universal clone-peek.
+/// slot the clamped per-bar period selects; peek enters that one slot's own
+/// `peek` and advances nothing.
 /// The bank inherits the callee's per-MAType streamability (MAType_MAMA
 /// rejects at the first sub-open, propagated by `?`).
 #[allow(clippy::too_many_lines)]
@@ -3985,8 +3975,8 @@ fn emit_period_bank(
 // sub-handles, mirroring c_stream.rs's emit_composed with the Rust
 // simplifications the design blesses: RAII replaces every cleanup ladder and
 // series-free replay, `free()` renders as a no-op so lag-ring seeding reads
-// the still-live intermediate Vec, and clone-peek needs no sub-call routing at
-// all (sub handles derive Clone, so the universal peek deep-clones the tree).
+// the still-live intermediate Vec, and the peek frame drives each sub-stream's
+// own public `peek` rather than committing anything.
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`RustStreamNames`] except the
