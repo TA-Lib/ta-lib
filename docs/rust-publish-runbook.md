@@ -63,6 +63,10 @@ into 0.1.2. Get the contents right before publishing, not after.
 
 ## 4. Pre-flight
 
+`main nightly tests` runs these same gates against `main` every night (#179 E5). Run
+them here anyway: the nightly can predate the commit being tagged, and the release path
+itself compiles no Rust.
+
 From the repo root:
 
 ```bash
