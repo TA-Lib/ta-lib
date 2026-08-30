@@ -523,13 +523,8 @@ impl Core {
     /// opening within/near the prior body and each with a very short upper shadow. A hit is a
     /// bullish reversal signal, most meaningful in a downtrend, which the code does not verify.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior downtrend the pattern classically assumes for significance.
-    /// * Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high
-    ///   rate mostly reflects how rare downward breakouts are afterward — moves following an
-    ///   upward breakout perform poorly.
-    ///   ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdl3whitesoldiers](https://ta-lib.org/functions/cdl3whitesoldiers).
     ///
     /// # Arguments
     ///
@@ -587,9 +582,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLADVANCEBLOCK`] · [`Core::CDLIDENTICAL3CROWS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdl3whitesoldiers](https://ta-lib.org/functions/cdl3whitesoldiers)
     #[doc(alias = "ThreeAdvancingWhiteSoldiers")]
     #[doc(alias = "ThreeWhiteSoldiers")]
     pub fn CDL3WHITESOLDIERS(

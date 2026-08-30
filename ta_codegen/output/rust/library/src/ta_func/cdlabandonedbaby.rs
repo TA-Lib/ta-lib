@@ -421,13 +421,8 @@ impl Core {
     /// opposite color that gaps back the other way and closes deep into the first body. Bullish
     /// (bottom) or bearish (top) reversal signal.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the pattern classically assumes for significance.
-    /// * Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million
-    ///   candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70%
-    ///   success as a reversal, overall performance rank 9 of 103).
-    ///   ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlabandonedbaby](https://ta-lib.org/functions/cdlabandonedbaby).
     ///
     /// # Arguments
     ///
@@ -492,9 +487,6 @@ impl Core {
     ///
     /// [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLEVENINGSTAR`] ·
     /// [`Core::CDLMORNINGSTAR`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlabandonedbaby](https://ta-lib.org/functions/cdlabandonedbaby)
     #[doc(alias = "AbandonedBaby")]
     pub fn CDLABANDONEDBABY(
         &self,

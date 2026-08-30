@@ -275,16 +275,7 @@ impl Core {
     /// out price moves shorter than the chosen period. Oscillates around zero; sign, zero-crossings
     /// and slope signal momentum direction.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The final rate-of-change step yields 0 when the previous smoothed value is exactly zero,
-    ///   rather than being undefined.
+    /// Formula and more info at [ta-lib.org/functions/trix](https://ta-lib.org/functions/trix).
     ///
     /// # Arguments
     ///
@@ -338,8 +329,6 @@ impl Core {
     /// # References
     ///
     /// * Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)
-    ///
-    /// Further reading: [ta-lib.org/functions/trix](https://ta-lib.org/functions/trix)
     #[doc(alias = "TripleExponentialAverage")]
     pub fn TRIX(
         &self,

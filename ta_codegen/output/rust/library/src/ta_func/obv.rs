@@ -125,11 +125,7 @@ impl Core {
     /// On Balance Volume: a running cumulative total of volume, added on up-price bars and
     /// subtracted on down-price bars. Relates volume flow to price direction.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/obv](https://ta-lib.org/functions/obv).
     ///
     /// # Arguments
     ///
@@ -179,8 +175,6 @@ impl Core {
     ///
     /// * Joseph Ensign Granville, B. Granville, *Granville's New Strategy of Daily Stock Market
     ///   Timing for Maximum Profit*, Simon & Schuster (ISBN 0133634329)
-    ///
-    /// Further reading: [ta-lib.org/functions/obv](https://ta-lib.org/functions/obv)
     #[doc(alias = "OnBalanceVolume")]
     pub fn OBV(
         &self,

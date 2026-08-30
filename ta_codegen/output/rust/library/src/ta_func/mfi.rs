@@ -312,20 +312,7 @@ impl Core {
     /// negative money flow over a period. A volume-based analog of RSI. >80 overbought, \<20
     /// oversold.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative if TP<prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When the typical price is unchanged from the prior bar, that bar's money flow is counted
-    ///   as neither positive nor negative.
-    /// * A window in which no bar contributed any money flow — every typical price unchanged, or
-    ///   no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not
-    ///   otherwise depend on the size of the money flow: scaling every volume, or quoting the
-    ///   instrument in a different unit, leaves the index unchanged.
+    /// Formula and more info at [ta-lib.org/functions/mfi](https://ta-lib.org/functions/mfi).
     ///
     /// # Arguments
     ///
@@ -390,8 +377,6 @@ impl Core {
     ///
     /// * Gene Quong & Avrum Soudack, *Volume-Weighted RSI: Money Flow*, Technical Analysis of
     ///   Stocks & Commodities, V.7:3 (March 1989)
-    ///
-    /// Further reading: [ta-lib.org/functions/mfi](https://ta-lib.org/functions/mfi)
     #[doc(alias = "MoneyFlowIndex")]
     pub fn MFI(
         &self,

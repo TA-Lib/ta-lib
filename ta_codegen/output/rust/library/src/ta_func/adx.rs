@@ -486,15 +486,7 @@ impl Core {
     /// regardless of direction. Higher values indicate a stronger trend (a common convention treats
     /// \>25 as trending); says nothing about direction.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Wilder's original integer rounding is not applied.
+    /// Formula and more info at [ta-lib.org/functions/adx](https://ta-lib.org/functions/adx).
     ///
     /// # Arguments
     ///
@@ -556,8 +548,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/adx](https://ta-lib.org/functions/adx)
     #[doc(alias = "AverageDirectionalMovementIndex")]
     #[doc(alias = "AverageDirectionalIndex")]
     pub fn ADX(

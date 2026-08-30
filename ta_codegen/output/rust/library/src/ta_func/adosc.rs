@@ -295,14 +295,7 @@ impl Core {
     /// Accumulation/Distribution line. Highlights momentum in accumulation/distribution volume
     /// flow. Positive/rising suggests accumulation; negative/falling suggests distribution.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ad += ((close-low)-(high-close))/(high-low) * volume   (only when high>low)
-    /// fastEMA = fastk*ad + (1-fastk)*fastEMA,  fastk = 2/(optInFastPeriod+1)
-    /// slowEMA = slowk*ad + (1-slowk)*slowEMA,  slowk = 2/(optInSlowPeriod+1)
-    /// ADOSC = fastEMA - slowEMA
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/adosc](https://ta-lib.org/functions/adosc).
     ///
     /// # Arguments
     ///
@@ -369,8 +362,6 @@ impl Core {
     /// # References
     ///
     /// * Marc Chaikin
-    ///
-    /// Further reading: [ta-lib.org/functions/adosc](https://ta-lib.org/functions/adosc)
     #[doc(alias = "ChaikinADOscillator")]
     #[doc(alias = "ChaikinOscillator")]
     pub fn ADOSC(

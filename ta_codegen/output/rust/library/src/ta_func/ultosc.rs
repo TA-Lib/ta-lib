@@ -422,19 +422,7 @@ impl Core {
     /// momentum to damp single-period noise. Ranges 0-100; conventionally >70 overbought, \<30
     /// oversold.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// trueLow = min(low, prevClose);  BP = close - trueLow
-    /// TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    /// avg_n = (sum BP over n bars) / (sum TR over n bars)
-    /// ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The three periods are sorted internally, so the 4/2/1 weighting always applies to the
-    ///   shortest, middle, and longest period regardless of the order in which you pass them.
+    /// Formula and more info at [ta-lib.org/functions/ultosc](https://ta-lib.org/functions/ultosc).
     ///
     /// # Arguments
     ///
@@ -496,8 +484,6 @@ impl Core {
     ///
     /// * Larry Williams, *The Ultimate Oscillator*, Technical Analysis of Stocks & Commodities,
     ///   V.3:4 (1985)
-    ///
-    /// Further reading: [ta-lib.org/functions/ultosc](https://ta-lib.org/functions/ultosc)
     #[doc(alias = "UltimateOscillator")]
     #[doc(alias = "UO")]
     pub fn ULTOSC(

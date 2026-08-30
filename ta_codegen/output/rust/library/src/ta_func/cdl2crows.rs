@@ -229,13 +229,8 @@ impl Core {
     /// body. A hit (-100) signals a bearish reversal; significant in an uptrend, which this
     /// function does not verify.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior uptrend the pattern classically assumes for significance.
-    /// * Bulkowski's testing found this reverses bearishly only 54% of the time — "near random"
-    ///   — despite the pattern's classic always-bearish label; the breakout direction cannot be
-    ///   predicted with any real accuracy.
-    ///   ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdl2crows](https://ta-lib.org/functions/cdl2crows).
     ///
     /// # Arguments
     ///
@@ -290,8 +285,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLUPSIDEGAP2CROWS`] · [`Core::CDLIDENTICAL3CROWS`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdl2crows](https://ta-lib.org/functions/cdl2crows)
     #[doc(alias = "TwoCrows")]
     pub fn CDL2CROWS(
         &self,

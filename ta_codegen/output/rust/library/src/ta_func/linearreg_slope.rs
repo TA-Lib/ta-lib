@@ -294,13 +294,8 @@ impl Core {
     /// bars. Reports the per-bar rate of change of the fitted trend line. Positive slope = rising
     /// trend, negative = falling; magnitude is price change per bar.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// m = (n·SumXY − SumX·SumY) / Divisor
-    /// SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    /// SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/linearreg_slope](https://ta-lib.org/functions/linearreg_slope).
     ///
     /// # Arguments
     ///
@@ -351,9 +346,6 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_INTERCEPT`] · [`Core::LINEARREG_ANGLE`] ·
     /// [`Core::TSF`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/linearreg_slope](https://ta-lib.org/functions/linearreg_slope)
     #[doc(alias = "LinearRegressionSlope")]
     #[doc(alias = "LSMAslope")]
     #[doc(alias = "leastsquaresslope")]

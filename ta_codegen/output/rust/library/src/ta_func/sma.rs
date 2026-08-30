@@ -167,16 +167,7 @@ impl Core {
     /// Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to
     /// smooth a series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input. Allowed since
-    ///   0.6.5 (issues #48/#59).
+    /// Formula and more info at [ta-lib.org/functions/sma](https://ta-lib.org/functions/sma).
     ///
     /// # Arguments
     ///
@@ -226,8 +217,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::EMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/sma](https://ta-lib.org/functions/sma)
     #[doc(alias = "simplemovingaverage")]
     pub fn SMA(
         &self,

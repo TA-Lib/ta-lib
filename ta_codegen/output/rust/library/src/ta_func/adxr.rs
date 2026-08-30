@@ -183,15 +183,7 @@ impl Core {
     /// (period-1) bars earlier. Further damps ADX to gauge trend strength. Higher values mean a
     /// stronger trend; smoother and more lagging than ADX.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Wilder's original integer rounding is not applied (unreliable when values are near 1).
+    /// Formula and more info at [ta-lib.org/functions/adxr](https://ta-lib.org/functions/adxr).
     ///
     /// # Arguments
     ///
@@ -252,8 +244,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/adxr](https://ta-lib.org/functions/adxr)
     #[doc(alias = "AverageDirectionalMovementIndexRating")]
     pub fn ADXR(
         &self,

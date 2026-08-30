@@ -313,13 +313,8 @@ impl Core {
     /// (nearly) equal. Emits a bullish signal when the second candle is white and a bearish signal
     /// when it is black (a reversal signal, though its trend context is not checked).
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the reversal signal classically assumes.
-    /// * Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably
-    ///   reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish
-    ///   version reverses only 56% of the time, both "near random" by his classification.
-    ///   ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlcounterattack](https://ta-lib.org/functions/cdlcounterattack).
     ///
     /// # Arguments
     ///
@@ -377,9 +372,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLPIERCING`] · [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLGAPSIDESIDEWHITE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlcounterattack](https://ta-lib.org/functions/cdlcounterattack)
     #[doc(alias = "Counterattack")]
     #[doc(alias = "CounterattackLines")]
     #[doc(alias = "MeetingLines")]

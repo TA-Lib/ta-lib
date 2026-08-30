@@ -257,35 +257,7 @@ impl Core {
     /// that same multiplier summed over a fixed window and normalised, where AD accumulates it from
     /// the start of the series without bound.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// t = high[i] - low[i]
-    ///
-    /// mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-    ///
-    /// CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-    ///
-    /// There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The output is the raw ratio in `[-1, +1]`, matching every published definition. Some
-    ///   retail platforms display it multiplied by 100; that is a presentation choice, not a
-    ///   different indicator.
-    /// * Each bar's close is expected to lie within its own `[low, high]`, and its volume to be
-    ///   finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is
-    ///   passed through unclamped, exactly as [`AD`](https://ta-lib.org/functions/ad) does.
-    /// * A bar whose high equals its low has no range for the close to sit inside, so it
-    ///   contributes exactly zero money flow volume rather than dividing by zero. Its volume still
-    ///   counts toward the divisor.
-    /// * A window whose volume is entirely zero has no money flow to distribute and reports 0.0.
-    ///   Published references are silent here and other implementations divide by zero; TA-Lib does
-    ///   not return NaN from a successful call.
-    /// * Bars where the low exceeds the high are malformed rather than degenerate, and also
-    ///   contribute zero.
-    /// * The default period of 20 follows the original write-up, which describes 20 or 21 bars.
+    /// Formula and more info at [ta-lib.org/functions/cmf](https://ta-lib.org/functions/cmf).
     ///
     /// # Arguments
     ///
@@ -353,8 +325,6 @@ impl Core {
     ///   example.
     /// * Kirkpatrick and Dahlquist, *Technical Analysis: The Complete Resource for Financial Market
     ///   Technicians*, 2nd edition, pages 419 and 421.
-    ///
-    /// Further reading: [ta-lib.org/functions/cmf](https://ta-lib.org/functions/cmf)
     #[doc(alias = "ChaikinMoneyFlow")]
     pub fn CMF(
         &self,

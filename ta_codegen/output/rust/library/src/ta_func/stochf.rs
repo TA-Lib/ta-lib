@@ -351,17 +351,7 @@ impl Core {
     /// STOCH (which slows both lines), STOCHF returns the unsmoothed FastK and FastD. Oscillates
     /// 0-100; >80 overbought, \<20 oversold.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    /// FastD = MA(FastK, FastD_Period, FastD_MAType)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When the high-low range over the window is zero, %K is set to 0 instead of being
-    ///   undefined.
+    /// Formula and more info at [ta-lib.org/functions/stochf](https://ta-lib.org/functions/stochf).
     ///
     /// # Arguments
     ///
@@ -426,8 +416,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STOCH`] · [`Core::STOCHRSI`] · [`Core::MA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/stochf](https://ta-lib.org/functions/stochf)
     #[doc(alias = "StochasticFast")]
     #[doc(alias = "FastStochasticOscillator")]
     pub fn STOCHF(

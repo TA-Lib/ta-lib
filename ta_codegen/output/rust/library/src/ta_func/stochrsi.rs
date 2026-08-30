@@ -231,19 +231,8 @@ impl Core {
     /// where RSI sits within its recent min/max range. Oscillates 0-100; high = RSI near its recent
     /// top, low = near its recent bottom.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// rsi = RSI(inReal, optInTimePeriod)
-    /// FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    /// FastD = MA(FastK, FastD_Period, FastD_MAType)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to
-    ///   the %K period and read the raw %K output.
-    /// * When the RSI's recent range is zero, %K is set to 0 instead of being undefined.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/stochrsi](https://ta-lib.org/functions/stochrsi).
     ///
     /// # Arguments
     ///
@@ -308,8 +297,6 @@ impl Core {
     ///
     /// * Tushar S. Chande, Stanley Kroll, *The New Technical Trader*, John Wiley & Sons (ISBN
     ///   0471597805)
-    ///
-    /// Further reading: [ta-lib.org/functions/stochrsi](https://ta-lib.org/functions/stochrsi)
     #[doc(alias = "StochasticRSI")]
     pub fn STOCHRSI(
         &self,

@@ -356,12 +356,8 @@ impl Core {
     /// range. It is a neutral indecision signal, not a directional (bullish/bearish) reversal. A
     /// hit marks market indecision/uncertainty; neutral, neither bullish nor bearish.
     ///
-    /// # Notes
-    ///
-    /// * Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no
-    ///   investment implications that I have been able to find" — his testing shows it continues
-    ///   only 51% of the time, statistically random.
-    ///   ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlrickshawman](https://ta-lib.org/functions/cdlrickshawman).
     ///
     /// # Arguments
     ///
@@ -419,9 +415,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlrickshawman](https://ta-lib.org/functions/cdlrickshawman)
     #[doc(alias = "RickshawMan")]
     pub fn CDLRICKSHAWMAN(
         &self,

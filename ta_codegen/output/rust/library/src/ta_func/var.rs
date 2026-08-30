@@ -301,17 +301,7 @@ impl Core {
     /// Rolling population variance of a real series over a given period. Measures dispersion of
     /// values around their mean. Higher values indicate greater dispersion; 0 means constant input.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Computes population variance (divides by the period), not the sample variance (n-1) used
-    ///   by some definitions.
-    /// * The deviation-count parameter is accepted but has no effect on the result.
+    /// Formula and more info at [ta-lib.org/functions/var](https://ta-lib.org/functions/var).
     ///
     /// # Arguments
     ///
@@ -363,8 +353,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STDDEV`]
-    ///
-    /// Further reading: [ta-lib.org/functions/var](https://ta-lib.org/functions/var)
     #[doc(alias = "Variance")]
     pub fn VAR(
         &self,

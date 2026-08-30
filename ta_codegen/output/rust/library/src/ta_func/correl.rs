@@ -354,16 +354,7 @@ impl Core {
     /// optInTimePeriod bars. Measures how linearly the two series move together. r near +1: strong
     /// positive co-movement; near -1: strong inverse; near 0: no linear relationship.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When the correlation is undefined for a window (for example a constant series), the output
-    ///   is 0 rather than an error or NaN.
+    /// Formula and more info at [ta-lib.org/functions/correl](https://ta-lib.org/functions/correl).
     ///
     /// # Arguments
     ///
@@ -420,8 +411,6 @@ impl Core {
     /// # References
     ///
     /// * Karl Pearson
-    ///
-    /// Further reading: [ta-lib.org/functions/correl](https://ta-lib.org/functions/correl)
     #[doc(alias = "PearsonCorrelation")]
     #[doc(alias = "CorrelationCoefficient")]
     #[doc(alias = "r")]

@@ -321,16 +321,7 @@ impl Core {
     /// successively-applied EMAs to reduce lag versus a plain EMA. Distinct from EMA3, also called
     /// "triple EMA" in the literature.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input. Allowed since
-    ///   0.6.5 (issues #48/#59).
+    /// Formula and more info at [ta-lib.org/functions/tema](https://ta-lib.org/functions/tema).
     ///
     /// # Arguments
     ///
@@ -384,8 +375,6 @@ impl Core {
     ///
     /// * Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of
     ///   Stocks & Commodities, V.12:1 (January 1994)
-    ///
-    /// Further reading: [ta-lib.org/functions/tema](https://ta-lib.org/functions/tema)
     #[doc(alias = "TripleExponentialMovingAverage")]
     pub fn TEMA(
         &self,

@@ -157,14 +157,8 @@ impl Core {
     /// followed by an opposite-color candle that fills into the gap. Bullish (upside) when the
     /// first two candles are white, bearish (downside) when they are black.
     ///
-    /// # Notes
-    ///
-    /// * This continuation pattern does not verify the prior trend it classically assumes; the
-    ///   caller must confirm the trend.
-    /// * Bulkowski's testing found BOTH directions of this pattern actually act as reversals more
-    ///   often than not, opposite the classic continuation label: the upside variant reverses
-    ///   bearish 59% of the time, the downside variant reverses bullish 62% of the time.
-    ///   ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlxsidegap3methods](https://ta-lib.org/functions/cdlxsidegap3methods).
     ///
     /// # Arguments
     ///
@@ -223,9 +217,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLTASUKIGAP`] · [`Core::CDLRISEFALL3METHODS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlxsidegap3methods](https://ta-lib.org/functions/cdlxsidegap3methods)
     #[doc(alias = "UpsideDownsideGapThreeMethods")]
     #[doc(alias = "UpsideGapThreeMethods")]
     #[doc(alias = "DownsideGapThreeMethods")]

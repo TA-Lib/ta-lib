@@ -535,6 +535,9 @@ impl Core {
     /// plus a 45-degree-lead sine. The two curves cross near cycle turning points. outSine and
     /// outLeadSine crossing marks cycle turning points.
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/ht_sine](https://ta-lib.org/functions/ht_sine).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -586,8 +589,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading: [ta-lib.org/functions/ht_sine](https://ta-lib.org/functions/ht_sine)
     #[doc(alias = "HilbertTransformSineWave")]
     #[doc(alias = "EhlersSineWave")]
     #[doc(alias = "SineWaveIndicator")]

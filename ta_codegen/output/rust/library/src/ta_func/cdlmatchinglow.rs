@@ -219,19 +219,8 @@ impl Core {
     /// tolerance). Treated as a bullish reversal signal. A hit signals a potential bullish reversal
     /// (shared support close after two down candles).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The bullish-reversal reading assumes a prior downtrend, which is not verified.
-    /// * Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's
-    ///   testing found it actually acts as a bearish continuation 61% of the time — even so, it
-    ///   still ranks a strong 8th of 103 patterns for overall performance.
-    ///   ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlmatchinglow](https://ta-lib.org/functions/cdlmatchinglow).
     ///
     /// # Arguments
     ///
@@ -289,9 +278,6 @@ impl Core {
     /// # See also
     ///
     /// CDLMATCHINGHIGH · [`Core::CDLHOMINGPIGEON`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlmatchinglow](https://ta-lib.org/functions/cdlmatchinglow)
     #[doc(alias = "MatchingLow")]
     pub fn CDLMATCHINGLOW(
         &self,

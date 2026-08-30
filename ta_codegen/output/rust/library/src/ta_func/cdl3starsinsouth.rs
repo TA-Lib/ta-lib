@@ -465,14 +465,8 @@ impl Core {
     /// range. A hit signals a bullish reversal; per the code comment it is meaningful in a
     /// downtrend, but the function does not verify prior trend.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior downtrend the pattern classically assumes for significance.
-    /// * Thomas Bulkowski's statistical study found this has the best reversal rate of the 103
-    ///   candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9
-    ///   occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks
-    ///   dead last, 103rd of 103.
-    ///   ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdl3starsinsouth](https://ta-lib.org/functions/cdl3starsinsouth).
     ///
     /// # Arguments
     ///
@@ -530,9 +524,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLIDENTICAL3CROWS`] · [`Core::CDL3WHITESOLDIERS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdl3starsinsouth](https://ta-lib.org/functions/cdl3starsinsouth)
     #[doc(alias = "ThreeStarsInTheSouth")]
     pub fn CDL3STARSINSOUTH(
         &self,

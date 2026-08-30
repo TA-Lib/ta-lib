@@ -293,16 +293,7 @@ impl Core {
     /// Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce lag versus a
     /// plain EMA. Overlap Studies overlay on price.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input. Allowed since
-    ///   0.6.5 (issues #48/#59).
+    /// Formula and more info at [ta-lib.org/functions/dema](https://ta-lib.org/functions/dema).
     ///
     /// # Arguments
     ///
@@ -356,8 +347,6 @@ impl Core {
     ///
     /// * Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of
     ///   Stocks & Commodities, V.12:1 (January 1994)
-    ///
-    /// Further reading: [ta-lib.org/functions/dema](https://ta-lib.org/functions/dema)
     #[doc(alias = "DoubleExponentialMovingAverage")]
     pub fn DEMA(
         &self,

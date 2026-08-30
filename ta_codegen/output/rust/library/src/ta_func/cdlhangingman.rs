@@ -426,14 +426,8 @@ impl Core {
     /// sitting at or near the highs of the prior candle. Bearish reversal signal. A hit is a
     /// bearish reversal signal (meaningful at the top of an uptrend).
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding uptrend that the pattern classically assumes; confirm the
-    ///   trend context yourself.
-    /// * Bulkowski's testing found this acts as a bullish continuation 59% of the time — the
-    ///   opposite of the bearish-reversal reading it's named for ("near random") — and it ranks
-    ///   87th of 103 patterns for post-breakout performance.
-    ///   ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlhangingman](https://ta-lib.org/functions/cdlhangingman).
     ///
     /// # Arguments
     ///
@@ -491,9 +485,6 @@ impl Core {
     ///
     /// [`Core::CDLHAMMER`] · [`Core::CDLINVERTEDHAMMER`] · [`Core::CDLSHOOTINGSTAR`] ·
     /// [`Core::CDLTAKURI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlhangingman](https://ta-lib.org/functions/cdlhangingman)
     #[doc(alias = "HangingMan")]
     pub fn CDLHANGINGMAN(
         &self,

@@ -338,28 +338,7 @@ impl Core {
     /// average gains to average losses over the period. Used to gauge overbought/oversold
     /// conditions. >70 overbought, \<30 oversold.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $$
-    /// \begin{aligned}
-    /// U_t &= \max(X_t - X_{t-1},\ 0)
-    ///    &  D_t &= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-    /// \overline{U}_t &= \begin{cases}
-    ///     \operatorname{SMA}(U, n)_t                 & \text{if } t = n \\[4pt]
-    ///     \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} & \text{if } t > n
-    ///   \end{cases}
-    ///    &  \overline{D}_t &= \begin{cases}
-    ///     \operatorname{SMA}(D, n)_t                 & \text{if } t = n \\[4pt]
-    ///     \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} & \text{if } t > n
-    ///   \end{cases} \\[4pt]
-    /// \mathrm{RS}_t &= \frac{\overline{U}_t}{\overline{D}_t}
-    ///    &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
-    /// \end{aligned}
-    /// $$
-    /// ```
-    ///
-    /// where $X$ is the input series and $n$ the period.
+    /// Formula and more info at [ta-lib.org/functions/rsi](https://ta-lib.org/functions/rsi).
     ///
     /// # Arguments
     ///
@@ -413,8 +392,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/rsi](https://ta-lib.org/functions/rsi)
     #[doc(alias = "relativestrengthindex")]
     pub fn RSI(
         &self,

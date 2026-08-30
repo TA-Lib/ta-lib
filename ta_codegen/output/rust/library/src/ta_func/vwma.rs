@@ -211,25 +211,7 @@ impl Core {
     /// charting-package folklore — and every published definition agrees, so there is no
     /// competing variant.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    ///
-    /// Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input, whatever the
-    ///   volume.
-    /// * Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that
-    ///   did not trade simply carries no weight, and the average stays well defined as long as some
-    ///   bar in the window has volume. At a period of 2 or more, a window in which *every* volume
-    ///   is zero has no weights at all; the weighted mean is then undefined and that element is
-    ///   NaN, as it is in every other implementation. Series carrying no volume on any bar, such as
-    ///   cash-index feeds, are outside what a volume-weighted average can describe — use SMA or
-    ///   WMA there.
+    /// Formula and more info at [ta-lib.org/functions/vwma](https://ta-lib.org/functions/vwma).
     ///
     /// # Arguments
     ///
@@ -292,8 +274,6 @@ impl Core {
     ///   a primary definition.
     /// * TradingView, *Volume Weighted Moving Average (VWMA)* — documents the equivalence with
     ///   SMA(price * volume) / SMA(volume).
-    ///
-    /// Further reading: [ta-lib.org/functions/vwma](https://ta-lib.org/functions/vwma)
     #[doc(alias = "VolumeWeightedMovingAverage")]
     pub fn VWMA(
         &self,

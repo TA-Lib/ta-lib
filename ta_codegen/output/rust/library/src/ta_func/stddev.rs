@@ -185,16 +185,7 @@ impl Core {
     /// Rolling standard deviation of a series over a window, scaled by a deviations multiplier.
     /// Delegates to VAR, then takes the square root.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Uses population variance (divides by the period, not period minus one), so results differ
-    ///   slightly from the sample standard deviation used by some tools.
+    /// Formula and more info at [ta-lib.org/functions/stddev](https://ta-lib.org/functions/stddev).
     ///
     /// # Arguments
     ///
@@ -245,8 +236,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::VAR`] · [`Core::BBANDS`] · [`Core::SMA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/stddev](https://ta-lib.org/functions/stddev)
     #[doc(alias = "StandardDeviation")]
     #[doc(alias = "SD")]
     #[doc(alias = "sigma")]

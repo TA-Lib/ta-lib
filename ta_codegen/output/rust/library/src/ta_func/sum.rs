@@ -163,11 +163,7 @@ impl Core {
     /// Rolling sum of the input over a fixed period. Each output is the sum of the most recent
     /// optInTimePeriod input values.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/sum](https://ta-lib.org/functions/sum).
     ///
     /// # Arguments
     ///
@@ -216,8 +212,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SMA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/sum](https://ta-lib.org/functions/sum)
     #[doc(alias = "Summation")]
     #[doc(alias = "RollingSum")]
     #[doc(alias = "MovingSum")]

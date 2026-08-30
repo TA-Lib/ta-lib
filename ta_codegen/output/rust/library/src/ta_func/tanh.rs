@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise hyperbolic tangent of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = tanh(inReal[i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/tanh](https://ta-lib.org/functions/tanh).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Hyperbolic functions*:
     ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/tanh](https://ta-lib.org/functions/tanh)
     #[doc(alias = "HyperbolicTangent")]
     pub fn TANH(
         &self,

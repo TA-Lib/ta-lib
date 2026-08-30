@@ -318,11 +318,8 @@ impl Core {
     /// Midpoint of the price range over a rolling window: the average of the highest high and
     /// lowest low across the last optInTimePeriod bars. An overlap-study line plotted on price.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/midprice](https://ta-lib.org/functions/midprice).
     ///
     /// # Arguments
     ///
@@ -374,8 +371,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MIDPOINT`] · [`Core::MEDPRICE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/midprice](https://ta-lib.org/functions/midprice)
     #[doc(alias = "MidpointPrice")]
     pub fn MIDPRICE(
         &self,

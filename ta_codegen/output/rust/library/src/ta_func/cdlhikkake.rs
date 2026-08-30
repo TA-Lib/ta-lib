@@ -201,14 +201,8 @@ impl Core {
     /// breakout direction. A false-breakout setup: positive = bullish, negative = bearish;
     /// magnitude 200 flags the confirming bar.
     ///
-    /// # Notes
-    ///
-    /// * The name comes from the Japanese word for a deceptive move or "trap" — fitting, since
-    ///   the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the
-    ///   confirmed pattern found the trap itself barely beats a coin flip: the bullish variant
-    ///   continues as expected only 52% of the time and the bearish variant exactly 50% ("random"),
-    ///   both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance.
-    ///   ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlhikkake](https://ta-lib.org/functions/cdlhikkake).
     ///
     /// # Arguments
     ///
@@ -263,8 +257,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHIKKAKEMOD`] · [`Core::CDLHARAMI`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlhikkake](https://ta-lib.org/functions/cdlhikkake)
     #[doc(alias = "HikkakePattern")]
     #[doc(alias = "Hikkake")]
     pub fn CDLHIKKAKE(

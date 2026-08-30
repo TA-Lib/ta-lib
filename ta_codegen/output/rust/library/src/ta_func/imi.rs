@@ -167,11 +167,7 @@ impl Core {
     /// each bar. Over a rolling window it ratios cumulative up-body moves against total up+down
     /// body moves.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for bars with close<=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/imi](https://ta-lib.org/functions/imi).
     ///
     /// # Arguments
     ///
@@ -227,8 +223,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::RSI`]
-    ///
-    /// Further reading: [ta-lib.org/functions/imi](https://ta-lib.org/functions/imi)
     #[doc(alias = "IntradayMomentumIndex")]
     pub fn IMI(
         &self,

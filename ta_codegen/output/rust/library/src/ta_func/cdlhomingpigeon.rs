@@ -291,19 +291,8 @@ impl Core {
     /// sits inside the prior body. A hit signals a bullish reversal, most meaningful in a
     /// downtrend, which the code does not verify.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding downtrend that the bullish reversal classically assumes.
-    /// * Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish
-    ///   continuation 56% of the time — "near random" by his own description — though its
-    ///   overall post-breakout performance rank (21st of 103) is comparatively strong.
-    ///   ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlhomingpigeon](https://ta-lib.org/functions/cdlhomingpigeon).
     ///
     /// # Arguments
     ///
@@ -361,9 +350,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLMATCHINGLOW`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlhomingpigeon](https://ta-lib.org/functions/cdlhomingpigeon)
     #[doc(alias = "HomingPigeon")]
     pub fn CDLHOMINGPIGEON(
         &self,

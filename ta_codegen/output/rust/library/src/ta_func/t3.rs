@@ -340,18 +340,7 @@ impl Core {
     /// volume-factor-weighted coefficients. Not the same as EMA3, despite both being called "triple
     /// EMA".
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    /// v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    /// T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input. Allowed since
-    ///   0.6.5 (issues #48/#59).
+    /// Formula and more info at [ta-lib.org/functions/t3](https://ta-lib.org/functions/t3).
     ///
     /// # Arguments
     ///
@@ -408,8 +397,6 @@ impl Core {
     ///
     /// * Tim Tillson, *Smoothing Techniques for More Accurate Signals*, Technical Analysis of
     ///   Stocks & Commodities, V.16:1 (January 1998)
-    ///
-    /// Further reading: [ta-lib.org/functions/t3](https://ta-lib.org/functions/t3)
     #[doc(alias = "TillsonT3")]
     #[doc(alias = "TripleExponentialMovingAverage")]
     pub fn T3(

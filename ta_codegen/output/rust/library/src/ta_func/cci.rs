@@ -244,14 +244,7 @@ impl Core {
     /// average, scaled by mean absolute deviation. Momentum oscillator flagging overbought/oversold
     /// extremes. CCI > +100 overbought; CCI \< -100 oversold.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// TP_i = (High_i + Low_i + Close_i)/3
-    /// SMA = (1/N) * sum(TP over N bars)
-    /// meanDev = (1/N) * sum(|TP - SMA| over N bars)
-    /// CCI = (TP_last - SMA) / (0.015 * meanDev)
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/cci](https://ta-lib.org/functions/cci).
     ///
     /// # Arguments
     ///
@@ -311,8 +304,6 @@ impl Core {
     /// # References
     ///
     /// * Donald Lambert
-    ///
-    /// Further reading: [ta-lib.org/functions/cci](https://ta-lib.org/functions/cci)
     #[doc(alias = "CommodityChannelIndex")]
     pub fn CCI(
         &self,

@@ -107,16 +107,7 @@ impl Core {
     }
     /// Element-wise arcsine of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = asin(inReal[i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Outside \[-1, 1] there is no angle whose sine is that value, so those elements come out
-    ///   NaN.
+    /// Formula and more info at [ta-lib.org/functions/asin](https://ta-lib.org/functions/asin).
     ///
     /// # Arguments
     ///
@@ -166,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Inverse trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/asin](https://ta-lib.org/functions/asin)
     #[doc(alias = "arcsine")]
     #[doc(alias = "inversesine")]
     pub fn ASIN(

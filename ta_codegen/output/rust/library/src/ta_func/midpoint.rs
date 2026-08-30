@@ -312,11 +312,8 @@ impl Core {
     /// lookback window. A single-series overlap smoother (use MIDPRICE for separate high/low price
     /// bars).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/midpoint](https://ta-lib.org/functions/midpoint).
     ///
     /// # Arguments
     ///
@@ -365,8 +362,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MIDPRICE`] · [`Core::MAX`] · [`Core::MIN`]
-    ///
-    /// Further reading: [ta-lib.org/functions/midpoint](https://ta-lib.org/functions/midpoint)
     pub fn MIDPOINT(
         &self,
         startIdx: usize,

@@ -146,13 +146,8 @@ impl Core {
     /// this index and in volume. That is an interpretive layer on top of the series, not part of
     /// it; `outReal` is the scalar only.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MARKETFI_t = (high_t - low_t) / volume_t
-    ///
-    /// A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/marketfi](https://ta-lib.org/functions/marketfi).
     ///
     /// # Arguments
     ///
@@ -213,8 +208,6 @@ impl Core {
     /// * The four-state green/fade/fake/squat colour code charting packages overlay is derived from
     ///   the signs of the bar-to-bar change in this index and in volume. It is an interpretive
     ///   layer, not part of the series; `outReal` is the scalar only.
-    ///
-    /// Further reading: [ta-lib.org/functions/marketfi](https://ta-lib.org/functions/marketfi)
     pub fn MARKETFI(
         &self,
         startIdx: usize,

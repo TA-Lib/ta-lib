@@ -110,11 +110,7 @@ impl Core {
     }
     /// Element-wise subtraction of two input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = inReal0[i] - inReal1[i]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/sub](https://ta-lib.org/functions/sub).
     ///
     /// # Arguments
     ///
@@ -163,8 +159,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ADD`] · [`Core::MULT`] · [`Core::DIV`]
-    ///
-    /// Further reading: [ta-lib.org/functions/sub](https://ta-lib.org/functions/sub)
     #[doc(alias = "Subtract")]
     #[doc(alias = "VectorSubtraction")]
     pub fn SUB(

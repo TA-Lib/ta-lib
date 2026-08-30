@@ -318,12 +318,7 @@ impl Core {
     /// comparable across price levels and securities. Same computation as ATR, then normalized by
     /// close. Higher values mean greater relative volatility; unit is percent of price.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// NATR = (ATR / Close) * 100
-    /// ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR_{t-1}*(period-1) + TR_t) / period
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/natr](https://ta-lib.org/functions/natr).
     ///
     /// # Arguments
     ///
@@ -383,8 +378,6 @@ impl Core {
     /// # References
     ///
     /// * John Forman
-    ///
-    /// Further reading: [ta-lib.org/functions/natr](https://ta-lib.org/functions/natr)
     #[doc(alias = "NormalizedAverageTrueRange")]
     pub fn NATR(
         &self,

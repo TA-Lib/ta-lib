@@ -458,11 +458,8 @@ impl Core {
     /// HT_* cycle functions. This function is meant for building your own cycle analysis on top of
     /// the raw phasor, not as a ready-made signal.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/ht_phasor](https://ta-lib.org/functions/ht_phasor).
     ///
     /// # Arguments
     ///
@@ -515,8 +512,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading: [ta-lib.org/functions/ht_phasor](https://ta-lib.org/functions/ht_phasor)
     #[doc(alias = "HilbertTransformPhasor")]
     #[doc(alias = "InPhaseQuadrature")]
     pub fn HT_PHASOR(

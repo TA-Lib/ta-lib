@@ -274,9 +274,8 @@ impl Core {
     /// successively lower closes, each opening inside the prior black's real body. It is a bearish
     /// reversal signal. A hit (-100) signals a bearish reversal.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior mature uptrend the pattern classically assumes for significance.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdl3blackcrows](https://ta-lib.org/functions/cdl3blackcrows).
     ///
     /// # Arguments
     ///
@@ -333,9 +332,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3WHITESOLDIERS`] · [`Core::CDLIDENTICAL3CROWS`] · [`Core::CDLADVANCEBLOCK`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdl3blackcrows](https://ta-lib.org/functions/cdl3blackcrows)
     #[doc(alias = "ThreeBlackCrows")]
     #[doc(alias = "3BlackCrows")]
     pub fn CDL3BLACKCROWS(

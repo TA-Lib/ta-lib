@@ -213,11 +213,7 @@ impl Core {
     /// Up near 100 = a very recent new high (strong uptrend); Down near 100 = a very recent new
     /// low. Up/Down crossovers signal trend shifts.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx))/period, where highestIdx/lowestIdx index the highest high / lowest low over the window [today-period .. today].
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon).
     ///
     /// # Arguments
     ///
@@ -279,8 +275,6 @@ impl Core {
     /// # References
     ///
     /// * Tushar S. Chande
-    ///
-    /// Further reading: [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon)
     pub fn AROON(
         &self,
         startIdx: usize,

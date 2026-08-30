@@ -249,9 +249,8 @@ impl Core {
     /// threshold. Signals a potential top. A hit (-100) is a bearish reversal signal, most
     /// meaningful after an uptrend.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding uptrend the bearish reversal classically assumes.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdldarkcloudcover](https://ta-lib.org/functions/cdldarkcloudcover).
     ///
     /// # Arguments
     ///
@@ -315,9 +314,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLPIERCING`] · [`Core::CDLENGULFING`] · [`Core::CDLONNECK`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdldarkcloudcover](https://ta-lib.org/functions/cdldarkcloudcover)
     #[doc(alias = "DarkCloudCover")]
     pub fn CDLDARKCLOUDCOVER(
         &self,

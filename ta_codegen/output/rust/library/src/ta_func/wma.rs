@@ -293,16 +293,7 @@ impl Core {
     /// Linearly weighted moving average: each of the last N prices is weighted by its position,
     /// oldest getting weight 1 and newest weight N. Smooths price while emphasizing recent bars.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input. Allowed since
-    ///   0.6.5 (issues #48/#59).
+    /// Formula and more info at [ta-lib.org/functions/wma](https://ta-lib.org/functions/wma).
     ///
     /// # Arguments
     ///
@@ -352,8 +343,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SMA`] · [`Core::EMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/wma](https://ta-lib.org/functions/wma)
     #[doc(alias = "WeightedMovingAverage")]
     #[doc(alias = "LinearlyWeightedMovingAverage")]
     #[doc(alias = "LWMA")]

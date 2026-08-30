@@ -283,9 +283,8 @@ impl Core {
     /// prior low and closes back above the midpoint of the prior black body. Bullish reversal
     /// signal. A hit (+100) is a bullish reversal signal.
     ///
-    /// # Notes
-    ///
-    /// * A prior downtrend is not verified.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlpiercing](https://ta-lib.org/functions/cdlpiercing).
     ///
     /// # Arguments
     ///
@@ -340,9 +339,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLENGULFING`] · [`Core::CDLMORNINGSTAR`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlpiercing](https://ta-lib.org/functions/cdlpiercing)
     #[doc(alias = "PiercingPattern")]
     #[doc(alias = "PiercingLine")]
     pub fn CDLPIERCING(

@@ -357,14 +357,8 @@ impl Core {
     /// Single-candle pattern: a small real body with a long upper shadow and little-to-no lower
     /// shadow that gaps down from the prior candle. A hit flags a potential bullish reversal.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding downtrend that the pattern classically assumes; it only
-    ///   checks the gap down from the immediately preceding candle.
-    /// * Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a
-    ///   bearish continuation 65% of the time — yet its overall post-breakout performance rank
-    ///   (6th of 103) is among the best of all candlestick patterns he studied.
-    ///   ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlinvertedhammer](https://ta-lib.org/functions/cdlinvertedhammer).
     ///
     /// # Arguments
     ///
@@ -422,9 +416,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHAMMER`] · [`Core::CDLSHOOTINGSTAR`] · [`Core::CDLHANGINGMAN`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlinvertedhammer](https://ta-lib.org/functions/cdlinvertedhammer)
     #[doc(alias = "InvertedHammer")]
     pub fn CDLINVERTEDHAMMER(
         &self,

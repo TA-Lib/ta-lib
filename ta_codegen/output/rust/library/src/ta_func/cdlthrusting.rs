@@ -328,16 +328,8 @@ impl Core {
     /// continuation signal. A hit is bearish: the failed white push back into the black body
     /// signals continuation of the down move.
     ///
-    /// # Notes
-    ///
-    /// * The pattern is classically meaningful only in a downtrend, but this function does not
-    ///   verify any prior trend.
-    /// * Although the pattern can be read as bullish in an uptrend or when it recurs, this function
-    ///   ignores trend and always reports it as bearish.
-    /// * Bulkowski's testing found this classically-bearish continuation pattern actually acts as a
-    ///   bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of
-    ///   103 patterns for overall performance.
-    ///   ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlthrusting](https://ta-lib.org/functions/cdlthrusting).
     ///
     /// # Arguments
     ///
@@ -392,9 +384,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLINNECK`] · [`Core::CDLONNECK`] · [`Core::CDLPIERCING`] · CDLMEETINGLINES
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlthrusting](https://ta-lib.org/functions/cdlthrusting)
     #[doc(alias = "ThrustingPattern")]
     #[doc(alias = "ThrustingLine")]
     pub fn CDLTHRUSTING(

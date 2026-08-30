@@ -108,11 +108,7 @@ impl Core {
     }
     /// Element-wise arctangent of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/atan](https://ta-lib.org/functions/atan).
     ///
     /// # Arguments
     ///
@@ -162,8 +158,6 @@ impl Core {
     ///
     /// * Wikipedia, *Inverse trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/atan](https://ta-lib.org/functions/atan)
     #[doc(alias = "arctangent")]
     #[doc(alias = "arctan")]
     #[doc(alias = "inversetangent")]

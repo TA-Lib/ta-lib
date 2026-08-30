@@ -175,16 +175,8 @@ impl Core {
     /// Returns the index of the highest input value within a rolling window of optInTimePeriod
     /// bars. Same as MAX but outputs the location instead of the value.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When several bars in a window share the highest value, the index of one of them is
-    ///   returned — not necessarily the first or the last.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/maxindex](https://ta-lib.org/functions/maxindex).
     ///
     /// # Arguments
     ///
@@ -233,8 +225,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MAX`] · [`Core::MININDEX`] · [`Core::MIN`] · [`Core::MINMAXINDEX`]
-    ///
-    /// Further reading: [ta-lib.org/functions/maxindex](https://ta-lib.org/functions/maxindex)
     #[doc(alias = "IndexofHighestValue")]
     #[doc(alias = "HighestValueIndex")]
     #[doc(alias = "argmax")]

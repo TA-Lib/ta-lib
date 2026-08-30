@@ -307,15 +307,8 @@ impl Core {
     /// contained within the first candle's real body (the doji variant of the Harami). Bullish
     /// after a black first candle, bearish after a white first candle.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the
-    ///   reversal signal assumes.
-    /// * Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label
-    ///   even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the
-    ///   time rather than a bearish reversal, and the bullish Harami Cross likewise fails to
-    ///   reverse the downtrend 55% of the time.
-    ///   ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlharamicross](https://ta-lib.org/functions/cdlharamicross).
     ///
     /// # Arguments
     ///
@@ -374,9 +367,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLDOJI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlharamicross](https://ta-lib.org/functions/cdlharamicross)
     #[doc(alias = "HaramiCross")]
     pub fn CDLHARAMICROSS(
         &self,

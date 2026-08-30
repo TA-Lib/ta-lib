@@ -446,6 +446,9 @@ impl Core {
     /// Outputs the smoothed instantaneous cycle period. Output is the estimated dominant cycle
     /// length in bars (clamped to 6-50).
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/ht_dcperiod](https://ta-lib.org/functions/ht_dcperiod).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -495,9 +498,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/ht_dcperiod](https://ta-lib.org/functions/ht_dcperiod)
     #[doc(alias = "HilbertTransformDominantCyclePeriod")]
     #[doc(alias = "DominantCyclePeriod")]
     pub fn HT_DCPERIOD(

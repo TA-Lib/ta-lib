@@ -116,11 +116,8 @@ impl Core {
     }
     /// Median Price: the midpoint of each bar's high and low. A price-transform overlay.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $MEDPRICE_i = (High_i + Low_i) / 2$
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/medprice](https://ta-lib.org/functions/medprice).
     ///
     /// # Arguments
     ///
@@ -167,8 +164,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MIDPRICE`] · [`Core::AVGPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/medprice](https://ta-lib.org/functions/medprice)
     #[doc(alias = "MedianPrice")]
     pub fn MEDPRICE(
         &self,

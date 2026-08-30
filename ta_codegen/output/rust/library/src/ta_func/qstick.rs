@@ -187,13 +187,7 @@ impl Core {
     /// have been over the window, independently of the wicks — above zero the bodies closed up on
     /// balance, below zero they closed down, and the zero-line crossings are the signal.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-    ///
-    /// The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/qstick](https://ta-lib.org/functions/qstick).
     ///
     /// # Arguments
     ///
@@ -263,8 +257,6 @@ impl Core {
     /// * TraderEvolution documents a default period of 1 and offers a choice of moving average;
     ///   AmiBroker community code commonly cites 8. Neither is verifiable against the book, and
     ///   this ships the SMA-only form the authors define.
-    ///
-    /// Further reading: [ta-lib.org/functions/qstick](https://ta-lib.org/functions/qstick)
     pub fn QSTICK(
         &self,
         startIdx: usize,

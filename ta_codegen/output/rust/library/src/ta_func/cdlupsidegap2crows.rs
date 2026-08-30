@@ -298,13 +298,8 @@ impl Core {
     /// candle's real body but still closes above the first candle's close. Signals a bearish
     /// reversal. A hit (-100) is a bearish reversal signal, most meaningful in an uptrend.
     ///
-    /// # Notes
-    ///
-    /// * The pattern classically assumes a prior uptrend, but this function does not verify any
-    ///   trend.
-    /// * Although classically a bearish reversal, Bulkowski's testing found this actually acts as a
-    ///   bullish continuation 60% of the time, and even when it does work "the price move is often
-    ///   lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlupsidegap2crows](https://ta-lib.org/functions/cdlupsidegap2crows).
     ///
     /// # Arguments
     ///
@@ -362,9 +357,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL2CROWS`] · [`Core::CDLGAPSIDESIDEWHITE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlupsidegap2crows](https://ta-lib.org/functions/cdlupsidegap2crows)
     #[doc(alias = "UpsideGapTwoCrows")]
     pub fn CDLUPSIDEGAP2CROWS(
         &self,

@@ -268,13 +268,7 @@ impl Core {
     /// Wilder-smoothed average of the True Range over a period, measuring price volatility
     /// regardless of direction. Higher ATR means greater volatility; no directional bias.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-    /// ATR seed = simple average of first `period` TR values
-    /// ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/atr](https://ta-lib.org/functions/atr).
     ///
     /// # Arguments
     ///
@@ -334,8 +328,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/atr](https://ta-lib.org/functions/atr)
     #[doc(alias = "AverageTrueRange")]
     pub fn ATR(
         &self,

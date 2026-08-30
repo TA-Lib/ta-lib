@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise sine of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = sin(inReal[i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/sin](https://ta-lib.org/functions/sin).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/sin](https://ta-lib.org/functions/sin)
     #[doc(alias = "sine")]
     pub fn SIN(
         &self,

@@ -462,11 +462,7 @@ impl Core {
     /// security moves relative to a market index. Beta = 1 moves with the index; \< 1 less
     /// volatile, > 1 more volatile.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1_{i-1})/p^1_{i-1}$ from inReal1. With $n$=period over the window: $\beta = \dfrac{n\,S_{xy}-S_x S_y}{n\,S_{xx}-S_x^2}$, where $S_{xx}=\sum x^2,\ S_{xy}=\sum xy,\ S_x=\sum x,\ S_y=\sum y$.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/beta](https://ta-lib.org/functions/beta).
     ///
     /// # Arguments
     ///
@@ -520,8 +516,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CORREL`] · [`Core::LINEARREG_SLOPE`] · [`Core::VAR`] · [`Core::STDDEV`]
-    ///
-    /// Further reading: [ta-lib.org/functions/beta](https://ta-lib.org/functions/beta)
     #[doc(alias = "Betacoefficient")]
     pub fn BETA(
         &self,

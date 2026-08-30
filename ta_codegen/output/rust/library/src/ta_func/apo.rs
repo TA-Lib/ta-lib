@@ -203,19 +203,7 @@ impl Core {
     /// input, in price units. Measures short- vs long-term momentum. Positive when fast MA > slow
     /// MA (upward momentum); negative otherwise.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
-    ///
-    /// The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * `optInMAType` applies to both the fast and slow moving average. `TA_MAType_MAMA` ignores
-    ///   its period argument, so with `optInMAType = TA_MAType_MAMA` the fast and slow MAs are
-    ///   identical and the output is zero at every bar.
+    /// Formula and more info at [ta-lib.org/functions/apo](https://ta-lib.org/functions/apo).
     ///
     /// # Arguments
     ///
@@ -275,8 +263,6 @@ impl Core {
     ///   newsletter). The APO is the same fast-minus-slow moving-average oscillator in price units;
     ///   with exponential moving averages and periods 12/26 it is the oscillator underlying the
     ///   MACD line. Appel's original definition uses **exponential** moving averages.
-    ///
-    /// Further reading: [ta-lib.org/functions/apo](https://ta-lib.org/functions/apo)
     #[doc(alias = "AbsolutePriceOscillator")]
     pub fn APO(
         &self,

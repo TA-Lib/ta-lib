@@ -115,11 +115,8 @@ impl Core {
     /// Typical Price: the average of the high, low, and close of each bar. A single representative
     /// price per period.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// out[i] = (High[i] + Low[i] + Close[i]) / 3
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/typprice](https://ta-lib.org/functions/typprice).
     ///
     /// # Arguments
     ///
@@ -170,8 +167,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MEDPRICE`] · [`Core::WCLPRICE`] · [`Core::AVGPRICE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/typprice](https://ta-lib.org/functions/typprice)
     #[doc(alias = "TypicalPrice")]
     pub fn TYPPRICE(
         &self,

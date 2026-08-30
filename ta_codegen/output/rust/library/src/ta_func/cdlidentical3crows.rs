@@ -364,11 +364,8 @@ impl Core {
     /// with a very short (or no) lower shadow, where each candle after the first opens at or very
     /// near the prior candle's close. A hit signals a bearish reversal (pattern is always bearish).
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding uptrend that the bearish reversal classically assumes.
-    /// * Does not require the three bodies to be equal in size; 'identical' refers only to each
-    ///   candle opening at or near the previous candle's close.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlidentical3crows](https://ta-lib.org/functions/cdlidentical3crows).
     ///
     /// # Arguments
     ///
@@ -426,9 +423,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDL2CROWS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlidentical3crows](https://ta-lib.org/functions/cdlidentical3crows)
     #[doc(alias = "IdenticalThreeCrows")]
     pub fn CDLIDENTICAL3CROWS(
         &self,

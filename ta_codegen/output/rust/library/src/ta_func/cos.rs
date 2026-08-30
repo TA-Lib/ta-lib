@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise cosine of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = cos(inReal[i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/cos](https://ta-lib.org/functions/cos).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/cos](https://ta-lib.org/functions/cos)
     #[doc(alias = "Cosine")]
     #[doc(alias = "VectorTrigonometricCos")]
     pub fn COS(

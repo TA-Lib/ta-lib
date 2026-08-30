@@ -157,16 +157,7 @@ impl Core {
     /// and today's high/low. Base volatility measure used to build ATR/NATR. Larger values mean
     /// wider or gappier bars (higher volatility).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The first bar produces no value because it has no prior close; unlike some definitions, it
-    ///   does not fall back to the high-low range for that bar.
+    /// Formula and more info at [ta-lib.org/functions/trange](https://ta-lib.org/functions/trange).
     ///
     /// # Arguments
     ///
@@ -222,8 +213,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/trange](https://ta-lib.org/functions/trange)
     #[doc(alias = "TrueRange")]
     #[doc(alias = "TR")]
     pub fn TRANGE(

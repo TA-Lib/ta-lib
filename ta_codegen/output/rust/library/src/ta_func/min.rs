@@ -255,11 +255,7 @@ impl Core {
     }
     /// Rolling minimum: the lowest input value over the trailing period.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/min](https://ta-lib.org/functions/min).
     ///
     /// # Arguments
     ///
@@ -308,8 +304,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MAX`] · [`Core::MININDEX`] · [`Core::MINMAX`]
-    ///
-    /// Further reading: [ta-lib.org/functions/min](https://ta-lib.org/functions/min)
     #[doc(alias = "Lowest")]
     #[doc(alias = "RollingMin")]
     #[doc(alias = "MinValue")]

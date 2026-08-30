@@ -473,26 +473,7 @@ impl Core {
     /// [`STOCH`](https://ta-lib.org/functions/stoch),
     /// [`MACDEXT`](https://ta-lib.org/functions/macdext), ...).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-    ///
-    /// All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The two derived periods `n/2` and `sqrt(n)` are **truncated** to integers, exactly as in
-    ///   Alan Hull's own statement of the formula (`Integer()`); Tulip Indicators and pandas-ta do
-    ///   the same. Some other published descriptions round to nearest instead, which changes both
-    ///   the values and, for the square root, the lookback — a visibly different line, not a
-    ///   tolerance-level difference. TA-Lib follows the author.
-    /// * The default period of 20 is Alan Hull's own default. It is also a period on which the
-    ///   truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47
-    ///   truncates and rounds to 4), so at the default a charting platform using the other
-    ///   convention still lands on TA-Lib's values.
-    /// * A period of 1 performs no smoothing: the output is a copy of the input.
+    /// Formula and more info at [ta-lib.org/functions/hma](https://ta-lib.org/functions/hma).
     ///
     /// # Arguments
     ///
@@ -548,8 +529,6 @@ impl Core {
     /// * Alan Hull, *How to reduce lag in a moving average* — the original definition, including
     ///   the `Integer()` truncation of both derived periods:
     ///   [alanhull.com/hull-moving-average](https://alanhull.com/hull-moving-average)
-    ///
-    /// Further reading: [ta-lib.org/functions/hma](https://ta-lib.org/functions/hma)
     #[doc(alias = "HullMovingAverage")]
     pub fn HMA(
         &self,

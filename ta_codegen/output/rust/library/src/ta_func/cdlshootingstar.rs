@@ -358,12 +358,8 @@ impl Core {
     /// shadow that gaps up from the prior candle's real body. Bearish reversal signal. A hit (-100)
     /// flags a bearish reversal at the top of an uptrend.
     ///
-    /// # Notes
-    ///
-    /// * A preceding uptrend is not verified.
-    /// * Bulkowski found this reverses only 59% of the time — "near random," summarized in his
-    ///   words as "this candle looks better than it performs" — ranking 55th of 103 patterns.
-    ///   ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlshootingstar](https://ta-lib.org/functions/cdlshootingstar).
     ///
     /// # Arguments
     ///
@@ -422,9 +418,6 @@ impl Core {
     ///
     /// [`Core::CDLINVERTEDHAMMER`] · [`Core::CDLHANGINGMAN`] · [`Core::CDLHAMMER`] ·
     /// [`Core::CDLGRAVESTONEDOJI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlshootingstar](https://ta-lib.org/functions/cdlshootingstar)
     #[doc(alias = "ShootingStar")]
     pub fn CDLSHOOTINGSTAR(
         &self,

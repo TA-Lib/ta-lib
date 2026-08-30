@@ -329,6 +329,9 @@ impl Core {
     /// Least-squares straight-line fit over the last optInTimePeriod bars, reported as the fitted
     /// line value at the window endpoint (b + m*(period-1)).
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/linearreg](https://ta-lib.org/functions/linearreg).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -378,8 +381,6 @@ impl Core {
     ///
     /// [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_ANGLE`] · [`Core::LINEARREG_INTERCEPT`] ·
     /// [`Core::TSF`]
-    ///
-    /// Further reading: [ta-lib.org/functions/linearreg](https://ta-lib.org/functions/linearreg)
     #[doc(alias = "LinearRegression")]
     #[doc(alias = "LeastSquares")]
     #[doc(alias = "BestFitLine")]

@@ -2,10 +2,17 @@
 //!
 //! Renders each function's canonical documentation (`ta_codegen/input/<name>/<name>.md`,
 //! parsed into [`DocDef`]) as idiomatic rustdoc on the generated `Core` methods:
-//! summary, plain-text formula, notes, `# Arguments` with ranges/defaults injected
-//! from the YAML metadata, `# Errors` / `# Panics`, a runnable `# Examples` doctest,
-//! `# See also` intra-doc links, references, a ta-lib.org deep link, and
+//! summary, a ta-lib.org deep link for formula/notes, `# Arguments` with
+//! ranges/defaults injected from the YAML metadata, `# Errors` / `# Panics`, a
+//! runnable `# Examples` doctest, `# See also` intra-doc links, references, and
 //! `#[doc(alias)]` attributes for docs.rs search.
+//!
+//! Formula and Notes stay ta-lib.org-only, not duplicated here: the canonical
+//! `.md` can grow LaTeX-like notation and eventually images on that page, and
+//! rustdoc's plain-CommonMark renderer has no path to match it. Keeping only
+//! Summary here (short, plain prose, never at that risk) and linking out for
+//! the rest means the two never need two renderings of the same formula to
+//! agree.
 //!
 //! Prose is escaped for rustdoc's markdown: `[` and `<` outside code spans would
 //! otherwise be parsed as intra-doc links / HTML tags (the canonical docs are full
@@ -38,25 +45,15 @@ pub fn guarded_docs(
 
     d.paragraph(&summary_text(func, doc));
 
-    if let Some(formula) = &doc.formula {
-        d.blank();
-        d.paragraph("# Formula");
-        d.blank();
-        d.fenced_text(formula);
-        if let Some(note) = &doc.formula_note {
-            d.blank();
-            d.paragraph(&escape_prose(note));
-        }
-    }
-
-    if !doc.notes.is_empty() {
-        d.blank();
-        d.paragraph("# Notes");
-        d.blank();
-        for note in &doc.notes {
-            d.bullet(&escape_prose(note));
-        }
-    }
+    // The site builds flat files (`dist/functions/sma.html`), so the slug is the
+    // lower-cased name and carries no trailing slash: `/functions/SMA` and
+    // `/functions/sma/` both 404. Same rule as `docs_site::generate`, which is
+    // what names the page.
+    let slug = func.name.to_lowercase();
+    d.blank();
+    d.paragraph(&format!(
+        "Formula and more info at [ta-lib.org/functions/{slug}](https://ta-lib.org/functions/{slug})."
+    ));
 
     d.blank();
     d.paragraph("# Arguments");
@@ -164,16 +161,6 @@ pub fn guarded_docs(
             d.bullet(&escape_prose(r));
         }
     }
-
-    d.blank();
-    // The site builds flat files (`dist/functions/sma.html`), so the slug is the
-    // lower-cased name and carries no trailing slash: `/functions/SMA` and
-    // `/functions/sma/` both 404. Same rule as `docs_site::generate`, which is
-    // what names the page.
-    let slug = func.name.to_lowercase();
-    d.paragraph(&format!(
-        "Further reading: [ta-lib.org/functions/{slug}](https://ta-lib.org/functions/{slug})"
-    ));
 
     let mut out = d.finish();
     for alias in doc_aliases(func, doc) {
@@ -817,15 +804,6 @@ impl DocWriter {
                 self.push_line(&format!("  {line}"));
             }
         }
-    }
-
-    /// Emit a ```text fenced block, lines verbatim (no wrapping, no escaping).
-    fn fenced_text(&mut self, body: &str) {
-        self.push_line_raw("```text");
-        for line in body.lines() {
-            self.push_line_raw(line);
-        }
-        self.push_line_raw("```");
     }
 
     /// Emit pre-built raw markdown lines verbatim (e.g. a doctest).

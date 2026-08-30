@@ -184,11 +184,8 @@ impl Core {
     /// optInTimePeriod bars ago. Momentum measure centered at 100 and always positive. Above 100 =
     /// price rose vs n bars ago; below 100 = price fell.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeriod
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/rocr100](https://ta-lib.org/functions/rocr100).
     ///
     /// # Arguments
     ///
@@ -238,8 +235,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ROCR`] · [`Core::ROC`] · [`Core::ROCP`] · [`Core::MOM`]
-    ///
-    /// Further reading: [ta-lib.org/functions/rocr100](https://ta-lib.org/functions/rocr100)
     #[doc(alias = "RateofChangeRatio100Scale")]
     #[doc(alias = "MO")]
     pub fn ROCR100(

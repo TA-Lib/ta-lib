@@ -130,11 +130,7 @@ impl Core {
     /// high-low range. A per-bar oscillator with no smoothing. Positive: close above open (buyers
     /// dominated); negative: sellers dominated.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// BOP = (Close - Open) / (High - Low)
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/bop](https://ta-lib.org/functions/bop).
     ///
     /// # Arguments
     ///
@@ -185,8 +181,6 @@ impl Core {
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
-    ///
-    /// Further reading: [ta-lib.org/functions/bop](https://ta-lib.org/functions/bop)
     #[doc(alias = "BalanceOfPower")]
     pub fn BOP(
         &self,

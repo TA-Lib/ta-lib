@@ -296,14 +296,8 @@ impl Core {
     /// about the same level. It is a continuation signal whose sign reports the gap direction; the
     /// code does not verify a prior trend.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the continuation signal classically assumes.
-    /// * Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle
-    ///   lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form
-    ///   is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" —
-    ///   Bulkowski cautions the bearish sample is too thin to trust.
-    ///   ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlgapsidesidewhite](https://ta-lib.org/functions/cdlgapsidesidewhite).
     ///
     /// # Arguments
     ///
@@ -362,9 +356,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLTASUKIGAP`] · [`Core::CDLXSIDEGAP3METHODS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlgapsidesidewhite](https://ta-lib.org/functions/cdlgapsidesidewhite)
     #[doc(alias = "UpDown-gapside-by-sidewhitelines")]
     #[doc(alias = "Gappingside-by-sidewhitelines")]
     pub fn CDLGAPSIDESIDEWHITE(
