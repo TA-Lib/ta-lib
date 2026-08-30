@@ -63,6 +63,13 @@ into 0.1.2. Get the contents right before publishing, not after.
 
 ## 4. Pre-flight
 
+The `main nightly tests` workflow now runs these same gates against the release branch
+every night — the `rust` and `regen-check` jobs, both `ref: main` (#179 E5). On an
+unchanged `main` this section therefore confirms a result CI already has. Run it anyway
+at the moment of publishing: the nightly's last run can predate the commit being tagged,
+and the release path itself (`release-step-1/2` → `scripts/pre-release-checks.py`)
+compiles no Rust and executes no test.
+
 From the repo root:
 
 ```bash
