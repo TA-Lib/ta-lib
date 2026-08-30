@@ -1051,24 +1051,12 @@ fn localize_state_writes(
     extra: &[String],
     buffers: &[(String, bool)],
 ) -> Option<(Vec<String>, Vec<Statement>)> {
-    let mut written: std::collections::BTreeSet<String> = extra.iter().cloned().collect();
     fn note(e: &Expr, out: &mut std::collections::BTreeSet<String>) {
         if let Expr::Var(v) = e {
             if let Some(bare) = v.strip_prefix("sp.") {
                 out.insert(bare.to_string());
             }
         }
-    }
-    for st in transition {
-        streaming::walk_stmt_exprs(st, &mut |top| {
-            streaming::walk_expr(top, &mut |e| match e {
-                Expr::PostIncrement(i)
-                | Expr::PostDecrement(i)
-                | Expr::PreIncrement(i)
-                | Expr::PreDecrement(i) => note(i, &mut written),
-                _ => {}
-            });
-        });
     }
     fn targets(list: &[Statement], out: &mut std::collections::BTreeSet<String>) {
         for st in list {
@@ -1105,6 +1093,18 @@ fn localize_state_writes(
                 targets(b, out);
             }
         }
+    }
+    let mut written: std::collections::BTreeSet<String> = extra.iter().cloned().collect();
+    for st in transition {
+        streaming::walk_stmt_exprs(st, &mut |top| {
+            streaming::walk_expr(top, &mut |e| match e {
+                Expr::PostIncrement(i)
+                | Expr::PostDecrement(i)
+                | Expr::PreIncrement(i)
+                | Expr::PreDecrement(i) => note(i, &mut written),
+                _ => {}
+            });
+        });
     }
     targets(transition, &mut written);
     for (b, _) in buffers {
@@ -1155,7 +1155,7 @@ fn answer_bare_returns_rust(func: &FuncDef, body: &[Statement]) -> Vec<Statement
 /// One model's peek frame: the transition rewritten to commit nothing, against
 /// `&self.state`, at `indent`. `None` where the frame cannot be built, and the
 /// caller falls back to peeking a copy of the handle.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn peek_frame_arm(
     func: &FuncDef,
     model: &StreamModel,

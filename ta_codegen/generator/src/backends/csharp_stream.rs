@@ -1383,7 +1383,6 @@ fn localize_state_writes(
     extra: &[String],
     buffers: &[(String, bool)],
 ) -> Option<(Vec<String>, Vec<Statement>)> {
-    let mut written: BTreeSet<String> = extra.iter().cloned().collect();
     fn note(e: &Expr, out: &mut BTreeSet<String>) {
         if let Expr::Var(v) = e {
             if let Some(bare) = v.strip_prefix("sp.") {
@@ -1426,6 +1425,7 @@ fn localize_state_writes(
             }
         }
     }
+    let mut written: BTreeSet<String> = extra.iter().cloned().collect();
     for st in transition {
         streaming::walk_stmt_exprs(st, &mut |top| {
             streaming::walk_expr(top, &mut |e| match e {
@@ -4094,7 +4094,7 @@ fn emit_composed_step_decls(
 /// `frame` renders the same pipeline as `Peek`'s body instead: the producer as
 /// a peek frame, each sub entered through its PUBLIC `Peek`, the lag-ring push
 /// dropped (nothing below loads it back), and the outputs left in locals.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_composed_step(
     o: &mut String,
     func: &FuncDef,

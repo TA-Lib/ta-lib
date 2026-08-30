@@ -647,7 +647,7 @@ fn emit_handle_class(
     subs: &SubMembers,
     frame: Option<&str>,
 ) {
-    emit_handle_class_with_members(o, func, fields, subs, "", frame)
+    emit_handle_class_with_members(o, func, fields, subs, "", frame);
 }
 
 /// [`emit_handle_class`] with additional raw member declarations (dispatch's
@@ -1164,10 +1164,6 @@ fn stream_ctx<'a>(
     }
 }
 
-/// `void <base>StepImpl( <Class> sp, double bar... )` — the one per-bar
-/// transition; update runs it on live state, peek on a deep copy.
-#[allow(clippy::too_many_arguments)]
-
 /// The state fields a transition writes, and the transition with every mention
 /// of them moved to a bare local.
 ///
@@ -1184,7 +1180,6 @@ fn localize_state_writes(
     extra: &[String],
     buffers: &[(String, bool)],
 ) -> Option<(Vec<String>, Vec<Statement>)> {
-    let mut written: BTreeSet<String> = extra.iter().cloned().collect();
     fn note(e: &Expr, out: &mut BTreeSet<String>) {
         if let Expr::Var(v) = e {
             if let Some(bare) = v.strip_prefix("sp.") {
@@ -1227,6 +1222,7 @@ fn localize_state_writes(
             }
         }
     }
+    let mut written: BTreeSet<String> = extra.iter().cloned().collect();
     for st in transition {
         streaming::walk_stmt_exprs(st, &mut |top| {
             streaming::walk_expr(top, &mut |e| match e {
@@ -3672,7 +3668,7 @@ fn emit_composed_step_decls(
 /// the batch-tail pipeline through the owned sub handles, combine maps per
 /// bar, lag-ring pushes, and the `sp.cur_*` output stores. No peek flag: peek
 /// is the universal deep-copy of the whole tree.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_composed_step(
     o: &mut String,
     func: &FuncDef,

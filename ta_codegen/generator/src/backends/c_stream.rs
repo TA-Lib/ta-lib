@@ -1143,7 +1143,7 @@ fn transform_map_step(
 /// writes the intermediate series' scalar, which pipelines through the sub
 /// handles; combine maps run per-bar. The peek frame calls each sub's `Peek`,
 /// which is why `update` no longer tests a routing flag per sub-call.
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn emit_composed_frame_body(
     decls: &mut String,
     o: &mut String,

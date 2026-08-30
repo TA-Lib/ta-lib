@@ -342,8 +342,7 @@ fn mask_buffer_reads(body: &str, buffers: &BTreeSet<String>) -> String {
 /// of the peek rewrite, so what is left is the expression update renders.
 fn undo_selects(body: &str) -> String {
     let mut s = body.to_string();
-    loop {
-        let Some(hit) = s.find("pkSlot") else { break };
+    while let Some(hit) = s.find("pkSlot") {
         // Back to the `(` that opens the comparison.
         let b: Vec<char> = s.chars().collect();
         let mut depth = 0i32;
